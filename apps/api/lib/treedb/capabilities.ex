@@ -36,4 +36,52 @@ defmodule TreeDb.Capabilities do
       end
     end
   end
+
+  def require_ref(scope, ref_name) do
+    if allowed?(scope["refs"] || [], ref_name) do
+      :ok
+    else
+      {:error,
+       %{
+         code: "permission_denied",
+         message: "Permission denied.",
+         details: %{ref: ref_name}
+       }}
+    end
+  end
+
+  def require_paths(scope, paths) do
+    denied = Enum.reject(paths, &allowed?(scope["paths"] || [], &1))
+
+    if denied == [] do
+      :ok
+    else
+      {:error,
+       %{
+         code: "permission_denied",
+         message: "Permission denied.",
+         details: %{paths: denied}
+       }}
+    end
+  end
+
+  defp allowed?(patterns, value), do: Enum.any?(patterns, &match_pattern?(&1, value))
+
+  defp match_pattern?("**", _value), do: true
+  defp match_pattern?("*", _value), do: true
+
+  defp match_pattern?(pattern, value) do
+    cond do
+      String.ends_with?(pattern, "/*") ->
+        prefix = String.trim_trailing(pattern, "*")
+        String.starts_with?(value, prefix)
+
+      String.ends_with?(pattern, "/**") ->
+        prefix = String.trim_trailing(pattern, "**")
+        String.starts_with?(value, prefix)
+
+      true ->
+        pattern == value
+    end
+  end
 end

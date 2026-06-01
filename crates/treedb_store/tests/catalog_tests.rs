@@ -134,3 +134,84 @@ fn dev_token_records_persist() {
         "actor_demo"
     );
 }
+
+#[test]
+fn workspaces_persist_and_writable_lease_conflicts() {
+    let dir = tempdir().unwrap();
+    init_data_dir(
+        dir.path(),
+        InitOptions {
+            node_id: "node_local".to_string(),
+        },
+    )
+    .unwrap();
+    let input = workspace_input("ws_one", "refs/heads/agent/demo", 60);
+    let first = put_workspace(dir.path(), input.clone()).unwrap();
+    assert_eq!(first.status, "ready");
+    assert!(first.lease_id.is_some());
+    assert!(get_workspace(dir.path(), "ws_one").unwrap().is_some());
+
+    let mut duplicate = input;
+    duplicate.id = Some("ws_two".to_string());
+    let error = put_workspace(dir.path(), duplicate).unwrap_err();
+    assert_eq!(error.code(), "conflict");
+
+    let closed = close_workspace(dir.path(), "ws_one").unwrap().unwrap();
+    assert_eq!(closed.status, "closed");
+
+    let mut after_close = workspace_input("ws_three", "refs/heads/agent/demo", 60);
+    after_close.materialized_path = "/tmp/ws_three".to_string();
+    assert!(put_workspace(dir.path(), after_close).is_ok());
+}
+
+#[test]
+fn expired_workspace_cleanup_marks_workspace_and_releases_lease() {
+    let dir = tempdir().unwrap();
+    init_data_dir(
+        dir.path(),
+        InitOptions {
+            node_id: "node_local".to_string(),
+        },
+    )
+    .unwrap();
+    put_workspace(
+        dir.path(),
+        workspace_input("ws_expired", "refs/heads/agent/expired", 1),
+    )
+    .unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(1200));
+    let report = cleanup_expired_workspaces(dir.path()).unwrap();
+    assert_eq!(report.expired_workspace_ids, vec!["ws_expired".to_string()]);
+    assert_eq!(
+        get_workspace(dir.path(), "ws_expired")
+            .unwrap()
+            .unwrap()
+            .status,
+        "expired"
+    );
+}
+
+fn workspace_input(id: &str, branch_name: &str, ttl_seconds: i64) -> WorkspaceInput {
+    WorkspaceInput {
+        id: Some(id.to_string()),
+        repository_id: "repo_demo".to_string(),
+        node_id: "node_local".to_string(),
+        actor_id: "actor_demo".to_string(),
+        tenant_id: "tenant_demo".to_string(),
+        base_ref: "refs/heads/main".to_string(),
+        branch_name: Some(branch_name.to_string()),
+        mode: "writable".to_string(),
+        allowed_paths: vec!["docs/**".to_string()],
+        capabilities: vec!["files:read".to_string(), "files:write".to_string()],
+        ttl_seconds,
+        materialized_path: format!("/tmp/{id}"),
+        effective_scope: EffectiveScope {
+            actor_id: "actor_demo".to_string(),
+            tenant_id: "tenant_demo".to_string(),
+            repo_ids: vec!["repo_demo".to_string()],
+            capabilities: vec!["files:read".to_string(), "files:write".to_string()],
+            refs: vec![branch_name.to_string()],
+            paths: vec!["docs/**".to_string()],
+        },
+    }
+}

@@ -19,12 +19,13 @@ Implemented now:
 - Dev-token authentication for local development.
 - Effective capability scope resolution.
 - Local node, registry, repository placement, mirror, and audit records.
-- Repository registration and basic gix-backed Git inspection.
+- Repository registration with Git path validation.
+- gix-backed repository status, ref, remote, ref resolution, tree, and blob primitives.
+- Workspace session creation, lookup, close, expiration cleanup, and writable branch leases.
 
 Not implemented yet:
 
 - File/blob read and write APIs.
-- Workspace sessions and leases beyond placeholders.
 - Commit, patch, diff, fetch, push, and mirror sync workflows.
 - Graph/search indexing service.
 - Sandbox command execution.
@@ -285,6 +286,10 @@ POST /api/v1/repos/register
 GET  /api/v1/repos
 GET  /api/v1/repos/:repo_id
 GET  /api/v1/repos/:repo_id/status
+GET  /api/v1/repos/:repo_id/refs
+GET  /api/v1/repos/:repo_id/remotes
+POST /api/v1/repos/:repo_id/sync
+POST /api/v1/repos/:repo_id/workspaces
 ```
 
 Register a repository:
@@ -301,7 +306,7 @@ curl -fsS -X POST http://localhost:4000/api/v1/repos/register \
   }'
 ```
 
-Phase 1 registration validates that `localPath` is absolute and stays under `$TREEDB_DATA_DIR`. The same normalized input produces the same deterministic repository ID.
+Repository registration validates that `localPath` is absolute, stays under `$TREEDB_DATA_DIR`, exists, and is a Git repository. The same normalized input produces the same deterministic repository ID. TreeDB keeps `localPath` as internal service setup data and does not return it in public repository response objects.
 
 Get repository status:
 
@@ -324,6 +329,30 @@ POST /api/v1/repos/:repo_id/mirrors
 ```
 
 `GET /api/v1/node` returns the local node identity. Registry writes and mirror creation require `registry:write`.
+
+### Workspaces
+
+```http
+GET  /api/v1/workspaces/:workspace_id
+POST /api/v1/workspaces/:workspace_id/close
+```
+
+Create a writable workspace:
+
+```bash
+curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/workspaces \
+  -H "authorization: Bearer $TREEDB_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{
+    "baseRef": "refs/heads/main",
+    "branchName": "refs/heads/agent/demo-task",
+    "mode": "writable",
+    "allowedPaths": ["docs/**"],
+    "ttlSeconds": 1800
+  }'
+```
+
+Writable workspaces require `workspace:create`, repository write capability, allowed ref/path scope, and primary-node placement. Phase 2 permits one active writable lease per repository branch.
 
 ## Error Format
 
@@ -416,7 +445,8 @@ The project currently has:
 
 - Rust store tests for data-dir initialization, dev seeding, repository records, placement records, mirrors, token records, effective scope, and checksum recovery errors.
 - Rust Git tests for missing paths, non-Git directories, non-bare repositories, and bare repositories.
-- Elixir context and controller tests for store initialization, auth, repository registration, repository status, health/version, policy, registry, and mirror endpoints.
+- Rust Git tests for refs, remotes, ref resolution, tree entries, and blob reads.
+- Elixir context and controller tests for store initialization, auth, repository registration, repository status, refs/remotes/sync, workspace lifecycle, health/version, policy, registry, and mirror endpoints.
 
 `packages/ts-sdk` has its own baseline state documented in `docs/research/sdk-baseline-verification.md`. Do not treat existing SDK fixture or package graph failures as TreeDB regressions unless the integration work explicitly changes the SDK.
 
@@ -483,7 +513,6 @@ Near-term work follows the phased MVP plan in `PLAN`.
 Expected next areas:
 
 - Repository file/blob APIs.
-- Workspace sessions and leases.
 - Patch, diff, commit, and ref update operations.
 - Fetch/push and mirror synchronization.
 - Graph/search/index crate and API endpoints.

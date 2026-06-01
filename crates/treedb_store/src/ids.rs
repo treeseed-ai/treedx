@@ -64,3 +64,26 @@ pub fn audit_event_id(event_type: &str, recorded_at: &str, request_id: Option<&s
         ))
     )
 }
+
+pub fn workspace_id(
+    repo_id: &str,
+    actor_id: &str,
+    branch_name: Option<&str>,
+    created_at: &str,
+) -> String {
+    format!(
+        "ws_{}",
+        short_hash(&format!(
+            "{}|{}|{}|{}|{}",
+            repo_id,
+            actor_id,
+            branch_name.unwrap_or(""),
+            created_at,
+            uuid::Uuid::new_v4()
+        ))
+    )
+}
+
+pub fn lease_id(repo_id: &str, branch_name: &str) -> String {
+    format!("lease_{}", short_hash(&format!("{repo_id}|{branch_name}")))
+}

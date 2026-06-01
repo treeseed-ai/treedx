@@ -23,6 +23,7 @@ defmodule TreeDbWeb.ControllerHelpers do
   def status_for("token_expired"), do: 401
   def status_for("permission_denied"), do: 403
   def status_for("not_found"), do: 404
+  def status_for("conflict"), do: 409
   def status_for("not_implemented"), do: 501
   def status_for("validation_error"), do: 422
   def status_for(_), do: 500

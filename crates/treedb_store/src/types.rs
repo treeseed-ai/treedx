@@ -196,3 +196,65 @@ pub struct AuditEventRecord {
     pub data: serde_json::Value,
     pub recorded_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceInput {
+    pub id: Option<String>,
+    pub repository_id: String,
+    pub node_id: String,
+    pub actor_id: String,
+    pub tenant_id: String,
+    pub base_ref: String,
+    pub branch_name: Option<String>,
+    pub mode: String,
+    pub allowed_paths: Vec<String>,
+    pub capabilities: Vec<String>,
+    pub ttl_seconds: i64,
+    pub materialized_path: String,
+    pub effective_scope: EffectiveScope,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceRecord {
+    pub id: String,
+    pub repository_id: String,
+    pub node_id: String,
+    pub actor_id: String,
+    pub tenant_id: String,
+    pub base_ref: String,
+    pub branch_name: Option<String>,
+    pub mode: String,
+    pub allowed_paths: Vec<String>,
+    pub capabilities: Vec<String>,
+    pub status: String,
+    pub materialized_path: String,
+    pub effective_scope: EffectiveScope,
+    pub lease_id: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
+    pub closed_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LeaseRecord {
+    pub id: String,
+    pub repository_id: String,
+    pub branch_name: String,
+    pub workspace_id: String,
+    pub actor_id: String,
+    pub mode: String,
+    pub status: String,
+    pub acquired_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
+    pub released_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CleanupReport {
+    pub expired_workspace_ids: Vec<String>,
+    pub released_lease_ids: Vec<String>,
+}

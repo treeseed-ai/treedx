@@ -20,6 +20,15 @@ defmodule TreeDb.Native do
     do: :erlang.nif_error(:nif_not_loaded)
 
   def append_audit_event(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
+  def put_workspace(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
+  def get_workspace(_data_dir, _workspace_id), do: :erlang.nif_error(:nif_not_loaded)
+  def close_workspace(_data_dir, _workspace_id), do: :erlang.nif_error(:nif_not_loaded)
+  def cleanup_expired_workspaces(_data_dir), do: :erlang.nif_error(:nif_not_loaded)
   def inspect_repository(_path), do: :erlang.nif_error(:nif_not_loaded)
+  def list_refs(_path), do: :erlang.nif_error(:nif_not_loaded)
+  def list_remotes(_path), do: :erlang.nif_error(:nif_not_loaded)
+  def resolve_ref(_path, _ref_name), do: :erlang.nif_error(:nif_not_loaded)
+  def list_tree(_path, _ref_name, _tree_path), do: :erlang.nif_error(:nif_not_loaded)
+  def read_blob(_path, _ref_name, _blob_path), do: :erlang.nif_error(:nif_not_loaded)
   def hash_token(_token), do: :erlang.nif_error(:nif_not_loaded)
 end

@@ -50,6 +50,18 @@ defmodule TreeDb.Store do
   def append_audit_event(input),
     do: call_json(&TreeDb.Native.append_audit_event/2, data_dir(), Jason.encode!(input))
 
+  def put_workspace(input),
+    do: call_json(&TreeDb.Native.put_workspace/2, data_dir(), Jason.encode!(input))
+
+  def get_workspace(workspace_id),
+    do: call_json(&TreeDb.Native.get_workspace/2, data_dir(), workspace_id)
+
+  def close_workspace(workspace_id),
+    do: call_json(&TreeDb.Native.close_workspace/2, data_dir(), workspace_id)
+
+  def cleanup_expired_workspaces,
+    do: call_json(&TreeDb.Native.cleanup_expired_workspaces/1, data_dir())
+
   def hash_token(token), do: call_json(&TreeDb.Native.hash_token/1, token)
 
   def call_json(fun, arg1), do: decode(apply_fun(fun, [arg1]))

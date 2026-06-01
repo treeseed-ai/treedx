@@ -258,5 +258,7 @@ fn log_files() -> Vec<(PathBuf, &'static str)> {
         ("federation/mirrors.tdb".into(), "mirror"),
         ("audit/events.tdb".into(), "audit_event"),
         ("config/dev_tokens.tdb".into(), "dev_token"),
+        ("workspaces/sessions.tdb".into(), "workspace"),
+        ("leases/leases.tdb".into(), "lease"),
     ]
 }

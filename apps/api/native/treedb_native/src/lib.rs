@@ -179,8 +179,88 @@ fn append_audit_event<'a>(env: Env<'a>, data_dir: String, input_json: String) ->
 }
 
 #[rustler::nif(schedule = "DirtyIo")]
+fn put_workspace<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
+    match parse_json::<WorkspaceInput>(input_json) {
+        Ok(input) => match treedb_store::put_workspace(Path::new(&data_dir), input) {
+            Ok(record) => ok_json(env, record),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn get_workspace<'a>(env: Env<'a>, data_dir: String, workspace_id: String) -> Term<'a> {
+    match treedb_store::get_workspace(Path::new(&data_dir), &workspace_id) {
+        Ok(record) => ok_json(env, record),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn close_workspace<'a>(env: Env<'a>, data_dir: String, workspace_id: String) -> Term<'a> {
+    match treedb_store::close_workspace(Path::new(&data_dir), &workspace_id) {
+        Ok(record) => ok_json(env, record),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn cleanup_expired_workspaces<'a>(env: Env<'a>, data_dir: String) -> Term<'a> {
+    match treedb_store::cleanup_expired_workspaces(Path::new(&data_dir)) {
+        Ok(report) => ok_json(env, report),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
 fn inspect_repository<'a>(env: Env<'a>, path: String) -> Term<'a> {
     match treedb_git::inspect_repository(Path::new(&path)) {
+        Ok(record) => ok_json(env, record),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn list_refs<'a>(env: Env<'a>, path: String) -> Term<'a> {
+    match treedb_git::list_refs(Path::new(&path)) {
+        Ok(record) => ok_json(env, record),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn list_remotes<'a>(env: Env<'a>, path: String) -> Term<'a> {
+    match treedb_git::list_remotes(Path::new(&path)) {
+        Ok(record) => ok_json(env, record),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn resolve_ref<'a>(env: Env<'a>, path: String, ref_name: String) -> Term<'a> {
+    match treedb_git::resolve_ref(Path::new(&path), &ref_name) {
+        Ok(record) => ok_json(env, record),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn list_tree<'a>(
+    env: Env<'a>,
+    path: String,
+    ref_name: String,
+    tree_path: Option<String>,
+) -> Term<'a> {
+    match treedb_git::list_tree(Path::new(&path), &ref_name, tree_path.as_deref()) {
+        Ok(record) => ok_json(env, record),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn read_blob<'a>(env: Env<'a>, path: String, ref_name: String, blob_path: String) -> Term<'a> {
+    match treedb_git::read_blob(Path::new(&path), &ref_name, &blob_path) {
         Ok(record) => ok_json(env, record),
         Err(error) => err_json(env, error.code(), error),
     }

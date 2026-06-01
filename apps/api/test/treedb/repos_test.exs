@@ -27,9 +27,33 @@ defmodule TreeDb.ReposTest do
   end
 
   test "repository registration persists placement", %{principal: principal, dir: dir} do
-    path = Path.join(dir, "repos/bare/demo.git")
+    path = Path.join(dir, "repos/bare/demo")
+    create_git_fixture(path)
     {:ok, result} = TreeDb.Repos.register(%{"name" => "demo", "localPath" => path}, principal)
     assert result.repo.repoId =~ "repo_"
     assert result.placement["primaryNodeId"] == "node_local"
+  end
+
+  test "repository registration rejects non-git paths", %{principal: principal, dir: dir} do
+    path = Path.join(dir, "repos/bare/not-git")
+    File.mkdir_p!(path)
+
+    assert {:error, %{code: "validation_error"}} =
+             TreeDb.Repos.register(%{"name" => "not-git", "localPath" => path}, principal)
+  end
+
+  defp create_git_fixture(path) do
+    File.mkdir_p!(path)
+    git(path, ["init", "-b", "main"])
+    git(path, ["config", "user.name", "TreeDB Test"])
+    git(path, ["config", "user.email", "test@example.invalid"])
+    File.write!(Path.join(path, "README.md"), "hello")
+    git(path, ["add", "README.md"])
+    git(path, ["commit", "-m", "init"])
+  end
+
+  defp git(cwd, args) do
+    {output, status} = System.cmd("git", args, cd: cwd, stderr_to_stdout: true)
+    assert status == 0, "git #{inspect(args)} failed: #{output}"
   end
 end

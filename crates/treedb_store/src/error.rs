@@ -18,6 +18,8 @@ pub enum StoreError {
     NotFound(String),
     #[error("validation error: {0}")]
     Validation(String),
+    #[error("conflict: {0}")]
+    Conflict(String),
 }
 
 impl StoreError {
@@ -29,6 +31,7 @@ impl StoreError {
             StoreError::InvalidRecord { .. } => "invalid_record",
             StoreError::NotFound(_) => "not_found",
             StoreError::Validation(_) => "validation_error",
+            StoreError::Conflict(_) => "conflict",
         }
     }
 }

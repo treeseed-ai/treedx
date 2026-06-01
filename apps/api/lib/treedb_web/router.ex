@@ -26,7 +26,14 @@ defmodule TreeDbWeb.Router do
     get("/repos", RepoController, :index)
     get("/repos/:repo_id", RepoController, :show)
     get("/repos/:repo_id/status", RepoController, :status)
+    get("/repos/:repo_id/refs", RepoController, :refs)
+    get("/repos/:repo_id/remotes", RepoController, :remotes)
+    post("/repos/:repo_id/sync", RepoController, :sync)
+    post("/repos/:repo_id/workspaces", RepoController, :create_workspace)
     get("/repos/:repo_id/mirrors", RegistryController, :mirrors)
     post("/repos/:repo_id/mirrors", RegistryController, :put_mirror)
+
+    get("/workspaces/:workspace_id", WorkspaceController, :show)
+    post("/workspaces/:workspace_id/close", WorkspaceController, :close)
   end
 end

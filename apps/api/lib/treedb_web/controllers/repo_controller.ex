@@ -36,4 +36,36 @@ defmodule TreeDbWeb.RepoController do
       {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
     end
   end
+
+  def refs(conn, %{"repo_id" => repo_id}) do
+    with {:ok, principal} <- require_principal(conn) do
+      handle_result(conn, TreeDb.Repos.refs(repo_id, principal))
+    else
+      {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
+    end
+  end
+
+  def remotes(conn, %{"repo_id" => repo_id}) do
+    with {:ok, principal} <- require_principal(conn) do
+      handle_result(conn, TreeDb.Repos.remotes(repo_id, principal))
+    else
+      {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
+    end
+  end
+
+  def sync(conn, %{"repo_id" => repo_id}) do
+    with {:ok, principal} <- require_principal(conn) do
+      handle_result(conn, TreeDb.Repos.sync(repo_id, principal))
+    else
+      {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
+    end
+  end
+
+  def create_workspace(conn, %{"repo_id" => repo_id} = params) do
+    with {:ok, principal} <- require_principal(conn) do
+      handle_result(conn, TreeDb.Workspaces.create(repo_id, params, principal))
+    else
+      {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
+    end
+  end
 end

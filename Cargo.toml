@@ -12,6 +12,7 @@ license = "AGPL-3.0-only"
 
 [workspace.dependencies]
 anyhow = "1"
+base64 = "0.22"
 blake3 = "1.8.5"
 chrono = { version = "0.4", features = ["serde"] }
 gix = "0.84.0"
