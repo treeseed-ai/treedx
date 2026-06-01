@@ -25,13 +25,13 @@ Implemented now:
 - Phase 3 workspace File API for tree listing, UTF-8 file read/write/patch/delete, search, status, diff, and commit.
 - Overlay MVP write model: base reads come from Git objects, workspace writes live in TreeDB-native overlay records and blobs, and commit synthesizes a Git commit from base tree plus overlay changes.
 - External Rust `treedb_git_worker` for overlay commits, keeping risky Git object writes out of the BEAM OS process while still using gix and no shell-Git default path.
+- Phase 4 remote sandbox shell MVP for allowlisted read-only exploration, verification commands, and explicitly writable internal sessions.
 
 Not implemented yet:
 
 - Binary file read/write APIs.
 - Fetch, push, and mirror sync workflows.
 - Graph/search indexing service.
-- Sandbox command execution.
 - Connected control-plane authentication.
 - SDK transport integration.
 
@@ -383,6 +383,7 @@ POST   /api/v1/workspaces/:workspace_id/search
 GET    /api/v1/workspaces/:workspace_id/status
 GET    /api/v1/workspaces/:workspace_id/diff
 POST   /api/v1/workspaces/:workspace_id/commit
+POST   /api/v1/workspaces/:workspace_id/exec
 ```
 
 The File API is workspace-scoped and UTF-8-only in Phase 3. Paths are repository-relative POSIX paths. TreeDB rejects absolute paths, `..`, backslashes, NUL bytes, and protected paths such as `.git/**`, `.env*`, private keys, lockfiles, dependency directories, and build output unless the request explicitly sets `allowProtected=true` and the workspace path scope also allows the path.
@@ -425,6 +426,47 @@ curl -fsS -X POST http://localhost:4000/api/v1/workspaces/$WORKSPACE_ID/commit \
 ```
 
 Commit finalizes the writable workspace for the MVP: status becomes `committed`, the writable lease is released, further mutations are rejected, and the workspace can still be inspected or closed.
+
+### Exec API
+
+```http
+POST /api/v1/workspaces/:workspace_id/exec
+```
+
+The Exec API materializes the current workspace view into an internal sandbox directory, runs a policy-checked command with a timeout and output cap, and records an audit event. It does not expose the internal materialized path in normal workspace responses.
+
+Supported MVP modes:
+
+| Mode | Capability | Profile |
+| --- | --- | --- |
+| `read_only` | `workspace:exec:read_only` | `ls`, `pwd`, `cat`, `sed -n`, `head`, `tail`, `find`, `grep`, `rg`, and read-only `git status/diff/log/show` convenience commands. |
+| `verification` | `workspace:exec:verification` | `npm test`, `npm run test`, `npm run typecheck`, `npm run build`, `pnpm test`, `pnpm build`. |
+| `write_limited` | `workspace:exec:write_limited` | Explicit writable sessions only; changed UTF-8 files are captured back into the TreeDB overlay and must still be committed through the TreeDB File API. |
+
+Run a read-only command:
+
+```bash
+curl -fsS -X POST http://localhost:4000/api/v1/workspaces/$WORKSPACE_ID/exec \
+  -H "authorization: Bearer $TREEDB_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"cmd":"rg \"Decision\" docs | head -20","mode":"read_only","timeoutMs":10000,"maxOutputBytes":60000}'
+```
+
+Response shape:
+
+```json
+{
+  "ok": true,
+  "exitCode": 0,
+  "stdout": "...",
+  "stderr": "",
+  "elapsedMs": 123,
+  "truncated": false,
+  "changedPaths": []
+}
+```
+
+Shell Git mutation commands such as `git push`, `git merge`, and `git rebase` are rejected. TreeDB remains authoritative for status, diff, commit, push, and mirror sync. The Phase 4 sandbox is intended for local development and trusted internal agents; production hosting needs stronger isolation, such as containerized or VM-backed execution, before accepting untrusted commands.
 
 ## Error Format
 
@@ -539,7 +581,7 @@ Production direction:
 - `TREEDB_AUTH_MODE=connected` will verify credentials through a control-plane boundary.
 - Production identity must not come from request JSON.
 - Future repository/file/search operations must authorize before querying or expanding graph/search results.
-- Future shell execution must be workspace-scoped, capability-gated, audited, timeout-bounded, and sandboxed.
+- Shell execution is workspace-scoped, capability-gated, audited, timeout-bounded, and environment-scrubbed. The Phase 4 direct-process sandbox is not sufficient for untrusted public execution.
 
 Do not use dev tokens as a production authentication mechanism. If you find a vulnerability, use GitHub's private vulnerability reporting or Security Advisories if enabled for the repository. If those are not enabled yet, open a GitHub issue with a minimal non-sensitive description and avoid posting exploitable secrets or private repository details.
 
@@ -590,7 +632,7 @@ Expected next areas:
 - Binary file strategy and larger object streaming.
 - Fetch/push and mirror synchronization.
 - Graph/search/index crate and API endpoints.
-- Sandboxed exec service.
+- Stronger sandbox isolation for untrusted exec, such as Docker, gVisor, or Firecracker.
 - Connected auth verifier boundary.
 - SDK repository transport seam.
 - Production hardening and observability.

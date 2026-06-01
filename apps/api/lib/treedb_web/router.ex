@@ -44,5 +44,6 @@ defmodule TreeDbWeb.Router do
     get("/workspaces/:workspace_id/status", FileController, :status)
     get("/workspaces/:workspace_id/diff", FileController, :diff)
     post("/workspaces/:workspace_id/commit", FileController, :commit)
+    post("/workspaces/:workspace_id/exec", ExecController, :exec)
   end
 end

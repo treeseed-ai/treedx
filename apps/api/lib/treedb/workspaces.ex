@@ -149,13 +149,21 @@ defmodule TreeDb.Workspaces do
       "files:write",
       "files:search",
       "workspace:exec:read_only",
+      "workspace:exec:verification",
+      "workspace:exec:write_limited",
       "git:diff",
       "git:commit"
     ]
   end
 
   defp workspace_capabilities(_),
-    do: ["files:read", "files:search", "workspace:exec:read_only", "git:diff"]
+    do: [
+      "files:read",
+      "files:search",
+      "workspace:exec:read_only",
+      "workspace:exec:verification",
+      "git:diff"
+    ]
 
   defp workspace_refs(_scope, %{branch_name: branch_name}) when is_binary(branch_name),
     do: [branch_name]
