@@ -15,4 +15,5 @@ rustler.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 treedb_git = { path = "../../../../crates/treedb_git" }
+treedb_graph = { path = "../../../../crates/treedb_graph" }
 treedb_store = { path = "../../../../crates/treedb_store" }

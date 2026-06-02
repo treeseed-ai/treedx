@@ -27,12 +27,13 @@ Implemented now:
 - External Rust `treedb_git_worker` for overlay commits, keeping risky Git object writes out of the BEAM OS process while still using gix and no shell-Git default path.
 - Phase 4 remote sandbox shell MVP for allowlisted read-only exploration, verification commands, and explicitly writable internal sessions.
 - Phase 5 repository query MVP for generic Git-object-backed read, path list, search, section/link, and changed-path queries that map cleanly to SDK content usage.
+- Phase 6 single-repository graph and context MVP with TreeDB-native graph segments, generic SDK-compatible node/edge shapes, authorization-aware graph filtering, graph search/query, related/subgraph traversal, context packs, and `ctx` DSL parsing.
 
 Not implemented yet:
 
 - Binary file read/write APIs.
 - Fetch, push, and mirror sync workflows.
-- Persistent graph/search indexing service.
+- Federation-aware global search/query/context routing.
 - Connected control-plane authentication.
 - SDK transport integration.
 
@@ -64,6 +65,7 @@ The core design choices are:
   crates/
     treedb_store/                # Native data directory, catalogs, logs, policy, audit
     treedb_git/                  # gix-backed repository inspection
+    treedb_graph/                # Generic graph segments, ranking, and context packs
   docs/
     research/                    # Phase 0 compatibility and architecture research
   packages/
@@ -93,7 +95,7 @@ TreeDB API service
 Rust core
   - treedb_store: append-only native records, manifests, recovery, policy, audit
   - treedb_git: gix-backed repository inspection and overlay commit worker
-  - future treedb_graph: repository graph/search/context indexing
+  - treedb_graph: repository graph/search/context indexing
   |
   v
 TreeDB data directory
@@ -119,7 +121,8 @@ Elixir owns process boundaries and lifecycle concerns:
 - `TreeDb.Workspaces`: workspace sessions, base commit snapshots, and writable leases.
 - `TreeDb.Files`: workspace-scoped tree, file, search, status, diff, and commit API orchestration.
 - `TreeDb.RepositoryQuery`: repository-scoped read, path list, search, section/link, and changed-path query orchestration.
-- `TreeDb.Search`, `TreeDb.Graph`, and `TreeDb.Exec`: placeholders for future phases.
+- `TreeDb.Graph`: graph refresh, graph search/query, related/subgraph traversal, context packs, and DSL parsing.
+- `TreeDb.Exec`: capability-gated workspace command execution.
 
 ### Rust Responsibilities
 
@@ -127,6 +130,7 @@ Rust crates are function libraries with explicit inputs and outputs:
 
 - `treedb_store` handles `.tdb` append logs, record encoding, checksums, replay, manifests, dev seed records, capabilities, placements, mirrors, tokens, and audit events.
 - `treedb_git` uses `gix` for repository opening/inspection, tree/blob reads, recursive tree listing, and overlay commit synthesis.
+- `treedb_graph` builds generic file, section, tag, reference, and provenance graphs; writes verified graph segment files; ranks lexical/graph-neighborhood matches; and assembles context packs.
 - `treedb_native` exposes bounded trusted operations to Elixir through Rustler.
 
 Rustler is used for small and bounded trusted calls. It does not provide OS-process crash isolation for segmentation faults in native code. The Phase 3 overlay commit path uses an external Rust worker process for that reason; future risky or long-running native work should follow the same supervised process boundary.
@@ -180,6 +184,19 @@ workspaces/active/<workspace_id>/overlay/blobs/<blake3_hex>
 ```
 
 Reads resolve `overlay first, then base Git tree`. Deletes are overlay tombstones. Commit keeps overlay records for audit/debug inspection, marks the workspace committed, and releases the writable lease.
+
+Graph refresh writes TreeDB-native graph segment files under:
+
+```text
+graph/repos/<repo_id>/<graph_version>/
+  manifest.tdb
+  documents.tdb
+  nodes.tdb
+  edges.tdb
+graph/repos/<repo_id>/latest/<ref_hash>.tdb
+```
+
+Graph segment records use the same inspectable `.tdb` envelope pattern with BLAKE3 payload hashes. API responses expose logical graph locators such as `treedb://graph/<repo_id>/<graph_version>`, never local segment filesystem paths.
 
 ## Quick Start
 
@@ -288,6 +305,7 @@ files:read
 files:write
 files:search
 graph:query
+graph:refresh
 workspace:create
 git:read
 git:diff
@@ -528,6 +546,70 @@ curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/query \
 
 The SDK compatibility seam is intentionally generic: SDK model `contentDir` values map to TreeDB `paths`, SDK filters map to generic fields such as `frontmatter.status`, and the SDK model registry remains responsible for aliases, model names, slugs, and TreeSeed product semantics.
 
+### Graph and Context API
+
+Phase 6 adds single-repository graph/context endpoints backed by TreeDB-native graph segments. Graph refresh indexes authorized UTF-8 `.md`, `.mdx`, and `.txt` files for a ref. Markdown/MDX files get generic file nodes, heading section nodes, tag/series metadata nodes, link/reference nodes, and commit/ref provenance nodes.
+
+```http
+POST /api/v1/repos/:repo_id/graph/refresh
+POST /api/v1/repos/:repo_id/graph/search-files
+POST /api/v1/repos/:repo_id/graph/search-sections
+POST /api/v1/repos/:repo_id/graph/search-entities
+GET  /api/v1/repos/:repo_id/graph/nodes/:node_id
+POST /api/v1/repos/:repo_id/graph/query
+POST /api/v1/repos/:repo_id/graph/related
+POST /api/v1/repos/:repo_id/graph/subgraph
+POST /api/v1/repos/:repo_id/context/build
+POST /api/v1/repos/:repo_id/context/parse-ctx
+```
+
+Authorization filtering runs before ranking, traversal, expansion, counting, diagnostics, and serialization. Unauthorized paths and protected paths do not contribute hidden scores, counts, snippets, node IDs, or edge data. Graph nodes are generic SDK-compatible shapes; TreeSeed product model mapping remains outside TreeDB.
+
+Refresh a graph:
+
+```bash
+curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/graph/refresh \
+  -H "authorization: Bearer $TREEDB_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"ref":"refs/heads/main","paths":["docs/**"]}'
+```
+
+Search sections:
+
+```bash
+curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/graph/search-sections \
+  -H "authorization: Bearer $TREEDB_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"ref":"refs/heads/main","query":"release provenance","limit":20}'
+```
+
+Run a graph query:
+
+```bash
+curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/graph/query \
+  -H "authorization: Bearer $TREEDB_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"ref":"refs/heads/main","query":"release provenance","scope":"sections","relations":["references"],"options":{"depth":1,"limit":8}}'
+```
+
+Build a context pack:
+
+```bash
+curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/context/build \
+  -H "authorization: Bearer $TREEDB_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"ref":"refs/heads/main","query":"release provenance","scope":"sections","budget":{"maxNodes":8,"maxTokens":1800}}'
+```
+
+Parse a `ctx` DSL request:
+
+```bash
+curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/context/parse-ctx \
+  -H "authorization: Bearer $TREEDB_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"source":"ctx \"release provenance\" for research in /docs via references depth 1 limit 8 budget 1200 as brief"}'
+```
+
 ## Error Format
 
 Controller errors use a stable JSON shape:
@@ -623,7 +705,8 @@ The project currently has:
 - Rust Git tests for missing paths, non-Git directories, non-bare repositories, and bare repositories.
 - Rust Git tests for refs, remotes, ref resolution, tree entries, recursive tree entries, blob reads, and overlay commits.
 - Rust store tests for workspace file overlays and committed workspace lease release.
-- Elixir context and controller tests for store initialization, auth, repository registration, repository status, refs/remotes/sync, workspace lifecycle, health/version, policy, registry, mirror endpoints, and File API workflows.
+- Rust graph tests for generic graph extraction, deterministic ranking/query behavior, segment write/read, checksum recovery, and `ctx` DSL parsing.
+- Elixir context and controller tests for store initialization, auth, repository registration, repository status, refs/remotes/sync, workspace lifecycle, health/version, policy, registry, mirror endpoints, File API workflows, Repository Query workflows, Graph/Context API workflows, and SDK query/graph mapping contracts.
 
 `packages/ts-sdk` has its own baseline state documented in `docs/research/sdk-baseline-verification.md`. Do not treat existing SDK fixture or package graph failures as TreeDB regressions unless the integration work explicitly changes the SDK.
 
@@ -640,7 +723,7 @@ Production direction:
 
 - `TREEDB_AUTH_MODE=connected` will verify credentials through a control-plane boundary.
 - Production identity must not come from request JSON.
-- Future repository/file/search operations must authorize before querying or expanding graph/search results.
+- Repository/file/search/graph operations authorize before querying, ranking, traversing, expanding, counting, or serializing results.
 - Shell execution is workspace-scoped, capability-gated, audited, timeout-bounded, and environment-scrubbed. The Phase 4 direct-process sandbox is not sufficient for untrusted public execution.
 
 Do not use dev tokens as a production authentication mechanism. If you find a vulnerability, use GitHub's private vulnerability reporting or Security Advisories if enabled for the repository. If those are not enabled yet, open a GitHub issue with a minimal non-sensitive description and avoid posting exploitable secrets or private repository details.
@@ -691,7 +774,7 @@ Expected next areas:
 
 - Binary file strategy and larger object streaming.
 - Fetch/push and mirror synchronization.
-- Graph/search/index crate and API endpoints.
+- Federation-aware global search/query/context APIs.
 - Stronger sandbox isolation for untrusted exec, such as Docker, gVisor, or Firecracker.
 - Connected auth verifier boundary.
 - SDK repository transport seam.

@@ -364,6 +364,142 @@ fn commit_overlay<'a>(env: Env<'a>, input_json: String) -> Term<'a> {
     )
 }
 
+#[rustler::nif(schedule = "DirtyIo")]
+fn build_graph_index<'a>(env: Env<'a>, input_json: String) -> Term<'a> {
+    match parse_json::<treedb_graph::GraphIndexInput>(input_json) {
+        Ok(input) => match treedb_graph::build_graph_index(input) {
+            Ok(index) => ok_json(env, index),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn write_graph_segments<'a>(env: Env<'a>, data_dir: String, index_json: String) -> Term<'a> {
+    match parse_json::<treedb_graph::GraphIndex>(index_json) {
+        Ok(index) => match treedb_graph::write_graph_segments(Path::new(&data_dir), &index) {
+            Ok(manifest) => ok_json(env, manifest),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn read_graph_segments<'a>(
+    env: Env<'a>,
+    data_dir: String,
+    repo_id: String,
+    graph_version: String,
+) -> Term<'a> {
+    match treedb_graph::read_graph_segments(Path::new(&data_dir), &repo_id, &graph_version) {
+        Ok(index) => ok_json(env, index),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn read_latest_graph_manifest<'a>(
+    env: Env<'a>,
+    data_dir: String,
+    repo_id: String,
+    ref_name: String,
+) -> Term<'a> {
+    match treedb_graph::read_latest_graph_manifest(Path::new(&data_dir), &repo_id, &ref_name) {
+        Ok(manifest) => ok_json(env, manifest),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn search_graph<'a>(env: Env<'a>, index_json: String, request_json: String) -> Term<'a> {
+    match (
+        parse_json::<treedb_graph::GraphIndex>(index_json),
+        parse_json::<treedb_graph::GraphSearchRequest>(request_json),
+    ) {
+        (Ok(index), Ok(request)) => match treedb_graph::search_graph(index, request) {
+            Ok(results) => ok_json(env, results),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        _ => err_json(env, "invalid_json", "invalid graph search input"),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn query_graph<'a>(env: Env<'a>, index_json: String, request_json: String) -> Term<'a> {
+    match (
+        parse_json::<treedb_graph::GraphIndex>(index_json),
+        parse_json::<treedb_graph::GraphQueryRequest>(request_json),
+    ) {
+        (Ok(index), Ok(request)) => match treedb_graph::query_graph(index, request) {
+            Ok(result) => ok_json(env, result),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        _ => err_json(env, "invalid_json", "invalid graph query input"),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn related_nodes<'a>(
+    env: Env<'a>,
+    index_json: String,
+    seed_id: String,
+    request_json: String,
+) -> Term<'a> {
+    match (
+        parse_json::<treedb_graph::GraphIndex>(index_json),
+        parse_json::<treedb_graph::GraphQueryRequest>(request_json),
+    ) {
+        (Ok(index), Ok(request)) => match treedb_graph::related_nodes(index, &seed_id, request) {
+            Ok(result) => ok_json(env, result),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        _ => err_json(env, "invalid_json", "invalid graph related input"),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn subgraph<'a>(
+    env: Env<'a>,
+    index_json: String,
+    seed_ids_json: String,
+    request_json: String,
+) -> Term<'a> {
+    match (
+        parse_json::<treedb_graph::GraphIndex>(index_json),
+        parse_json::<Vec<String>>(seed_ids_json),
+        parse_json::<treedb_graph::GraphQueryRequest>(request_json),
+    ) {
+        (Ok(index), Ok(seed_ids), Ok(request)) => {
+            match treedb_graph::subgraph(index, seed_ids, request) {
+                Ok(result) => ok_json(env, result),
+                Err(error) => err_json(env, error.code(), error),
+            }
+        }
+        _ => err_json(env, "invalid_json", "invalid graph subgraph input"),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn build_context_pack<'a>(env: Env<'a>, index_json: String, request_json: String) -> Term<'a> {
+    match (
+        parse_json::<treedb_graph::GraphIndex>(index_json),
+        parse_json::<treedb_graph::ContextPackRequest>(request_json),
+    ) {
+        (Ok(index), Ok(request)) => match treedb_graph::build_context_pack(index, request) {
+            Ok(result) => ok_json(env, result),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        _ => err_json(env, "invalid_json", "invalid context input"),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn parse_ctx_dsl<'a>(env: Env<'a>, source: String) -> Term<'a> {
+    ok_json(env, treedb_graph::parse_ctx_dsl(&source))
+}
+
 #[rustler::nif]
 fn hash_token<'a>(env: Env<'a>, token: String) -> Term<'a> {
     ok_json(env, treedb_store::hash_token(&token))

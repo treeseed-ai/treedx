@@ -1963,6 +1963,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "treedb_graph"
+version = "0.1.0"
+dependencies = [
+ "blake3",
+ "chrono",
+ "regex",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
 name = "treedb_native"
 version = "0.1.0"
 dependencies = [
@@ -1972,6 +1985,7 @@ dependencies = [
  "serde",
  "serde_json",
  "treedb_git",
+ "treedb_graph",
  "treedb_store",
 ]
 

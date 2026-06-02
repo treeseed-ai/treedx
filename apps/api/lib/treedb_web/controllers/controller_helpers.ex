@@ -23,6 +23,7 @@ defmodule TreeDbWeb.ControllerHelpers do
   def status_for("token_expired"), do: 401
   def status_for("permission_denied"), do: 403
   def status_for("not_found"), do: 404
+  def status_for("graph_not_ready"), do: 404
   def status_for("payload_too_large"), do: 413
   def status_for("unsupported_media_type"), do: 415
   def status_for("conflict"), do: 409

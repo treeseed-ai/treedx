@@ -38,5 +38,20 @@ defmodule TreeDb.Native do
   def read_blob(_path, _ref_name, _blob_path), do: :erlang.nif_error(:nif_not_loaded)
   def changed_paths(_path, _base_ref, _head_ref), do: :erlang.nif_error(:nif_not_loaded)
   def commit_overlay(_input), do: :erlang.nif_error(:nif_not_loaded)
+  def build_graph_index(_input), do: :erlang.nif_error(:nif_not_loaded)
+  def write_graph_segments(_data_dir, _index), do: :erlang.nif_error(:nif_not_loaded)
+
+  def read_graph_segments(_data_dir, _repo_id, _graph_version),
+    do: :erlang.nif_error(:nif_not_loaded)
+
+  def read_latest_graph_manifest(_data_dir, _repo_id, _ref_name),
+    do: :erlang.nif_error(:nif_not_loaded)
+
+  def search_graph(_index, _request), do: :erlang.nif_error(:nif_not_loaded)
+  def query_graph(_index, _request), do: :erlang.nif_error(:nif_not_loaded)
+  def related_nodes(_index, _seed_id, _request), do: :erlang.nif_error(:nif_not_loaded)
+  def subgraph(_index, _seed_ids, _request), do: :erlang.nif_error(:nif_not_loaded)
+  def build_context_pack(_index, _request), do: :erlang.nif_error(:nif_not_loaded)
+  def parse_ctx_dsl(_source), do: :erlang.nif_error(:nif_not_loaded)
   def hash_token(_token), do: :erlang.nif_error(:nif_not_loaded)
 end

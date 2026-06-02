@@ -107,6 +107,7 @@ pub fn seed_dev_records(
         "files:read",
         "files:write",
         "files:search",
+        "graph:refresh",
         "graph:query",
         "workspace:create",
         "workspace:exec:read_only",
