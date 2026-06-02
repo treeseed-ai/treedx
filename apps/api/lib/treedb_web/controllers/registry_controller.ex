@@ -53,12 +53,8 @@ defmodule TreeDbWeb.RegistryController do
 
   def mirrors(conn, %{"repo_id" => repo_id}) do
     with {:ok, principal} <- require_principal(conn),
-         {:ok, _scope} <-
-           TreeDb.Capabilities.require_capability(principal, "registry:read", repo_id),
-         {:ok, _mirror_scope} <-
-           TreeDb.Capabilities.require_capability(principal, "mirror:read", repo_id),
-         {:ok, mirrors} <- TreeDb.Registry.mirrors(repo_id) do
-      ok(conn, %{mirrors: mirrors})
+         {:ok, result} <- TreeDb.Mirrors.list(repo_id, principal) do
+      ok(conn, result)
     else
       {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
     end
@@ -66,31 +62,17 @@ defmodule TreeDbWeb.RegistryController do
 
   def put_mirror(conn, params = %{"repo_id" => repo_id}) do
     with {:ok, principal} <- require_principal(conn),
-         {:ok, _scope} <-
-           TreeDb.Capabilities.require_capability(principal, "registry:write", repo_id),
-         {:ok, _mirror_scope} <-
-           TreeDb.Capabilities.require_capability(principal, "mirror:write", repo_id) do
-      input = %{
-        id: params["id"] || "",
-        repositoryId: repo_id,
-        sourceNodeId: params["sourceNodeId"] || "node_local",
-        targetNodeId: params["targetNodeId"] || "node_mirror",
-        mode: params["mode"] || "read_replica",
-        lastSeenCommit: params["lastSeenCommit"],
-        behindBy: params["behindBy"],
-        status: params["status"] || "planned"
-      }
+         {:ok, result} <- TreeDb.Mirrors.create(repo_id, params, principal) do
+      ok(conn, result)
+    else
+      {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
+    end
+  end
 
-      TreeDb.Audit.append("mirror.created", %{
-        actor_id: principal["actorId"],
-        tenant_id: principal["tenantId"],
-        repo_id: repo_id,
-        operation: "mirror.create",
-        status: "ok",
-        request_id: conn.assigns[:request_id]
-      })
-
-      handle_result(conn, TreeDb.Registry.put_mirror(input) |> wrap(:mirror))
+  def sync_mirror(conn, params = %{"repo_id" => repo_id, "mirror_id" => mirror_id}) do
+    with {:ok, principal} <- require_principal(conn),
+         {:ok, result} <- TreeDb.Mirrors.sync(repo_id, mirror_id, params, principal) do
+      ok(conn, result)
     else
       {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
     end

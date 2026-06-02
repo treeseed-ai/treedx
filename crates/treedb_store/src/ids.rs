@@ -53,6 +53,52 @@ pub fn mirror_id(repo_id: &str, source: &str, target: &str, mode: &str) -> Strin
     )
 }
 
+pub fn snapshot_id(
+    repo_id: &str,
+    ref_name: &str,
+    commit_sha: &str,
+    kind: &str,
+    paths: &[String],
+) -> String {
+    format!(
+        "snap_{}",
+        short_hash(&format!(
+            "{}|{}|{}|{}|{}",
+            repo_id,
+            ref_name,
+            commit_sha,
+            kind,
+            paths.join(",")
+        ))
+    )
+}
+
+pub fn artifact_id(snapshot_id: &str, format: &str) -> String {
+    format!(
+        "artifact_{}",
+        short_hash(&format!("{snapshot_id}|{format}"))
+    )
+}
+
+pub fn mirror_sync_id(mirror_id: &str, started_at: &str) -> String {
+    format!("msync_{}", short_hash(&format!("{mirror_id}|{started_at}")))
+}
+
+pub fn migration_id(
+    repo_id: &str,
+    source_node_id: &str,
+    target_node_id: &str,
+    mode: &str,
+    created_at: &str,
+) -> String {
+    format!(
+        "mig_{}",
+        short_hash(&format!(
+            "{repo_id}|{source_node_id}|{target_node_id}|{mode}|{created_at}"
+        ))
+    )
+}
+
 pub fn audit_event_id(event_type: &str, recorded_at: &str, request_id: Option<&str>) -> String {
     format!(
         "evt_{}",

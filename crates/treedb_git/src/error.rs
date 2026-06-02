@@ -8,6 +8,8 @@ pub enum GitError {
     Git(String),
     #[error("not found: {0}")]
     NotFound(String),
+    #[error("unsupported transport: {0}")]
+    UnsupportedTransport(String),
 }
 
 impl GitError {
@@ -16,6 +18,7 @@ impl GitError {
             GitError::Io(_) => "io_error",
             GitError::Git(_) => "git_error",
             GitError::NotFound(_) => "not_found",
+            GitError::UnsupportedTransport(_) => "unsupported_transport",
         }
     }
 }

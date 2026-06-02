@@ -29,10 +29,14 @@ defmodule TreeDbWeb.ControllerHelpers do
   def status_for("permission_denied"), do: 403
   def status_for("not_found"), do: 404
   def status_for("graph_not_ready"), do: 404
+  def status_for("snapshot_not_found"), do: 404
+  def status_for("artifact_not_found"), do: 404
   def status_for("payload_too_large"), do: 413
   def status_for("unsupported_media_type"), do: 415
   def status_for("conflict"), do: 409
+  def status_for("migration_conflict"), do: 409
   def status_for("not_implemented"), do: 501
+  def status_for("unsupported_transport"), do: 422
   def status_for("validation_error"), do: 422
   def status_for(_), do: 500
 

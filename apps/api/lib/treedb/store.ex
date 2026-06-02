@@ -41,6 +41,33 @@ defmodule TreeDb.Store do
   def put_mirror(input),
     do: call_json(&TreeDb.Native.put_mirror/2, data_dir(), Jason.encode!(input))
 
+  def build_snapshot_artifact(input),
+    do: call_json(&TreeDb.Native.build_snapshot_artifact/2, data_dir(), Jason.encode!(input))
+
+  def get_snapshot_manifest(snapshot_id),
+    do: call_json(&TreeDb.Native.get_snapshot_manifest/2, data_dir(), snapshot_id)
+
+  def get_artifact(snapshot_id),
+    do: call_json(&TreeDb.Native.get_artifact/2, data_dir(), snapshot_id)
+
+  def read_artifact_bytes(snapshot_id),
+    do: call_json(&TreeDb.Native.read_artifact_bytes/2, data_dir(), snapshot_id)
+
+  def put_mirror_sync(input),
+    do: call_json(&TreeDb.Native.put_mirror_sync/2, data_dir(), Jason.encode!(input))
+
+  def get_mirror_sync(sync_id),
+    do: call_json(&TreeDb.Native.get_mirror_sync/2, data_dir(), sync_id)
+
+  def list_mirror_syncs(input),
+    do: call_json(&TreeDb.Native.list_mirror_syncs/2, data_dir(), Jason.encode!(input))
+
+  def put_migration(input),
+    do: call_json(&TreeDb.Native.put_migration/2, data_dir(), Jason.encode!(input))
+
+  def get_migration(repo_id, migration_id),
+    do: call_json(&TreeDb.Native.get_migration/3, data_dir(), repo_id, migration_id)
+
   def put_dev_token(input),
     do: call_json(&TreeDb.Native.put_dev_token/2, data_dir(), Jason.encode!(input))
 

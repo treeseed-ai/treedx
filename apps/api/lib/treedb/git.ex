@@ -21,6 +21,8 @@ defmodule TreeDb.Git do
   def changed_paths(path, base_ref, head_ref),
     do: call(&TreeDb.Native.changed_paths/3, [path, base_ref, head_ref])
 
+  def fetch_remote(input), do: call(&TreeDb.Native.fetch_remote/1, [Jason.encode!(input)])
+
   def commit_overlay(input) do
     input_json = Jason.encode!(input)
 

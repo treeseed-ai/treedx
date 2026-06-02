@@ -103,3 +103,26 @@ pub struct ChangedPath {
     pub object_id: Option<String>,
     pub kind: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FetchRemoteInput {
+    pub repo_path: String,
+    pub remote_url: Option<String>,
+    pub remote_name: Option<String>,
+    pub refspecs: Vec<String>,
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FetchRemoteResult {
+    pub remote_name: String,
+    pub remote_url: Option<String>,
+    pub refspecs: Vec<String>,
+    pub updated_refs: Vec<String>,
+    pub received_pack: bool,
+    pub before_head: Option<String>,
+    pub after_head: Option<String>,
+    pub status: String,
+}

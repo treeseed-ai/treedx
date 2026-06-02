@@ -30,14 +30,14 @@ Implemented now:
 - Phase 6 single-repository graph and context MVP with TreeDB-native graph segments, generic SDK-compatible node/edge shapes, authorization-aware graph filtering, graph search/query, related/subgraph traversal, context packs, and `ctx` DSL parsing.
 - Phase 7 opt-in TypeScript SDK TreeDB clients/adapters and registry-aware routing primitives.
 - Phase 8 HMAC JWT connected-auth MVP, expanded scoped capability grants, audit event listing, and planner-only federation access reduction.
+- Phase 9 repository snapshots, tar.zst artifact export/download, gix-backed mirror sync, placement migration records, and SDK client methods for those surfaces.
 
 Not implemented yet:
 
 - Binary file read/write APIs.
-- Fetch, push, and mirror sync workflows.
+- Git push workflows.
 - Federation-aware global search/query/context routing.
-- Connected control-plane authentication.
-- SDK transport integration.
+- Connected control-plane/JWKS authentication.
 
 ## Why TreeDB Exists
 
@@ -125,13 +125,16 @@ Elixir owns process boundaries and lifecycle concerns:
 - `TreeDb.RepositoryQuery`: repository-scoped read, path list, search, section/link, and changed-path query orchestration.
 - `TreeDb.Graph`: graph refresh, graph search/query, related/subgraph traversal, context packs, and DSL parsing.
 - `TreeDb.Exec`: capability-gated workspace command execution.
+- `TreeDb.Snapshots`: repository snapshot build, artifact export, and authenticated artifact download.
+- `TreeDb.Mirrors`: registry mirror creation/listing and gix-backed sync orchestration.
+- `TreeDb.Migrations`: dry-run and committed placement migration planning.
 
 ### Rust Responsibilities
 
 Rust crates are function libraries with explicit inputs and outputs:
 
 - `treedb_store` handles `.tdb` append logs, record encoding, checksums, replay, manifests, dev seed records, capabilities, placements, mirrors, tokens, and audit events.
-- `treedb_git` uses `gix` for repository opening/inspection, tree/blob reads, recursive tree listing, and overlay commit synthesis.
+- `treedb_git` uses `gix` for repository opening/inspection, tree/blob reads, recursive tree listing, overlay commit synthesis, changed-path comparison, and network fetch.
 - `treedb_graph` builds generic file, section, tag, reference, and provenance graphs; writes verified graph segment files; ranks lexical/graph-neighborhood matches; and assembles context packs.
 - `treedb_native` exposes bounded trusted operations to Elixir through Rustler.
 
@@ -200,6 +203,18 @@ graph/repos/<repo_id>/latest/<ref_hash>.tdb
 
 Graph segment records use the same inspectable `.tdb` envelope pattern with BLAKE3 payload hashes. API responses expose logical graph locators such as `treedb://graph/<repo_id>/<graph_version>`, never local segment filesystem paths.
 
+Snapshot build writes repository artifacts under:
+
+```text
+snapshots/<snapshot_id>/
+  manifest.tdb
+  artifact.tar.zst
+snapshots/snapshots.tdb
+snapshots/artifacts.tdb
+```
+
+Artifact responses expose logical URIs such as `treedb://artifact/<snapshot_id>` and optional authenticated download URLs. They never expose local artifact filesystem paths.
+
 ## Quick Start
 
 The canonical development path is Docker Compose.
@@ -242,16 +257,21 @@ Important environment variables:
 | Variable | Default | Description |
 | --- | --- | --- |
 | `TREEDB_DATA_DIR` | `/var/lib/treedb` | TreeDB catalog, audit, workspace, repository, and index data directory. |
-| `TREEDB_AUTH_MODE` | `dev` | `dev` enables local dev-token auth. `connected` is a future verifier mode and currently returns not implemented for dev-token creation. |
+| `TREEDB_AUTH_MODE` | `dev` | `dev` enables local dev-token auth. `connected` enables HS256 JWT verification and disables dev-token creation. |
+| `TREEDB_JWT_ISSUER` | unset | Required JWT issuer in connected auth mode. |
+| `TREEDB_JWT_AUDIENCE` | unset | Required JWT audience in connected auth mode. |
+| `TREEDB_JWT_HS256_SECRET` | unset | Required HS256 verifier secret in connected auth mode. |
 | `TREEDB_REGISTRY_MODE` | `local` | Local registry mode for Phase 1. |
 | `TREEDB_NODE_ID` | `node_local` | Local node identifier. |
 | `TREEDB_MAX_FILE_BYTES` | `1048576` | Maximum UTF-8 file size for read/write/patch MVP operations. |
+| `TREEDB_SNAPSHOT_MAX_FILE_BYTES` | `10485760` | Maximum single file size included in a snapshot artifact. |
+| `TREEDB_SNAPSHOT_MAX_TOTAL_BYTES` | `104857600` | Maximum total artifact input size for snapshot build. |
 | `PORT` | `4000` | HTTP port for the Phoenix service. |
 | `PHX_HOST` | `0.0.0.0` in Compose | Phoenix host binding. |
 
 ## API Overview
 
-All Phase 1 routes are JSON-over-HTTP under `/api/v1`.
+TreeDB routes are JSON-over-HTTP under `/api/v1`, except authenticated artifact download responses.
 
 ### Health and Version
 
@@ -644,6 +664,70 @@ curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/context/parse-ctx 
   -d '{"source":"ctx \"release provenance\" for research in /docs via references depth 1 limit 8 budget 1200 as brief"}'
 ```
 
+### Snapshot, Artifact, Mirror, And Migration API
+
+Phase 9 adds generic repository snapshot, artifact export, mirror sync, and placement migration endpoints.
+
+```http
+POST /api/v1/repos/:repo_id/snapshots/build
+GET  /api/v1/repos/:repo_id/snapshots/:snapshot_id
+POST /api/v1/repos/:repo_id/artifacts/export
+POST /api/v1/repos/:repo_id/artifacts/export?download=true
+POST /api/v1/repos/:repo_id/mirrors/:mirror_id/sync
+POST /api/v1/repos/:repo_id/migrations
+GET  /api/v1/repos/:repo_id/migrations/:migration_id
+```
+
+Snapshot build requires `snapshot:build`, `files:read`, `git:read`, and authorized ref/path scope. Artifact export requires `artifact:export`. Mirror sync requires `mirror:write`, `git:fetch`, and `registry:write`. Migration creation requires `migration:write`, `registry:write`, and `repos:write`.
+
+Build a snapshot:
+
+```bash
+curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/snapshots/build \
+  -H "authorization: Bearer $TREEDB_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"ref":"refs/heads/main","kind":"repository_snapshot","paths":["docs/**"],"includeGraph":true}'
+```
+
+Export artifact metadata:
+
+```bash
+curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/artifacts/export \
+  -H "authorization: Bearer $TREEDB_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"snapshotId":"snap_..."}'
+```
+
+Download artifact bytes:
+
+```bash
+curl -fsS -X POST 'http://localhost:4000/api/v1/repos/'"$REPO_ID"'/artifacts/export?download=true' \
+  -H "authorization: Bearer $TREEDB_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"snapshotId":"snap_..."}' \
+  -o artifact.tar.zst
+```
+
+Sync a mirror:
+
+```bash
+curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/mirrors/$MIRROR_ID/sync \
+  -H "authorization: Bearer $TREEDB_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"remoteName":"origin","dryRun":false}'
+```
+
+Create a migration dry run:
+
+```bash
+curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/migrations \
+  -H "authorization: Bearer $TREEDB_TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"targetNodeId":"node_mirror","mode":"primary_transfer","dryRun":true,"requireMirrorSynced":false}'
+```
+
+Mirror fetch uses gix network APIs for HTTP(S) and local file remotes. Unsupported transports return `unsupported_transport`. Shell Git is not used as an implementation path.
+
 ## Error Format
 
 Controller errors use a stable JSON shape:
@@ -807,11 +891,11 @@ Near-term work follows the phased MVP plan in `PLAN`.
 Expected next areas:
 
 - Binary file strategy and larger object streaming.
-- Fetch/push and mirror synchronization.
+- Git push workflows and richer mirror lag reconciliation.
 - Federation-aware global search/query/context APIs.
 - Stronger sandbox isolation for untrusted exec, such as Docker, gVisor, or Firecracker.
-- Connected auth verifier boundary.
-- SDK repository transport seam.
+- Connected auth key rotation and JWKS/control-plane integration.
+- Deeper SDK repository transport integration and live contract tests.
 - Production hardening and observability.
 
 ## Contributing
