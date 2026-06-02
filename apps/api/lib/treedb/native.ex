@@ -4,6 +4,7 @@ defmodule TreeDb.Native do
 
   def init_data_dir(_data_dir, _opts), do: :erlang.nif_error(:nif_not_loaded)
   def seed_dev_records(_data_dir, _node_id, _base_url), do: :erlang.nif_error(:nif_not_loaded)
+  def seed_local_records(_data_dir, _node_id, _base_url), do: :erlang.nif_error(:nif_not_loaded)
   def put_repository(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
   def list_repositories(_data_dir), do: :erlang.nif_error(:nif_not_loaded)
   def get_repository(_data_dir, _repo_id), do: :erlang.nif_error(:nif_not_loaded)
@@ -15,6 +16,12 @@ defmodule TreeDb.Native do
   def put_mirror(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
   def put_dev_token(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
   def get_dev_token_by_hash(_data_dir, _token_hash), do: :erlang.nif_error(:nif_not_loaded)
+  def put_capability_grant(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
+  def list_capability_grants(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
+  def put_connected_token(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
+  def get_connected_token(_data_dir, _jti), do: :erlang.nif_error(:nif_not_loaded)
+  def put_policy_refresh(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
+  def list_audit_events(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
 
   def resolve_effective_scope(_data_dir, _actor_id, _repo_id),
     do: :erlang.nif_error(:nif_not_loaded)

@@ -43,6 +43,32 @@ defmodule TreeDb.Auth do
     do: {:error, %{code: "invalid_authorization", message: "Invalid authorization header."}}
 
   def authenticate_token(token) do
+    if mode() == "connected" do
+      TreeDb.Auth.Connected.authenticate(token)
+    else
+      authenticate_dev_token(token)
+    end
+  end
+
+  def auth_mode_payload do
+    case mode() do
+      "connected" ->
+        %{mode: "connected", connected: true, verifier: TreeDb.Auth.Connected.verifier_info()}
+
+      _ ->
+        %{mode: "dev", connected: false}
+    end
+  end
+
+  def validate_boot_config do
+    if mode() == "connected" do
+      TreeDb.Auth.Connected.validate_config()
+    else
+      :ok
+    end
+  end
+
+  defp authenticate_dev_token(token) do
     with {:ok, token_hash} <- TreeDb.Store.hash_token(token),
          {:ok, record} when is_map(record) <- TreeDb.Store.get_dev_token_by_hash(token_hash),
          {:ok, expires_at, _} <- DateTime.from_iso8601(record["expiresAt"]) do
@@ -59,6 +85,6 @@ defmodule TreeDb.Auth do
   end
 
   def principal(actor_id, tenant_id) do
-    %{actorId: actor_id, tenantId: tenant_id, authMode: mode()}
+    TreeDb.Auth.Principal.from_dev(actor_id, tenant_id)
   end
 end

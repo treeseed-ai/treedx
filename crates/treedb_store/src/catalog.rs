@@ -52,33 +52,7 @@ pub fn seed_dev_records(
     base_url: &str,
 ) -> Result<SeedReport, StoreError> {
     let now = Utc::now();
-    put_record(
-        data_dir,
-        "catalog/volumes.tdb",
-        "volume",
-        "volume_local",
-        &VolumeRecord {
-            id: "volume_local".to_string(),
-            root_path: data_dir.display().to_string(),
-            capacity_policy: "local_dev".to_string(),
-            repository_count: 0,
-            status: "active".to_string(),
-        },
-    )?;
-    put_record(
-        data_dir,
-        "catalog/nodes.tdb",
-        "node",
-        node_id,
-        &NodeRecord {
-            id: node_id.to_string(),
-            base_url: base_url.to_string(),
-            role: "primary".to_string(),
-            capacity: serde_json::json!({"mode": "local"}),
-            health: "healthy".to_string(),
-            last_seen_at: now,
-        },
-    )?;
+    seed_volume_and_node(data_dir, node_id, base_url, now)?;
     put_record(
         data_dir,
         "catalog/tenants.tdb",
@@ -104,8 +78,11 @@ pub fn seed_dev_records(
     let capabilities = vec![
         "repos:read",
         "repos:write",
+        "remotes:read",
+        "remotes:write",
         "files:read",
         "files:write",
+        "files:delete",
         "files:search",
         "graph:refresh",
         "graph:query",
@@ -116,8 +93,20 @@ pub fn seed_dev_records(
         "git:read",
         "git:diff",
         "git:commit",
+        "git:fetch",
+        "git:push",
+        "snapshot:build",
+        "artifact:export",
         "registry:read",
         "registry:write",
+        "mirror:read",
+        "mirror:write",
+        "migration:read",
+        "migration:write",
+        "query:federated",
+        "policy:read",
+        "policy:write",
+        "audit:read",
     ]
     .into_iter()
     .map(String::from)
@@ -146,6 +135,55 @@ pub fn seed_dev_records(
         tenant_id: "tenant_demo".to_string(),
         actor_id: "actor_demo".to_string(),
     })
+}
+
+pub fn seed_local_records(
+    data_dir: &Path,
+    node_id: &str,
+    base_url: &str,
+) -> Result<SeedReport, StoreError> {
+    seed_volume_and_node(data_dir, node_id, base_url, Utc::now())?;
+    Ok(SeedReport {
+        node_id: node_id.to_string(),
+        tenant_id: String::new(),
+        actor_id: String::new(),
+    })
+}
+
+fn seed_volume_and_node(
+    data_dir: &Path,
+    node_id: &str,
+    base_url: &str,
+    now: chrono::DateTime<Utc>,
+) -> Result<(), StoreError> {
+    put_record(
+        data_dir,
+        "catalog/volumes.tdb",
+        "volume",
+        "volume_local",
+        &VolumeRecord {
+            id: "volume_local".to_string(),
+            root_path: data_dir.display().to_string(),
+            capacity_policy: "local_dev".to_string(),
+            repository_count: 0,
+            status: "active".to_string(),
+        },
+    )?;
+    put_record(
+        data_dir,
+        "catalog/nodes.tdb",
+        "node",
+        node_id,
+        &NodeRecord {
+            id: node_id.to_string(),
+            base_url: base_url.to_string(),
+            role: "primary".to_string(),
+            capacity: serde_json::json!({"mode": "local"}),
+            health: "healthy".to_string(),
+            last_seen_at: now,
+        },
+    )?;
+    Ok(())
 }
 
 pub fn put_repository(
@@ -256,6 +294,8 @@ fn log_files() -> Vec<(PathBuf, &'static str)> {
         ("catalog/actors.tdb".into(), "actor"),
         ("catalog/capability_grants.tdb".into(), "capability_grant"),
         ("catalog/repo_access.tdb".into(), "repo_access"),
+        ("catalog/connected_tokens.tdb".into(), "connected_token"),
+        ("catalog/policy_refreshes.tdb".into(), "policy_refresh"),
         (
             "federation/repository_placements.tdb".into(),
             "repository_placement",

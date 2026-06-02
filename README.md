@@ -28,6 +28,8 @@ Implemented now:
 - Phase 4 remote sandbox shell MVP for allowlisted read-only exploration, verification commands, and explicitly writable internal sessions.
 - Phase 5 repository query MVP for generic Git-object-backed read, path list, search, section/link, and changed-path queries that map cleanly to SDK content usage.
 - Phase 6 single-repository graph and context MVP with TreeDB-native graph segments, generic SDK-compatible node/edge shapes, authorization-aware graph filtering, graph search/query, related/subgraph traversal, context packs, and `ctx` DSL parsing.
+- Phase 7 opt-in TypeScript SDK TreeDB clients/adapters and registry-aware routing primitives.
+- Phase 8 HMAC JWT connected-auth MVP, expanded scoped capability grants, audit event listing, and planner-only federation access reduction.
 
 Not implemented yet:
 
@@ -269,6 +271,7 @@ curl -fsS http://localhost:4000/api/v1/version
 
 ```http
 GET  /api/v1/auth/whoami
+GET  /api/v1/auth/mode
 POST /api/v1/auth/dev-token
 ```
 
@@ -287,11 +290,25 @@ curl -fsS http://localhost:4000/api/v1/auth/whoami \
   -H "authorization: Bearer $TREEDB_TOKEN"
 ```
 
+Connected mode uses HS256 JWT verification:
+
+```bash
+TREEDB_AUTH_MODE=connected
+TREEDB_JWT_ISSUER=https://issuer.example.invalid
+TREEDB_JWT_AUDIENCE=treedb
+TREEDB_JWT_HS256_SECRET=change-me
+```
+
+Required JWT claims are `iss`, `aud`, `sub`, `exp`, and `treedb_tenant_id`. `treedb_actor_id` defaults to `sub` when omitted. Optional `treedb_repo_ids`, `treedb_capabilities`, `treedb_refs`, and `treedb_paths` can further narrow catalog grants.
+
 ### Policy
 
 ```http
 GET  /api/v1/policy/effective-scope
 POST /api/v1/policy/refresh
+GET  /api/v1/policy/capabilities
+GET  /api/v1/policy/grants
+POST /api/v1/policy/grants
 ```
 
 In dev mode, the default seeded actor is `actor_demo` in `tenant_demo`.
@@ -312,7 +329,24 @@ git:diff
 git:commit
 registry:read
 registry:write
+mirror:read
+mirror:write
+query:federated
+policy:read
+policy:write
+audit:read
 ```
+
+### Audit And Federation Planning
+
+```http
+GET  /api/v1/audit/events
+POST /api/v1/federation/query/plan
+```
+
+Audit events are stored in TreeDB-native append-only files under `audit/events.tdb`. Event payloads include actor, tenant, repository, node, workspace, operation, status, request ID, requested scope, effective scope, and sanitized metadata. File contents, unsanitized commands, full stdout, and full stderr are not stored by default.
+
+The federation planner is read-safe and planner-only in Phase 8. It reduces requested repository/ref/path scope to the caller's effective authorized scope before any future cross-repository query execution. It does not read graph segments, file contents, snippets, or hidden path counts.
 
 ### Repositories
 

@@ -91,13 +91,15 @@ defmodule TreeDb.Repos do
   end
 
   def sync(repo_id, principal) do
-    with {:ok, _scope} <- TreeDb.Capabilities.require_capability(principal, "git:read", repo_id),
+    with {:ok, _scope} <- TreeDb.Capabilities.require_capability(principal, "git:fetch", repo_id),
          {:ok, repo} when is_map(repo) <- TreeDb.Store.get_repository(repo_id),
          {:ok, git} <- TreeDb.Git.inspect_repository(repo["localPath"]) do
-      TreeDb.Audit.append("repo.synced", %{
+      TreeDb.Audit.append("git.fetch.completed", %{
         actor_id: principal["actorId"],
         tenant_id: principal["tenantId"],
         repo_id: repo_id,
+        operation: "git.fetch",
+        status: "noop",
         data: %{refreshed: false}
       })
 

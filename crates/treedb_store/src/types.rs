@@ -169,6 +169,8 @@ pub struct EffectiveScope {
     pub capabilities: Vec<String>,
     pub refs: Vec<String>,
     pub paths: Vec<String>,
+    pub source: Option<String>,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -179,7 +181,12 @@ pub struct AuditEventInput {
     pub tenant_id: Option<String>,
     pub repo_id: Option<String>,
     pub node_id: Option<String>,
+    pub workspace_id: Option<String>,
+    pub operation: Option<String>,
+    pub status: Option<String>,
     pub request_id: Option<String>,
+    pub requested_scope: Option<serde_json::Value>,
+    pub effective_scope: Option<serde_json::Value>,
     pub data: serde_json::Value,
 }
 
@@ -192,9 +199,49 @@ pub struct AuditEventRecord {
     pub tenant_id: Option<String>,
     pub repo_id: Option<String>,
     pub node_id: Option<String>,
+    pub workspace_id: Option<String>,
+    pub operation: Option<String>,
+    pub status: Option<String>,
     pub request_id: Option<String>,
+    pub requested_scope: Option<serde_json::Value>,
+    pub effective_scope: Option<serde_json::Value>,
     pub data: serde_json::Value,
     pub recorded_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConnectedTokenRecord {
+    pub jti: String,
+    pub actor_id: String,
+    pub tenant_id: String,
+    pub issuer: String,
+    pub audience: String,
+    pub subject: String,
+    pub expires_at: DateTime<Utc>,
+    pub seen_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PolicyRefreshRecord {
+    pub id: String,
+    pub source: String,
+    pub actor_id: Option<String>,
+    pub tenant_id: Option<String>,
+    pub status: String,
+    pub data: serde_json::Value,
+    pub refreshed_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AuditQuery {
+    pub actor_id: Option<String>,
+    pub tenant_id: Option<String>,
+    pub repo_id: Option<String>,
+    pub event_type: Option<String>,
+    pub limit: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

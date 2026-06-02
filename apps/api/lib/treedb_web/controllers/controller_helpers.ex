@@ -21,6 +21,11 @@ defmodule TreeDbWeb.ControllerHelpers do
   def status_for("authentication_required"), do: 401
   def status_for("invalid_token"), do: 401
   def status_for("token_expired"), do: 401
+  def status_for("token_not_yet_valid"), do: 401
+  def status_for("invalid_issuer"), do: 401
+  def status_for("invalid_audience"), do: 401
+  def status_for("invalid_signature"), do: 401
+  def status_for("auth_not_configured"), do: 500
   def status_for("permission_denied"), do: 403
   def status_for("not_found"), do: 404
   def status_for("graph_not_ready"), do: 404

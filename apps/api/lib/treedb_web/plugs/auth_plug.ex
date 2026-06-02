@@ -5,9 +5,21 @@ defmodule TreeDbWeb.AuthPlug do
   def init(opts), do: opts
 
   def call(conn, _opts) do
+    request_id = get_req_header(conn, "x-request-id") |> List.first() || TreeDb.Ids.short("req")
+
     case TreeDb.Auth.authenticate_header(get_req_header(conn, "authorization") |> List.first()) do
-      {:ok, principal} -> assign(conn, :principal, stringify(principal))
-      {:error, error} -> assign(conn, :auth_error, error) |> assign(:principal, nil)
+      {:ok, principal} ->
+        conn
+        |> put_resp_header("x-request-id", request_id)
+        |> assign(:request_id, request_id)
+        |> assign(:principal, stringify(principal))
+
+      {:error, error} ->
+        conn
+        |> put_resp_header("x-request-id", request_id)
+        |> assign(:request_id, request_id)
+        |> assign(:auth_error, error)
+        |> assign(:principal, nil)
     end
   end
 

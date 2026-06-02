@@ -16,47 +16,83 @@ defmodule TreeDb.Exec do
     max_output =
       params["maxOutputBytes"] |> coerce_int(@default_output_bytes) |> min(@max_output_bytes)
 
-    with {:ok, ctx} <- context(workspace_id, principal, capability_for(mode)),
-         :ok <- workspace_allows_mode(ctx.workspace, mode),
-         :ok <- workspace_ready(ctx.workspace),
-         :ok <- Policy.allow(command, mode),
-         {:ok, cwd} <- Materializer.materialize(ctx),
-         before <- Materializer.snapshot(cwd),
-         started <- System.monotonic_time(:millisecond),
-         {:ok, result} <- Runner.run(command, cwd, timeout_ms, max_output),
-         after_snapshot <- Materializer.snapshot(cwd),
-         changed_paths <- Materializer.changed_paths(before, after_snapshot),
-         :ok <- enforce_read_only(mode, changed_paths),
-         {:ok, persisted_paths} <-
-           persist_write_limited(mode, ctx, before, after_snapshot, changed_paths) do
-      elapsed_ms = max(System.monotonic_time(:millisecond) - started, 0)
-      changed_paths = if mode == "write_limited", do: persisted_paths, else: changed_paths
+    outcome =
+      with {:ok, ctx} <- context(workspace_id, principal, capability_for(mode)),
+           :ok <- workspace_allows_mode(ctx.workspace, mode),
+           :ok <- workspace_ready(ctx.workspace),
+           :ok <- Policy.allow(command, mode),
+           :ok <- audit_started(ctx, workspace_id, mode, command),
+           {:ok, cwd} <- Materializer.materialize(ctx),
+           before <- Materializer.snapshot(cwd),
+           started <- System.monotonic_time(:millisecond),
+           {:ok, result} <- Runner.run(command, cwd, timeout_ms, max_output),
+           after_snapshot <- Materializer.snapshot(cwd),
+           changed_paths <- Materializer.changed_paths(before, after_snapshot),
+           :ok <- enforce_read_only(mode, changed_paths),
+           {:ok, persisted_paths} <-
+             persist_write_limited(mode, ctx, before, after_snapshot, changed_paths) do
+        elapsed_ms = max(System.monotonic_time(:millisecond) - started, 0)
+        changed_paths = if mode == "write_limited", do: persisted_paths, else: changed_paths
 
-      TreeDb.Audit.append("workspace.exec_completed", %{
-        actor_id: actor_id(principal),
-        tenant_id: tenant_id(principal),
-        repo_id: ctx.repo["id"],
-        data: %{
-          workspaceId: workspace_id,
-          mode: mode,
-          commandProfile: Policy.profile(mode),
-          exitCode: result.exit_code,
-          elapsedMs: elapsed_ms,
-          truncated: result.truncated,
-          changedPaths: changed_paths
-        }
-      })
+        TreeDb.Audit.append("exec.completed", %{
+          actor_id: actor_id(principal),
+          tenant_id: tenant_id(principal),
+          repo_id: ctx.repo["id"],
+          workspace_id: workspace_id,
+          operation: "workspace.exec",
+          status: "ok",
+          data: %{
+            mode: mode,
+            command: command,
+            commandProfile: Policy.profile(mode),
+            exitCode: result.exit_code,
+            elapsedMs: elapsed_ms,
+            truncated: result.truncated,
+            changedPaths: changed_paths
+          }
+        })
 
-      {:ok,
-       %{
-         exitCode: result.exit_code,
-         stdout: result.stdout,
-         stderr: result.stderr,
-         elapsedMs: elapsed_ms,
-         truncated: result.truncated,
-         changedPaths: changed_paths
-       }}
+        {:ok,
+         %{
+           exitCode: result.exit_code,
+           stdout: result.stdout,
+           stderr: result.stderr,
+           elapsedMs: elapsed_ms,
+           truncated: result.truncated,
+           changedPaths: changed_paths
+         }}
+      end
+
+    case outcome do
+      {:error, error} ->
+        TreeDb.Audit.append("exec.rejected", %{
+          actor_id: actor_id(principal),
+          tenant_id: tenant_id(principal),
+          workspace_id: workspace_id,
+          operation: "workspace.exec",
+          status: "error",
+          data: %{mode: mode, command: command, code: error[:code] || error["code"]}
+        })
+
+        {:error, error}
+
+      other ->
+        other
     end
+  end
+
+  defp audit_started(ctx, workspace_id, mode, command) do
+    TreeDb.Audit.append("exec.started", %{
+      actor_id: actor_id(ctx.principal),
+      tenant_id: tenant_id(ctx.principal),
+      repo_id: ctx.repo["id"],
+      workspace_id: workspace_id,
+      operation: "workspace.exec",
+      status: "started",
+      data: %{mode: mode, command: command, commandProfile: Policy.profile(mode)}
+    })
+
+    :ok
   end
 
   defp context(workspace_id, principal, capability) do

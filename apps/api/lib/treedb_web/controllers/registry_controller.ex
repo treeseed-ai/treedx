@@ -36,10 +36,13 @@ defmodule TreeDbWeb.RegistryController do
         migrationState: params["migrationState"] || "stable"
       }
 
-      TreeDb.Audit.append("registry.placement_updated", %{
+      TreeDb.Audit.append("registry.placement.updated", %{
         actor_id: principal["actorId"],
         tenant_id: principal["tenantId"],
-        repo_id: repo_id
+        repo_id: repo_id,
+        operation: "registry.placement.put",
+        status: "ok",
+        request_id: conn.assigns[:request_id]
       })
 
       handle_result(conn, TreeDb.Registry.put_placement(input) |> wrap(:placement))
@@ -52,6 +55,8 @@ defmodule TreeDbWeb.RegistryController do
     with {:ok, principal} <- require_principal(conn),
          {:ok, _scope} <-
            TreeDb.Capabilities.require_capability(principal, "registry:read", repo_id),
+         {:ok, _mirror_scope} <-
+           TreeDb.Capabilities.require_capability(principal, "mirror:read", repo_id),
          {:ok, mirrors} <- TreeDb.Registry.mirrors(repo_id) do
       ok(conn, %{mirrors: mirrors})
     else
@@ -62,7 +67,9 @@ defmodule TreeDbWeb.RegistryController do
   def put_mirror(conn, params = %{"repo_id" => repo_id}) do
     with {:ok, principal} <- require_principal(conn),
          {:ok, _scope} <-
-           TreeDb.Capabilities.require_capability(principal, "registry:write", repo_id) do
+           TreeDb.Capabilities.require_capability(principal, "registry:write", repo_id),
+         {:ok, _mirror_scope} <-
+           TreeDb.Capabilities.require_capability(principal, "mirror:write", repo_id) do
       input = %{
         id: params["id"] || "",
         repositoryId: repo_id,
@@ -74,10 +81,13 @@ defmodule TreeDbWeb.RegistryController do
         status: params["status"] || "planned"
       }
 
-      TreeDb.Audit.append("registry.mirror_created", %{
+      TreeDb.Audit.append("mirror.created", %{
         actor_id: principal["actorId"],
         tenant_id: principal["tenantId"],
-        repo_id: repo_id
+        repo_id: repo_id,
+        operation: "mirror.create",
+        status: "ok",
+        request_id: conn.assigns[:request_id]
       })
 
       handle_result(conn, TreeDb.Registry.put_mirror(input) |> wrap(:mirror))

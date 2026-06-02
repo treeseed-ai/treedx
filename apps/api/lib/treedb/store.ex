@@ -19,6 +19,9 @@ defmodule TreeDb.Store do
   def seed_dev_records(node_id, base_url),
     do: call_json(&TreeDb.Native.seed_dev_records/3, data_dir(), node_id, base_url)
 
+  def seed_local_records(node_id, base_url),
+    do: call_json(&TreeDb.Native.seed_local_records/3, data_dir(), node_id, base_url)
+
   def put_repository(input),
     do: call_json(&TreeDb.Native.put_repository/2, data_dir(), Jason.encode!(input))
 
@@ -43,6 +46,24 @@ defmodule TreeDb.Store do
 
   def get_dev_token_by_hash(hash),
     do: call_json(&TreeDb.Native.get_dev_token_by_hash/2, data_dir(), hash)
+
+  def put_capability_grant(input),
+    do: call_json(&TreeDb.Native.put_capability_grant/2, data_dir(), Jason.encode!(input))
+
+  def list_capability_grants(input \\ %{}),
+    do: call_json(&TreeDb.Native.list_capability_grants/2, data_dir(), Jason.encode!(input))
+
+  def put_connected_token(input),
+    do: call_json(&TreeDb.Native.put_connected_token/2, data_dir(), Jason.encode!(input))
+
+  def get_connected_token(jti),
+    do: call_json(&TreeDb.Native.get_connected_token/2, data_dir(), jti)
+
+  def put_policy_refresh(input),
+    do: call_json(&TreeDb.Native.put_policy_refresh/2, data_dir(), Jason.encode!(input))
+
+  def list_audit_events(input \\ %{}),
+    do: call_json(&TreeDb.Native.list_audit_events/2, data_dir(), Jason.encode!(input))
 
   def resolve_effective_scope(actor_id, repo_id \\ nil),
     do: call_json(&TreeDb.Native.resolve_effective_scope/3, data_dir(), actor_id, repo_id)

@@ -147,6 +147,7 @@ defmodule TreeDb.Workspaces do
     [
       "files:read",
       "files:write",
+      "files:delete",
       "files:search",
       "workspace:exec:read_only",
       "workspace:exec:verification",

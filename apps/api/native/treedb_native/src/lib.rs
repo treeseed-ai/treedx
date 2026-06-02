@@ -55,6 +55,19 @@ fn seed_dev_records<'a>(
 }
 
 #[rustler::nif(schedule = "DirtyIo")]
+fn seed_local_records<'a>(
+    env: Env<'a>,
+    data_dir: String,
+    node_id: String,
+    base_url: String,
+) -> Term<'a> {
+    match treedb_store::seed_local_records(Path::new(&data_dir), &node_id, &base_url) {
+        Ok(report) => ok_json(env, report),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
 fn put_repository<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
     match parse_json::<RepositoryInput>(input_json) {
         Ok(input) => match treedb_store::put_repository(Path::new(&data_dir), input) {
@@ -151,6 +164,73 @@ fn get_dev_token_by_hash<'a>(env: Env<'a>, data_dir: String, token_hash: String)
     match treedb_store::get_dev_token_by_hash(Path::new(&data_dir), &token_hash) {
         Ok(record) => ok_json(env, record),
         Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn put_capability_grant<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
+    match parse_json::<CapabilityGrantRecord>(input_json) {
+        Ok(input) => match treedb_store::put_capability_grant(Path::new(&data_dir), input) {
+            Ok(record) => ok_json(env, record),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn list_capability_grants<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
+    match parse_json::<serde_json::Value>(input_json) {
+        Ok(input) => match treedb_store::list_capability_grants(
+            Path::new(&data_dir),
+            input.get("actorId").and_then(|value| value.as_str()),
+            input.get("repoId").and_then(|value| value.as_str()),
+        ) {
+            Ok(records) => ok_json(env, records),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn put_connected_token<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
+    match parse_json::<ConnectedTokenRecord>(input_json) {
+        Ok(input) => match treedb_store::put_connected_token(Path::new(&data_dir), input) {
+            Ok(()) => ok_json(env, serde_json::json!({"ok": true})),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn get_connected_token<'a>(env: Env<'a>, data_dir: String, jti: String) -> Term<'a> {
+    match treedb_store::get_connected_token(Path::new(&data_dir), &jti) {
+        Ok(record) => ok_json(env, record),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn put_policy_refresh<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
+    match parse_json::<PolicyRefreshRecord>(input_json) {
+        Ok(input) => match treedb_store::put_policy_refresh(Path::new(&data_dir), input) {
+            Ok(record) => ok_json(env, record),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn list_audit_events<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
+    match parse_json::<AuditQuery>(input_json) {
+        Ok(input) => match treedb_store::list_audit_events(Path::new(&data_dir), input) {
+            Ok(records) => ok_json(env, records),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
     }
 }
 

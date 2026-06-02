@@ -31,7 +31,7 @@ defmodule TreeDb.Files do
   end
 
   def write(workspace_id, params, principal) do
-    with {:ok, ctx} <- writable_context(workspace_id, principal, "files:write"),
+    with {:ok, ctx} <- writable_context(workspace_id, principal, "files:delete"),
          {:ok, path} <- PathPolicy.normalize(params["path"]),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
          {:ok, content} <- utf8_content(params["content"]),

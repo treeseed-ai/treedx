@@ -13,9 +13,15 @@ defmodule TreeDbWeb.Router do
     get("/version", HealthController, :version)
 
     get("/auth/whoami", AuthController, :whoami)
+    get("/auth/mode", AuthController, :mode)
     post("/auth/dev-token", AuthController, :dev_token)
     get("/policy/effective-scope", PolicyController, :effective_scope)
     post("/policy/refresh", PolicyController, :refresh)
+    get("/policy/capabilities", CapabilityController, :capabilities)
+    get("/policy/grants", CapabilityController, :grants)
+    post("/policy/grants", CapabilityController, :put_grant)
+    get("/audit/events", AuditController, :events)
+    post("/federation/query/plan", FederationController, :plan_query)
 
     get("/node", NodeController, :show)
     get("/registry/nodes", RegistryController, :nodes)

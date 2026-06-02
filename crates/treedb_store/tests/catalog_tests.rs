@@ -214,6 +214,8 @@ fn workspace_input(id: &str, branch_name: &str, ttl_seconds: i64) -> WorkspaceIn
             capabilities: vec!["files:read".to_string(), "files:write".to_string()],
             refs: vec![branch_name.to_string()],
             paths: vec!["docs/**".to_string()],
+            source: Some("test".to_string()),
+            expires_at: None,
         },
     }
 }
