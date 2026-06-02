@@ -1,2498 +1,723 @@
-# TreeDB MVP Implementation Plan
+# TreeDB Production Hardening + TreeSeed SDK Integration Plan
 
-## Purpose
+Status: Draft  
+Owner: TreeDB / TreeSeed platform team  
+Scope: `treeseed-ai/treedb` and `packages/ts-sdk`  
+Target: Production-ready TreeDB service plus stable TreeSeed SDK remote TreeDB mode  
+Baseline: TreeDB MVP snapshot, 2026-06-02
 
-Create a methodical MVP of **TreeDB** as a repository-native API service and storage engine. TreeDB exists to make it easy and efficient to update, manage, query, index, mirror, and federate **portfolios of Git repositories**.
+---
 
-TreeDB should be useful to TreeSeed, but it should not encode TreeSeed Market concepts. TreeDB primitives should be built around Git and repository database concepts:
+## 1. Executive Summary
 
-```text
-repositories
-remotes
-refs
-commits
-trees
-blobs
-paths
-diffs
-patches
-workspaces
-leases
-indexes
-queries
-snapshots
-mirrors
-nodes
-repository placement
-```
+TreeDB is already a strong MVP: it has a Phoenix API service, Rust-backed native storage/Git/graph crates, TreeDB-native `.tdb` records, scoped auth/capabilities, workspace file operations, overlay commits, repository query APIs, graph/context endpoints, snapshots/artifacts, mirrors, migrations, audit, and opt-in TypeScript SDK TreeDB clients/adapters.
 
-TreeSeed-specific concepts such as knowledge packs, templates, listings, objectives, proposals, decisions, releases, or product workflow semantics belong in the SDK, core package, market application, or control plane. TreeDB may store, index, and query the files that contain those concepts, but it should not know what those product concepts mean.
+This plan finishes TreeDB production hardening and completes its integration into the TreeSeed SDK as a stable, no-clone, repository-native transport.
 
-The MVP should prove this product-level claim:
+The production goal is:
 
-> TreeDB lets workers, agents, and applications scale across machines without cloning large repositories repeatedly, while preserving efficient Git updates, repository-level federation, auditable operations, access-controlled query, and strongly Git-aligned storage semantics.
+> TreeDB lets workers, agents, SDKs, and applications safely manage, query, index, snapshot, mirror, federate, and mutate Git repository portfolios without local clones, while preserving Git-native semantics, strong authorization, auditable operations, and clear separation from TreeSeed product-domain concepts.
 
-TreeDB should **not** be an API façade over PostgreSQL, SQLite, and shell Git. TreeDB should have its own optimized data directory and use Rust/Gitoxide-backed Git operations wherever practical.
+---
 
-## Starting Assumptions
+## 2. Current Baseline
 
-The new TreeDB repository has a top-level project directory similar to:
+### Implemented
 
-```text
-/treedb
-  Dockerfile
-  compose.yaml
-  compose.prod.yaml      # optional production/deployment overlay
-  .dockerignore
-  /apps
-    /api                # Elixir/Phoenix TreeDB service and supervision layer
-  /packages
-    /ts-sdk             # copied from current packages/sdk for research and integration
-  /crates
-    /treedb_store       # TreeDB-native data directory, catalogs, logs, indexes
-    /treedb_git         # Gitoxide/gix-backed Git operations
-    /treedb_graph       # repository graph/search/indexing/context components
-  /docs
-  /fixtures
-  /scripts
-```
+- Docker-based development and production runtime skeleton.
+- Phoenix JSON API under `apps/api`.
+- Rust crates:
+  - `crates/treedb_store`
+  - `crates/treedb_git`
+  - `crates/treedb_graph`
+- Rustler NIF wrapper under `apps/api/native/treedb_native`.
+- TreeDB-native append-only `.tdb` catalog files with payload checksums.
+- Dev-token authentication.
+- Connected HMAC JWT authentication.
+- Effective scoped capability resolution.
+- Repository registration and placement records.
+- Workspace sessions, TTLs, writable leases, overlay writes, status, diff, commit.
+- UTF-8 file read/write/patch/delete/search APIs.
+- Repository query APIs for reads, paths, text search, frontmatter, sections, links, and changed paths.
+- Single-repository graph/context APIs.
+- Graph segments with generic SDK-compatible nodes and edges.
+- Context pack generation with token/node budgets.
+- Planner-only federation scope reduction.
+- Snapshot build and tar.zst artifact export/download.
+- Mirror sync records and placement migration records.
+- Audit event append/listing.
+- TypeScript SDK TreeDB clients/adapters.
+- No-clone TreeDB remote mode in `packages/ts-sdk`.
+- MVP E2E tests, Rust tests, Elixir tests, SDK mocked contract tests, and optional Docker smoke tests.
 
-The `packages/ts-sdk` directory is used for:
+### Not Yet Production Complete
 
-1. Research into current SDK interfaces.
-2. Compatibility target for a TreeDB-backed SDK adapter.
-3. Integration tests proving TreeDB can support repository operations used by the surrounding ecosystem.
+- Binary file read/write APIs.
+- Git push workflows.
+- Federation-aware global search/query/context routing.
+- Connected control-plane/JWKS authentication.
+- Production-grade sandboxing for untrusted agents.
+- Policy revocation propagation for active workspaces.
+- Storage compaction/migration/backup hardening.
+- Multi-node read routing and mirror promotion/failover.
+- Full observability, SLOs, operational runbooks, and security hardening.
 
-Do **not** assume `packages/ts-sdk` is current. Build research, verification, and compatibility mapping into the work plan.
+---
 
-## Boundary Decision
+## 3. Production Principles
 
-TreeDB is a Git-oriented repository database, not a TreeSeed Market domain service.
+### Preserve
 
-TreeDB should know about:
+- TreeDB is a Git/repository database, not a TreeSeed Market domain service.
+- TreeSeed product semantics stay in SDK, core, market, agents, platform, or control plane.
+- TreeDB APIs stay repository/ref/path/workspace scoped.
+- Authorization happens before query, ranking, graph expansion, counting, and serialization.
+- The SDK developer experience remains stable; TreeDB is an opt-in transport.
+- TreeDB-owned state lives in `$TREEDB_DATA_DIR`, not in PostgreSQL or SQLite.
+- Git operations use Rust/Gitoxide/gix where practical.
+- Shell is a constrained fallback, not the primary mutation path.
+- Storage formats are versioned, replayable, migratable, and observable.
 
-```text
-repository identity
-repository placement
-node identity
-remotes
-refs
-commits
-trees
-blobs
-paths
-patches
-diffs
-workspace sessions
-leases
-graph/search indexes
-query scopes
-access grants as opaque claims
-snapshots of repository/index state
-mirrors and replication status
-```
+### Avoid
 
-TreeDB should not know about:
+- Trusting request JSON for production identity.
+- Querying all repositories first and filtering unauthorized results later.
+- Embedding TreeSeed models like objectives, proposals, listings, releases, or approvals inside TreeDB.
+- Replacing SDK ergonomics with raw TreeDB endpoint usage.
+- Exposing internal filesystem paths in public API responses.
+- Running arbitrary shell commands against repository volumes.
+- Allowing unbounded output, execution time, memory, CPU, or network access.
 
-```text
-knowledge packs
-templates
-market listings
-pricing
-offers
-objectives
-proposals
-decisions
-release approval semantics
-team inboxes
-product workstreams
-commerce workflows
-```
+---
 
-If the surrounding ecosystem represents a template, package, release, decision, or listing as files in a Git repository, TreeDB can store, update, index, query, and snapshot those files as repository data. The meaning of those files belongs outside TreeDB.
+## 4. Completion Definition
 
-## Core Storage Decision
+TreeDB production hardening is complete when:
 
-TreeDB should not depend on PostgreSQL or SQLite for repository, workspace, graph, audit, snapshot, search, federation, placement, or access-policy mirror state that it owns.
+- Connected auth supports production verifier workflows with JWKS/key rotation.
+- Every endpoint has explicit capability, repo/ref/path/workspace checks.
+- Active workspaces respond correctly to policy revocation.
+- Binary/object APIs are safe, streaming-capable, size-bounded, and audited.
+- Git push/fetch/mirror workflows are capability-gated, audited, and safe.
+- Remote exec is isolated enough for untrusted or semi-trusted agents.
+- Global search/query/context routes across repository placements without authorization leakage.
+- Storage has locks, crash recovery, compaction, migrations, backup/restore, and diagnostics.
+- SDK local mode and TreeDB remote mode both pass stable integration tests.
+- TreeDB remote mode requires no local repository clone.
+- OpenAPI, TypeScript types, and server contracts are versioned and kept in sync.
+- Operators have runbooks for deploy, auth, storage recovery, mirror sync, migration, backup, and incidents.
 
-PostgreSQL and SQLite are both file-backed storage systems. TreeDB should likewise own a file-backed data directory, but its files should be optimized for TreeDB's domain:
+---
 
-```text
-repository portfolio metadata
-repository placement metadata
-Git object/repository access
-workspace sessions
-leases
-file and blob operations
-graph nodes and edges
-cross-repository graph overlays
-search segments
-context/query indexes
-audit logs
-snapshot manifests
-mirror manifests
-node manifests
-federation manifests
-access-policy mirrors as opaque grants
-```
+# 5. Epic Roadmap
 
-This means TreeDB is responsible for:
+## Epic A — Production Auth, Identity, and Policy
+
+### Goal
+
+Replace MVP connected-auth limitations with production-grade verifier support, policy refresh, and revocation behavior.
+
+### Workstreams
+
+#### A1. JWKS and verifier abstraction
+
+Add verifier interface:
 
 ```text
-file format versioning
-record encoding
-checksums
-append behavior
-compaction
-crash recovery
-startup repair/replay
-safe migration
-observability/debug tooling
+hs256_dev
+jwks_oidc
+trusted_internal
+future_pluggable_verifier
 ```
 
-TreeDB may use small third-party libraries for encoding, compression, checksums, locking, and memory mapping, but it should not delegate its primary metadata and index storage to PostgreSQL, SQLite, RocksDB, LMDB, or another general-purpose database during the MVP unless a future design review explicitly changes this constraint.
+Support:
 
-## MVP Outcome
+- issuer validation
+- audience validation
+- `kid` lookup
+- JWKS cache
+- JWKS refresh
+- key rotation
+- network failure handling
+- clock skew
+- algorithm allowlist
 
-By the end of the MVP, TreeDB should support:
+Reject:
 
-1. Registering and managing local Git repositories on one or more TreeDB volumes.
-2. Maintaining TreeDB-native metadata, indexes, leases, audit logs, graph snapshots, placement records, mirror records, access-policy mirrors, and manifests inside a dedicated TreeDB data directory.
-3. Authenticating callers through dev tokens for local mode and a production-ready verifier boundary for connected control-plane mode.
-4. Authorizing operations by opaque tenant/project/repository/ref/path/workspace/capability scope supplied by a control plane or dev policy file.
-5. Opening short-lived repository workspace sessions with effective access snapshots.
-6. Listing, reading, searching, writing, patching, deleting, diffing, and committing repository files through an API.
-7. Performing Git operations through Rust/Gitoxide (`gix`) wherever practical, with shell `git` reserved only as a documented compatibility fallback.
-8. Running constrained shell commands inside a sandboxed workspace session near the repository volume when agents need real filesystem behavior.
-9. Running basic repository graph/search indexing over text and Markdown/MDX content without encoding product semantics.
-10. Exposing repository-scoped graph/search/context endpoints compatible with the SDK direction.
-11. Supporting single-repository queries in MVP, while designing storage/API contracts around repository portfolios and federation from day one.
-12. Supporting a node/registry model where different TreeDB servers can host different repository subsets and mirrors.
-13. Integrating into `packages/ts-sdk` behind a transport abstraction so existing SDK consumers can use either local filesystem mode or remote TreeDB mode.
-14. Producing clear audit events for authentication, effective scope resolution, remote file edits, shell execution, commits, graph refreshes, repository migration, mirror sync, and future federated queries.
+- missing `exp`
+- unsupported algorithms
+- unsigned tokens
+- issuer/audience mismatch
+- stale JWKS keys outside configured grace period
 
-## Product and Architecture Constraints
+#### A2. Control-plane policy mirror
 
-TreeDB must remain a generic repository database service built around Git primitives.
+Define policy refresh API and local `.tdb` records.
 
-### Must Preserve
+Store:
 
-* Containerized development and deployment as the canonical runtime path.
-* One explicit TreeDB data volume that holds catalog state, access-policy mirrors, indexes, workspaces, snapshots, and local repository copies.
-* Hot reloading support in development so contributors do not need to install Erlang/Elixir/Rust/Node toolchains directly on the host.
-* Git-native repository identity, refs, commits, trees, blobs, remotes, diffs, and patches as primary primitives.
-* Control-plane-provided authentication and access as opaque input to TreeDB, not product-domain logic inside TreeDB.
-* Capability-gated remote execution.
-* Repository federation through Git remotes, mirrors, placement records, and registry routing.
-* Compatibility with SDK/core/CLI callers without embedding their higher-level domain model.
-* Package-local verification that adapts to the integrated fixture rather than rewriting the fixture for TreeDB convenience.
+- actors
+- tenants
+- repo grants
+- path grants
+- ref grants
+- capability grants
+- expiry and revocation metadata
 
-### Must Avoid
+Add policy refresh audit events.
 
-* Requiring users or contributors to manually install Erlang/OTP, Elixir, Rust, Node, or native search/build utilities on the host machine before running TreeDB.
-* Hiding repository copies outside the explicit TreeDB data directory or mounted TreeDB volume.
-* Replacing the SDK developer experience with raw TreeDB endpoints.
-* Encoding TreeSeed Market concepts such as knowledge packs, templates, listings, pricing, objectives, proposals, decisions, or release approval semantics inside TreeDB.
-* Trusting request JSON for production identity instead of verified credentials or verified control-plane claims.
-* Querying all repositories first and filtering unauthorized cross-repository results only at the end.
-* Leaking hidden repository names, paths, snippets, counts, graph edges, or ranking signals through portfolio queries.
-* Exposing branch names, Git internals, or raw permission strings to non-technical product users by default.
-* Making shell execution the primary editing interface.
-* Creating package-specific fixture forks or hidden verification shims.
-* Baking billing, commerce, listing, or product deployment orchestration into TreeDB MVP.
-* Depending on PostgreSQL or SQLite for TreeDB-owned metadata/index state.
-* Making shell `git` the default implementation for ordinary repository operations.
-* Treating TreeDB internal state as a strongly replicated distributed database when Git content and registry placement are the primary federation tools.
+Add policy version/hash to effective scope.
 
-## High-Level Architecture
+#### A3. Workspace revocation
+
+Add workspace policy version/hash fields.
+
+On each workspace operation:
+
+1. Compare current policy with workspace snapshot.
+2. Allow safe reads only if policy still covers scope.
+3. Quarantine or expire workspace if scope was revoked.
+
+Add admin endpoint to list quarantined workspaces.
+
+Add audit events:
 
 ```text
-Control Plane
-  - identity, tenants, actors, roles, grants, repository access policy
-  - issues signed user/agent/service credentials
-  - owns product-specific semantics outside TreeDB
-  - may own global TreeDB registry in connected mode
-  |
-  v
-SDK / Core / CLI / Agents / Applications
-  |
-  | TreeDB client transport
-  |  - local or remote repository adapter
-  |  - token/actor context passed to TreeDB
-  |  - optional registry-aware routing across TreeDB nodes
-  v
-TreeDB API Service
-  - Elixir/Phoenix HTTP API
-  - auth/token verification boundary
-  - scoped capability enforcement over Git/repository primitives
-  - repository routing
-  - workspace session supervision
-  - node/registry/federation endpoints
-  - mirror and migration orchestration
-  - job lifecycle supervision
-  - event/audit publication
-  - remote sandbox shell supervision
-  - portfolio query planning
-  - calls into Rust storage/Git/graph libraries
-  v
-TreeDB Rust Core
-  - treedb_store: native data directory, catalogs, logs, segments
-  - treedb_git: Gitoxide/gix-backed Git operations
-  - treedb_graph: repository graph/search/context indexing
-  v
-TreeDB Data Directory
-  - bare Git repositories and packs
-  - leased worktrees or materialized workspace overlays
-  - TreeDB-native catalog files
-  - TreeDB-native access-policy mirror files
-  - TreeDB-native placement and mirror files
-  - TreeDB-native lease/session files
-  - TreeDB-native audit logs
-  - TreeDB-native graph/search segments
-  - portfolio graph/search overlays
-  - repository/index snapshots and artifacts
+workspace.quarantined
+workspace.revoked
+policy.revocation_applied
 ```
 
-## Canonical Runtime Model
+### Acceptance Criteria
 
-TreeDB should be designed, developed, and operated primarily as a **containerized service**.
+- Connected production mode refuses to boot without a configured verifier.
+- JWKS rotation is covered by tests.
+- Expired or revoked actor loses access to new operations.
+- Active workspace becomes quarantined or expired after revocation.
+- SDK receives typed `permission_denied`, `workspace_revoked`, or `authentication_required` errors.
 
-The canonical way to run TreeDB should be:
+---
 
-```bash
-docker compose up treedb-api
-```
+## Epic B — Capability Enforcement and Leakage Review
 
-This avoids requiring developers, operators, or early users to install and align Erlang/OTP, Elixir, Rust, Node, Git utilities, ripgrep, build tools, and native dependencies directly on their machines.
+### Goal
 
-TreeDB should provide:
+Prove authorization is complete, consistent, and leakage-resistant across files, queries, graph, context, snapshots, mirrors, migration, and federation.
+
+### Workstreams
+
+#### B1. Endpoint capability matrix
+
+Create:
 
 ```text
-Dockerfile
-  production image
-  development target with hot reload
-  Rust/Elixir build environment
-  required repository/search/sandbox utilities
-
-compose.yaml
-  development service
-  explicit persistent TreeDB data volume
-  source-code bind mounts for hot reload
-  environment variables for API and storage
-  health checks
-
-compose.prod.yaml or deployment docs
-  production-style service
-  explicit mounted volume or host path
-  no source bind mounts
-  release command
+docs/architecture/capability-matrix.md
 ```
 
-The container should expose one clear persistent storage root:
-
-```text
-/var/lib/treedb
-```
-
-Inside the container:
-
-```text
-TREEDB_DATA_DIR=/var/lib/treedb
-```
-
-That directory must hold all TreeDB-owned state, including local repository copies:
-
-```text
-/var/lib/treedb/
-  catalog/
-  repos/
-  workspaces/
-  leases/
-  audit/
-  graph/
-  search/
-  snapshots/
-  federation/
-  tmp/
-  recovery/
-```
-
-The Compose manifest should mount it explicitly:
-
-```yaml
-volumes:
-  treedb-data:
-```
-
-and the service should use:
-
-```yaml
-volumes:
-  - treedb-data:/var/lib/treedb
-```
-
-For development, the source tree should be bind-mounted into the container so Phoenix hot reloading and Rust/Elixir rebuilds can happen inside the container:
-
-```yaml
-volumes:
-  - .:/workspace/treedb
-  - treedb-data:/var/lib/treedb
-```
-
-This gives developers a simple operating model:
-
-```text
-host machine
-  needs Docker only
-
-container
-  owns Erlang/Elixir/Rust/Node/toolchain dependency complexity
-
-named volume or host volume
-  owns TreeDB data directory and local repository copies
-```
-
-## Authentication and Access Model
-
-TreeDB should authenticate every caller and authorize every operation against repository, ref, path, workspace, and capability scope.
-
-TreeDB should not be the long-term source of truth for user identity, tenant membership, project ownership, billing, or approval authority. A control plane should remain the authority for those concepts.
-
-TreeDB should enforce access based on verified credentials and local policy mirrors/caches stored in its native data directory.
-
-### Authentication Modes
-
-TreeDB should support two modes:
-
-```text
-connected mode
-  validates signed tokens from a control plane
-  refreshes repository/capability policy from the control plane
-  emits audit events that the control plane can consume
-
-standalone/dev mode
-  uses local dev tokens and config files under $TREEDB_DATA_DIR/config
-  supports local fixture tenants, actors, repositories, and capabilities
-  is suitable for local development and self-hosted experiments
-```
-
-Production requests should derive actor identity from a verified credential, not from trusting request JSON.
-
-### Actor Claims
-
-A verified actor should resolve to opaque claims like:
-
-```json
-{
-  "actorId": "actor_123",
-  "tenantId": "tenant_abc",
-  "scopes": [
-    "repos:read",
-    "files:read",
-    "files:write",
-    "graph:query",
-    "workspace:create"
-  ]
-}
-```
-
-TreeDB should treat domain labels such as team, project, or product role as opaque claims if they are present. It should not encode their product meaning.
-
-### Authorization Levels
-
-TreeDB authorization should be checked at multiple Git/repository boundaries:
-
-```text
-instance-level
-  can this caller access this TreeDB node at all?
-
-tenant/control-plane scope
-  what opaque tenant or account boundary applies?
-
-repo-level
-  can this caller read/write this repository?
-
-ref/branch-level
-  can this caller read this ref or write this branch pattern?
-
-path-level
-  can this caller read/update these path globs?
-
-operation-level
-  can this caller search, write, exec shell, commit, refresh graph, export snapshot, mirror, migrate, or query registry state?
-
-workspace-level
-  can this caller access this active workspace session?
-```
-
-### Scoped Capabilities
-
-Capabilities should include explicit scope, not just permission strings.
-
-```json
-{
-  "capability": "files:write",
-  "scope": {
-    "tenantId": "tenant_abc",
-    "repoIds": ["repo_123"],
-    "refs": ["refs/heads/agent/*"],
-    "paths": ["src/content/**", "docs/**"]
-  }
-}
-```
-
-This lets TreeDB express policies such as:
-
-```text
-actor may read repository files
-actor may write task branches
-actor may run read-only shell commands
-actor may not push, mirror, migrate, or export
-```
-
-### Policy Storage
-
-TreeDB should store local policy mirrors and access caches in native files:
-
-```text
-$TREEDB_DATA_DIR/catalog/tenants.tdb
-$TREEDB_DATA_DIR/catalog/actors.tdb
-$TREEDB_DATA_DIR/catalog/capabilities.tdb
-$TREEDB_DATA_DIR/catalog/repo_access.tdb
-$TREEDB_DATA_DIR/catalog/registry_access.tdb
-```
-
-In connected mode, these records are synchronized or refreshed from a control plane. In standalone/dev mode, they are loaded from local config and fixture files.
-
-### Workspace Access Snapshots
-
-When TreeDB creates a workspace, it should snapshot the effective authorization into the workspace record.
-
-```json
-{
-  "workspaceId": "ws_123",
-  "actorId": "actor_123",
-  "repoId": "repo_abc",
-  "baseRef": "refs/heads/main",
-  "branchName": "refs/heads/agent/task-123",
-  "allowedPaths": ["src/content/**"],
-  "capabilities": [
-    "files:read",
-    "files:write",
-    "git:commit"
-  ],
-  "expiresAt": "..."
-}
-```
-
-Later file, shell, diff, commit, graph, and snapshot calls must be constrained by the workspace's effective scope. If permissions are revoked, TreeDB should revoke, expire, or quarantine affected workspace sessions.
-
-## Federation, Mirroring, and Repository Placement
-
-TreeDB should start from a federation-first design because Git itself is federated. TreeDB federation should be **repository-first**, not **cluster-state-first**.
-
-The core rule:
-
-> Repositories federate through Git. TreeDB nodes federate through registry and placement records. TreeDB internal indexes are local, rebuildable, or exported as artifacts. Workspaces and leases never federate.
-
-### State Classification
-
-TreeDB state should be classified by how it participates in federation.
-
-```text
-Git-federated durable content
-  repositories
-  commits
-  refs
-  trees
-  blobs
-  tags
-  remotes
-
-Node-local operational state
-  active workspace sessions
-  leases
-  tmp files
-  sandbox state
-  in-flight exec jobs
-  local recovery state
-
-Rebuildable derived state
-  graph indexes
-  search segments
-  context-pack caches
-  path indexes
-  text indexes
-
-Control-plane synchronized or locally configured state
-  actors
-  opaque tenants
-  capability grants
-  repo access policy
-  registry access policy
-
-Append/export state
-  audit logs
-  operation events
-  storage health events
-
-Portable artifacts
-  repository snapshots
-  graph manifests
-  search manifests
-  exported bundles
-```
-
-### Local Node Catalog vs Federation Registry
-
-Each TreeDB node should maintain a local catalog:
-
-```text
-which repositories are physically present here
-which volumes hold them
-local graph/search versions
-local mirror status
-local health and capacity
-local workspace sessions
-local leases
-local audit log
-local snapshots/artifacts
-```
-
-A federation registry should maintain placement records:
-
-```text
-which TreeDB nodes exist
-which repositories exist
-which node is primary for each repository
-which nodes are mirrors for each repository
-which nodes may serve reads
-which node must serve writes
-node capacity and health
-migration state
-mirror lag
-```
-
-The registry can be implemented in stages:
-
-```text
-MVP
-  local registry files on one TreeDB node
-
-Post-MVP
-  static signed registry manifest consumed by SDK clients
-
-Connected mode
-  control plane owns or distributes registry records
-
-Federated mode
-  dedicated TreeDB registry service or replicated signed registry manifests
-```
-
-### Repository Placement Record
-
-```json
-{
-  "repoId": "repo_abc",
-  "primary": {
-    "nodeId": "treedb-node-a",
-    "baseUrl": "https://treedb-a.example.com"
-  },
-  "mirrors": [
-    {
-      "nodeId": "treedb-node-b",
-      "baseUrl": "https://treedb-b.example.com",
-      "mode": "read_replica",
-      "lastSeenCommit": "abc123",
-      "behindBy": 0
-    }
-  ],
-  "readPolicy": "primary_or_mirror",
-  "writePolicy": "primary_only"
-}
-```
-
-### Mirror Modes
-
-```text
-read_replica
-  can serve reads, searches, graph/context queries
-  cannot create writable workspaces
-  follows primary refs
-
-warm_standby
-  can become primary after promotion
-  keeps repos and indexes current
-  does not accept writes until promoted
-
-active_primary
-  owns writes for assigned repositories
-  creates workspaces and commits
-
-archive_mirror
-  stores snapshots and historical repository/index state
-  optimized for durability and historical reads
-```
-
-### Repository Migration When a Node Runs Out of Space
-
-If one TreeDB node runs out of space, repositories should move by changing repository placement, not by synchronously replicating all internal TreeDB state.
-
-Migration flow:
-
-```text
-1. Mark repository placement as migrating.
-2. Reject new writable workspaces on the source node.
-3. Wait for active writable workspace leases to close, or explicitly revoke/quarantine them.
-4. Initialize/import repository on target node.
-5. Fetch refs/objects from source node or configured Git remote.
-6. Rebuild graph/search indexes on target node, or copy verified index artifacts if supported.
-7. Update registry primary location from source node to target node.
-8. Route new sessions and writes to target node.
-9. Keep source as read-only mirror for a grace period, or delete local copy after verification.
-```
-
-MVP should not support live migration of active writable workspaces. Drain first, then move.
-
-### Mirror Sync
-
-Mirror sync should use Git remotes and refs as the source of truth.
-
-```text
-primary repository
-  refs and objects are authoritative for that repository
-
-mirror repository
-  fetches refs/objects from primary or upstream remote
-  rebuilds or imports graph/search indexes
-  reports mirror lag through registry status
-```
-
-Mirror sync state belongs in TreeDB-native mirror manifests:
-
-```text
-$TREEDB_DATA_DIR/federation/mirrors/<repo_id>/<node_id>.tdb
-```
-
-### Federated Query Routing
-
-TreeDB should support single-repository queries first, but design for federated portfolio queries.
-
-Single-repo MVP APIs:
+Initial matrix:
+
+| Surface | Required capability | Repo scoped | Ref scoped | Path scoped | Workspace scoped |
+|---|---|---:|---:|---:|---:|
+| repo register | `repos:write` | yes | no | no | no |
+| repo read/status | `repos:read` | yes | no | no | no |
+| file read | `files:read` | yes | yes | yes | optional |
+| file write | `files:write` | yes | yes | yes | yes |
+| file delete | `files:delete` | yes | yes | yes | yes |
+| query/search | `files:search` | yes | yes | yes | no |
+| graph refresh | `graph:refresh` | yes | yes | yes | no |
+| graph query | `graph:query` | yes | yes | yes | no |
+| context build | `graph:query` | yes | yes | yes | no |
+| snapshot build | `snapshot:build` | yes | yes | yes | no |
+| artifact export | `artifact:export` | yes | no | no | no |
+| mirror sync | `mirror:write`, `git:fetch` | yes | optional | no | no |
+| migration | `migration:write` | yes | no | no | no |
+| exec read | `workspace:exec:read_only` | yes | yes | yes | yes |
+| exec write | `workspace:exec:write_limited` | yes | yes | yes | yes |
+| push | `git:push` | yes | yes | optional | no |
+
+#### B2. Leakage test suite
+
+Add tests for:
+
+- hidden repo names
+- hidden path names
+- hidden snippets
+- hidden counts
+- hidden graph node IDs
+- hidden ranking signals
+- hidden diagnostics
+- hidden snapshot file lists
+- hidden mirror/placement metadata
+- hidden audit data for unauthorized actors
+
+#### B3. Public response hygiene
+
+- Add response sanitizer tests.
+- Ensure no `localPath`, `materializedPath`, `/var/lib/treedb`, or host temp paths leak.
+- Add shared `assert_public_hygiene` helpers in Elixir and SDK tests.
+
+### Acceptance Criteria
+
+- Every endpoint has a capability test.
+- Unauthorized query/graph/context results are filtered before ranking/serialization.
+- Federation planner never reads unauthorized content.
+- Public API never emits internal filesystem paths.
+- Audit payloads do not include full content, stdout, stderr, or secret-bearing URLs by default.
+
+---
+
+## Epic C — Binary File and Object APIs
+
+### Goal
+
+Add safe repository object APIs for binary files, large files, and artifact-like content.
+
+### Workstreams
+
+#### C1. API design
+
+Add:
 
 ```http
-POST /api/v1/repos/:repo_id/search
-POST /api/v1/repos/:repo_id/graph/query
-POST /api/v1/repos/:repo_id/context/build
+POST /api/v1/repos/:repo_id/blobs/read
+POST /api/v1/workspaces/:workspace_id/blobs/write
+POST /api/v1/workspaces/:workspace_id/blobs/delete
+GET  /api/v1/workspaces/:workspace_id/blobs/download?path=...
+PUT  /api/v1/workspaces/:workspace_id/blobs/upload?path=...
 ```
 
-Future registry-aware/federated APIs:
+Support:
 
-```http
-POST /api/v1/query
-POST /api/v1/search
-POST /api/v1/context/build
-```
+- `encoding: "base64"`
+- streaming upload/download
+- content-type detection
+- byte length limits
+- content hash validation
+- optional expected SHA
+- protected path enforcement
 
-Federated query flow:
+#### C2. Storage
 
-```text
-1. Authenticate actor.
-2. Resolve effective allowed repository/ref/path scope.
-3. Ask registry where allowed repositories are located.
-4. Group subqueries by TreeDB node.
-5. Each node queries only local authorized repositories and paths.
-6. Each node returns scored results with repo_id, node_id, commit_sha, graph_version, and provenance.
-7. Coordinator merges results.
-8. Final response is filtered again before serialization.
-9. Audit event records requested scope, effective scope, nodes queried, and result counts.
-```
+- Store workspace binary overlays as content-addressed blobs.
+- Add blob size metadata and checksums.
+- Ensure snapshot export includes binary files safely.
+- Ensure diff/status handles binary changes without textual diff leakage.
 
-Do not do this:
+#### C3. SDK
 
-```text
-query all repos on all nodes
-rank everything
-filter unauthorized results at the end
-```
-
-Do this instead:
-
-```text
-authenticate actor
-resolve allowed repo/ref/path scope
-query only allowed local segments
-expand only through allowed graph edges
-serialize only allowed paths/snippets/provenance
-audit requested and effective scope
-```
-
-### Cross-Repository Graphs
-
-Each repository should maintain its own graph index:
-
-```text
-$TREEDB_DATA_DIR/graph/indexes/<repo_id>/<graph_version>/
-```
-
-Cross-repository graph overlays should be explicit and optional:
-
-```text
-$TREEDB_DATA_DIR/graph/portfolio/<registry_scope_id>/
-  manifest.tdb
-  repo_graph_refs.tdb
-  cross_repo_edges.tdb
-  merged_search_segments/
-```
-
-Cross-repo edges should be built from repository data and should not assume product semantics.
-
-```json
-{
-  "from": {
-    "repoId": "repo_a",
-    "nodeId": "file:docs/a.md#section-1"
-  },
-  "to": {
-    "repoId": "repo_b",
-    "nodeId": "file:docs/b.md#section-2"
-  },
-  "edgeType": "references",
-  "source": "markdown_link",
-  "confidence": 1.0
-}
-```
-
-For MVP, unauthorized cross-repo nodes should be omitted rather than redacted. A future product layer may choose to display redacted boundaries, but TreeDB should avoid leaking hidden repository names, node titles, snippets, counts, or ranking signals.
-
-### SDK Registry Mode
-
-The SDK can federate multiple TreeDB nodes by using a registry-aware client.
+Add SDK methods:
 
 ```ts
-const registry = new TreeDbRegistryClient({
-  registryUrl,
-  token,
-});
-
-const client = new TreeDbFederatedClient({
-  registry,
-  token,
-});
+readBlob(input): Promise<TreeDbBlob>
+writeBlob(input): Promise<TreeDbBlobMutationResult>
+downloadBlob(input): Promise<Response | ArrayBuffer>
+uploadBlob(input): Promise<TreeDbBlobMutationResult>
 ```
 
-Routing rules:
-
-```text
-single-repository read
-  resolve repo -> primary or read mirror
-  query selected TreeDB node
-
-single-repository write
-  resolve repo -> primary
-  open workspace on primary only
-
-multi-repository search/query
-  resolve allowed repos
-  group by node
-  execute subqueries
-  merge and filter results
-
-mirror/failover
-  update registry placement
-  SDK routes future requests to new primary or mirror
-```
-
-## Core Design Principle
-
-TreeDB should be built around **remote workspace sessions** and **federated repository placement**.
-
-A worker or agent does not clone the repo. It asks TreeDB to open a workspace for a repository and branch/ref. TreeDB creates or leases a worktree, materialized workspace, or overlay near the repository volume. The agent interacts with that workspace through structured tools, and only falls back to sandboxed shell when needed.
-
-```text
-Canonical content lives in Git repositories.
-TreeDB state lives in a TreeDB-native data directory.
-Git operations use Gitoxide/gix wherever practical.
-Every operation is authenticated and authorization-scoped.
-Repository placement determines which TreeDB node serves each repo.
-Writes go to the primary node for a repository.
-Reads may go to primary or authorized mirrors.
-Agent opens a short-lived workspace session.
-Workspace records snapshot effective access scope.
-Agent uses structured file/content/graph tools first.
-Agent uses remote sandbox shell when needed.
-TreeDB captures changes, commits, indexes, and reports audit events.
-Workers stay stateless and horizontally scalable.
-```
-
-## TreeDB Data Directory
-
-TreeDB should own a single configurable data root. In containers, the canonical path is:
-
-```text
-/var/lib/treedb
-```
-
-The service should also support overriding it with:
-
-```text
-TREEDB_DATA_DIR
-```
-
-TreeDB should own a single configurable data root:
-
-```text
-$TREEDB_DATA_DIR/
-  VERSION
-  LOCK
-
-  config/
-    node.toml
-    durability.toml
-    command-policy.toml
-    auth-dev.toml
-    policy-dev.toml
-    registry-dev.toml
-
-  catalog/
-    repositories.tdb
-    repository_refs.tdb
-    remotes.tdb
-    volumes.tdb
-    tenants.tdb
-    actors.tdb
-    capabilities.tdb
-    repo_access.tdb
-    registry_access.tdb
-
-  federation/
-    node.tdb
-    registry.tdb
-    placement.tdb
-    mirrors/
-      <repo_id>/<node_id>.tdb
-    migrations/
-      <repo_id>/<migration_id>.tdb
-
-  repos/
-    bare/
-      <repo_id>.git/
-
-  workspaces/
-    active/
-      <workspace_id>/
-    closed/
-      <workspace_id>.manifest
-
-  leases/
-    repo/
-      <repo_id>.lease
-    workspace/
-      <workspace_id>.lease
-
-  audit/
-    events-000001.tlog
-    events-000002.tlog
-    manifest.tdb
-
-  graph/
-    indexes/
-      <repo_id>/<graph_version>/
-    portfolio/
-      <registry_scope_id>/
-    segments/
-    manifests/
-
-  search/
-    segments/
-    manifests/
-
-  snapshots/
-    <snapshot_id>/
-      manifest.tdb
-      artifact.tar.zst
-
-  tmp/
-  recovery/
-```
-
-### Native File Groups
-
-```text
-Catalog files
-  repositories
-  repository_refs
-  remotes
-  volume_registry
-  tenants
-  actors
-  capabilities
-  repo_access
-  registry_access
-
-Federation files
-  node_manifest
-  registry_manifest
-  repository_placement
-  mirror_state
-  migration_state
-  node_health
-  node_capacity
-
-Lease/session files
-  workspace_sessions
-  active_leases
-  cleanup_queue
-
-Append logs
-  audit_events
-  auth_events
-  policy_events
-  workspace_events
-  graph_events
-  commit_events
-  mirror_events
-  migration_events
-  federated_query_events
-
-Index files
-  path_index
-  content_search_segments
-  graph_node_segments
-  graph_edge_segments
-  cross_repo_edge_segments
-  context_pack_cache
-
-Manifest files
-  graph_index_manifest
-  portfolio_graph_manifest
-  search_index_manifest
-  snapshot_manifest
-  artifact_manifest
-```
-
-### File Format Requirements
-
-Every TreeDB-owned file format should define:
-
-```text
-magic header
-format version
-record encoding
-checksum strategy
-append/replace behavior
-compaction behavior
-crash recovery behavior
-upgrade/migration behavior
-human-debug dump tooling
-```
-
-MVP implementation rules:
-
-* Use atomic rename for compacted catalog replacement.
-* Use append-only writes for audit and operation logs.
-* Use segment files for graph and search indexes.
-* Use manifest swaps for graph/search snapshot updates.
-* Use Git refs/objects as the source of truth for repository content.
-* Use registry manifests for repository placement and federation state.
-* Use configurable fsync policy.
-* Run recovery scanning on startup.
-* Keep a simple `treedb doctor` or equivalent diagnostic target in scope.
-
-## Gitoxide/Git Implementation Policy
-
-TreeDB should use Rust/Gitoxide (`gix`) as the primary Git implementation wherever practical.
-
-The `treedb_git` crate owns ordinary Git operations:
-
-```text
-open repository
-initialize/import repository
-inspect remotes
-inspect refs
-resolve branch/tag/commit
-read tree entries
-read blob content
-write blob/tree changes
-compute status
-compute diffs
-create commits
-fetch refs/objects for mirror sync
-push refs/objects where explicitly allowed
-manage worktree/materialized workspace state where supported
-```
-
-Shell `git` is allowed only as a compatibility fallback when a required operation is not yet supported by the TreeDB Gitoxide layer.
-
-Every fallback must be:
-
-```text
-documented
-feature-gated
-audited
-covered by a test that explains why fallback is needed
-tracked as a removal candidate
-```
-
-All Git operations, whether Rust-native or fallback, should emit a normalized operation record:
-
-```text
-operation name
-arguments summary
-repository/workspace
-node_id
-result status
-elapsed time
-actor/session/effective scope
-changed paths
-commit SHA when applicable
-sanitized audit payload
-```
-
-Do not log secrets or full file content by default.
-
-## Rust/Elixir Boundary
-
-Elixir/Phoenix should own supervision, API routing, authentication, authorization, sessions, eventing, federation orchestration, and sandbox lifecycle.
-
-Rust should own deterministic storage and compute:
-
-```text
-treedb_store
-  native file formats
-  catalog read/write
-  policy mirror read/write
-  federation registry read/write
-  placement and mirror manifests
-  append logs
-  segment read/write
-  manifests
-  recovery
-  compaction
-
-treedb_git
-  Gitoxide/gix repository operations
-  remote/ref inspection
-  fetch/push where supported
-  tree/blob reads
-  diffs
-  commits
-  workspace/materialization helpers
-
-treedb_graph
-  Markdown/MDX/text parsing
-  graph index construction
-  search/ranking
-  authorization-aware segment reads
-  cross-repo edge segment support
-  changed-path graph impact
-  context construction
-```
-
-Use Rust NIFs only for bounded operations. For long-running operations, prefer Elixir-supervised Rust workers or external helper processes with a narrow protocol. Do not run arbitrary shell commands inside Rust NIFs.
-
-## MVP Capabilities
-
-## MVP — Repository Research and Compatibility Audit
-
-### Goal
-
-Understand the copied `packages/ts-sdk` accurately before changing it. Produce a compatibility map between current SDK interfaces and TreeDB service endpoints.
-
-### Tasks
-
-1. Inspect the top-level TreeDB repository.
-
-   * Identify package manager.
-   * Identify existing build/test scripts.
-   * Identify Elixir, Rust, Node, and TypeScript versions.
-   * Document assumptions in `docs/research/environment.md`.
-
-2. Inspect `packages/ts-sdk/package.json`.
-
-   * Record package name, version, module type, export map, scripts, dependencies, test framework, build target, Node version assumptions.
-   * Record whether it is currently a standalone TreeDB client, `@treeseed/sdk`, or another package name.
-
-3. Inspect SDK source structure.
-
-   * Find public exports.
-   * Find repository/file APIs.
-   * Find content store abstractions.
-   * Find graph/runtime APIs.
-   * Find Git/worktree APIs.
-   * Find remote dispatch/client APIs.
-   * Find model registry/types, if any, and confirm they remain outside TreeDB.
-   * Find tests that define expected behavior.
-
-4. Inspect current SDK Git usage.
-
-   * Which operations shell out to Git?
-   * Which operations rely on local worktrees?
-   * Which operations assume a POSIX filesystem?
-   * Which operations could be backed by TreeDB API calls?
-   * Which operations map to Gitoxide/gix primitives?
-
-5. Inspect current SDK/auth/capability assumptions.
-
-   * How does the SDK represent actors, capabilities, and scoped access?
-   * Does the SDK already have a remote operation dispatch abstraction TreeDB should reuse?
-   * Which SDK calls should include token/repo/ref/path scope?
-
-6. Produce `docs/research/sdk-interface-map.md`.
-
-Expected sections:
-
-```text
-SDK public exports
-Repository operations
-File/blob operations
-Graph operations
-Context/query operations
-Repository/Git operations
-Remote dispatch operations
-Capability/security concepts
-Local filesystem assumptions
-Shell command assumptions
-Auth/token assumptions
-Repository access assumptions
-TreeDB adapter seams
-Domain concepts that must remain outside TreeDB
-Breaking-change risks
-```
-
-7. Run baseline verification before modifications.
-
-Suggested commands, adjusted to actual package scripts:
-
-```bash
-cd packages/ts-sdk
-npm install
-npm run typecheck
-npm test
-npm run build
-```
-
-8. If commands fail, document failures before fixing anything.
-
-   * Missing dependency?
-   * Broken copied state?
-   * Workspace link issue?
-   * Tests depend on sibling packages?
-   * Fixture issue?
-
-9. Create a baseline verification note:
-
-```text
-docs/research/sdk-baseline-verification.md
-```
-
-### Deliverables
-
-* `docs/research/environment.md`
-* `docs/research/sdk-interface-map.md`
-* `docs/research/sdk-baseline-verification.md`
-* Initial issue list for SDK compatibility work
-
-### Exit Criteria
-
-* The team knows what SDK surfaces actually exist in this copy.
-* The team knows whether SDK tests pass before TreeDB changes.
-* The team knows which SDK behavior assumes local filesystem or shell Git.
-* The team knows which SDK behavior assumes actor/capability context.
-* The team has identified any higher-level domain semantics that must stay outside TreeDB.
-* No TreeDB API shape is finalized until this audit is complete.
+### Acceptance Criteria
+
+- Binary file read/write/delete works through TreeDB.
+- Large file limits are enforced.
+- SDK can write binary data without local repo clone.
+- Text APIs continue rejecting invalid UTF-8 unless `encoding: "base64"` is requested.
+- Snapshots preserve binary files and checksums.
 
 ---
 
-## MVP — Containerized Service Skeleton, Auth Skeleton, Federation Skeleton, and Native Storage Engine
+## Epic D — Git Push, Fetch, Mirror, and Remote Workflows
 
 ### Goal
 
-Create a minimal Elixir/Phoenix API service that runs canonically through Docker Compose, reports health, initializes a TreeDB data directory mounted at `/var/lib/treedb`, supports standalone/dev authentication, initializes node/registry state, and manages repository registrations through TreeDB-native storage rather than PostgreSQL or SQLite.
+Finish Git remote workflows while keeping Git mutations explicit, auditable, and capability-gated.
 
-### Directory Layout
+### Workstreams
 
-```text
-/Dockerfile
-/compose.yaml
-/compose.prod.yaml
-/.dockerignore
+#### D1. Push API
 
-/apps/api
-  mix.exs
-  config/
-  lib/treedb/
-  lib/treedb_web/
-  test/
-
-/crates/treedb_store
-  Cargo.toml
-  src/lib.rs
-  src/catalog.rs
-  src/policy.rs
-  src/federation.rs
-  src/log.rs
-  src/segment.rs
-  src/manifest.rs
-  src/recovery.rs
-  tests/
-
-/crates/treedb_git
-  Cargo.toml
-  src/lib.rs
-  src/repo.rs
-  src/remotes.rs
-  src/refs.rs
-  src/tree.rs
-  src/blob.rs
-  src/diff.rs
-  src/commit.rs
-  src/sync.rs
-  tests/
-```
-
-### Core Elixir Contexts
-
-```text
-TreeDb.Auth
-  Token verification boundary
-  Dev token support
-  Actor resolution
-  Control-plane trust boundary
-
-TreeDb.Capabilities
-  Scoped capability checks over Git/repository operations
-  Repo/ref/path/operation authorization
-  Workspace access snapshots
-  Future control-plane integration
-
-TreeDb.Registry
-  Node registration
-  Repository placement
-  Mirror placement
-  Local registry mode
-  Future external registry/control-plane mode
-
-TreeDb.Federation
-  Mirror sync orchestration
-  Repository migration orchestration
-  Federated query planning
-  Failover/promotion workflow, post-MVP
-
-TreeDb.Repos
-  Repository registry
-  Repository locations
-  Repository health/status
-
-TreeDb.Store
-  Elixir wrapper around TreeDB native storage engine
-  Data directory initialization
-  Catalog reads/writes
-  Policy mirror reads/writes
-  Registry/placement reads/writes
-  Lease/session state
-  Audit append/read
-  Graph/index metadata
-
-TreeDb.Workspaces
-  Workspace sessions
-  Leases
-  Worktree/materialized workspace paths
-  Session lifecycle
-
-TreeDb.Git
-  Elixir wrapper around Rust Gitoxide/gix operations
-  Git status/diff/commit/fetch
-  Worktree/materialization management
-  Shell fallback only when explicitly needed
-
-TreeDb.Files
-  Tree/list/read/write/patch/delete
-
-TreeDb.Search
-  Text search MVP backed by TreeDB-native segments
-  Rust-backed search as soon as contract stabilizes
-
-TreeDb.Graph
-  Repository graph index lifecycle
-  Authorization-aware graph query MVP
-
-TreeDb.Exec
-  Sandboxed command execution
-  Command policy
-  Output capture
-
-TreeDb.Audit
-  Event recording through TreeDB native append log
-  Operation timeline
-```
-
-### Required Container Artifacts
-
-Create a root `Dockerfile` with at least two targets:
-
-```text
-dev
-  includes Erlang/OTP, Elixir, Rust, Node, npm/pnpm as needed, build-essential, ca-certificates, openssl, pkg-config, ripgrep, git compatibility fallback tools
-  runs Phoenix in development mode
-  supports source bind mount and hot reload
-
-prod
-  builds release artifacts
-  includes only runtime dependencies and required TreeDB utilities
-  runs as a non-root user where practical
-  uses /var/lib/treedb as data dir
-```
-
-Create `compose.yaml` for development:
-
-```yaml
-services:
-  treedb-api:
-    build:
-      context: .
-      target: dev
-    working_dir: /workspace/treedb/apps/api
-    command: mix phx.server
-    environment:
-      MIX_ENV: dev
-      PHX_SERVER: "true"
-      PHX_HOST: 0.0.0.0
-      PORT: "4000"
-      TREEDB_DATA_DIR: /var/lib/treedb
-      TREEDB_AUTH_MODE: dev
-      TREEDB_REGISTRY_MODE: local
-      TREEDB_DEV_HOT_RELOAD: "true"
-    ports:
-      - "4000:4000"
-    volumes:
-      - .:/workspace/treedb
-      - treedb-data:/var/lib/treedb
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:4000/api/v1/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-      start_period: 20s
-
-volumes:
-  treedb-data:
-```
-
-Create `compose.prod.yaml` or deployment notes for production-style operation:
-
-```yaml
-services:
-  treedb-api:
-    build:
-      context: .
-      target: prod
-    environment:
-      PHX_SERVER: "true"
-      PHX_HOST: 0.0.0.0
-      PORT: "4000"
-      TREEDB_DATA_DIR: /var/lib/treedb
-      TREEDB_AUTH_MODE: connected
-      TREEDB_REGISTRY_MODE: connected
-    ports:
-      - "4000:4000"
-    volumes:
-      - treedb-data:/var/lib/treedb
-    restart: unless-stopped
-
-volumes:
-  treedb-data:
-```
-
-The explicit `treedb-data` volume is the canonical persistent storage location for local repository copies and all TreeDB-native state.
-
-### Initial Endpoints
-
-Authentication and policy endpoints for MVP/dev mode:
+Add:
 
 ```http
-GET  /api/v1/auth/whoami
-POST /api/v1/auth/dev-token
-GET  /api/v1/policy/effective-scope
-POST /api/v1/policy/refresh
+POST /api/v1/repos/:repo_id/push
 ```
 
-Core endpoints:
-
-```http
-GET  /api/v1/health
-GET  /api/v1/version
-POST /api/v1/repos/register
-GET  /api/v1/repos
-GET  /api/v1/repos/:repo_id
-GET  /api/v1/repos/:repo_id/status
-```
-
-Federation/registry endpoints:
-
-```http
-GET  /api/v1/node
-GET  /api/v1/registry/nodes
-GET  /api/v1/registry/repos/:repo_id/placement
-POST /api/v1/registry/repos/:repo_id/placement
-GET  /api/v1/repos/:repo_id/mirrors
-POST /api/v1/repos/:repo_id/mirrors
-```
-
-### Repository Registration Request
-
-Repository registration should require an actor with `repos:write` or administrative capability for the target repository scope.
+Request:
 
 ```json
 {
-  "name": "demo-repository",
-  "localPath": "/var/lib/treedb/repos/bare/demo-repository.git",
-  "defaultRef": "refs/heads/main",
-  "remoteUrl": "https://example.invalid/demo-repository.git"
+  "remoteName": "origin",
+  "remoteUrl": "https://example.invalid/repo.git",
+  "refspecs": ["refs/heads/agent/x:refs/heads/agent/x"],
+  "dryRun": true
 }
 ```
 
-### Repository Registration Response
+Rules:
 
-```json
-{
-  "repoId": "repo_...",
-  "name": "demo-repository",
-  "defaultRef": "refs/heads/main",
-  "status": "registered",
-  "placement": {
-    "primaryNodeId": "node_local"
-  }
-}
+- Require `git:push`.
+- Only push allowed refs.
+- Block credential leakage in audit.
+- Reject unsupported transports unless explicitly enabled.
+- Prefer gix; shell fallback must be tracked and audited.
+
+#### D2. Remote credential handling
+
+- Never accept raw credentials in arbitrary URLs unless explicitly configured.
+- Support credential provider boundary.
+- Sanitize URLs in logs and audit.
+- Add secret scrubber tests.
+
+#### D3. Mirror promotion/failover
+
+- Add mirror health records.
+- Add promotion dry-run endpoint.
+- Validate mirror is synced before promotion.
+- Make migrations idempotent.
+- Add rollback plan for failed promotion.
+
+#### D4. SDK
+
+Add methods:
+
+```ts
+fetchRemote(input)
+push(input)
+syncMirror(input)
+planMigration(input)
+createMigration(input)
 ```
 
-### Native Storage Records
+### Acceptance Criteria
 
-For MVP, persist repository registrations, local policy mirrors, and placement records in TreeDB catalog files.
-
-```text
-RepositoryRecord
-  id
-  name
-  storage_kind
-  local_path
-  default_ref
-  status
-  created_at
-  updated_at
-
-RepositoryRemoteRecord
-  repository_id
-  name
-  url
-  fetch_refspecs
-  push_refspecs
-  last_sync_at
-
-RepositoryRefRecord
-  repository_id
-  name
-  sha
-  kind
-  last_seen_at
-
-VolumeRecord
-  id
-  root_path
-  capacity_policy
-  repository_count
-  status
-
-NodeRecord
-  id
-  base_url
-  role
-  capacity
-  health
-  last_seen_at
-
-RepositoryPlacementRecord
-  repository_id
-  primary_node_id
-  mirror_node_ids
-  read_policy
-  write_policy
-  migration_state
-
-MirrorRecord
-  repository_id
-  source_node_id
-  target_node_id
-  mode
-  last_seen_commit
-  behind_by
-  status
-
-TenantRecord
-  id
-  source
-  updated_at
-
-ActorRecord
-  id
-  tenant_ids
-  updated_at
-
-CapabilityGrantRecord
-  actor_id
-  tenant_id
-  repo_ids
-  capabilities
-  refs
-  paths
-  expires_at
-
-RepoAccessRecord
-  repo_id
-  tenant_id
-  actor_ids
-  capability_refs
-```
-
-### Verification
-
-Canonical container verification:
-
-```bash
-docker compose build treedb-api
-docker compose up treedb-api
-curl http://localhost:4000/api/v1/health
-curl http://localhost:4000/api/v1/auth/whoami
-curl http://localhost:4000/api/v1/node
-docker compose exec treedb-api test -d /var/lib/treedb
-docker compose exec treedb-api ls -la /var/lib/treedb
-```
-
-Host-local verification is optional and should not be required for ordinary users:
-
-```bash
-cd apps/api
-mix format --check-formatted
-mix test
-mix phx.server
-curl http://localhost:4000/api/v1/health
-
-cd crates/treedb_store
-cargo fmt --check
-cargo clippy -- -D warnings
-cargo test
-
-cd ../treedb_git
-cargo fmt --check
-cargo clippy -- -D warnings
-cargo test
-```
-
-### Deliverables
-
-* Root Dockerfile with `dev` and `prod` targets
-* Root `compose.yaml` for hot-reload development
-* Optional `compose.prod.yaml` or deployment overlay for production-style launches
-* `.dockerignore`
-* Phoenix service skeleton
-* Health/version endpoints
-* Dev-token auth endpoints
-* Effective-scope endpoint
-* Node and registry skeleton endpoints
-* TreeDB data directory initialization
-* TreeDB catalog/log/policy/federation file definitions
-* Repository registration endpoints
-* `treedb_store` crate with repository catalog, policy-cache, and placement persistence
-* `treedb_git` crate that can open a fixture repo and inspect refs/remotes
-* Basic tests
-
-### Exit Criteria
-
-* TreeDB API boots through `docker compose up treedb-api`.
-* Development mode supports source bind mounts and Phoenix hot reload.
-* The container owns toolchain setup for Erlang/Elixir/Rust/Node/native utilities.
-* `/var/lib/treedb` is mounted as an explicit Docker volume.
-* `$TREEDB_DATA_DIR` is initialized.
-* Dev-token mode works for local fixture actors.
-* Effective scope can be resolved for a fixture actor/repository.
-* Node identity and local registry records are initialized.
-* A repository can be registered by an authorized actor.
-* Repository metadata, local policy cache records, and placement records persist in TreeDB-native files.
-* Basic Git repo inspection works through Gitoxide/gix.
-* No PostgreSQL or SQLite is required.
-* Tests pass.
+- Push is tested with local/file remotes and dry-run.
+- Unauthorized actor cannot push, mirror, or migrate.
+- Credentials are never exposed in audit or API responses.
+- Mirror promotion/failover has dry-run and committed paths.
+- SDK surfaces push/mirror errors consistently.
 
 ---
 
-## MVP — Git Volume, Repository Operations, Placement, and Access Enforcement
+## Epic E — Production Sandbox for Exec
 
 ### Goal
 
-TreeDB can operate on local Git repositories without exposing filesystem paths to SDK callers, using Gitoxide/gix wherever practical, enforcing repo/ref/workspace authorization for every repository operation, and tracking where repositories live in the local/federated registry.
+Replace MVP direct-process exec with an isolation model appropriate for untrusted or semi-trusted agents.
 
-### Required Capabilities
+### Workstreams
 
-1. Validate a registered repo path.
-2. Initialize/import a bare repo for tests.
-3. Inspect remotes.
-4. Fetch or refresh refs/status where supported.
-5. Resolve branch/tag/commit refs.
-6. Read tree entries and blobs through Gitoxide/gix.
-7. Create workspaces for sessions on the repository primary node.
-8. Clean up expired workspaces.
-9. Prevent concurrent unsafe mutation with TreeDB-native leases.
-10. Record Git operation audit events in TreeDB append logs.
-11. Enforce repo/ref/workspace authorization for every repository operation.
-12. Maintain repository placement and mirror records.
+#### E1. Sandbox backend abstraction
 
-### Endpoints
-
-```http
-GET  /api/v1/repos/:repo_id/refs
-GET  /api/v1/repos/:repo_id/remotes
-POST /api/v1/repos/:repo_id/sync
-POST /api/v1/repos/:repo_id/workspaces
-GET  /api/v1/workspaces/:workspace_id
-POST /api/v1/workspaces/:workspace_id/close
-GET  /api/v1/registry/repos/:repo_id/placement
-GET  /api/v1/repos/:repo_id/mirrors
-```
-
-### Workspace Create Request
-
-In production, actor identity should be derived from the verified token. The request actor object is acceptable only in dev mode or as compatibility metadata.
-
-```json
-{
-  "actor": {
-    "id": "actor_demo"
-  },
-  "baseRef": "refs/heads/main",
-  "branchName": "refs/heads/agent/demo-task",
-  "mode": "writable",
-  "allowedPaths": ["src/content/**", "docs/**"],
-  "ttlSeconds": 1800
-}
-```
-
-### Workspace Create Response
-
-```json
-{
-  "workspaceId": "ws_...",
-  "repoId": "repo_...",
-  "nodeId": "node_local",
-  "baseRef": "refs/heads/main",
-  "branchName": "refs/heads/agent/demo-task",
-  "status": "ready",
-  "expiresAt": "...",
-  "effectiveScope": {
-    "tenantId": "tenant_demo",
-    "repoIds": ["repo_..."],
-    "refs": ["refs/heads/agent/*"],
-    "paths": ["src/content/**", "docs/**"]
-  },
-  "capabilities": [
-    "files:read",
-    "files:write",
-    "files:search",
-    "workspace:exec:read_only",
-    "git:diff",
-    "git:commit"
-  ]
-}
-```
-
-### Implementation Notes
-
-Use `treedb_git` for ordinary Git operations.
-
-Initial Gitoxide/gix-backed operations:
+Define exec backends:
 
 ```text
-open repository
-list remotes
-list refs
-resolve ref to commit
-read commit tree
-list tree entries
-read blobs
-calculate changed paths
-create commit from workspace changes where practical
-fetch refs/objects for mirror sync where practical
+direct_dev
+container_sandbox
+firecracker_or_microvm
+external_worker
 ```
 
-Workspace materialization may be implemented in stages:
+Production default must not be `direct_dev`.
+
+#### E2. Isolation controls
+
+Enforce:
+
+- read-only root filesystem where possible
+- writable workspace mount only
+- no host secrets
+- env allowlist
+- network disabled by default
+- CPU limit
+- memory limit
+- process limit
+- timeout
+- output cap
+- path scope validation
+- command allowlists by mode
+
+#### E3. Exec policy
+
+Modes:
 
 ```text
-Stage 1: materialized worktree directory under $TREEDB_DATA_DIR/workspaces/active/<workspace_id>
-Stage 2: TreeDB overlay workspace that stores changed blobs separately
-Stage 3: optimized sparse/materialized hybrid for very large repositories
-```
-
-Shell `git` fallback is allowed only when blocked by missing MVP Gitoxide functionality. It must be feature-gated, logged, tested, and tracked as a removal candidate.
-
-### Workspace Authorization Rules
-
-* Workspace creation requires `workspace:create` plus appropriate `repos:read` or `repos:write` capability.
-* Writable workspaces require path/ref scopes that permit mutation.
-* Writable workspaces must be created on the repository primary node.
-* Read-only workspaces may be created on primary or read-capable mirrors.
-* Workspace records must snapshot effective actor, capability, ref, and path scope.
-* All file, shell, diff, commit, graph, and snapshot operations through a workspace must be constrained by that snapshot.
-* Revoked or expired access should revoke, expire, or quarantine active workspaces.
-
-### Lease Rules
-
-* One writable session per repo/branch at a time for MVP.
-* Multiple read-only sessions allowed.
-* Lease state is stored in TreeDB-native lease/session files and is node-local.
-* Leases never federate.
-* Lease expiration must clean up or mark workspaces recoverable.
-* Commit operation requires active writable lease.
-* Close operation releases lease and optionally removes or archives workspace state.
-
-### Verification
-
-Create fixture repos under `fixtures/repos` during tests.
-
-Tests:
-
-* initialize TreeDB data dir
-* register valid bare repo
-* reject invalid repo path
-* inspect remotes through `treedb_git`
-* inspect refs through `treedb_git`
-* resolve branch/tag/commit
-* read tree entries through `treedb_git`
-* read blob through `treedb_git`
-* create workspace from main
-* create branch if absent
-* reject duplicate writable lease
-* reject writable workspace on read-only mirror
-* unauthorized workspace creation rejected
-* workspace effective scope snapshot persisted
-* revoked actor cannot continue using workspace
-* close workspace removes or marks worktree closed
-* expired workspace cleanup works
-* audit event appended for workspace operations
-
-### Deliverables
-
-* Rust `treedb_git` crate using Gitoxide/gix
-* Elixir wrapper around `treedb_git`
-* TreeDB-native lease/session records
-* Workspace effective-scope records
-* Repository placement records
-* Mirror records
-* Workspace session lifecycle
-* Ref/remote/status endpoints
-* Tests with fixture repos
-
-### Exit Criteria
-
-* TreeDB can safely create and close workspace sessions.
-* Basic repository inspection uses Gitoxide/gix.
-* Mutating operations are serialized enough for MVP.
-* Repo/ref/workspace authorization is enforced.
-* Repository placement controls read/write routing.
-* No SQL database is used.
-
----
-
-## MVP — File API MVP
-
-### Goal
-
-Expose structured file operations so agents and SDK consumers do not need a local filesystem.
-
-### Endpoints
-
-```http
-GET    /api/v1/workspaces/:workspace_id/tree?path=...
-GET    /api/v1/workspaces/:workspace_id/files?path=...
-PUT    /api/v1/workspaces/:workspace_id/files?path=...
-PATCH  /api/v1/workspaces/:workspace_id/files?path=...
-DELETE /api/v1/workspaces/:workspace_id/files?path=...
-POST   /api/v1/workspaces/:workspace_id/search
-GET    /api/v1/workspaces/:workspace_id/status
-GET    /api/v1/workspaces/:workspace_id/diff
-POST   /api/v1/workspaces/:workspace_id/commit
-```
-
-### SDK Tool Mapping
-
-```text
-repo.list(path)      -> GET tree
-repo.read(path)      -> GET files
-repo.search(...)     -> POST search
-repo.write(...)      -> PUT files
-repo.patch(...)      -> PATCH files
-repo.delete(...)     -> DELETE files
-repo.status()        -> GET status
-repo.diff()          -> GET diff
-repo.commit(...)     -> POST commit
-```
-
-### File Read Response
-
-```json
-{
-  "path": "src/content/example.mdx",
-  "encoding": "utf8",
-  "content": "---
-title: Example
----
-
-Body...",
-  "stat": {
-    "size": 1234,
-    "mtime": "..."
-  }
-}
-```
-
-### Patch Request
-
-Support unified diffs for MVP.
-
-```json
-{
-  "patch": "--- a/src/content/example.mdx
-+++ b/src/content/example.mdx
-@@ ...",
-  "expectedSha": "optional_blob_sha"
-}
-```
-
-### Commit Request
-
-```json
-{
-  "message": "Update repository file through TreeDB",
-  "author": {
-    "name": "TreeDB Agent",
-    "email": "agent@example.invalid"
-  },
-  "indexPolicy": "incremental"
-}
-```
-
-### Commit Response
-
-```json
-{
-  "repoId": "repo_...",
-  "workspaceId": "ws_...",
-  "branchName": "refs/heads/agent/demo-task",
-  "commitSha": "abc123...",
-  "changedPaths": ["src/content/example.mdx"],
-  "status": "committed"
-}
-```
-
-### Implementation Strategy
-
-Use `treedb_git` to read trees/blobs from the repository. Workspace writes can initially materialize changed files in a workspace directory, then `treedb_git` creates the new commit from the workspace state.
-
-For large repositories, the long-term direction should be overlay-based workspaces:
-
-```text
-base tree from Git object database
-workspace overlay stores changed files only
-read path = overlay first, then base tree
-commit = synthesize new tree from base tree + overlay changes
-```
-
-This overlay direction is important because it preserves the core scaling goal: avoid repeatedly materializing huge repositories when only a few files change.
-
-### Safety and Access Rules
-
-* Enforce actor and workspace capability scope on every operation.
-* Enforce allowed path globs on every operation.
-* Block `.git/**`, environment files, secrets, lockfiles, or generated directories unless explicitly allowed.
-* Normalize paths and reject path traversal.
-* Limit max file size for read/write.
-* Limit search output.
-* Diff before commit must be inspectable.
-* Commit must produce audit event.
-
-### Verification
-
-Tests:
-
-* list root tree
-* read file from base Git tree
-* write new file into workspace overlay/materialized directory
-* patch existing file
-* delete file
-* search text
-* status shows changes
-* diff shows changes
-* commit returns changed paths and SHA
-* committed file can be read from new ref
-* path traversal rejected
-* disallowed path rejected
-* actor without `files:read` cannot read
-* actor without `files:write` cannot write
-* actor with limited paths cannot read or write outside allowed scope
-
-### Deliverables
-
-* Structured file API
-* Search MVP using TreeDB-native scan or Rust segment search
-* Commit API backed by `treedb_git` where practical
-* Audit events for all mutations
-* Access enforcement tests
-
-### Exit Criteria
-
-* An agent can modify repository content without a local clone.
-* TreeDB can commit those changes efficiently.
-* Ordinary read/list/blob operations use Gitoxide/gix.
-* File operations are scoped by actor/workspace authorization.
-* No SQL database is used.
-
----
-
-## MVP — Remote Sandbox Shell MVP
-
-### Goal
-
-Support real shell behavior for agent ergonomics while preserving TreeDB control over storage, permissions, and audit.
-
-### Endpoint
-
-```http
-POST /api/v1/workspaces/:workspace_id/exec
-```
-
-### Exec Request
-
-```json
-{
-  "cmd": "rg \"Decision\" src/content | head -20",
-  "timeoutMs": 10000,
-  "maxOutputBytes": 60000,
-  "mode": "read_only"
-}
-```
-
-### Exec Response
-
-```json
-{
-  "exitCode": 0,
-  "stdout": "...",
-  "stderr": "...",
-  "elapsedMs": 123,
-  "truncated": false,
-  "changedPaths": []
-}
-```
-
-### Command Policy
-
-For MVP, define command profiles:
-
-```text
-read_only_basic
-  ls
-  pwd
-  cat
-  sed -n
-  head
-  tail
-  find
-  grep
-  rg
-
+read_only
 verification
-  npm test
-  npm run test
-  npm run typecheck
-  npm run build
-  pnpm test
-  pnpm build
-
 write_limited
-  only allowed for explicitly approved sessions
-  captures diff after command
 ```
 
-Do not allow arbitrary `git push`, `git merge`, or `git rebase` in shell. Prefer TreeDB API operations for status, diff, commit, push, and mirror sync. If shell `git status` or shell `git diff` is allowed for agent ergonomics, treat it as a read-only convenience only and keep TreeDB's Gitoxide-backed status/diff as the authoritative path.
+Rules:
 
-### Sandbox Options
+- `read_only` cannot persist changes.
+- `verification` can run allowlisted package/test commands.
+- `write_limited` can persist UTF-8/binary overlay changes only within scope.
+- No Git mutation commands through shell.
+- Commit remains API-owned.
 
-MVP acceptable options:
+#### E4. SDK
 
-1. Run commands directly in an isolated workspace with strict allowlist, timeouts, and no secrets.
-2. Run commands inside Docker if available.
-3. Add Firecracker/gVisor later if the threat model requires stronger isolation.
+- Preserve `exec` API.
+- Add `sandboxProfile`, `network`, `resourceLimits`, and diagnostics fields.
+- Map sandbox errors to typed SDK errors.
 
-For initial MVP, option 1 is acceptable for local development and trusted internal agents. The plan should document that production hosting needs stronger isolation before untrusted shell execution.
+### Acceptance Criteria
 
-### Supervision Model
-
-Each exec request should run as a supervised process with:
-
-```text
-timeout
-output cap
-working directory set to workspace path
-environment scrubbed
-network disabled where possible
-command policy checked
-workspace effective scope checked
-audit event recorded
-changed paths captured after execution
-```
-
-### Verification
-
-Tests:
-
-* read-only command succeeds
-* output truncation works
-* timeout kills command
-* disallowed command rejected
-* command cannot escape workspace
-* actor without exec capability is rejected
-* read-only exec cannot write files
-* write command captures changed paths when explicitly allowed
-* commit after shell edit works through TreeDB API
-* shell Git mutation commands are rejected
-
-### Deliverables
-
-* Exec endpoint
-* Command policy module
-* Supervised command runner
-* Audit event capture
-* Access enforcement for exec modes
-* Basic sandbox documentation
-
-### Exit Criteria
-
-* Agents can run common exploration commands without local repo clones.
-* TreeDB remains the authority for commits and repo mutation.
-* Shell is a fallback for agent ergonomics, not the primary implementation path.
-* Remote shell execution is capability-gated and audit-visible.
+- Production mode refuses unsafe exec backend by default.
+- Untrusted exec cannot access `/var/lib/treedb` outside scoped workspace.
+- Network isolation tests pass.
+- Resource exhaustion tests pass.
+- Write-limited changes are persisted only after path policy validation.
+- Audit includes command profile, mode, timeout, changed paths, exit code, and truncation status.
 
 ---
 
-## MVP — Repository Query and SDK Compatibility
+## Epic F — Native Storage Hardening
 
 ### Goal
 
-Expose repository-level query operations that map cleanly to SDK usage without encoding SDK/core product models inside TreeDB.
+Make `.tdb` storage safe for production operation, migration, backup, recovery, and observability.
 
-### Research First
+### Workstreams
 
-Before implementation, inspect `packages/ts-sdk` for actual request/response types.
+#### F1. Data directory lock
 
-Find and document:
+- Add exclusive process lock.
+- Refuse unsafe multi-writer startup.
+- Add read-only recovery mode.
 
-```text
-file search conventions
-content entry shapes, if any
-frontmatter conventions, if currently used by SDK
-body/content field conventions
-filter syntax
-sort syntax
-pagination syntax
-query result shape
-error types
-path/ref access semantics
-```
+#### F2. Atomic writes and fsync policy
 
-Update:
+- Use temp files and atomic rename for compaction.
+- Add configurable durability:
+  - `strict`
+  - `balanced`
+  - `fast_dev`
+- Document tradeoffs.
 
-```text
-docs/research/sdk-query-contract.md
-```
+#### F3. Compaction
 
-### Endpoints
+Implement compaction for:
 
-Generic repository query endpoints:
+- catalog
+- policy
+- federation
+- workspace files
+- audit index, not audit history
+
+Keep audit append-only.
+
+Write compaction audit events.
+
+#### F4. Format versioning and migrations
+
+- Add manifest of data-dir schema version.
+- Add migration runner:
+  - dry-run
+  - apply
+  - rollback where possible
+  - backup-before-migrate option
+- Add migration tests.
+
+#### F5. Backup and restore
+
+Add admin/export command for:
+
+- catalog
+- policy
+- audit
+- graph manifests
+- snapshots
+- placement/mirror records
+
+Add restore verifier.
+
+Add checksum scan command.
+
+#### F6. Diagnostics
+
+Add protected admin endpoints:
 
 ```http
-POST /api/v1/repos/:repo_id/files/search
-POST /api/v1/repos/:repo_id/files/read
-POST /api/v1/repos/:repo_id/paths/list
-POST /api/v1/repos/:repo_id/query
+GET  /api/v1/admin/storage/health
+POST /api/v1/admin/storage/check
+POST /api/v1/admin/storage/compact
+POST /api/v1/admin/storage/backup
+POST /api/v1/admin/storage/recover
 ```
 
-TreeDB may parse common file formats such as Markdown/MDX frontmatter to support repository indexing, but it should expose the result as generic file/path/section metadata, not product-specific models.
+### Acceptance Criteria
 
-### Query Request
-
-In production, actor identity comes from the token. Request actor metadata is allowed only for dev mode or compatibility hints.
-
-```json
-{
-  "ref": "refs/heads/main",
-  "paths": ["src/content/**", "docs/**"],
-  "query": "release provenance",
-  "limit": 20
-}
-```
-
-### Implementation Strategy
-
-Prefer TreeDB-native repository query primitives:
-
-```text
-path query
-text query
-frontmatter/key query
-section query
-link/reference query
-changed-path query
-```
-
-The SDK or core package can map these generic repository primitives into higher-level product concepts.
-
-### Verification
-
-* Use real repository fixtures with Markdown/MDX and generic text files.
-* Verify frontmatter roundtrip as generic metadata.
-* Verify body preservation.
-* Verify search respects path filters.
-* Verify search respects actor/repo/path/ref scope.
-* Verify unauthorized paths are omitted before ranking/serialization.
-* Verify query metadata persists in TreeDB-native files or is derived from Git content without SQL.
-
-### Deliverables
-
-* SDK query contract research doc
-* Generic repository query endpoints
-* SDK mapping tests
-* Fixture-based repository query tests
-* Access-filtering tests for repository search and query
-
-### Exit Criteria
-
-* SDK can call TreeDB for repository reads/searches and basic query operations.
-* Higher-level product semantics remain outside TreeDB.
-* Repository query operations are authorization-filtered.
-* No PostgreSQL or SQLite is used for query metadata.
+- Corruption tests identify affected file/line/record.
+- Recovery mode can start with partial writes.
+- Storage compaction preserves latest records and checksums.
+- Migration tests cover old/new format records.
+- Backup/restore roundtrip passes E2E.
 
 ---
 
-## MVP — Graph, Context, and Authorization-Aware Query MVP
+## Epic G — Federation-Aware Global Search, Query, and Context
 
 ### Goal
 
-Provide enough graph/index functionality for agents and applications to retrieve repository context without local file access, while preventing unauthorized graph/search leakage.
+Move from planner-only federation to safe, authorized, cross-repository execution.
 
-### Research First
+### Workstreams
 
-Inspect `packages/ts-sdk` for actual graph APIs and types.
+#### G1. Query planner
 
-Find:
-
-```text
-graph runtime public methods
-query request shape
-query result shape
-context request/result types
-graph DSL parser behavior
-node/edge schema
-ranking provider interfaces
-graph snapshot storage paths
-graph refresh behavior
-graph access filtering behavior
-```
-
-Update:
-
-```text
-docs/research/sdk-graph-contract.md
-```
-
-### Endpoints
+Add:
 
 ```http
-POST /api/v1/repos/:repo_id/graph/refresh
-POST /api/v1/repos/:repo_id/graph/query
-POST /api/v1/repos/:repo_id/graph/search-files
-POST /api/v1/repos/:repo_id/graph/search-sections
-POST /api/v1/repos/:repo_id/graph/search-entities
-GET  /api/v1/repos/:repo_id/graph/nodes/:node_id
-POST /api/v1/repos/:repo_id/graph/related
-POST /api/v1/repos/:repo_id/graph/subgraph
-POST /api/v1/repos/:repo_id/context/build
-POST /api/v1/repos/:repo_id/context/parse-ctx
-
-# future federation-aware query surface
 POST /api/v1/search
 POST /api/v1/query
 POST /api/v1/context/build
 ```
 
-### Query Scope Strategy
+Planner stages:
 
-For MVP, single-repository graph/query/context endpoints are required. Federation-aware queries are designed now but may be implemented after single-repo correctness and access filtering are proven.
+1. Authenticate actor.
+2. Resolve requested scope.
+3. Reduce to effective allowed repo/ref/path/capability scope.
+4. Resolve placements.
+5. Route to local/remote nodes.
+6. Query only authorized segments.
+7. Merge results.
+8. Rank within authorized result set.
+9. Serialize only authorized paths/snippets/provenance.
+10. Audit requested and effective scope.
 
-Required MVP query rule:
+#### G2. Segment router
 
-```text
-query only authorized repo/ref/path segments
-expand only authorized graph edges
-return only authorized paths, snippets, nodes, and provenance
+- Local segments query path.
+- Remote node query path.
+- Mirror read-policy path.
+- Timeout and partial failure handling.
+- Deterministic result merge.
+
+#### G3. Cross-repo graph
+
+- Add cross-repo reference edges.
+- Add `treedb://repo/...` resolver.
+- Add per-repo provenance.
+- Prevent hidden edge leakage.
+- Allow graph expansion only through authorized edges.
+
+#### G4. SDK
+
+Add federated client methods:
+
+```ts
+federatedSearch(input)
+federatedQuery(input)
+federatedContext(input)
+planFederatedQuery(input)
 ```
 
-Future federated queries should resolve requested repository scope into the actor's effective allowed scope before ranking or graph expansion.
+### Acceptance Criteria
 
-### MVP Graph Index
-
-For MVP, index text and Markdown/MDX files into TreeDB-native graph segment files:
-
-```text
-File nodes
-Section nodes
-Metadata/frontmatter nodes
-Reference/link edges
-Backlink edges
-Path containment edges
-Commit/ref provenance edges
-```
-
-Initial parser can be simple:
-
-* Parse frontmatter as generic metadata.
-* Split headings into sections.
-* Extract Markdown links.
-* Extract file/path references.
-* Track commit/ref provenance.
-
-### Rust Components
-
-Rust is part of the MVP because TreeDB owns its storage engine and Gitoxide-backed Git operations.
-
-Create these crates early:
-
-```text
-crates/treedb_store
-  native TreeDB file formats
-  catalog/log/segment read-write APIs
-  recovery and compaction helpers
-
-crates/treedb_git
-  Gitoxide/gix integration
-  refs, tree reads, blob reads, diffs, commits, fetch/mirror helpers
-  workspace/materialization helpers
-
-crates/treedb_graph
-  graph index construction
-  Markdown/MDX/text parsing
-  search/ranking
-  context support
-```
-
-Initial `treedb_graph` functions:
-
-```text
-parse_document(input) -> document structure
-extract_sections(input) -> sections
-extract_links(input) -> links
-rank_nodes(query, candidates) -> scored candidates
-compute_changed_graph_nodes(changed_paths) -> affected node IDs
-write_graph_segments(index) -> TreeDB graph segment files
-read_graph_segments(graph_version) -> graph index
-read_authorized_segments(scope) -> filtered segment reader
-```
-
-### Context MVP
-
-A context response should include:
-
-```text
-included nodes
-included file paths
-selected sections
-provenance
-edge paths
-estimated tokens
-diagnostics
-effective scope summary for audit/debugging
-```
-
-### Verification
-
-Tests:
-
-* refresh graph for fixture repo
-* graph segments are written under `$TREEDB_DATA_DIR/graph`
-* query by text
-* query by seed ID
-* related nodes return expected links
-* backlinks work
-* context output respects token/node budget
-* graph refresh after file change updates only affected paths where possible
-* access/path filters apply to graph results
-* unauthorized graph nodes are omitted before ranking/serialization
-* graph query cannot leak hidden repo names, paths, snippets, counts, or ranking signals
-* graph survives service restart through TreeDB-native manifests/segments
-* future federated query fixture proves effective-scope reduction across multiple repos
-
-### Deliverables
-
-* Graph contract research doc
-* Graph index segment format
-* Authorization-aware graph segment reader
-* Refresh/query endpoints
-* Context endpoint
-* Fixture tests
-
-### Exit Criteria
-
-* SDK can use TreeDB for graph query/context retrieval.
-* Agents can retrieve relevant repository context without cloning the repo.
-* Graph/search state is stored in TreeDB-native files, not SQL.
-* Graph/context results are authorization-filtered before ranking, expansion, and response serialization.
-* API and storage shapes are ready for future federation-aware queries.
+- Cross-repo query fixture proves correct result merging.
+- Hidden repos/paths/snippets/counts do not leak.
+- Partial node failure returns structured partial response where allowed.
+- SDK can run no-clone federated query.
+- Audit captures requested scope, effective scope, node routing, and partial failures.
 
 ---
 
-## MVP — TypeScript SDK Integration and Registry Routing
+## Epic H — Graph, Search, and Context Productionization
 
 ### Goal
 
-Integrate TreeDB into `packages/ts-sdk` as an API-backed repository/file/query/graph transport while preserving current SDK ergonomics and preparing for registry-aware routing across TreeDB nodes.
+Harden graph/search/context for performance, incremental refresh, correctness, and SDK compatibility.
 
-### Research First
+### Workstreams
 
-Inspect actual SDK construction and public API.
+#### H1. Incremental graph refresh
 
-Determine whether integration should be:
+- Use changed paths to update affected nodes.
+- Preserve graph version history.
+- Add stale manifest detection.
+- Add refresh job status records.
+
+#### H2. Search index segments
+
+- Add text search segments separate from graph if needed.
+- Add incremental indexing.
+- Add ranking diagnostics gated by authorization.
+- Add index compaction.
+
+#### H3. Context quality
+
+- Improve token estimation.
+- Add context modes:
+  - brief
+  - detailed
+  - citations
+  - mixed file/section
+- Add provenance paths.
+- Add context budget diagnostics.
+
+#### H4. SDK graph compatibility
+
+- Ensure TreeDB graph nodes map to SDK graph types.
+- Preserve local `ContentGraphRuntime` behavior.
+- Add adapter parity tests:
+  - local graph query
+  - TreeDB graph query
+  - context pack
+  - DSL parse
+  - reference resolution
+
+### Acceptance Criteria
+
+- Graph refresh on changed branch updates only affected paths where possible.
+- Graph survives restart.
+- Context respects token and node budgets.
+- SDK local and remote graph results match normalized expectations.
+- Unauthorized graph data never enters ranking/diagnostics.
+
+---
+
+## Epic I — TypeScript SDK Production Integration
+
+### Goal
+
+Make TreeDB remote mode a stable, documented, testable transport inside `packages/ts-sdk`.
+
+### Workstreams
+
+#### I1. Stable public exports
+
+Ensure exports:
 
 ```text
-new TreeDbClient exported separately
-new TreeDbRegistryClient exported separately
-new repository transport option
-new file/query adapter
-new graph adapter
-new remote dispatch target
-combination of the above
+@treeseed/sdk/treedb
+@treeseed/sdk/treedb/client
+@treeseed/sdk/treedb/types
+@treeseed/sdk/treedb/adapters
 ```
 
-Document in:
+Include:
 
-```text
-docs/research/sdk-integration-design.md
-```
+- `TreeDbClient`
+- `TreeDbRegistryClient`
+- `TreeDbFederatedClient`
+- `TreeDbApiError`
+- `TreeDbRepositoryAdapter`
+- `TreeDbQueryAdapter`
+- `TreeDbGraphAdapter`
+- `TreeDbWorkspaceAdapter`
+- Type definitions for all API payloads.
 
-### Proposed SDK Additions
+#### I2. Transport ports
 
-```text
-packages/ts-sdk/src/treedb/client.ts
-packages/ts-sdk/src/treedb/registry-client.ts
-packages/ts-sdk/src/treedb/federated-client.ts
-packages/ts-sdk/src/treedb/types.ts
-packages/ts-sdk/src/treedb/errors.ts
-packages/ts-sdk/src/treedb/repository-adapter.ts
-packages/ts-sdk/src/treedb/query-adapter.ts
-packages/ts-sdk/src/treedb/graph-adapter.ts
-packages/ts-sdk/src/treedb/workspace-adapter.ts
-packages/ts-sdk/src/treedb/index.ts
-```
-
-### Client Constructor
+Formalize ports:
 
 ```ts
-export interface TreeDbClientOptions {
-  baseUrl: string;
-  token?: string;
-  repoId?: string;
-  fetch?: typeof fetch;
-  defaultActor?: TreeDbActor;
-}
-
-export class TreeDbClient {
-  constructor(options: TreeDbClientOptions);
-
-  health(): Promise<TreeDbHealth>;
-  whoami(): Promise<TreeDbWhoami>;
-  effectiveScope(input?: TreeDbEffectiveScopeRequest): Promise<TreeDbEffectiveScope>;
-
-  getNode(): Promise<TreeDbNode>;
-  getPlacement(repoId: string): Promise<TreeDbRepositoryPlacement>;
-
-  getRepository(repoId: string): Promise<TreeDbRepository>;
-  createWorkspace(input: TreeDbCreateWorkspaceRequest): Promise<TreeDbWorkspace>;
-  closeWorkspace(workspaceId: string): Promise<void>;
-
-  listTree(input: TreeDbListTreeRequest): Promise<TreeDbTreeEntry[]>;
-  readFile(input: TreeDbReadFileRequest): Promise<TreeDbFile>;
-  writeFile(input: TreeDbWriteFileRequest): Promise<TreeDbFileMutationResult>;
-  patchFile(input: TreeDbPatchFileRequest): Promise<TreeDbFileMutationResult>;
-  deleteFile(input: TreeDbDeleteFileRequest): Promise<TreeDbFileMutationResult>;
-  search(input: TreeDbSearchRequest): Promise<TreeDbSearchResult>;
-  status(input: TreeDbWorkspaceRequest): Promise<TreeDbStatus>;
-  diff(input: TreeDbWorkspaceRequest): Promise<TreeDbDiff>;
-  commit(input: TreeDbCommitRequest): Promise<TreeDbCommitResult>;
-  exec(input: TreeDbExecRequest): Promise<TreeDbExecResult>;
-
-  queryRepository(input: TreeDbRepositoryQueryRequest): Promise<TreeDbRepositoryQueryResult>;
-  refreshGraph(input: TreeDbGraphRefreshRequest): Promise<TreeDbGraphRefreshResult>;
-  queryGraph(input: TreeDbGraphQueryRequest): Promise<TreeDbGraphQueryResult>;
-  buildContext(input: TreeDbContextRequest): Promise<TreeDbContextResult>;
-}
-
-export class TreeDbRegistryClient {
-  constructor(options: TreeDbRegistryClientOptions);
-  listNodes(): Promise<TreeDbNode[]>;
-  resolveRepository(repoId: string): Promise<TreeDbRepositoryPlacement>;
-  resolveRepositories(repoIds: string[]): Promise<TreeDbRepositoryPlacement[]>;
-}
-
-export class TreeDbFederatedClient {
-  constructor(options: TreeDbFederatedClientOptions);
-  resolveRepository(repoId: string): Promise<TreeDbClient>;
-  query(input: TreeDbFederatedQueryRequest): Promise<TreeDbFederatedQueryResult>;
-  search(input: TreeDbFederatedSearchRequest): Promise<TreeDbFederatedSearchResult>;
-}
-```
-
-### Adapter Strategy
-
-Define ports inside the SDK first:
-
-```ts
-interface AuthPort {
-  whoami(): Promise<unknown>;
-  effectiveScope(input: unknown): Promise<unknown>;
-}
-
-interface RepositoryPort {
-  createWorkspace(input: unknown): Promise<unknown>;
-  listTree(input: unknown): Promise<unknown>;
-  readFile(input: unknown): Promise<unknown>;
-  writeFile(input: unknown): Promise<unknown>;
-  patchFile(input: unknown): Promise<unknown>;
-  status(input: unknown): Promise<unknown>;
-  diff(input: unknown): Promise<unknown>;
-  commit(input: unknown): Promise<unknown>;
-  exec(input: unknown): Promise<unknown>;
-}
-
-interface RepositoryQueryPort {
-  query(input: unknown): Promise<unknown>;
-  search(input: unknown): Promise<unknown>;
-}
-
-interface GraphPort {
-  refresh(input: unknown): Promise<unknown>;
-  query(input: unknown): Promise<unknown>;
-  buildContext(input: unknown): Promise<unknown>;
-}
-
-interface RegistryPort {
-  resolveRepository(repoId: string): Promise<unknown>;
-  resolveRepositories(repoIds: string[]): Promise<unknown>;
-}
+interface AuthPort
+interface RepositoryPort
+interface RepositoryQueryPort
+interface GraphPort
+interface RegistryPort
+interface ExecPort
+interface ArtifactPort
 ```
 
 Implement:
@@ -2500,1315 +725,613 @@ Implement:
 ```text
 LocalRepositoryPort -> existing SDK filesystem/Git code
 TreeDbRepositoryPort -> TreeDbClient
-TreeDbRepositoryQueryPort -> TreeDbClient repository query endpoints
-LocalGraphPort -> existing graph runtime
-TreeDbGraphPort -> TreeDbClient graph endpoints
-TreeDbAuthPort -> TreeDbClient auth/effective-scope endpoints
+TreeDbRepositoryQueryPort -> TreeDbClient query endpoints
+LocalGraphPort -> existing ContentGraphRuntime
+TreeDbGraphPort -> TreeDbClient graph/context endpoints
 TreeDbRegistryPort -> TreeDbRegistryClient
 TreeDbFederatedPort -> TreeDbFederatedClient
 ```
 
-Higher-level SDK/core concepts can map TreeDB results into product-specific models outside TreeDB.
+#### I3. AgentSdk wiring
 
-### SDK Verification
+Support:
 
-Add tests:
-
-* TreeDbClient request construction.
-* TreeDbClient token handling.
-* TreeDbClient whoami/effectiveScope calls.
-* TreeDbClient node/placement calls.
-* TreeDbClient error handling.
-* Registry client resolves repository placement.
-* Federated client routes writes to primary.
-* Federated client routes reads to primary or mirror.
-* Adapter maps SDK repository search/read/update to TreeDB requests.
-* Local mode remains unchanged.
-* Remote mode can run against a mocked TreeDB server.
-* Contract tests run against the real Phoenix app in CI/dev.
-* TreeDB remote mode tests verify no local repository clone is required by the SDK worker.
-* Unauthorized repository/query results are not surfaced by the SDK.
-
-### Deliverables
-
-* TreeDbClient
-* TreeDbRegistryClient
-* TreeDbFederatedClient
-* SDK types
-* Adapter ports
-* Local and remote implementation wiring
-* Auth/effective-scope client support
-* Registry routing support
-* Tests
-* Usage docs
-
-### Exit Criteria
-
-* SDK users can opt into TreeDB mode.
-* Existing local SDK tests still pass.
-* Remote adapter tests pass.
-* SDK integration does not require PostgreSQL, SQLite, or a local repo clone for remote mode.
-* SDK remote mode can pass token/auth context to TreeDB and handle authorization errors cleanly.
-* SDK has a clear path to resolve repositories across multiple TreeDB nodes.
-
----
-
-## MVP — Authentication, Capability, Federation Access, and Audit Integration
-
-### Goal
-
-Make remote repository operations authenticated, authorized, understandable, auditable, and ready to integrate with a control-plane capability model. This capability also formalizes federation access and future cross-repository query behavior.
-
-### Authentication Model
-
-Implement a token verification boundary:
-
-```text
-Control plane
-  issues signed user/agent/service tokens
-
-TreeDB
-  verifies token
-  resolves actor/repo/ref/path/capability scope
-  applies policy to every operation
-  records effective scope in audit events
-```
-
-MVP may include a dev-token endpoint for local development, but production mode should require a configured verifier or trusted service-token mechanism.
-
-### MVP Capability Model
-
-In TreeDB MVP, represent capabilities simply:
-
-```text
-repos:read
-repos:write
-remotes:read
-remotes:write
-files:read
-files:write
-files:delete
-files:search
-graph:refresh
-graph:query
-workspace:create
-workspace:exec:read_only
-workspace:exec:verification
-workspace:exec:write_limited
-git:commit
-git:fetch
-git:push
-snapshot:build
-artifact:export
-registry:read
-registry:write
-mirror:read
-mirror:write
-migration:read
-migration:write
-query:federated
-policy:read
-policy:write
-```
-
-### Scoped Grant Shape
-
-```json
-{
-  "capability": "files:write",
-  "scope": {
-    "tenantId": "tenant_abc",
-    "repoIds": ["repo_123"],
-    "refs": ["refs/heads/agent/*"],
-    "paths": ["src/content/**", "docs/**"]
+```ts
+new AgentSdk({
+  treeDb: {
+    enabled: true,
+    baseUrl,
+    token,
+    repoId,
+    contentPathMap,
+    registryRouting: true
   }
-}
+})
 ```
 
-### Actor Shape
+Rules:
 
-```json
-{
-  "actorId": "actor_demo",
-  "tenantId": "tenant_demo",
-  "capabilities": ["files:read", "files:write"]
-}
-```
+- Local mode remains default.
+- TreeDB mode requires explicit config.
+- TreeDB mode must not require local repo root.
+- `contentPathMap` maps SDK model names to repository-relative paths.
+- SDK model registry remains responsible for product concepts.
 
-### Repository Portfolio Access Model
+#### I4. Error handling
 
-TreeDB should maintain a repository portfolio catalog that maps:
+Map TreeDB errors to `TreeDbApiError`:
+
+- `authentication_required`
+- `invalid_token`
+- `permission_denied`
+- `workspace_revoked`
+- `not_found`
+- `conflict`
+- `payload_too_large`
+- `unsupported_media_type`
+- `validation_error`
+- `graph_not_ready`
+- `federated_query_not_implemented`
+- `network_error`
+- `timeout`
+- `partial_failure`
+
+#### I5. Type generation
+
+- Decide between hand-maintained types and OpenAPI-generated types.
+- Add compatibility tests for type drift.
+- Ensure endpoint changes update:
+  - OpenAPI
+  - SDK types
+  - SDK tests
+  - migration notes
+
+#### I6. Documentation
+
+Add:
 
 ```text
-tenant/control-plane scope -> repositories
-repository -> graph/search indexes
-repository -> local TreeDB node/volume
-repository -> primary node
-repository -> mirror nodes
-actor -> scoped grants
-```
-
-MVP should enforce single-repo access correctly. Future federated queries should use the same grants to safely query across repositories and nodes.
-
-### Cross-Boundary Query Rule
-
-Cross-repository queries must be filtered by authorization before ranking and graph expansion.
-
-```text
-authenticate actor
-resolve effective repository/ref/path scope
-query only allowed local segments
-expand only through allowed edges
-serialize only allowed paths/snippets/provenance
-audit requested scope and effective scope
-```
-
-Never query all repositories first and filter unauthorized results only at the end.
-
-### Audit Events
-
-Record at least:
-
-```text
-auth.verified
-auth.rejected
-policy.loaded
-policy.refreshed
-policy.effective_scope_resolved
-node.registered
-registry.placement.updated
-repo.registered
-repo.remote.updated
-mirror.sync.started
-mirror.sync.completed
-mirror.sync.failed
-migration.started
-migration.completed
-migration.failed
-workspace.created
-workspace.closed
-file.read
-file.written
-file.patched
-file.deleted
-search.performed
-exec.started
-exec.completed
-exec.rejected
-git.ref.resolved
-git.status
-git.diff
-git.commit.created
-git.fetch.completed
-git.push.completed
-graph.refresh.started
-graph.refresh.completed
-federated.query.started
-federated.query.completed
-federated.query.rejected
-storage.recovered
-storage.compacted
-```
-
-### Event Payload Rules
-
-* Include actor, tenant, repo, node, workspace, operation, path(s), status, timestamps.
-* Include requested scope and effective authorized scope for cross-repository or federated operations.
-* Include changed paths and commit SHA where applicable.
-* Include storage segment/manifest IDs where useful.
-* Include placement/mirror/migration IDs where applicable.
-* Do not include full file contents by default.
-* Include command string only after sanitization.
-* Include stdout/stderr only if explicitly configured or truncated.
-
-### Verification
-
-* Token verification succeeds and fails correctly.
-* Dev-token mode is clearly separated from production mode.
-* Unauthorized operation rejected.
-* Repo/path/ref-limited actor cannot access out-of-scope resources.
-* Capability-limited actor cannot exec shell, mirror, migrate, or query registry state.
-* Audit event emitted for every mutation.
-* Audit event shape is stable and documented.
-* Audit events persist in TreeDB-native append logs.
-* Audit events survive service restart.
-* Federated query planner reduces requested scope to effective authorized scope before reading graph/search segments.
-* Cross-repo query fixture proves hidden repo/path/snippet/count leakage does not occur.
-
-### Deliverables
-
-* Auth/token verification module
-* Dev-token/local policy mode
-* Capability module
-* Scoped grant records
-* Repository portfolio scope resolver
-* Registry access checks
-* Federation access checks
-* Audit event schema
-* Event docs
-* Tests
-
-### Exit Criteria
-
-* Every API request is authenticated or explicitly running in dev-token mode.
-* Every repository/file/graph/workspace/shell/snapshot/registry/mirror/migration operation is authorization-gated.
-* Remote execution is capability-gated.
-* Mirror and migration operations are capability-gated.
-* Operations are auditable enough for external control-plane integration.
-* Audit state is stored without PostgreSQL or SQLite.
-* TreeDB can safely prepare for future federation-aware queries without leaking unauthorized resources.
-
----
-
-## MVP — Repository Snapshots, Mirrors, and Migration Support
-
-### Goal
-
-Support repository/index snapshots and basic mirror/migration workflows without implementing product-specific packaging or market workflows inside TreeDB.
-
-### Endpoints
-
-```http
-POST /api/v1/repos/:repo_id/snapshots/build
-GET  /api/v1/repos/:repo_id/snapshots/:snapshot_id
-POST /api/v1/repos/:repo_id/artifacts/export
-POST /api/v1/repos/:repo_id/mirrors/:mirror_id/sync
-POST /api/v1/repos/:repo_id/migrations
-GET  /api/v1/repos/:repo_id/migrations/:migration_id
-```
-
-### Snapshot Types
-
-TreeDB snapshot types should be repository/index-oriented:
-
-```text
-repository_snapshot
-index_snapshot
-graph_snapshot
-search_snapshot
-audit_export
-```
-
-### Snapshot Metadata
-
-```json
-{
-  "snapshotId": "snap_...",
-  "repoId": "repo_...",
-  "ref": "refs/heads/main",
-  "commitSha": "abc123...",
-  "kind": "repository_snapshot",
-  "includedPaths": ["src/**", "docs/**"],
-  "graphVersion": "graph_...",
-  "checksums": {}
-}
-```
-
-### MVP Scope
-
-TreeDB builds and stores/exports repository and index snapshots. Higher-level systems remain responsible for interpreting those snapshots as product-specific packages, releases, templates, or other artifacts.
-
-### Native Storage
-
-Snapshot manifests and artifacts live under:
-
-```text
-$TREEDB_DATA_DIR/snapshots/<snapshot_id>/manifest.tdb
-$TREEDB_DATA_DIR/snapshots/<snapshot_id>/artifact.tar.zst
-```
-
-Mirror and migration manifests live under:
-
-```text
-$TREEDB_DATA_DIR/federation/mirrors/<repo_id>/<node_id>.tdb
-$TREEDB_DATA_DIR/federation/migrations/<repo_id>/<migration_id>.tdb
-```
-
-### Verification
-
-* Build snapshot from allowed paths.
-* Include commit SHA and graph version.
-* Export artifact can be consumed by SDK/core tests.
-* Unauthorized actor cannot build/export snapshot.
-* Mirror sync records lag/status.
-* Migration record can move repository placement after drain.
-* Snapshot/mirror/migration manifests survive service restart.
-
-### Deliverables
-
-* Snapshot build endpoint
-* Artifact export endpoint
-* Snapshot manifest format
-* Mirror sync endpoint skeleton
-* Migration endpoint skeleton
-* Access-gated snapshot/mirror/migration tests
-* Integration docs
-
-### Exit Criteria
-
-* TreeDB can produce repo-backed artifacts useful for backup, migration, indexing, and higher-level systems.
-* Snapshot state is stored in TreeDB-native files.
-* Mirror and migration state is represented in TreeDB-native files.
-* Snapshot, mirror, and migration operations are authorization-gated.
-
----
-
-## MVP — End-to-End MVP Scenario
-
-### Goal
-
-Prove TreeDB supports the core repository database loop with a realistic authenticated and registry-aware fixture.
-
-### Scenario
-
-Use a fixture repository portfolio containing:
-
-```text
-Node A
-Node B, simulated or mocked
-Actor
-Scoped capability grants
-Repository A
-Repository B
-Refs
-Markdown/MDX files
-Generic text files
-Cross-repository links
-```
-
-Flow:
-
-```text
-1. Initialize $TREEDB_DATA_DIR.
-2. Load dev actor/capability fixture.
-3. Initialize local node identity and registry records.
-4. Register fixture repo with TreeDB as an authorized actor.
-5. Create repository placement record with local node as primary.
-6. Open workspace for an agent/helper.
-7. TreeDB snapshots effective workspace scope.
-8. Search repository files.
-9. Build graph/context output.
-10. Verify unauthorized query scope is reduced before graph/search access.
-11. Agent writes a proposed update to a repository file.
-12. Agent runs read-only shell search if needed.
-13. Agent runs verification command if available.
-14. TreeDB reports status/diff.
-15. TreeDB commits update to task branch using Gitoxide/gix where practical.
-16. TreeDB refreshes graph into native graph segments.
-17. SDK reads updated repository content through TreeDB mode.
-18. Build repository/index snapshot.
-19. Simulate mirror placement or mirror sync status.
-20. Verify audit events show the whole sequence with actor, requested scope, effective scope, node, and repo placement.
-21. Restart TreeDB and verify repository catalog, policy mirror, placement records, audit events, graph index, and snapshot manifest recover.
+packages/ts-sdk/docs/treedb-remote-mode.md
+packages/ts-sdk/docs/treedb-errors.md
+packages/ts-sdk/docs/treedb-no-clone.md
+docs/architecture/sdk-integration.md
 ```
 
 ### Acceptance Criteria
 
-* No local clone required on the agent/worker side.
-* The SDK uses TreeDB APIs for repository/file/query/graph operations.
-* TreeDB uses Gitoxide/gix for ordinary Git reads and commits where practical.
-* TreeDB uses its own data directory for catalog, policy mirror, placement, session, audit, graph, and snapshot state.
-* Authentication and effective-scope resolution occur before repository operations.
-* Unauthorized repo/path/ref query is rejected or filtered.
-* The final commit has changed paths and SHA.
-* Graph query sees updated content.
-* Repository placement can be resolved through the registry skeleton.
-* Audit events are complete.
-* Tests demonstrate local SDK mode still works.
-* Tests demonstrate remote TreeDB mode works.
-* No PostgreSQL or SQLite service/file is required.
+- SDK local tests pass unchanged.
+- TreeDB remote tests pass with mocked fetch.
+- Live-gated TreeDB tests pass against Phoenix app.
+- No-clone remote mode works for read, search, write, commit, graph, context, snapshot.
+- SDK docs include examples for auth, repository read/search, workspace update, commit, graph query, context build, and artifact export.
 
 ---
 
-## API Contract Summary
+## Epic J — API Contract, Versioning, and Compatibility
 
-### Authentication and Policy
+### Goal
 
-```http
-GET  /api/v1/auth/whoami
-POST /api/v1/auth/dev-token
-GET  /api/v1/policy/effective-scope
-POST /api/v1/policy/refresh
+Stabilize the TreeDB API and SDK contract for production consumers.
+
+### Workstreams
+
+#### J1. OpenAPI as contract
+
+Update:
+
+```text
+docs/api/openapi.yaml
 ```
 
-### Health
+Add schema coverage for:
+
+- auth
+- effective scope
+- repos
+- files
+- blobs
+- workspaces
+- exec
+- query
+- graph
+- context
+- snapshots/artifacts
+- mirrors
+- migrations
+- federation
+- admin diagnostics
+- errors
+
+#### J2. Contract tests
+
+- Validate Phoenix responses against OpenAPI.
+- Validate SDK request construction against OpenAPI.
+- Validate SDK error handling.
+- Validate response envelope compatibility.
+
+#### J3. Versioning
+
+- Add API version policy.
+- Add deprecation policy.
+- Add storage migration policy.
+- Add SDK semver policy for TreeDB types.
+
+### Acceptance Criteria
+
+- OpenAPI is complete enough for SDK type generation or drift checks.
+- Every new endpoint has contract tests.
+- Breaking changes require migration notes.
+- SDK and server cannot drift silently in CI.
+
+---
+
+## Epic K — Observability and Operations
+
+### Goal
+
+Make TreeDB observable, debuggable, and operable in production.
+
+### Workstreams
+
+#### K1. Structured logs
+
+- JSON logs in production.
+- Include request ID, actor ID, tenant ID, repo ID, workspace ID, operation, status.
+- Scrub secrets.
+
+#### K2. Metrics
+
+Expose metrics for:
+
+- HTTP latency/error rate
+- auth success/failure
+- capability denials
+- repo operations
+- workspace counts
+- active leases
+- exec runs/timeouts
+- graph refresh duration
+- query latency
+- snapshot duration/size
+- mirror sync status
+- storage compaction/recovery
+- audit append failures
+
+#### K3. Health checks
+
+Add:
 
 ```http
 GET /api/v1/health
-GET /api/v1/version
+GET /api/v1/ready
+GET /api/v1/admin/health/deep
 ```
 
-### Node and Registry
+Deep checks:
 
-```http
-GET  /api/v1/node
-GET  /api/v1/registry/nodes
-GET  /api/v1/registry/repos/:repo_id/placement
-POST /api/v1/registry/repos/:repo_id/placement
-GET  /api/v1/registry/repos/:repo_id/mirrors
-POST /api/v1/registry/repos/:repo_id/mirrors
+- data-dir writable
+- lock held
+- store replay ok
+- native crates loaded
+- graph store readable
+- repository placement reachable
+- optional control-plane verifier reachable
+
+#### K4. Runbooks
+
+Create:
+
+```text
+docs/runbooks/deploy.md
+docs/runbooks/configuration.md
+docs/runbooks/auth-jwks.md
+docs/runbooks/storage-recovery.md
+docs/runbooks/backup-restore.md
+docs/runbooks/mirror-sync.md
+docs/runbooks/repository-migration.md
+docs/runbooks/sandbox-exec.md
+docs/runbooks/federated-query.md
+docs/runbooks/sdk-remote-mode.md
+docs/runbooks/security-incident.md
 ```
 
-### Repositories
+### Acceptance Criteria
 
-```http
-POST /api/v1/repos/register
-GET  /api/v1/repos
-GET  /api/v1/repos/:repo_id
-GET  /api/v1/repos/:repo_id/status
-GET  /api/v1/repos/:repo_id/refs
-GET  /api/v1/repos/:repo_id/remotes
-POST /api/v1/repos/:repo_id/sync
-```
-
-### Workspaces
-
-```http
-POST /api/v1/repos/:repo_id/workspaces
-GET  /api/v1/workspaces/:workspace_id
-POST /api/v1/workspaces/:workspace_id/close
-```
-
-### Files
-
-```http
-GET    /api/v1/workspaces/:workspace_id/tree?path=...
-GET    /api/v1/workspaces/:workspace_id/files?path=...
-PUT    /api/v1/workspaces/:workspace_id/files?path=...
-PATCH  /api/v1/workspaces/:workspace_id/files?path=...
-DELETE /api/v1/workspaces/:workspace_id/files?path=...
-POST   /api/v1/workspaces/:workspace_id/search
-GET    /api/v1/workspaces/:workspace_id/status
-GET    /api/v1/workspaces/:workspace_id/diff
-POST   /api/v1/workspaces/:workspace_id/commit
-POST   /api/v1/workspaces/:workspace_id/exec
-```
-
-### Repository Query
-
-```http
-POST /api/v1/repos/:repo_id/files/search
-POST /api/v1/repos/:repo_id/files/read
-POST /api/v1/repos/:repo_id/paths/list
-POST /api/v1/repos/:repo_id/query
-```
-
-### Graph, Context, and Federated Query
-
-```http
-POST /api/v1/repos/:repo_id/graph/refresh
-POST /api/v1/repos/:repo_id/graph/query
-POST /api/v1/repos/:repo_id/graph/search-files
-POST /api/v1/repos/:repo_id/graph/search-sections
-POST /api/v1/repos/:repo_id/graph/search-entities
-GET  /api/v1/repos/:repo_id/graph/nodes/:node_id
-POST /api/v1/repos/:repo_id/graph/related
-POST /api/v1/repos/:repo_id/graph/subgraph
-POST /api/v1/repos/:repo_id/context/build
-POST /api/v1/repos/:repo_id/context/parse-ctx
-
-# future federation-aware query surface
-POST /api/v1/search
-POST /api/v1/query
-POST /api/v1/context/build
-```
-
-### Snapshots, Mirrors, and Migrations
-
-```http
-POST /api/v1/repos/:repo_id/snapshots/build
-GET  /api/v1/repos/:repo_id/snapshots/:snapshot_id
-POST /api/v1/repos/:repo_id/artifacts/export
-POST /api/v1/repos/:repo_id/mirrors/:mirror_id/sync
-POST /api/v1/repos/:repo_id/migrations
-GET  /api/v1/repos/:repo_id/migrations/:migration_id
-```
-
-### Audit
-
-```http
-GET /api/v1/repos/:repo_id/audit-events
-GET /api/v1/workspaces/:workspace_id/audit-events
-```
-
-### Storage Diagnostics
-
-```http
-GET  /api/v1/storage/health
-POST /api/v1/storage/compact
-POST /api/v1/storage/recover
-GET  /api/v1/storage/manifests
-```
-
-Storage diagnostics should be protected administrative endpoints.
+- Production logs are useful without leaking secrets.
+- Metrics are available to Prometheus-compatible tooling or equivalent.
+- Readiness check blocks traffic before data-dir recovery is complete.
+- Runbooks cover common operational failures.
 
 ---
 
-## Native Storage Model Summary
+## Epic L — Security Review and Release Gate
 
-TreeDB stores its state in its own data directory instead of relational tables.
+### Goal
 
-### Policy and Access Records
+Complete the security work needed for production use.
 
-```text
-TenantRecord
-  id
-  source
-  updated_at
+### Workstreams
 
-ActorRecord
-  id
-  tenant_ids
-  updated_at
+#### L1. Threat model
 
-CapabilityGrantRecord
-  actor_id
-  tenant_id
-  repo_ids
-  capabilities
-  refs
-  paths
-  expires_at
+Document threats for:
 
-RepoAccessRecord
-  repo_id
-  tenant_id
-  actor_ids
-  capability_refs
-```
+- auth/token forgery
+- path traversal
+- hidden repo/path leakage
+- malicious Git repositories
+- malicious file contents
+- malicious shell commands
+- secret exfiltration
+- network egress
+- storage corruption
+- artifact tampering
+- mirror/push credential leakage
+- cross-tenant access
+- dependency vulnerabilities
 
-### Catalog Records
+#### L2. Security test suite
 
-```text
-RepositoryRecord
-  id
-  name
-  storage_kind
-  local_path
-  default_ref
-  status
-  created_at
-  updated_at
+Add tests for:
 
-RepositoryRemoteRecord
-  repository_id
-  name
-  url
-  fetch_refspecs
-  push_refspecs
-  last_sync_at
+- path traversal
+- protected paths
+- `.env`, keys, pem files
+- symlink behavior
+- binary file limits
+- huge file limits
+- malicious patches
+- command injection
+- environment leakage
+- unauthorized snapshot/export
+- unauthorized graph diagnostics
+- unauthorized federation routes
+- token expiration
+- token issuer/audience mismatch
+- JWKS key rotation
+- revocation propagation
 
-RepositoryRefRecord
-  repository_id
-  name
-  sha
-  kind
-  last_seen_at
+#### L3. Dependency and supply-chain checks
 
-VolumeRecord
-  id
-  root_path
-  capacity_policy
-  repository_count
-  status
-```
+- `cargo audit`
+- npm audit or configured alternative
+- container image scan
+- SBOM generation
+- license review
+- pinned production image versions
 
-### Federation Records
+#### L4. Security release checklist
 
-```text
-NodeRecord
-  id
-  base_url
-  role
-  capacity
-  health
-  last_seen_at
+- No dev-token mode in production.
+- Production verifier configured.
+- Sandbox backend not `direct_dev`.
+- Secrets scrubber tested.
+- Audit content redaction tested.
+- Data-dir permissions checked.
+- Backup/restore tested.
+- Incident runbook written.
 
-RepositoryPlacementRecord
-  repository_id
-  primary_node_id
-  mirror_node_ids
-  read_policy
-  write_policy
-  migration_state
+### Acceptance Criteria
 
-MirrorRecord
-  repository_id
-  source_node_id
-  target_node_id
-  mode
-  last_seen_commit
-  behind_by
-  status
-
-MigrationRecord
-  repository_id
-  source_node_id
-  target_node_id
-  state
-  started_at
-  completed_at
-```
-
-### Workspace Records
-
-```text
-WorkspaceSessionRecord
-  id
-  repository_id
-  actor_id
-  base_ref
-  branch_name
-  worktree_path
-  mode
-  allowed_paths
-  capabilities
-  effective_scope
-  status
-  expires_at
-  created_at
-  updated_at
-```
-
-### Commit Records
-
-```text
-CommitRecord
-  repository_id
-  workspace_session_id
-  branch_name
-  commit_sha
-  message
-  changed_paths
-  author_name
-  author_email
-  actor_id
-  node_id
-  effective_scope_hash
-  created_at
-```
-
-### Portfolio Graph Records
-
-```text
-PortfolioGraphManifest
-  registry_scope_id
-  repo_graph_refs
-  cross_repo_edge_segments
-  merged_search_segments
-  created_at
-  updated_at
-
-CrossRepoEdgeRecord
-  from_repo_id
-  from_node_id
-  to_repo_id
-  to_node_id
-  edge_type
-  source
-  confidence
-  payload
-```
-
-### Graph Records
-
-```text
-GraphIndexManifest
-  repository_id
-  ref
-  commit_sha
-  graph_version
-  status
-  node_count
-  edge_count
-  segment_paths
-  created_at
-  updated_at
-
-GraphNodeRecord
-  repository_id
-  graph_version
-  node_id
-  node_type
-  path
-  section
-  title
-  summary
-  payload
-
-GraphEdgeRecord
-  repository_id
-  graph_version
-  from_node_id
-  to_node_id
-  edge_type
-  payload
-```
-
-### Snapshot Records
-
-```text
-SnapshotManifest
-  id
-  repository_id
-  kind
-  ref
-  commit_sha
-  graph_version
-  included_paths
-  checksums
-  artifact_path
-  created_at
-```
-
-### Audit Records
-
-```text
-AuditEventRecord
-  repository_id
-  workspace_session_id
-  actor_id
-  tenant_id
-  node_id
-  event_type
-  requested_scope
-  effective_scope
-  payload
-  created_at
-```
-
-### Storage Engine Requirements
-
-```text
-append-only audit/event log
-compacted catalog files
-compacted policy/access files
-compacted federation/placement files
-segment-based graph/search indexes
-manifest-based snapshots
-checksums for critical records
-versioned file formats
-startup recovery scan
-safe compaction
-atomic manifest swaps
-configurable fsync/durability policy
-```
+- Security test suite passes.
+- Known critical/high dependency issues are resolved or documented with mitigations.
+- Production config refuses insecure defaults.
+- Release checklist is signed off.
 
 ---
 
-## Verification Strategy
+# 6. Suggested Sprint Breakdown
 
-## Local Service Verification
+## Sprint 1 — Contract Freeze and Baseline CI
+
+Deliverables:
+
+- Endpoint/capability matrix.
+- OpenAPI gap list.
+- SDK type drift check.
+- CI job running:
+  - Rust fmt/clippy/test
+  - Elixir format/test
+  - SDK build/test
+  - MVP E2E
+  - Docker smoke
+- Public response hygiene tests.
+
+Exit criteria:
+
+- Current MVP has a stable baseline.
+- Known production gaps are tracked as issues.
+
+## Sprint 2 — Auth/JWKS and Policy Revocation
+
+Deliverables:
+
+- JWKS verifier.
+- Policy refresh records.
+- Workspace revocation/quarantine.
+- SDK error mapping for auth/revocation.
+
+Exit criteria:
+
+- Production connected mode can verify rotating keys.
+- Revoked actors lose access safely.
+
+## Sprint 3 — Storage Locking, Recovery, and Admin Diagnostics
+
+Deliverables:
+
+- Data-dir lock.
+- Recovery mode.
+- Storage check endpoint.
+- Compaction design and first implementation.
+- Backup/restore prototype.
+
+Exit criteria:
+
+- TreeDB can detect corruption and unsafe multi-writer startup.
+- Operators can inspect storage health.
+
+## Sprint 4 — Binary APIs and SDK Blob Transport
+
+Deliverables:
+
+- Blob read/write/upload/download APIs.
+- SDK blob methods.
+- Snapshot binary support tests.
+- Large-file limits.
+
+Exit criteria:
+
+- Binary repository content works safely through no-clone SDK mode.
+
+## Sprint 5 — Sandbox Exec
+
+Deliverables:
+
+- Sandbox backend abstraction.
+- Container sandbox backend.
+- Network/resource/secret isolation tests.
+- SDK exec diagnostics.
+
+Exit criteria:
+
+- Production exec backend is safe enough for shared environments.
+
+## Sprint 6 — Git Push and Mirror Hardening
+
+Deliverables:
+
+- Push endpoint.
+- Credential scrubber.
+- Mirror health and promotion dry-run.
+- SDK push/mirror methods.
+
+Exit criteria:
+
+- Git push and mirror workflows are explicit, audited, and capability-gated.
+
+## Sprint 7 — Federated Global Query
+
+Deliverables:
+
+- Global planner execution.
+- Segment router.
+- Cross-repo search/query/context.
+- SDK federated methods.
+- Leakage test suite.
+
+Exit criteria:
+
+- Authorized cross-repo query works without hidden repo/path/snippet leakage.
+
+## Sprint 8 — SDK Remote Mode Stabilization
+
+Deliverables:
+
+- Stable exports.
+- AgentSdk TreeDB wiring.
+- Usage docs.
+- Live contract tests.
+- Local-vs-remote parity tests.
+
+Exit criteria:
+
+- SDK users can adopt TreeDB mode confidently.
+
+## Sprint 9 — Observability, Runbooks, and Release Gate
+
+Deliverables:
+
+- Metrics.
+- Readiness/deep health.
+- Runbooks.
+- Security checklist.
+- Release candidate.
+
+Exit criteria:
+
+- TreeDB is ready for a controlled production rollout.
+
+---
+
+# 7. Verification Matrix
+
+## Rust
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace -- -D warnings
+cargo test --workspace
+```
+
+## Elixir/Phoenix
 
 ```bash
 cd apps/api
 mix format --check-formatted
 mix test
-mix credo --strict
 ```
 
-If Credo is not installed, document and defer rather than blocking MVP.
-
-## Rust Verification
-
-```bash
-cd crates/treedb_store
-cargo fmt --check
-cargo clippy -- -D warnings
-cargo test
-
-cd ../treedb_git
-cargo fmt --check
-cargo clippy -- -D warnings
-cargo test
-
-cd ../treedb_graph
-cargo fmt --check
-cargo clippy -- -D warnings
-cargo test
-```
-
-Rust is not deferred in this version of the plan. `treedb_store` and `treedb_git` are MVP foundations. `treedb_graph` can start simple but should share the same verification discipline.
-
-## TypeScript SDK Verification
-
-Use actual scripts from `packages/ts-sdk/package.json`. Likely examples:
+## TypeScript SDK
 
 ```bash
 cd packages/ts-sdk
-npm run typecheck
-npm test
 npm run build
+npm test
+npx vitest run --config ./vitest.config.ts \
+  test/utils/treedb-e2e-contract.test.ts \
+  test/utils/treedb-live-contract.test.ts
 ```
 
-Do not assume script names. Research first.
+## Docker Smoke
 
-## Contract Verification
-
-Create contract fixtures:
-
-```text
-fixtures/contracts/openapi.json
-fixtures/repos/simple-repo
-fixtures/repos/large-content-repo
-fixtures/auth/repo-policy
-fixtures/federation/two-node-placement
-fixtures/sdk/tree-db-mode
+```bash
+docker compose build treedb-api
+docker compose up -d treedb-api
+curl -fsS http://localhost:4000/api/v1/health
+scripts/mvp-smoke.sh
+docker compose down
 ```
 
-Contract tests should prove:
+## Production Release Gate
 
-* Phoenix response shapes match TypeScript types.
-* SDK client serializes requests correctly.
-* SDK client handles errors correctly.
-* TreeDB remote mode matches local mode for selected repository/query/graph operations.
-* TreeDB remote mode does not require local repo clone on the SDK/agent worker.
-* TreeDB state survives restart from native data directory files.
-* Authenticated requests enforce repo/path/ref scope.
-* Unauthorized graph/query/search results are omitted before ranking and serialization.
-* Registry placement routes writes to primary and reads to allowed primary/mirror nodes.
-
-## End-to-End Verification
-
-```text
-start TreeDB service
-initialize TreeDB data directory
-load dev actor/policy fixture
-initialize local node and registry records
-register fixture repo
-create placement record for fixture repo
-open workspace
-read/search/update repository files through SDK
-run remote shell search if needed
-commit changes with Gitoxide-backed path where practical
-refresh graph into TreeDB-native segments
-query graph through SDK
-verify unauthorized query scope is reduced before graph/search access
-build repository snapshot
-simulate mirror placement/sync state
-restart service
-verify catalog/policy/placement/audit/graph/snapshot recovery
-check audit events
+```bash
+scripts/test-all.sh
+scripts/security-check.sh
+scripts/openapi-check.sh
+scripts/storage-recovery-check.sh
+scripts/sdk-live-contract.sh
 ```
-
-## Regression Rules
-
-* Existing SDK local mode tests must keep passing.
-* TreeDB remote mode must be additive until proven stable.
-* Any SDK type changes must have migration notes.
-* Any TreeDB endpoint changes must update OpenAPI and SDK tests in the same commit.
-* Any TreeDB storage format change must include a version/migration note.
-* Any auth/policy storage format change must include a version/migration note.
-* Any federation/placement format change must include a version/migration note.
-* Any shell Git fallback must include an issue or tracking note for Gitoxide replacement.
-* No TreeDB test should require knowledge-pack, template, listing, or other product-domain semantics.
 
 ---
 
-## Security and Safety MVP
+# 8. CI/CD Requirements
 
-### Required Before Any Shared Environment
+CI must block on:
 
-* Token verification or explicitly configured dev-token mode.
-* Effective scope resolution for every request.
-* Repo/path/ref authorization checks.
-* Registry/mirror/migration authorization checks.
-* Path normalization and traversal protection.
-* Capability checks for every endpoint.
-* Workspace TTL and cleanup.
-* Command timeout and output cap.
-* Disallowed path globs.
-* Environment scrubbing for shell execution.
-* Audit events for all mutations and exec requests.
-* Commit API separate from shell API.
-* No arbitrary push/mirror/migration through shell.
-* TreeDB data directory permissions checked on startup.
-* TreeDB data directory lock to prevent unsafe multi-process writes.
-* Recovery mode for interrupted writes.
-
-### Required Before Untrusted Agents
-
-* Stronger sandboxing than direct host process execution.
-* Network isolation.
-* Resource isolation.
-* Secret isolation.
-* Per-tenant repository separation.
-* Production-grade token verification/key rotation.
-* Policy refresh and revocation propagation.
-* Stronger storage-level corruption detection and backup/export story.
-* Mirror promotion/failover safety review.
-* Federated query leakage review.
+- Rust fmt/clippy/tests.
+- Elixir format/tests.
+- SDK build/tests.
+- E2E MVP test.
+- OpenAPI drift.
+- SDK type drift.
+- Docker build.
+- Smoke test.
+- Security dependency check.
+- Storage migration tests.
+- No public response hygiene regressions.
+- No unauthorized query/graph leakage regressions.
 
 ---
 
-## Documentation Plan
+# 9. Documentation Deliverables
 
-Create:
+Create or update:
 
 ```text
 docs/architecture/overview.md
 docs/architecture/native-storage.md
 docs/architecture/gitoxide-integration.md
 docs/architecture/workspace-sessions.md
-docs/architecture/sdk-integration.md
 docs/architecture/security-model.md
 docs/architecture/authentication-and-access.md
 docs/architecture/federation-and-placement.md
 docs/architecture/federated-queries.md
+docs/architecture/sdk-integration.md
 docs/api/openapi.yaml
-docs/research/sdk-interface-map.md
-docs/research/sdk-query-contract.md
-docs/research/sdk-graph-contract.md
-docs/research/sdk-baseline-verification.md
-docs/runbooks/local-development.md
-docs/runbooks/containerized-development.md
-docs/runbooks/containerized-deployment.md
-docs/runbooks/debugging-workspaces.md
+docs/runbooks/deploy.md
+docs/runbooks/configuration.md
+docs/runbooks/auth-jwks.md
 docs/runbooks/storage-recovery.md
-docs/runbooks/repository-migration.md
+docs/runbooks/backup-restore.md
 docs/runbooks/mirror-sync.md
-docs/runbooks/fixture-verification.md
+docs/runbooks/repository-migration.md
+docs/runbooks/sandbox-exec.md
+docs/runbooks/federated-query.md
+docs/runbooks/sdk-remote-mode.md
+docs/runbooks/security-incident.md
+packages/ts-sdk/docs/treedb-remote-mode.md
+packages/ts-sdk/docs/treedb-errors.md
+packages/ts-sdk/docs/treedb-no-clone.md
 ```
-
-## Developer Experience Goals
-
-The canonical developer experience should require Docker, not a host Erlang/Elixir/Rust/Node toolchain.
-
-Primary commands:
-
-```bash
-docker compose build treedb-api
-docker compose up treedb-api
-docker compose exec treedb-api mix test
-docker compose exec treedb-api cargo test --workspace
-```
-
-Convenience wrappers may be added:
-
-```bash
-make setup
-make test
-make dev
-```
-
-Or package-native equivalents:
-
-```bash
-scripts/setup.sh
-scripts/test-all.sh
-scripts/dev.sh
-```
-
-The wrappers should call Docker Compose by default.
-
-Developer should be able to run:
-
-```bash
-# start TreeDB with hot reload and persistent data volume
-docker compose up treedb-api
-
-# inspect the TreeDB data directory inside the container
-docker compose exec treedb-api ls -la /var/lib/treedb
-
-# request a dev token and inspect effective scope
-curl -X POST http://localhost:4000/api/v1/auth/dev-token
-curl http://localhost:4000/api/v1/policy/effective-scope
-
-# inspect local node and repository placement
-curl http://localhost:4000/api/v1/node
-curl http://localhost:4000/api/v1/registry/nodes
-
-# run SDK tests against TreeDB
-cd packages/ts-sdk && TREEDB_URL=http://localhost:4000 npm test
-```
-
-Optional host-local development can remain documented for maintainers who already have the toolchains installed:
-
-```bash
-export TREEDB_DATA_DIR=/tmp/treedb-dev
-cd apps/api && mix phx.server
-```
-
-But host-local development should not be the canonical path.
 
 ---
 
-## Open Questions to Resolve During Research
+# 10. Risk Register
 
-1. What are the exact current SDK public exports?
-2. Does the SDK already have a remote operation dispatch abstraction that TreeDB should reuse?
-3. Does the SDK graph runtime currently store snapshots on disk, in D1/SQLite, or both?
-4. Which higher-level SDK/core concepts must remain outside TreeDB?
-5. Are repository query operations path-first, metadata-first, or hybrid?
-6. What is the actual request/response shape for graph query and context output?
-7. How does the surrounding ecosystem currently expect remote jobs and capability grants to be represented?
-8. Which current tests define package boundary expectations?
-9. Can SDK local mode and TreeDB remote mode share a generic repository fixture?
-10. Should TreeDB generate TypeScript types from OpenAPI, or should the SDK remain the source of request/response types during MVP?
-11. Which current SDK Git operations map cleanly to Gitoxide/gix?
-12. Which Git operations need temporary shell fallback?
-13. What minimum TreeDB-native file formats are needed before the first end-to-end test?
-14. What durability level is required for MVP: fsync every write, batch fsync, or development-mode relaxed durability?
-15. Should TreeDB workspaces begin as materialized directories, overlays, or a hybrid?
-16. Which token format should TreeDB verify in connected mode?
-17. How should policy refresh and revocation work between a control plane and TreeDB?
-18. Which federated query endpoints belong in MVP versus post-MVP?
-19. Should unauthorized cross-repo graph boundaries be omitted or represented as redacted placeholders by higher-level product surfaces?
-20. Should the registry be hosted by a TreeDB node, a control plane, static signed manifests, or a dedicated registry service?
-21. What is the minimum safe mirror promotion/failover workflow?
-22. How should repository migration drain active writable workspaces?
-
-## Recommended Answer to Question 10
-
-For MVP, define the OpenAPI contract in TreeDB and hand-maintain TypeScript types only where needed. Once the contract stabilizes, generate SDK client types from OpenAPI to reduce drift.
-
-## Recommended Answer to Question 15
-
-Begin with materialized workspace directories for simplicity, but design the file API and commit path around an overlay model so large repositories do not need full materialization later.
-
-## Recommended Answer to Question 20
-
-Start with a local registry inside a single TreeDB node, then add signed static registry manifests for multi-node SDK routing, then allow connected control-plane registry ownership or a dedicated registry service.
+| Risk | Impact | Mitigation |
+|---|---|---|
+| JWKS/control-plane auth is under-specified | Production auth weakness | Build verifier abstraction and fail-closed boot config |
+| Direct exec sandbox leaks host data | Critical security issue | Require production sandbox backend and isolation tests |
+| Federation leaks hidden data through ranking/counts | Cross-tenant data leak | Query only authorized segments before ranking/serialization |
+| Storage corruption loses metadata | Data loss | Data-dir lock, checksums, recovery mode, backup/restore |
+| SDK remote mode breaks local SDK ergonomics | Adoption blocker | Keep local mode default and add parity tests |
+| API/server and SDK type drift | Runtime failures | OpenAPI drift checks and SDK contract tests |
+| Git push leaks credentials | Secret exposure | Credential provider boundary and URL sanitizer |
+| Policy revocation does not affect active workspaces | Unauthorized access persists | Workspace policy hash and quarantine/expire flow |
+| Product semantics creep into TreeDB | Architecture degradation | Keep model registry/product mapping in SDK/core |
+| Shell Git fallback becomes default | Reliability/security drift | Track every fallback and prefer gix implementation |
 
 ---
 
-## MVP Capability Checklist
+# 11. Production Rollout Plan
 
-### MVP — Research Complete
+## Phase 1 — Internal Dev Production-Like
 
-* [x] SDK baseline verification completed.
-* [x] SDK public exports mapped.
-* [x] Repository/file/query contract mapped.
-* [x] Graph contract mapped.
-* [x] Git/worktree behavior mapped.
-* [x] Local filesystem assumptions mapped.
-* [x] Gitoxide/gix mapping documented.
-* [x] Authentication/token expectations documented.
-* [x] Repository access assumptions documented.
-* [x] Federated repository placement requirements documented.
-* [x] Domain concepts that must remain outside TreeDB documented.
-* [x] Integration risks documented.
+- Connected auth with test JWKS.
+- Sandbox backend enabled.
+- Storage lock/recovery enabled.
+- SDK live tests enabled.
+- No external users.
 
-### MVP — TreeDB API, Container Runtime, Auth Skeleton, Federation Skeleton, and Native Storage Skeleton
+## Phase 2 — Controlled Agent Workloads
 
-* [x] Root Dockerfile exists with development and production targets.
-* [x] `compose.yaml` launches `treedb-api` with hot reload.
-* [x] Compose uses an explicit `treedb-data:/var/lib/treedb` volume.
-* [x] Phoenix app boots through Docker Compose.
-* [x] Health/version endpoints work.
-* [x] Auth whoami/dev-token endpoints work in dev mode.
-* [x] Effective-scope endpoint works for fixture actors.
-* [x] Node endpoint works.
-* [x] Local registry records initialize.
-* [x] `$TREEDB_DATA_DIR` initializes.
-* [x] `treedb_store` writes/reads repository catalog records.
-* [x] `treedb_store` writes/reads policy/access records.
-* [x] `treedb_store` writes/reads placement records.
-* [x] Repository registration works with an authorized actor.
-* [x] Metadata persists in TreeDB-native files.
-* [x] Tests pass.
+- Limited repository set.
+- Restricted path grants.
+- No Git push except dry-run.
+- Read-only and verification exec only.
+- Full audit review.
 
-### MVP — Gitoxide Repository Operations and Workspace Sessions
+## Phase 3 — Write Workloads
 
-* [x] `treedb_git` opens fixture repos.
-* [x] Repo remotes/refs/status work through Gitoxide/gix where practical.
-* [x] Tree/blob reads work through Gitoxide/gix.
-* [x] Workspace create/close works.
-* [x] Git worktree/materialized workspace creation works.
-* [x] Workspace effective-scope snapshot works.
-* [x] Lease enforcement works through TreeDB-native records.
-* [x] Repository placement controls read/write routing.
-* [x] Unauthorized workspace creation is rejected.
-* [x] Cleanup works.
+- Workspace write/commit enabled.
+- Binary APIs enabled.
+- Snapshot/artifact export enabled.
+- Push enabled for selected actors/refs.
 
-### MVP — File Operations
+## Phase 4 — Federation Pilot
 
-* [x] List/read/write/patch/delete work.
-* [x] Search works.
-* [x] Status/diff work.
-* [x] Commit works.
-* [x] Path safety tests pass.
-* [x] Access-scope tests pass.
-* [x] Commit produces changed paths and SHA.
-* [x] Commit can be read from resulting ref.
+- Two or more TreeDB nodes.
+- Mirror read policy enabled.
+- Federated query enabled for selected repos.
+- Leakage test fixtures required in CI.
 
-### MVP — Remote Shell
+## Phase 5 — General Production
 
-* [x] Exec endpoint works.
-* [x] Command policy works.
-* [x] Timeout/output caps work.
-* [x] Audit events work.
-* [x] Shell edits can be committed through API.
-* [x] Shell Git mutation commands are rejected.
-* [x] Exec capability checks pass.
-
-### MVP — Repository Query, Graph, and Authorization-Aware Query
-
-* [x] Repository query endpoints map to SDK expectations.
-* [x] Query authorization tests pass.
-* [x] Graph refresh works.
-* [x] Graph query works.
-* [x] Context output works.
-* [x] Incremental refresh is at least path-aware.
-* [x] Graph/search state persists in TreeDB-native segments/manifests.
-* [x] Unauthorized graph/query/search results are omitted before ranking and serialization.
-* [x] Future federated query fixture is present even if federated API is not fully implemented.
-
-### MVP — SDK Integration and Registry Routing
-
-* [x] TreeDbClient implemented.
-* [x] TreeDbRegistryClient implemented.
-* [x] SDK remote adapter implemented.
-* [x] SDK auth/effective-scope calls implemented.
-* [x] Local SDK mode remains unchanged.
-* [x] Mocked client tests pass.
-* [x] Real TreeDB contract tests pass.
-* [x] Remote mode requires no local repo clone.
-* [x] Registry routing resolves repository primary/mirror placement.
-* [x] Authorization errors are surfaced clearly.
-
-### MVP — Authenticated Federated Repository Demo
-
-* [x] Fixture actor and scoped grants loaded.
-* [x] Fixture repository registered.
-* [x] Local node and placement records initialized.
-* [x] Agent-style update performed without local clone.
-* [x] Commit created.
-* [x] Graph refreshed.
-* [x] Context output returned.
-* [x] Repository snapshot exported.
-* [x] Mirror placement or mirror sync state simulated.
-* [x] Audit events include actor, requested scope, effective scope, node, and repo placement.
-* [x] Unauthorized repo/path/ref query is rejected or filtered.
-* [x] Audit events visible.
-* [x] Service restart recovers catalog, policy, placement, audit, graph, and snapshot state.
+- SLOs active.
+- Incident runbooks complete.
+- Backup/restore regularly tested.
+- Security checklist complete.
+- SDK docs published.
 
 ---
 
-## Suggested First Implementation Sprint
+# 12. Final Acceptance Checklist
 
-### Sprint Goal
-
-Prove TreeDB can be launched as a containerized hot-reload service with an explicit persistent data volume, prove a fixture actor can authenticate and receive an effective repository scope, initialize local node/registry state, and prove a stateless TypeScript SDK client can update a file in a Git repository through TreeDB and receive a commit SHA, without cloning the repository locally, without PostgreSQL/SQLite, and without shell Git for basic repository inspection.
-
-### Scope
-
-* Root Dockerfile with `dev` and `prod` targets.
-* Root `compose.yaml` with `treedb-api` service and `treedb-data` volume.
-* Phoenix service skeleton running through Docker Compose.
-* Hot reload support through source bind mount.
-* TreeDB data directory initialization at `/var/lib/treedb`.
-* Dev-token/local policy fixture.
-* Local node manifest.
-* Local registry/placement catalog files.
-* `treedb_store` repository catalog file.
-* `treedb_store` policy/access catalog files.
-* `treedb_store` append-only audit log.
-* `treedb_git` fixture repo open/remote/ref/tree/blob reads through Gitoxide/gix.
-* Repository registration with authorized actor.
-* Repository placement record with local node as primary.
-* Workspace create/close with effective-scope snapshot.
-* File read/write/status/diff/commit.
-* Minimal `TreeDbClient` and placement read in `packages/ts-sdk`.
-* One end-to-end test.
-
-### Out of Scope
-
-* Production-grade token verification/key rotation.
-* Full federated query implementation.
-* Multi-node mirror sync.
-* Mirror promotion/failover.
-* Full graph indexing.
-* Higher-level product model semantics.
-* Remote shell.
-* Production sandboxing.
-* Multi-node replication.
-* Fully optimized overlay workspaces.
-
-### Sprint Acceptance Test
-
-```ts
-const client = new TreeDbClient({ baseUrl, repoId, token, defaultActor });
-
-const whoami = await client.whoami();
-expect(whoami.actor.id).toBeTruthy();
-
-const node = await client.getNode();
-expect(node.nodeId).toBeTruthy();
-
-const placement = await client.getPlacement(repoId);
-expect(placement.primary.nodeId).toEqual(node.nodeId);
-
-const scope = await client.effectiveScope({ repoId });
-expect(scope.capabilities).toContain("workspace:create");
-
-const workspace = await client.createWorkspace({
-  baseRef: "refs/heads/main",
-  branchName: "refs/heads/agent/demo-update",
-  mode: "writable",
-  allowedPaths: ["src/content/**"]
-});
-
-await client.writeFile({
-  workspaceId: workspace.id,
-  path: "src/content/demo.mdx",
-  content: "---
-title: Demo
----
-
-Updated by TreeDB.
-"
-});
-
-const diff = await client.diff({ workspaceId: workspace.id });
-
-const commit = await client.commit({
-  workspaceId: workspace.id,
-  message: "Update demo file through TreeDB"
-});
-
-expect(commit.commitSha).toBeTruthy();
-expect(commit.changedPaths).toContain("src/content/demo.mdx");
-```
-
-Additional sprint assertions:
-
-```text
-docker compose up treedb-api starts the API service.
-The developer does not need host Erlang/Elixir/Rust/Node setup.
-/var/lib/treedb is backed by an explicit Docker volume.
-The data volume contains local repository copies under repos/.
-$TREEDB_DATA_DIR exists and contains TreeDB-native catalog/policy/placement/audit files.
-No PostgreSQL or SQLite process/file is required.
-Basic repo remote/ref/tree/blob inspection uses treedb_git/Gitoxide.
-The SDK worker has no local clone of the repository.
-Audit log records auth, effective scope, placement, workspace, file write, diff, and commit events.
-Restarting TreeDB preserves repository registration, policy records, placement records, and audit history.
-```
-
-This sprint proves the core storage/scaling/authentication/federation foundation before adding semantic query, graph, shell, or advanced mirror workflows.
-
----
-
-## Final MVP Definition
-
-TreeDB MVP is complete when:
-
-1. TreeDB runs canonically as a containerized service with Dockerfile and Docker Compose support.
-2. Development supports hot reload without host Erlang/Elixir/Rust/Node toolchain installation.
-3. Large Git repositories can remain on TreeDB volumes.
-4. TreeDB-owned state lives in a TreeDB-native data directory, not PostgreSQL or SQLite.
-5. The TreeDB data directory is mounted explicitly as `/var/lib/treedb` in the container and holds local repository copies.
-6. Ordinary Git repository reads and commits use Gitoxide/gix wherever practical.
-7. Authentication and repo/path/ref access are enforced for all operations.
-8. A stateless worker can update repository files through the TypeScript SDK without cloning the repository.
-9. TreeDB creates a Git commit with changed paths and audit events.
-10. Agents can explore repositories through structured file/search APIs.
-11. Agents can run constrained remote shell commands when necessary.
-12. TreeDB can build a basic graph index and context output for text and Markdown/MDX content.
-13. TreeDB supports single-repository queries in MVP and has API/storage shapes ready for future federation-aware cross-repository queries.
-14. TreeDB includes node identity, repository placement, mirror records, and migration records as first-class storage/API foundations.
-15. SDK local mode and TreeDB remote mode can both pass integration tests against the same generic repository fixture.
-16. TreeDB can restart and recover repository catalog, policy records, placement records, workspace state, audit logs, graph manifests, and snapshot manifests from its own data directory.
-17. TreeDB remains a Git/repository database: higher-level concepts are added by SDK/core/control-plane layers, not embedded in TreeDB.
+- [ ] Production auth verifier supports JWKS/key rotation.
+- [ ] Dev-token mode cannot be accidentally used as production auth.
+- [ ] Every endpoint has capability tests.
+- [ ] Workspace revocation/quarantine works.
+- [ ] Binary APIs are implemented and tested.
+- [ ] Git push is capability-gated, audited, and credential-safe.
+- [ ] Production exec sandbox is isolated and tested.
+- [ ] Storage lock, recovery, compaction, migration, and backup/restore are implemented.
+- [ ] Federation-aware global search/query/context is implemented without authorization leakage.
+- [ ] Graph/context results are filtered before ranking/serialization.
+- [ ] SDK remote mode is stable, documented, and no-clone.
+- [ ] SDK local mode remains unchanged.
+- [ ] OpenAPI and SDK types are synchronized.
+- [ ] Observability and runbooks are complete.
+- [ ] Security review is complete.
+- [ ] Controlled production rollout has passed.
 
