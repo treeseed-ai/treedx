@@ -31,6 +31,7 @@ Implemented now:
 - Phase 7 opt-in TypeScript SDK TreeDB clients/adapters and registry-aware routing primitives.
 - Phase 8 HMAC JWT connected-auth MVP, expanded scoped capability grants, audit event listing, and planner-only federation access reduction.
 - Phase 9 repository snapshots, tar.zst artifact export/download, gix-backed mirror sync, placement migration records, and SDK client methods for those surfaces.
+- Phase 10 end-to-end MVP contract verification with an in-process Phoenix scenario, mocked TypeScript SDK TreeDB contract tests, static OpenAPI fixtures, and an optional Docker black-box smoke script.
 
 Not implemented yet:
 
@@ -248,7 +249,7 @@ Production image build smoke test:
 docker compose -f compose.prod.yaml build treedb-api
 ```
 
-The production compose file uses the `prod` Docker target, runs the Phoenix release, sets `TREEDB_AUTH_MODE=connected`, and persists `/var/lib/treedb` in the `treedb-data` volume. Connected auth is a future verifier mode, so the production compose file is a deployment skeleton rather than a complete production security configuration.
+The production compose file uses the `prod` Docker target, runs the Phoenix release, sets `TREEDB_AUTH_MODE=connected`, and persists `/var/lib/treedb` in the `treedb-data` volume. Connected auth currently verifies HS256 JWTs; JWKS, key rotation, and control-plane policy refresh remain future production hardening work.
 
 ## Configuration
 
@@ -728,6 +729,38 @@ curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/migrations \
 
 Mirror fetch uses gix network APIs for HTTP(S) and local file remotes. Unsupported transports return `unsupported_transport`. Shell Git is not used as an implementation path.
 
+### End-To-End MVP Scenario
+
+Phase 10 adds a repeatable MVP proof that runs the main TreeDB repository loop:
+
+- create a dev-token actor
+- register fixture repositories
+- resolve effective scope and registry placement
+- create a writable workspace with a scoped base commit snapshot
+- search repository content
+- refresh graph data and build context
+- plan federation scope reduction without executing global query
+- write, inspect, diff, and commit a file through the workspace API
+- refresh graph data on the committed branch
+- build a repository snapshot and export artifact metadata
+- create a migration dry-run
+- inspect audit events
+- simulate restart/replay for repository, placement, audit, graph manifest, and snapshot manifest state
+
+The fast in-process scenario lives at:
+
+```text
+apps/api/test/treedb_web/end_to_end_mvp_test.exs
+```
+
+The optional Docker black-box smoke script runs the same style of loop through HTTP only:
+
+```bash
+scripts/phase10-smoke.sh
+```
+
+It starts `treedb-api`, waits for readiness, creates a fixture repository inside the container data volume, registers the repo, updates and commits a file, refreshes graph data, builds a snapshot, exports artifact metadata, reads audit events, and prints a concise summary. Set `TREEDB_KEEP_RUNNING=1` to leave the service up after the script exits.
+
 ## Error Format
 
 Controller errors use a stable JSON shape:
@@ -825,8 +858,10 @@ The project currently has:
 - Rust store tests for workspace file overlays and committed workspace lease release.
 - Rust graph tests for generic graph extraction, deterministic ranking/query behavior, segment write/read, checksum recovery, and `ctx` DSL parsing.
 - Elixir context and controller tests for store initialization, auth, repository registration, repository status, refs/remotes/sync, workspace lifecycle, health/version, policy, registry, mirror endpoints, File API workflows, Repository Query workflows, Graph/Context API workflows, and SDK query/graph mapping contracts.
+- Phase 10 E2E tests for authenticated repository registration, workspace update/commit, graph/context, federation planning, snapshot/artifact export, migration dry-run, audit coverage, public path hygiene, and restart-style replay.
+- TypeScript SDK mocked contract tests for TreeDB remote mode without an agent-side repository clone.
 
-`packages/ts-sdk` has its own baseline state documented in `docs/research/sdk-baseline-verification.md`. Do not treat existing SDK fixture or package graph failures as TreeDB regressions unless the integration work explicitly changes the SDK.
+`packages/ts-sdk` has its own baseline state documented in `docs/research/sdk-baseline-verification.md`. Phase 10 adds `treedb-e2e-contract.test.ts` and a live-gated `treedb-live-contract.test.ts`.
 
 ## Security Model
 

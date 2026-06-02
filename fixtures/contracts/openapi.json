@@ -1,0 +1,90 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "TreeDB MVP API Contract",
+    "version": "0.10.0",
+    "description": "Compact Phase 10 fixture for implemented TreeDB MVP routes. docs/api/openapi.yaml is the human-readable contract."
+  },
+  "servers": [{ "url": "http://localhost:4000" }],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/api/v1/health": { "get": { "security": [], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/version": { "get": { "security": [], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/auth/whoami": { "get": { "security": [], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/auth/mode": { "get": { "security": [], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/auth/dev-token": { "post": { "security": [], "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/policy/effective-scope": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/policy/capabilities": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/policy/grants": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } }, "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/audit/events": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/federation/query/plan": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/node": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/registry/nodes": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/registry/repos/{repo_id}/placement": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } }, "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/register": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/status": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/refs": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/remotes": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/sync": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/workspaces": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/workspaces/{workspace_id}/close": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/workspaces/{workspace_id}/tree": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/workspaces/{workspace_id}/files": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } }, "put": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } }, "patch": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } }, "delete": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/workspaces/{workspace_id}/search": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/workspaces/{workspace_id}/status": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/workspaces/{workspace_id}/diff": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/workspaces/{workspace_id}/commit": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/workspaces/{workspace_id}/exec": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/files/read": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/files/search": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/paths/list": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/query": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/graph/refresh": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/graph/query": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/graph/search-files": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/graph/search-sections": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/graph/search-entities": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/graph/nodes/{node_id}": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" }, "404": { "$ref": "#/components/responses/Error" } } } },
+    "/api/v1/repos/{repo_id}/graph/related": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/graph/subgraph": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/context/build": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/context/parse-ctx": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/snapshots/build": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/snapshots/{snapshot_id}": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/artifacts/export": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/mirrors": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } }, "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/mirrors/{mirror_id}/sync": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/migrations": { "post": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } },
+    "/api/v1/repos/{repo_id}/migrations/{migration_id}": { "get": { "responses": { "200": { "$ref": "#/components/responses/Ok" } } } }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer" }
+    },
+    "responses": {
+      "Ok": { "description": "TreeDB ok envelope", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OkEnvelope" } } } },
+      "Error": { "description": "TreeDB error envelope", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } } }
+    },
+    "schemas": {
+      "OkEnvelope": { "type": "object", "required": ["ok"], "properties": { "ok": { "const": true } }, "additionalProperties": true },
+      "ErrorEnvelope": { "type": "object", "required": ["ok", "error"], "properties": { "ok": { "const": false }, "error": { "type": "object", "required": ["code", "message"], "properties": { "code": { "type": "string" }, "message": { "type": "string" }, "details": { "type": "object" } } } } },
+      "Principal": { "type": "object", "properties": { "actorId": { "type": "string" }, "tenantId": { "type": "string" } } },
+      "EffectiveScope": { "type": "object", "properties": { "capabilities": { "type": "array", "items": { "type": "string" } }, "refs": { "type": "array", "items": { "type": "string" } }, "paths": { "type": "array", "items": { "type": "string" } } } },
+      "Repository": { "type": "object", "properties": { "repoId": { "type": "string" }, "defaultRef": { "type": "string" } } },
+      "Workspace": { "type": "object", "properties": { "workspaceId": { "type": "string" }, "baseCommitSha": { "type": "string" } } },
+      "TreeEntry": { "type": "object", "properties": { "path": { "type": "string" }, "kind": { "enum": ["blob", "tree"] } } },
+      "RepositoryQueryResult": { "type": "object", "additionalProperties": true },
+      "GraphQueryResult": { "type": "object", "additionalProperties": true },
+      "ContextPack": { "type": "object", "additionalProperties": true },
+      "Snapshot": { "type": "object", "properties": { "snapshotId": { "type": "string" }, "artifact": { "$ref": "#/components/schemas/Artifact" } } },
+      "Artifact": { "type": "object", "properties": { "artifactId": { "type": "string" }, "uri": { "type": "string" } } },
+      "Mirror": { "type": "object", "properties": { "mirrorId": { "type": "string" }, "targetNodeId": { "type": "string" } } },
+      "Migration": { "type": "object", "properties": { "id": { "type": "string" }, "status": { "type": "string" } } },
+      "AuditEvent": { "type": "object", "properties": { "eventType": { "type": "string" }, "recordedAt": { "type": "string" } } }
+    }
+  },
+  "x-treedb-future": {
+    "globalFederation": ["/api/v1/search", "/api/v1/query", "/api/v1/context/build"]
+  }
+}

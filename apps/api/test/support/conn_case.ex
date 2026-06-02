@@ -5,6 +5,7 @@ defmodule TreeDbWeb.ConnCase do
     quote do
       import Plug.Conn
       import Phoenix.ConnTest
+      import TreeDbTestFixtures
 
       @endpoint TreeDbWeb.Endpoint
     end

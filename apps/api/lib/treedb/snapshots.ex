@@ -117,7 +117,7 @@ defmodule TreeDb.Snapshots do
          {:ok, repo} when is_map(repo) <- TreeDb.Store.get_repository(repo_id),
          ref <- params["ref"] || repo["defaultRef"] || "refs/heads/main",
          :ok <- TreeDb.Capabilities.require_ref(scope, ref),
-         {:ok, commit_sha} <- TreeDb.Git.resolve_ref(repo["localPath"], ref),
+         {:ok, resolved_ref} <- TreeDb.Git.resolve_ref(repo["localPath"], ref),
          {:ok, patterns} <- PathMatch.normalize_patterns(params["paths"] || ["**"]),
          :ok <- TreeDb.Capabilities.require_paths(scope, patterns) do
       {:ok,
@@ -127,7 +127,7 @@ defmodule TreeDb.Snapshots do
          principal: principal,
          scope: scope,
          ref: ref,
-         commit_sha: commit_sha,
+         commit_sha: resolved_ref["target"],
          patterns: patterns,
          kind: params["kind"] || @default_kind,
          allow_protected: params["allowProtected"] == true,

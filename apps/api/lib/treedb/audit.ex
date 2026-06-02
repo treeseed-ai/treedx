@@ -16,7 +16,7 @@ defmodule TreeDb.Audit do
   def list(query, principal) do
     with {:ok, _scope} <-
            TreeDb.Capabilities.require_capability(principal, "audit:read", query["repoId"]) do
-      limit = query["limit"] || 100
+      limit = coerce_int(query["limit"], 100)
 
       TreeDb.Store.list_audit_events(%{
         actorId: query["actorId"],
@@ -27,8 +27,7 @@ defmodule TreeDb.Audit do
       })
       |> case do
         {:ok, events} ->
-          {:ok,
-           %{events: events, page: %{limit: min(coerce_int(limit, 100), 500), hasMore: false}}}
+          {:ok, %{events: events, page: %{limit: min(limit, 500), hasMore: false}}}
 
         other ->
           other
