@@ -58,6 +58,9 @@ The GitHub workflow publishes Docker images only after the release gate passes.
 - Existing Docker Hub version tags are not overwritten.
 - Images are built as a multi-architecture manifest for `linux/amd64` and
   `linux/arm64`.
+- The published runtime image omits optional shell Git tooling; deployments that
+  enable authenticated external Git transport provide that tooling in a derived
+  image or controlled worker environment.
 - Publishing uses the GitHub `production` environment secrets
   `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`.
 

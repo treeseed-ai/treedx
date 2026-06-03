@@ -38,3 +38,11 @@ GET /metrics
 
 6. Confirm production logs are JSON and do not contain raw secrets or local
    filesystem paths.
+
+The published production image uses a distroless runtime with only the minimal
+shell support needed by the Elixir release launcher. It intentionally omits a
+package manager and optional shell Git tooling to keep the runtime surface
+small. Native repository operations and local/file push paths do not require the
+shell `git` binary. If authenticated external Git transport is enabled, provide
+`git` through a derived image or a controlled worker environment with the
+documented credential-provider settings.

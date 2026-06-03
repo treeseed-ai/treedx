@@ -772,7 +772,7 @@ curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/migrations \
   -d '{"targetNodeId":"node_mirror","mode":"primary_transfer","dryRun":true,"requireMirrorSynced":false}'
 ```
 
-Mirror fetch uses gix network APIs for HTTP(S) and local file remotes. Push supports local path and `file://` remotes through the native path and authenticated HTTPS/SSH through an opt-in constrained external transport. Public requests provide logical `credentialId` values only. Credential-bearing URLs are rejected, SSH requires known hosts, and audit payloads never include raw credentials or full transport output.
+Mirror fetch uses gix network APIs for HTTP(S) and local file remotes. Push supports local path and `file://` remotes through the native path and authenticated HTTPS/SSH through an opt-in constrained external transport. Public requests provide logical `credentialId` values only. Credential-bearing URLs are rejected, SSH requires known hosts, and audit payloads never include raw credentials or full transport output. The published production image keeps the runtime package set small and does not include the shell `git` binary; deployments that enable external Git transport should use a derived image or worker environment that supplies `git` under the same credential and audit controls.
 
 ### Admin Storage API
 

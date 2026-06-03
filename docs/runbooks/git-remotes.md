@@ -17,6 +17,10 @@ Use `POST /api/v1/repos/:repo_id/push` with `git:push`.
   `TREEDB_GIT_EXTERNAL_TRANSPORT_ENABLED=true`.
 - SSH also requires `TREEDB_GIT_SSH_ENABLED=true` and
   `TREEDB_GIT_SSH_KNOWN_HOSTS`.
+- The published production image does not include the shell `git` binary. Native
+  local and `file://` push paths continue to work without it. Deployments that
+  enable authenticated external transport should provide `git` in a derived
+  image or operator-managed worker environment.
 
 ## Fetch
 
