@@ -4,8 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - main
-      - treedb
+      - '**'
 
 jobs:
   release-gate:
@@ -26,17 +25,40 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Detect repository layout
+        id: layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f packages/ts-sdk/package.json ]]; then
+            echo "monorepo=true" >> "$GITHUB_OUTPUT"
+            echo "sdk-dir=packages/ts-sdk" >> "$GITHUB_OUTPUT"
+            echo "sdk-lock=packages/ts-sdk/package-lock.json" >> "$GITHUB_OUTPUT"
+          elif [[ -f package.json ]]; then
+            echo "monorepo=false" >> "$GITHUB_OUTPUT"
+            echo "sdk-dir=." >> "$GITHUB_OUTPUT"
+            echo "sdk-lock=package-lock.json" >> "$GITHUB_OUTPUT"
+          else
+            echo "Unable to find TreeDB monorepo or SDK package layout." >&2
+            exit 1
+          fi
 
       - name: Setup Rust
+        if: steps.layout.outputs.monorepo == 'true'
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cache Rust target
+        if: steps.layout.outputs.monorepo == 'true'
         uses: actions/cache@v4
         with:
           path: /tmp/treedb-target
           key: ${{ runner.os }}-treedb-rust-${{ hashFiles('Cargo.lock', 'apps/api/native/**/Cargo.lock') }}
 
       - name: Setup Elixir
+        if: steps.layout.outputs.monorepo == 'true'
         uses: erlef/setup-beam@v1
         with:
           otp-version: '27'
@@ -47,13 +69,25 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: packages/ts-sdk/package-lock.json
+          cache-dependency-path: ${{ steps.layout.outputs.sdk-lock }}
 
       - name: Install scanner tools
+        if: steps.layout.outputs.monorepo == 'true'
         run: |
           cargo install cargo-audit --locked
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
           curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
       - name: Run release gate
+        if: steps.layout.outputs.monorepo == 'true'
         run: ./scripts/release-gate.sh
+
+      - name: Install SDK dependencies
+        if: steps.layout.outputs.monorepo != 'true'
+        working-directory: ${{ steps.layout.outputs.sdk-dir }}
+        run: npm ci
+
+      - name: Verify SDK package
+        if: steps.layout.outputs.monorepo != 'true'
+        working-directory: ${{ steps.layout.outputs.sdk-dir }}
+        run: npm run verify
