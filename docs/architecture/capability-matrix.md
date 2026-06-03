@@ -36,6 +36,7 @@ required by the route itself.
 | POST | `/api/v1/repos/:repo_id/sync` | `RepoController.sync` | `git:fetch` | yes | optional | no | no | no | sync audit | credential scrubbing |
 | POST | `/api/v1/repos/:repo_id/files/search` | `RepoQueryController.search` | `files:search` | yes | yes | yes | no | no | query audit | leakage tests |
 | POST | `/api/v1/repos/:repo_id/files/read` | `RepoQueryController.read` | `files:read` | yes | yes | yes | no | no | file read audit | leakage tests |
+| POST | `/api/v1/repos/:repo_id/blobs/read` | `BlobController.read_repo` | `files:read` | yes | yes | yes | no | no | `blob.read` | Stage 2 binary-safe base64 read |
 | POST | `/api/v1/repos/:repo_id/paths/list` | `RepoQueryController.paths` | `files:read` | yes | yes | yes | no | no | path list audit | hide unauthorized paths |
 | POST | `/api/v1/repos/:repo_id/query` | `RepoQueryController.query` | `files:search` | yes | yes | yes | no | no | query audit | rank only authorized results |
 | POST | `/api/v1/repos/:repo_id/graph/refresh` | `GraphController.refresh` | `graph:refresh` | yes | yes | yes | no | no | graph refresh audit | none |
@@ -61,9 +62,13 @@ required by the route itself.
 | POST | `/api/v1/workspaces/:workspace_id/close` | `WorkspaceController.close` | same actor | via workspace | via workspace | via workspace | yes | no | `workspace.closed` | policy hash check |
 | GET | `/api/v1/workspaces/:workspace_id/tree` | `FileController.tree` | `files:read` | via workspace | via workspace | yes | yes | no | `file.tree_listed` | policy hash check |
 | GET | `/api/v1/workspaces/:workspace_id/files` | `FileController.read` | `files:read` | via workspace | via workspace | yes | yes | no | `file.read` | policy hash check |
-| PUT | `/api/v1/workspaces/:workspace_id/files` | `FileController.write` | `files:write` | via workspace | via workspace | yes | yes | no | `file.written` | currently checks wrong capability |
+| PUT | `/api/v1/workspaces/:workspace_id/files` | `FileController.write` | `files:write` | via workspace | via workspace | yes | yes | no | `file.written` | policy hash check |
 | PATCH | `/api/v1/workspaces/:workspace_id/files` | `FileController.patch` | `files:write` | via workspace | via workspace | yes | yes | no | `file.patched` | policy hash check |
-| DELETE | `/api/v1/workspaces/:workspace_id/files` | `FileController.delete` | `files:delete` | via workspace | via workspace | yes | yes | no | `file.deleted` | currently checks wrong capability |
+| DELETE | `/api/v1/workspaces/:workspace_id/files` | `FileController.delete` | `files:delete` | via workspace | via workspace | yes | yes | no | `file.deleted` | policy hash check |
+| POST | `/api/v1/workspaces/:workspace_id/blobs/write` | `BlobController.write` | `files:write` | via workspace | via workspace | yes | yes | no | `blob.written` | Stage 2 binary-safe overlay |
+| POST | `/api/v1/workspaces/:workspace_id/blobs/delete` | `BlobController.delete` | `files:delete` | via workspace | via workspace | yes | yes | no | `blob.deleted` | Stage 2 binary-safe overlay |
+| GET | `/api/v1/workspaces/:workspace_id/blobs/download` | `BlobController.download` | `files:read` | via workspace | via workspace | yes | yes | no | `blob.downloaded` | Stage 2 raw byte download |
+| PUT | `/api/v1/workspaces/:workspace_id/blobs/upload` | `BlobController.upload` | `files:write` | via workspace | via workspace | yes | yes | no | `blob.uploaded` | Stage 2 raw byte upload |
 | POST | `/api/v1/workspaces/:workspace_id/search` | `FileController.search` | `files:search` | via workspace | via workspace | yes | yes | no | `file.searched` | policy hash check |
 | GET | `/api/v1/workspaces/:workspace_id/status` | `FileController.status` | `files:read` | via workspace | via workspace | yes | yes | no | `workspace.status_viewed` | policy hash check |
 | GET | `/api/v1/workspaces/:workspace_id/diff` | `FileController.diff` | `git:diff` | via workspace | via workspace | yes | yes | no | `workspace.diff_viewed` | policy hash check |

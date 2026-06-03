@@ -6,7 +6,7 @@ defmodule TreeDbWeb.Endpoint do
 
   plug(Plug.Parsers,
     parsers: [:json],
-    pass: ["application/json"],
+    pass: ["application/json", "application/octet-stream"],
     json_decoder: Jason
   )
 

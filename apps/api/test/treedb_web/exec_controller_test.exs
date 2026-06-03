@@ -201,7 +201,7 @@ defmodule TreeDbWeb.ExecControllerTest do
         "mode" => "read_only"
       })
 
-    assert json_response(conn, 403)["error"]["code"] == "permission_denied"
+    assert json_response(conn, 409)["error"]["code"] == "workspace_revoked"
   end
 
   defp create_workspace(token, repo_id, branch_name, allowed_paths, overrides \\ %{}) do

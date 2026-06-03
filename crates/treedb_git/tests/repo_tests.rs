@@ -103,6 +103,29 @@ fn refs_remotes_tree_and_blob_can_be_read() {
 }
 
 #[test]
+fn blob_read_is_binary_safe() {
+    let dir = tempdir().unwrap();
+    git(dir.path(), &["init", "-b", "main"]);
+    git(dir.path(), &["config", "user.name", "TreeDB Test"]);
+    git(
+        dir.path(),
+        &["config", "user.email", "test@example.invalid"],
+    );
+    std::fs::create_dir_all(dir.path().join("assets")).unwrap();
+    let bytes = vec![0, 159, 146, 150, 255];
+    std::fs::write(dir.path().join("assets/logo.bin"), &bytes).unwrap();
+    git(dir.path(), &["add", "assets/logo.bin"]);
+    git(dir.path(), &["commit", "-m", "binary"]);
+
+    let blob = read_blob(dir.path(), "refs/heads/main", "assets/logo.bin").unwrap();
+    assert_eq!(blob.byte_length, bytes.len());
+    assert_eq!(
+        blob.content_base64,
+        base64::engine::general_purpose::STANDARD.encode(bytes)
+    );
+}
+
+#[test]
 fn bare_repo_can_be_inspected() {
     let dir = tempdir().unwrap();
     git(dir.path(), &["init", "--bare"]);

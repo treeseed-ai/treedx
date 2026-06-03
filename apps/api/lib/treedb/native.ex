@@ -74,4 +74,5 @@ defmodule TreeDb.Native do
   def build_context_pack(_index, _request), do: :erlang.nif_error(:nif_not_loaded)
   def parse_ctx_dsl(_source), do: :erlang.nif_error(:nif_not_loaded)
   def hash_token(_token), do: :erlang.nif_error(:nif_not_loaded)
+  def hash_bytes_base64(_content_base64), do: :erlang.nif_error(:nif_not_loaded)
 end

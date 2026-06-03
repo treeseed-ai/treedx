@@ -444,7 +444,11 @@ pub struct WorkspaceFileInput {
     pub encoding: Option<String>,
     pub content_base64: Option<String>,
     pub expected_sha: Option<String>,
+    #[serde(default)]
+    pub expected_content_hash: Option<String>,
     pub base_sha: Option<String>,
+    #[serde(default)]
+    pub content_type: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -458,7 +462,11 @@ pub struct WorkspaceFileRecord {
     pub content_hash: Option<String>,
     pub content_path: Option<String>,
     pub expected_sha: Option<String>,
+    #[serde(default)]
+    pub expected_content_hash: Option<String>,
     pub base_sha: Option<String>,
+    #[serde(default)]
+    pub content_type: Option<String>,
     pub size: u64,
     pub updated_at: DateTime<Utc>,
 }

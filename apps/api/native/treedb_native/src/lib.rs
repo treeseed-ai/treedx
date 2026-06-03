@@ -731,4 +731,16 @@ fn hash_token<'a>(env: Env<'a>, token: String) -> Term<'a> {
     ok_json(env, treedb_store::hash_token(&token))
 }
 
+#[rustler::nif]
+fn hash_bytes_base64<'a>(env: Env<'a>, content_base64: String) -> Term<'a> {
+    match base64::engine::general_purpose::STANDARD.decode(content_base64) {
+        Ok(bytes) => ok_json(env, treedb_store::hash_bytes(&bytes)),
+        Err(error) => err_json(
+            env,
+            "validation_error",
+            format!("invalid contentBase64: {error}"),
+        ),
+    }
+}
+
 rustler::init!("Elixir.TreeDb.Native");

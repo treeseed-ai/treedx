@@ -28,9 +28,9 @@ pub fn put_workspace_file(
     let id = workspace_file_id(&input.workspace_id, &path);
     let now = Utc::now();
     let (content_hash, content_path, size) = if input.op == "put" {
-        if input.encoding.as_deref() != Some("utf8") {
+        if !matches!(input.encoding.as_deref(), Some("utf8") | Some("base64")) {
             return Err(StoreError::Validation(
-                "only utf8 workspace file content is supported".to_string(),
+                "workspace file encoding must be utf8 or base64".to_string(),
             ));
         }
         let content_base64 = input.content_base64.as_deref().ok_or_else(|| {
@@ -40,6 +40,14 @@ pub fn put_workspace_file(
             .decode(content_base64)
             .map_err(|err| StoreError::Validation(format!("invalid contentBase64: {err}")))?;
         let hash_hex = blake3::hash(&bytes).to_hex().to_string();
+        let content_hash = format!("blake3:{hash_hex}");
+        if let Some(expected_hash) = input.expected_content_hash.as_deref() {
+            if expected_hash != content_hash {
+                return Err(StoreError::Conflict(
+                    "expectedContentHash does not match.".to_string(),
+                ));
+            }
+        }
         let blob_dir = data_dir
             .join("workspaces/active")
             .join(&input.workspace_id)
@@ -48,7 +56,7 @@ pub fn put_workspace_file(
         let blob_path = blob_dir.join(&hash_hex);
         std::fs::write(&blob_path, &bytes)?;
         (
-            Some(format!("blake3:{hash_hex}")),
+            Some(content_hash),
             Some(blob_path.display().to_string()),
             bytes.len() as u64,
         )
@@ -65,7 +73,9 @@ pub fn put_workspace_file(
         content_hash,
         content_path,
         expected_sha: input.expected_sha,
+        expected_content_hash: input.expected_content_hash,
         base_sha: input.base_sha,
+        content_type: input.content_type,
         size,
         updated_at: now,
     };

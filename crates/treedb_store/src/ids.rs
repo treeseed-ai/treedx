@@ -8,6 +8,10 @@ pub fn hash_token(token: &str) -> String {
     format!("blake3:{}", blake3::hash(token.as_bytes()).to_hex())
 }
 
+pub fn hash_bytes(bytes: &[u8]) -> String {
+    format!("blake3:{}", blake3::hash(bytes).to_hex())
+}
+
 pub fn payload_hash<T: Serialize>(payload: &T) -> Result<String, serde_json::Error> {
     let value = serde_json::to_value(payload)?;
     let bytes = serde_json::to_vec(&value)?;

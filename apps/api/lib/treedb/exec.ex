@@ -98,6 +98,8 @@ defmodule TreeDb.Exec do
   defp context(workspace_id, principal, capability) do
     with {:ok, workspace} when is_map(workspace) <- TreeDb.Store.get_workspace(workspace_id),
          :ok <- same_actor(workspace, principal),
+         {:ok, workspace, _current_scope} <-
+           TreeDb.Workspaces.ensure_policy_current(workspace, principal, capability),
          {:ok, scope} <-
            TreeDb.Capabilities.require_capability(
              principal,

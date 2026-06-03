@@ -25,7 +25,10 @@ Priority routes for typed response schemas:
    - `/api/v1/workspaces/{workspace_id}`
 3. File/query:
    - `/api/v1/workspaces/{workspace_id}/files`
+   - `/api/v1/workspaces/{workspace_id}/blobs/write`
+   - `/api/v1/workspaces/{workspace_id}/blobs/download`
    - `/api/v1/repos/{repo_id}/files/read`
+   - `/api/v1/repos/{repo_id}/blobs/read`
    - `/api/v1/repos/{repo_id}/query`
 4. Graph/context:
    - `/api/v1/repos/{repo_id}/graph/query`
@@ -44,10 +47,12 @@ Request bodies are not yet schema-complete for:
 - policy refresh and grant updates
 - federation planning
 - repository file read/search/path/query
+- repository blob read
 - graph refresh/query/search/traversal
 - context build and parse
 - snapshot build and artifact export
 - workspace create/write/patch/search/commit/exec
+- workspace blob write/delete/upload/download
 - mirror sync and migration creation
 
 ## Missing Response Schemas
@@ -61,6 +66,7 @@ Response schemas are not yet complete for:
 - node/placement/mirror/migration records
 - repository/ref/remote/status records
 - workspace and file mutation results
+- blob read, mutation, upload, and download metadata
 - graph/context results
 - snapshot/artifact records
 
@@ -78,6 +84,22 @@ Add examples for:
 - `unsupported_media_type`
 - `payload_too_large`
 - `graph_not_ready`
+
+## Stage 2 Binary Blob Follow-Ups
+
+Implemented Stage 2 routes are binary-safe but still use generic OpenAPI
+envelopes. Later schema work should add typed contracts for:
+
+- base64 blob read/write request and response bodies
+- raw upload headers (`x-treedb-expected-sha`,
+  `x-treedb-expected-content-hash`, `x-treedb-allow-protected`)
+- raw download metadata headers (`x-treedb-content-hash`,
+  `x-treedb-object-id`, `x-treedb-source`)
+- `payload_too_large`, malformed base64, hash mismatch, and
+  `workspace_revoked` examples
+
+Resumable uploads, multipart upload, large artifact lifecycle, retention
+policy, and destructive storage repair remain later-stage work.
 
 ## Hand-Maintained SDK Types
 

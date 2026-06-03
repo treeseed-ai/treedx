@@ -23,7 +23,7 @@ pub use error::StoreError;
 pub use federation::{
     get_repository_placement, list_mirrors, put_mirror, put_repository_placement,
 };
-pub use ids::hash_token;
+pub use ids::{hash_bytes, hash_token};
 pub use migration::{
     get_migration, get_mirror_sync, list_mirror_syncs, put_migration, put_mirror_sync,
 };

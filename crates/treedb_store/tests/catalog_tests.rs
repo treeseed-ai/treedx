@@ -247,7 +247,9 @@ fn workspace_file_overlay_records_persist_and_latest_wins() {
             encoding: Some("utf8".to_string()),
             content_base64: Some(base64::engine::general_purpose::STANDARD.encode("one")),
             expected_sha: None,
+            expected_content_hash: None,
             base_sha: None,
+            content_type: None,
         },
     )
     .unwrap();
@@ -260,7 +262,9 @@ fn workspace_file_overlay_records_persist_and_latest_wins() {
             encoding: Some("utf8".to_string()),
             content_base64: Some(base64::engine::general_purpose::STANDARD.encode("two")),
             expected_sha: Some(first.content_hash.unwrap()),
+            expected_content_hash: None,
             base_sha: None,
+            content_type: None,
         },
     )
     .unwrap();
@@ -293,7 +297,9 @@ fn workspace_file_overlay_records_persist_and_latest_wins() {
             encoding: None,
             content_base64: None,
             expected_sha: second.content_hash,
+            expected_content_hash: None,
             base_sha: None,
+            content_type: None,
         },
     )
     .unwrap();

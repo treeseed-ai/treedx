@@ -182,6 +182,7 @@ defmodule TreeDb.Store do
     do: call_json(&TreeDb.Native.mark_workspace_committed/2, data_dir(), Jason.encode!(input))
 
   def hash_token(token), do: call_json(&TreeDb.Native.hash_token/1, token)
+  def hash_bytes_base64(content), do: call_json(&TreeDb.Native.hash_bytes_base64/1, content)
 
   def call_json(fun, arg1), do: decode(apply_fun(fun, [arg1]))
   def call_json(fun, arg1, arg2), do: decode(apply_fun(fun, [arg1, arg2]))

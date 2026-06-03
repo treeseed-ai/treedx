@@ -34,4 +34,36 @@ defmodule TreeDbWeb.AdminStorageControllerTest do
 
     assert recover["recovered"] == false
   end
+
+  test "store lock rejects live pid and replaces stale pid" do
+    original = Application.get_env(:treedb, :data_dir)
+
+    data_dir =
+      Path.join(System.tmp_dir!(), "treedb-lock-test-#{System.unique_integer([:positive])}")
+
+    {pid, 0} = System.cmd("sh", ["-c", "sleep 10 > /dev/null 2>&1 & echo $!"])
+    live_pid = String.trim(pid)
+
+    try do
+      File.rm_rf!(data_dir)
+      File.mkdir_p!(data_dir)
+      Application.put_env(:treedb, :data_dir, data_dir)
+      File.write!(Path.join(data_dir, ".treedb.lock"), "#{live_pid}\n")
+
+      assert_raise RuntimeError, ~r/already locked/, fn ->
+        TreeDb.Store.init!(node_id: "node_local")
+      end
+
+      File.write!(Path.join(data_dir, ".treedb.lock"), "99999999\n")
+      report = TreeDb.Store.init!(node_id: "node_local")
+      assert report["dataDir"] == data_dir
+      assert File.read!(Path.join(data_dir, ".treedb.lock")) == "#{System.pid()}\n"
+    after
+      System.cmd("kill", [live_pid], stderr_to_stdout: true)
+
+      if original,
+        do: Application.put_env(:treedb, :data_dir, original),
+        else: Application.delete_env(:treedb, :data_dir)
+    end
+  end
 end

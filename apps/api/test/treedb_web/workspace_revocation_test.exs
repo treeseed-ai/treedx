@@ -30,7 +30,10 @@ defmodule TreeDbWeb.WorkspaceRevocationTest do
           "files:delete",
           "files:search",
           "git:diff",
-          "git:commit"
+          "git:commit",
+          "workspace:exec:read_only",
+          "workspace:exec:verification",
+          "workspace:exec:write_limited"
         ],
         "refs" => ["refs/heads/*"],
         "paths" => ["docs/**"]
@@ -78,6 +81,14 @@ defmodule TreeDbWeb.WorkspaceRevocationTest do
       |> json!(409)
 
     assert write["error"]["code"] == "workspace_revoked"
+
+    exec =
+      build_conn()
+      |> auth_conn(limited_token)
+      |> post("/api/v1/workspaces/#{workspace_id}/exec", %{"cmd" => "true", "mode" => "read_only"})
+      |> json!(409)
+
+    assert exec["error"]["code"] == "workspace_revoked"
 
     quarantined =
       build_conn()

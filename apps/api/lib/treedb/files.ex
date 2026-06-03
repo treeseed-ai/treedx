@@ -59,7 +59,7 @@ defmodule TreeDb.Files do
   end
 
   def patch(workspace_id, params, principal) do
-    with {:ok, ctx} <- writable_context(workspace_id, principal, "files:delete"),
+    with {:ok, ctx} <- writable_context(workspace_id, principal, "files:write"),
          {:ok, path} <- PathPolicy.normalize(params["path"]),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
          {:ok, file} <- current_file(ctx, path),
@@ -88,7 +88,7 @@ defmodule TreeDb.Files do
   end
 
   def delete(workspace_id, params, principal) do
-    with {:ok, ctx} <- writable_context(workspace_id, principal, "files:write"),
+    with {:ok, ctx} <- writable_context(workspace_id, principal, "files:delete"),
          {:ok, path} <- PathPolicy.normalize(params["path"]),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
          {:ok, file} <- current_file(ctx, path),
@@ -458,6 +458,7 @@ defmodule TreeDb.Files do
 
   defp status_entry(ctx, record) do
     base = base_file(ctx, record["path"])
+    binary = record["encoding"] == "base64"
 
     status =
       if record["op"] == "delete",
@@ -475,9 +476,24 @@ defmodule TreeDb.Files do
       status: status,
       baseSha: base_sha,
       contentHash: record["contentHash"],
+      encoding: record["encoding"],
+      binary: binary,
       size: record["size"],
       updatedAt: record["updatedAt"]
     }
+  end
+
+  defp diff_entry(ctx, %{"encoding" => "base64"} = record) do
+    base = base_file(ctx, record["path"])
+
+    status =
+      cond do
+        record["op"] == "delete" -> "deleted"
+        match?({:ok, _}, base) -> "modified"
+        true -> "added"
+      end
+
+    "Binary file #{record["path"]} #{status}"
   end
 
   defp diff_entry(ctx, %{"op" => "delete"} = record) do
