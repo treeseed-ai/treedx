@@ -20,3 +20,16 @@ Operational settings:
 Use `/api/v1/ready` to verify traffic readiness and
 `/api/v1/admin/health/deep` with a `policy:read` token for protected
 diagnostics. Public responses must show logical or redacted values only.
+
+## CI/CD Secrets
+
+The root TreeDB workflow uses GitHub's `production` environment only for Docker
+publishing after all tests pass.
+
+Required production environment secrets:
+
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
+
+The root workflow does not require npm, Node, or the ignored TypeScript SDK
+package.

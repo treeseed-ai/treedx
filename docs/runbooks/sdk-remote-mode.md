@@ -10,23 +10,10 @@
 
 ## Smoke Check
 
-```bash
-TREEDB_LIVE_URL=http://localhost:4000 \
-TREEDB_LIVE_TOKEN=... \
-TREEDB_LIVE_REPO_ID=repo_demo \
-./scripts/sdk-live-contract.sh
-```
-
-Without those environment variables, the script reports `not configured` and
-exits successfully. This is an operational check result, not a skipped test.
+SDK live checks are run by the independent SDK package workflow. The top-level
+TreeDB release gate does not invoke SDK scripts or require an SDK checkout.
 
 ## Mutating Check
-
-```bash
-TREEDB_LIVE_MUTATING=true \
-TREEDB_LIVE_WRITE_PATH=tmp/sdk-live.md \
-./scripts/sdk-live-contract.sh
-```
 
 Use a test repository or an isolated branch policy for mutating checks.
 

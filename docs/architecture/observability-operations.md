@@ -38,4 +38,5 @@ scrubs secret-like values and filesystem paths before serialization.
 ## Contract
 
 Operational endpoints are part of the public API contract in
-`docs/api/openapi.yaml`. SDK types are generated from that contract.
+`docs/api/openapi.yaml`. SDK verification is handled independently from the
+TreeDB service release gate.

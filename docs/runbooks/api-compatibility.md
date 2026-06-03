@@ -1,28 +1,28 @@
 # TreeDB API Compatibility Runbook
 
-Use this runbook when changing TreeDB public routes, SDK methods, or payload
-types.
+Use this runbook when changing TreeDB public routes or payload types.
 
 ## Required Steps
 
 1. Update `docs/api/openapi.yaml`.
-2. Run `npm run treedb:generate-types` in `packages/ts-sdk`.
-3. Update SDK code only through public aliases in `packages/ts-sdk/src/treedb/types.ts`.
-4. Add or update server and SDK contract tests.
-5. Record breaking or compatibility-sensitive changes in
+2. Add or update server contract tests.
+3. Coordinate SDK type generation and SDK client changes in the independent SDK
+   repository when public payloads change.
+4. Record breaking or compatibility-sensitive changes in
    `docs/api/compatibility-notes.md`.
-6. Run `./scripts/test-treedb-fast.sh`.
+5. Run `./scripts/test-treedb-fast.sh`.
 
 ## Additive Changes
 
 Optional request fields and optional response fields are usually compatible.
-Document the field, regenerate SDK types, and verify contract tests.
+Document the field and verify contract tests. Coordinate SDK updates separately
+when the field is part of SDK-facing behavior.
 
 ## Breaking Changes
 
 Changing required fields, removing fields, renaming routes, changing error
-codes, or changing response envelope keys requires a compatibility note and an
-SDK semver decision.
+codes, or changing response envelope keys requires a compatibility note and a
+coordinated SDK compatibility decision.
 
 ## Safety Checks
 

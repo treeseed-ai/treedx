@@ -24,7 +24,7 @@ TreeDB protects repository, workspace, graph, search, blob, artifact, federation
 | Artifact tampering | Artifact bytes or metadata changed | Checksums and logical artifact IDs | Artifact security tests | External storage tamper | Rebuild snapshot and compare checksum |
 | Remote credential leakage | Credentials in URL, logs, audit, or metrics | Credential IDs only, URL sanitizer, scrubber, strict logs | Git remote and observability tests | Operator command leak | Disable external transport and rotate credentials |
 | Cross-tenant access | Token or grant crosses tenant boundary | Principal tenant and policy scope resolution | Policy and federation tests | Bad grant | Revoke grant and quarantine affected workspaces |
-| Dependency vulnerability | Vulnerable package or crate | `cargo audit`, `npm audit` | `scripts/security-check.sh` | Accepted temporary advisory | Document in accepted vulnerabilities with expiration |
+| Dependency vulnerability | Vulnerable crate or container dependency | `cargo audit`, Syft, Trivy | `scripts/security-check.sh` | Accepted temporary advisory | Document in accepted vulnerabilities with expiration |
 | Container vulnerability | Runtime image has high/critical issue | Trivy image scan | `scripts/security-check.sh` | Base image emergency | Patch image and rerun release gate |
 | SBOM and license risk | Unknown package inventory | Syft SBOM generation and license docs | `scripts/security-check.sh` | Transitive changes | Review generated SBOM before release |
 

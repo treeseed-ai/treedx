@@ -30,12 +30,12 @@ Implemented now:
 - Repository query APIs for generic Git-object-backed read, path list, search, section/link, and changed-path queries that map cleanly to SDK content usage.
 - Single-repository graph and context APIs with TreeDB-native graph segments, generic SDK-compatible node/edge shapes, authorization-aware graph filtering, graph refresh jobs, search index status/compaction, graph search/query, related/subgraph traversal, context modes, context packs, and `ctx` DSL parsing.
 - Federation-aware global search, query, context, and graph execution with authorization scope reduction, local and HTTP remote routing, deterministic merge, and sanitized partial failures.
-- Opt-in TypeScript SDK TreeDB clients/adapters, generated OpenAPI-backed TreeDB API types, no-clone `AgentSdk` remote mode, registry-aware routing, and federated clients.
+- OpenAPI contract coverage for SDK clients that are maintained and tested independently from this TreeDB service repository.
 - Connected auth with verifier abstraction, HS256 development compatibility, JWKS/OIDC verification, key rotation/cache behavior, scoped capability grants, policy refresh/revocation, workspace quarantine, and audit event listing.
 - Repository snapshots, tar.zst artifact export/download, artifact listing/deletion/cleanup, gix-backed mirror sync, push/fetch workflows, placement migration records, and SDK client methods for those surfaces.
 - Storage health/check/recover, compaction, backup, migration, guarded restore verification/apply, retention records, and release-gated recovery checks.
 - Public liveness/readiness/deep-health and metrics endpoints, protected deep health, scrubbed production JSON logging, and strict release-gate scripts.
-- End-to-end contract verification with in-process Phoenix scenarios, mocked TypeScript SDK TreeDB contract tests, generated OpenAPI fixtures, package-local SDK verification, release-gate scripts, and optional live HTTP checks.
+- End-to-end contract verification with in-process Phoenix scenarios, generated OpenAPI fixtures, TreeDB release-gate scripts, container smoke checks, and optional live HTTP checks.
 
 ## Why TreeDB Exists
 
@@ -70,13 +70,11 @@ The core design choices are:
     architecture/                # Current system architecture and risk docs
     runbooks/                    # Operations, recovery, release, and security runbooks
     research/                    # Historical compatibility research and design background
-  packages/
-    ts-sdk/                      # TreeSeed SDK compatibility target, separate checkout
   PLAN                           # Original implementation planning record
   LICENSE
 ```
 
-`packages/ts-sdk` is included for compatibility research, TreeDB transport adapters, and SDK contract tests. TreeDB SDK integration is implemented behind explicit TreeDB mode.
+The TypeScript SDK is intentionally tested and released independently from this TreeDB service repository. The top-level TreeDB release gate does not require `packages/ts-sdk`, npm, or Node setup.
 
 ## Architecture
 
@@ -924,11 +922,10 @@ The project currently has:
 - Rust graph tests for generic graph extraction, deterministic ranking/query behavior, segment write/read, checksum recovery, and `ctx` DSL parsing.
 - Elixir context and controller tests for store initialization, auth, repository registration, repository status, refs/remotes/sync, workspace lifecycle, health/version, policy, registry, mirror endpoints, File API workflows, Repository Query workflows, Graph/Context API workflows, and SDK query/graph mapping contracts.
 - End-to-end tests for authenticated repository registration, workspace update/commit, graph/context, federation planning/execution, snapshot/artifact export, migration dry-run, audit coverage, public path hygiene, and restart-style replay.
-- TypeScript SDK mocked contract tests for TreeDB remote mode without an agent-side repository clone.
-- OpenAPI and generated SDK type contract tests.
+- OpenAPI server contract tests.
 - Security boundary, observability, storage recovery, and release-gate tests.
 
-`packages/ts-sdk` has its own baseline state documented in `docs/research/sdk-baseline-verification.md`. The TreeDB SDK contract tests include `treedb-e2e-contract.test.ts` and a live-gated `treedb-live-contract.test.ts`.
+SDK verification is handled by the SDK package workflow. The TreeDB repository verifies the service, native crates, API contract, container image, storage recovery, and live TreeDB HTTP checks.
 
 ## Security Model
 
@@ -943,13 +940,13 @@ Security model:
 - Production identity must not come from request JSON.
 - Repository/file/search/graph operations authorize before querying, ranking, traversing, expanding, counting, or serializing results.
 - Shell execution is workspace-scoped, capability-gated, audited, timeout-bounded, and environment-scrubbed. Production should use container or worker-backed backends.
-- Release readiness is gated by `scripts/release-gate.sh`, which combines tests, OpenAPI checks, storage recovery checks, dependency scans, SBOM generation, container scanning, and optional live checks.
+- Release readiness is gated by `scripts/release-gate.sh`, which combines TreeDB tests, OpenAPI checks, storage recovery checks, dependency scans, SBOM generation, container scanning, container smoke checks, and optional live federation checks.
 
 Do not use dev tokens as a production authentication mechanism. If you find a vulnerability, use GitHub's private vulnerability reporting or Security Advisories if enabled for the repository. If those are not enabled yet, open a GitHub issue with a minimal non-sensitive description and avoid posting exploitable secrets or private repository details.
 
 ## API Stability
 
-TreeDB is pre-1.0. Public compatibility is based on `docs/api/openapi.yaml`, generated SDK TreeDB types, documented error codes, and the release gate. Additive optional fields are allowed when documented and regenerated; breaking changes require compatibility notes and SDK shims or versioning.
+TreeDB is pre-1.0. Public compatibility is based on `docs/api/openapi.yaml`, documented error codes, and the release gate. Additive optional fields are allowed when documented; breaking changes require compatibility notes and versioning.
 
 Compatibility priorities:
 
@@ -1008,7 +1005,7 @@ Use GitHub for project coordination:
 - Do not introduce TreeSeed product-domain concepts into TreeDB core.
 - Do not add PostgreSQL, SQLite, Ecto, or a shell-Git default path without an explicit design discussion.
 - Include tests for new storage formats, API behavior, and authorization logic.
-- Preserve `packages/ts-sdk` as a compatibility target unless the task explicitly requires SDK changes.
+- Keep SDK changes in the independent SDK workflow unless the task explicitly requires coordinated TreeDB API compatibility work.
 
 Before opening a pull request, run the relevant checks:
 

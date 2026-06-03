@@ -2,12 +2,6 @@
 set -euo pipefail
 
 (
-  cd packages/ts-sdk
-  npm run treedb:check-types
-  npm run treedb:contract
-)
-
-(
   cd apps/api
   CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedb-target}" \
   RUSTLER_TARGET_DIR="${RUSTLER_TARGET_DIR:-/tmp/treedb-target}" \
