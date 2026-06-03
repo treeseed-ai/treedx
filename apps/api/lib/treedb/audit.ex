@@ -4,7 +4,15 @@ defmodule TreeDb.Audit do
   alias TreeDb.Audit.Event
 
   def append(event_type, attrs \\ %{}) do
-    TreeDb.Store.append_audit_event(Event.new(event_type, attrs))
+    case TreeDb.Store.append_audit_event(Event.new(event_type, attrs)) do
+      {:ok, _} = result ->
+        TreeDb.Observability.Metrics.record_audit_event(event_type, attrs)
+        result
+
+      other ->
+        TreeDb.Observability.Metrics.incr("treedb_audit_append_failures_total")
+        other
+    end
   end
 
   def append_auth(event_type, attrs, status, data \\ %{}) do

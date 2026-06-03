@@ -1,27 +1,39 @@
 # Auth, Capability, Federation Access, And Audit Design
 
+This document records the original auth and capability design background.
+Current behavior includes JWKS/OIDC verification, policy refresh/revocation,
+workspace quarantine, global federation execution, and release-gated security
+checks. The current contract is in `docs/api/openapi.yaml`.
+
 ## Current Auth State
 
 TreeDB currently supports local development bearer tokens through `POST /api/v1/auth/dev-token`. Tokens are stored only as BLAKE3 hashes in `config/dev_tokens.tdb`, and authenticated callers resolve to a generic principal shape with `actorId`, `tenantId`, and `authMode`.
 
-Before MVP, `TREEDB_AUTH_MODE=connected` rejected dev-token creation but did not verify production tokens. The MVP connected-mode gap is closed with a local HMAC JWT verifier.
+Connected mode verifies bearer JWTs through configured verifier modules.
 
 ## Connected Auth Decision
 
-MVP uses HMAC-signed JWT verification with `HS256`.
+HS256 remains available for development and controlled compatibility. Production
+should use the configured verifier appropriate to the deployment, such as JWKS
+or OIDC, and production boot rejects development verifier settings unless
+explicitly overridden.
 
-Required connected-mode environment:
+Common connected-mode environment:
 
 - `TREEDB_AUTH_MODE=connected`
 - `TREEDB_JWT_ISSUER`
 - `TREEDB_JWT_AUDIENCE`
 - `TREEDB_JWT_HS256_SECRET`
+- `TREEDB_JWKS_URL` when using JWKS verification
 
 Optional:
 
 - `TREEDB_JWT_CLOCK_SKEW_SECONDS`, default `60`
 
-Static opaque tokens were rejected because they do not model user/agent/service claims well enough. JWKS JWT was deferred because key discovery, rotation, and network failure behavior are control-plane integration work beyond this MVP capability.
+Static opaque tokens were rejected because they do not model user/agent/service
+claims well enough. JWKS key discovery, cache refresh, rotation, issuer,
+audience, expiry, not-before, clock skew, and algorithm allowlisting are now
+covered by verifier modules and tests.
 
 ## JWT Claim Contract
 
@@ -51,7 +63,8 @@ TreeDB-scoped claims:
 
 ## Capability Contract
 
-TreeDB uses string capabilities scoped by tenant, repository, ref, and path. The canonical MVP capabilities are:
+TreeDB uses string capabilities scoped by tenant, repository, ref, and path. The
+canonical capabilities include:
 
 ```text
 repos:read
@@ -89,13 +102,20 @@ audit:read
 
 Repo matching supports exact IDs and `*`. Ref matching supports exact refs, `refs/heads/*`, `refs/tags/*`, and `*`. Path matching supports exact paths, `prefix/**`, and `**`.
 
-Workspace records snapshot effective scope at creation time. Future revocation work should expire, revoke, or quarantine active workspaces whose live policy no longer authorizes their snapshot.
+Workspace records include effective policy metadata. Revocation and policy hash
+changes quarantine active workspaces whose live policy no longer authorizes
+their snapshot.
 
 ## Federation Access Contract
 
-MVP federation is planner-only. `POST /api/v1/federation/query/plan` reduces a requested cross-repository scope to the effective authorized repo/ref/path scope before any future query execution.
+`POST /api/v1/federation/query/plan` reduces a requested cross-repository scope
+to the effective authorized repo/ref/path scope for inspection. Global
+`/api/v1/search`, `/api/v1/query`, `/api/v1/context/build`, and
+`/api/v1/graph/query` execute only after that scope reduction.
 
-The planner must not query every repository and filter afterward. It does not read graph segments, search indexes, blobs, snippets, or file contents. Hidden repositories and paths must not leak via snippets, counts, ranking signals, graph node IDs, or unauthorized path names.
+Federated execution must not query every repository and filter afterward. Hidden
+repositories and paths must not leak via snippets, counts, ranking signals,
+graph node IDs, diagnostics, errors, or unauthorized path names.
 
 ## Audit Contract
 

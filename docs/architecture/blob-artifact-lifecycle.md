@@ -1,8 +1,7 @@
 # Blob And Artifact Lifecycle
 
-Blob APIs support binary-safe JSON and raw byte transport. Deferred
-production hardening adds resumable multipart upload sessions and artifact
-lifecycle metadata.
+Blob APIs support binary-safe JSON transport, raw byte transport, resumable
+multipart upload sessions, and artifact lifecycle metadata.
 
 Multipart upload endpoints:
 

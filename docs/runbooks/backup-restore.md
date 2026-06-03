@@ -1,7 +1,7 @@
 # Backup and Recovery Runbook
 
-TreeDB provides diagnostic compaction and logical backup creation. Public
-destructive restore is intentionally deferred.
+TreeDB provides diagnostic compaction, logical backup creation, backup
+verification, migration records, and guarded restore operations.
 
 ## Health and Check
 
@@ -29,4 +29,21 @@ Backups are `tar.zst` archives under the TreeDB recovery area, but public
 responses return only `treedb://backup/<backup_id>` logical URIs.
 
 The archive is verified by decoding and reading all entries when `verify` is
-true. Public restore remains future work.
+true.
+
+## Migration and Restore
+
+Use:
+
+- `GET /api/v1/admin/storage/migrations`
+- `POST /api/v1/admin/storage/migrations/plan`
+- `POST /api/v1/admin/storage/migrations/apply`
+- `POST /api/v1/admin/storage/migrations/rollback`
+- `POST /api/v1/admin/storage/restore/verify`
+- `POST /api/v1/admin/storage/restore`
+
+Migration planning is read-only. Applying a migration records logical migration
+metadata and takes a backup by default. Restore verification is non-destructive
+and returns logical status. Restore apply is disabled unless
+`TREEDB_STORAGE_RESTORE_ENABLED=true`; destructive restore also requires
+`TREEDB_STORAGE_MODE=read_only_recovery` or `force: true`.

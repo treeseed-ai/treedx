@@ -1,12 +1,18 @@
-# MVP End-To-End Contract
+# End-To-End Contract
 
 ## Purpose
 
-MVP turns the implemented TreeDB surfaces into a repeatable MVP proof that a repository can be registered, queried, updated, indexed, snapshotted, audited, and replayed without putting TreeSeed product semantics into TreeDB.
+The end-to-end contract proves that a repository can be registered, queried,
+updated, indexed, snapshotted, audited, federated, and replayed without putting
+TreeSeed product semantics into TreeDB.
 
-## Current MVP Baseline
+## Current Baseline
 
-The baseline includes dev and connected auth, scoped capabilities, audit listing, repository query, workspace file operations, graph/context segments, snapshots/artifacts, mirror sync records, placement migration records, and TypeScript SDK TreeDB clients.
+The baseline includes dev and connected auth, scoped capabilities, audit
+listing, repository query, workspace file/blob operations, graph/context
+segments, search indexes, snapshots/artifacts, mirror sync records, push/fetch,
+placement migration records, storage operations, global federation execution,
+and TypeScript SDK TreeDB clients.
 
 ## Verification Shape
 
@@ -22,7 +28,9 @@ The optional deployment layer is:
 
 ## Federation Scope
 
-Global federation execution remains out of scope. MVP only verifies planner behavior: requested repositories, refs, paths, and capabilities are reduced to authorized scopes before any future query execution.
+Federation tests verify both planner behavior and authorized global execution.
+Requested repositories, refs, paths, and capabilities are reduced to authorized
+scope before search, query, context, or graph execution.
 
 ## Fixture Repository Shape
 
@@ -32,14 +40,18 @@ The dynamic fixture repository contains:
 - YAML frontmatter
 - headings and Markdown links
 - a generic unresolved `treedb://` reference
-- `mvp provenance` as a unique searchable phrase
+- `treedb provenance` as a unique searchable phrase
 - files outside a restricted actor path scope
 
 Shell Git is used only to create this test fixture repository.
 
 ## Required Sequence
 
-The fast test covers auth, policy, node and placement lookup, workspace creation, repository search, graph refresh, context build, federation planning, file write, read-only and verification exec, status/diff, commit, committed-ref reads, graph refresh/search on the committed branch, snapshot build, artifact export, migration dry-run, audit listing, and restart-style replay.
+The fast test covers auth, policy, node and placement lookup, workspace
+creation, repository search, graph refresh, context build, federation
+planning/execution, file and blob writes, exec, status/diff, commit,
+committed-ref reads, graph refresh/search on the committed branch, snapshot
+build, artifact export, migration dry-run, audit listing, and replay.
 
 ## Restart And Recovery
 
@@ -49,15 +61,10 @@ The restart check calls `TreeDb.Store.init!/1` against the same data directory a
 
 The SDK mocked test constructs `TreeDbClient`, `TreeDbRepositoryAdapter`, and `TreeDbGraphAdapter` without a local repository clone. Content model path routing is provided through `contentPathMap`.
 
-## Non-Goals
+## Boundary
 
-- global `/api/v1/search`, `/api/v1/query`, or `/api/v1/context/build`
-- live multi-node federation
-- Git push
-- production sandbox hardening
-- JWKS/key rotation
-- OpenAPI generation
-- TreeSeed product-domain semantics inside TreeDB
+TreeSeed product-domain semantics remain outside TreeDB. Live checks are
+environment-backed and report `not configured` when credentials are absent.
 
 ## Verification Commands
 

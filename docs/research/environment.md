@@ -1,16 +1,20 @@
-# MVP Environment Research
+# Environment Research
+
+This document is historical background from the first repository audit. The
+current operational source of truth is the root `README.md`, `Dockerfile`,
+`compose.yaml`, `compose.prod.yaml`, `Cargo.toml`, `apps/api`, `crates`, and the
+runbooks under `docs/runbooks`.
 
 ## Repository Layout
 
-The top-level TreeDB repository is only a plan plus a copied SDK at this capability. The root currently contains `PLAN`, `LICENSE`, `.gitignore`, and `packages/ts-sdk`; no root application skeleton is present yet.
-
-No root `package.json`, `Cargo.toml`, `mix.exs`, `Dockerfile`, `compose.yaml`, or `docker-compose.yml` was found. MVP needs to introduce the root Elixir/Phoenix service, Rust crates, Dockerfile, and Compose manifests described in `PLAN`.
-
-`packages/ts-sdk` is its own Git checkout/submodule-style directory and is the only runnable package found during MVP. It is the current compatibility target for TreeSeed market, core, and agent behavior.
+The current repository includes the Phoenix API service, Rust crates, Docker
+runtime, Compose manifests, OpenAPI contract, runbooks, and the SDK package.
+`packages/ts-sdk` remains separately verifiable and also participates in the
+root release gate.
 
 ## Tooling
 
-Detected local host tools during the MVP audit:
+Detected local host tools during the original audit:
 
 | Tool | Version |
 | --- | --- |
@@ -22,11 +26,13 @@ Detected local host tools during the MVP audit:
 | Erlang/OTP | `27` |
 | Elixir | `1.17.3` |
 
-These host versions are useful for MVP research only. They must not become prerequisites for contributors. MVP should make Docker the canonical way to run the service and should containerize Elixir, Erlang/OTP, Rust, Node, Git, ripgrep, and native build tooling.
+These host versions were audit context only. Docker remains the canonical way
+to run the service for contributors who do not already have the full toolchain.
 
 ## Package Manager And Scripts
 
-The root TreeDB repository has no package manager configuration yet.
+The root TreeDB repository uses Cargo, Mix, Docker, and shell verification
+scripts. The SDK package uses npm and remains independently verifiable.
 
 `packages/ts-sdk` uses npm, evidenced by `packages/ts-sdk/package-lock.json`. Its package metadata is:
 
@@ -57,14 +63,16 @@ SDK scripts recorded for compatibility:
 
 ## Runtime Assumptions
 
-Per `PLAN`, host contributors should ultimately need Docker only. The canonical runtime path should be `docker compose up treedb-api`, with the container owning language runtime and native dependency complexity.
+The canonical runtime path is `docker compose up treedb-api`, with the
+container owning language runtime and native dependency complexity. Host-local
+commands are supported for maintainers with Rust, Elixir/OTP, Node, Git, Docker,
+and scanner tools installed.
 
-Current direct host execution of npm commands in `packages/ts-sdk` is appropriate only for MVP audit and baseline capture. It should not define the long-term TreeDB developer experience.
+## Current Environment Risks
 
-## Open Environment Risks
-
-1. No root project skeleton exists yet.
-2. The SDK fixture submodule is not initialized.
-3. The SDK has no `typecheck` script even though MVP suggested one.
-4. Existing host Elixir and Rust versions must not become required; MVP should containerize them.
-5. `packages/ts-sdk` is a separate Git checkout, so root-level automation must be careful not to assume a single worktree.
+1. `packages/ts-sdk` can be checked out and verified independently, so contract
+   generation must continue to support package-local OpenAPI files.
+2. Strict release scanning requires external tools (`cargo-audit`, `syft`,
+   `trivy`, and Docker) that may not be installed on every developer machine.
+3. Live TreeDB and federation checks are optional environment-backed checks and
+   must report `not configured` rather than appearing as skipped tests.

@@ -1,0 +1,16 @@
+# Accepted Vulnerabilities
+
+These findings are accepted only for the current release gate while dependency upgrades are prepared. Every entry is time-limited and must be revisited before the expiration date.
+
+| Package/Image | Advisory ID | Severity | Reason Accepted | Mitigation | Owner | Expiration Date |
+| --- | --- | --- | --- | --- | --- | --- |
+| `@github/copilot` | `GHSA-9ccr-r5hg-74gf` | High | Upstream fix requires a package update outside the current declared range. | Keep Copilot CLI use out of TreeDB server runtime paths; upgrade the package range before expiration. | TreeDB release owner | 2026-09-01 |
+| `fast-uri` | `GHSA-q3j6-qgpj-74h6` | High | Transitive dependency update is available but must be validated with SDK contract tests. | TreeDB URL handling rejects credential-bearing URLs and validates public routes separately; update dependency tree before expiration. | TreeDB release owner | 2026-09-01 |
+| `fast-uri` | `GHSA-v39h-62p7-jpjc` | High | Transitive dependency update is available but must be validated with SDK contract tests. | TreeDB URL handling rejects credential-bearing URLs and validates public routes separately; update dependency tree before expiration. | TreeDB release owner | 2026-09-01 |
+| `fast-xml-builder` | `GHSA-5wm8-gmm8-39j9` | High | Transitive dependency update is available but requires package-lock validation. | Do not process untrusted XML through TreeDB API paths; update dependency tree before expiration. | TreeDB release owner | 2026-09-01 |
+| `tar` | `GHSA-34x7-hfp2-rc4v` | High | Fix requires a Railway CLI dependency update that must be tested against deploy workflows. | TreeDB storage restore uses native validation paths rather than this SDK CLI dependency; update Railway CLI before expiration. | TreeDB release owner | 2026-09-01 |
+| `tar` | `GHSA-8qq5-rm4j-mr97` | High | Fix requires a Railway CLI dependency update that must be tested against deploy workflows. | TreeDB storage restore uses native validation paths rather than this SDK CLI dependency; update Railway CLI before expiration. | TreeDB release owner | 2026-09-01 |
+| `tar` | `GHSA-83g3-92jg-28cx` | High | Fix requires a Railway CLI dependency update that must be tested against deploy workflows. | TreeDB storage restore uses native validation paths rather than this SDK CLI dependency; update Railway CLI before expiration. | TreeDB release owner | 2026-09-01 |
+| `tar` | `GHSA-qffp-2rhf-9h96` | High | Fix requires a Railway CLI dependency update that must be tested against deploy workflows. | TreeDB storage restore uses native validation paths rather than this SDK CLI dependency; update Railway CLI before expiration. | TreeDB release owner | 2026-09-01 |
+| `tar` | `GHSA-9ppj-qmqm-q256` | High | Fix requires a Railway CLI dependency update that must be tested against deploy workflows. | TreeDB storage restore uses native validation paths rather than this SDK CLI dependency; update Railway CLI before expiration. | TreeDB release owner | 2026-09-01 |
+| `tar` | `GHSA-r6q2-hw4h-h46w` | High | Fix requires a Railway CLI dependency update that must be tested against deploy workflows. | TreeDB storage restore uses native validation paths rather than this SDK CLI dependency; update Railway CLI before expiration. | TreeDB release owner | 2026-09-01 |

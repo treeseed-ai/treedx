@@ -1,88 +1,32 @@
 # TreeDB OpenAPI Gap List
 
-Status: Route and schema gap inventory
+Status: Typed contract coverage inventory
 
-`docs/api/openapi.yaml` is currently a human-maintained route inventory with
-generic envelopes. It is complete enough to prevent missing-route drift, but it
-is not yet a schema-complete contract.
+`docs/api/openapi.yaml` is the public TreeDB HTTP contract. SDK API payload
+types are generated from that file into
+`packages/ts-sdk/src/treedb/generated/openapi-types.ts`.
 
-## Routes With Generic `OkEnvelope`
+## Typed Contract Coverage
 
-Many routes still use the generic `OkEnvelope` response. The route inventory
-keeps this explicit to avoid pretending the contract is stricter than the
-implementation.
+Every public route in `apps/api/lib/treedb_web/router.ex` must appear in
+OpenAPI with:
 
-Priority routes for typed response schemas:
+- `operationId`
+- `summary`
+- `x-treedb-required-capabilities`
+- route-specific success response schema
+- typed error envelope
+- request schemas where the route accepts JSON
+- binary response metadata for raw byte routes
+- operational health, readiness, and metrics response schemas
 
-1. Auth and policy:
-   - `/api/v1/auth/whoami`
-   - `/api/v1/auth/mode`
-   - `/api/v1/policy/effective-scope`
-2. Repository and workspace:
-   - `/api/v1/repos/register`
-   - `/api/v1/repos/{repo_id}`
-   - `/api/v1/repos/{repo_id}/workspaces`
-   - `/api/v1/workspaces/{workspace_id}`
-3. File/query:
-   - `/api/v1/workspaces/{workspace_id}/files`
-   - `/api/v1/workspaces/{workspace_id}/blobs/write`
-   - `/api/v1/workspaces/{workspace_id}/blobs/download`
-   - `/api/v1/repos/{repo_id}/files/read`
-   - `/api/v1/repos/{repo_id}/blobs/read`
-   - `/api/v1/repos/{repo_id}/query`
-4. Graph/context:
-   - `/api/v1/repos/{repo_id}/graph/refresh`
-   - `/api/v1/repos/{repo_id}/graph/refresh-jobs/{job_id}`
-   - `/api/v1/repos/{repo_id}/graph/query`
-   - `/api/v1/repos/{repo_id}/context/build`
-   - `/api/v1/repos/{repo_id}/search/index/refresh`
-   - `/api/v1/repos/{repo_id}/search/index/status`
-   - `/api/v1/repos/{repo_id}/search/index/compact`
-5. Snapshot/mirror/migration:
-   - `/api/v1/repos/{repo_id}/snapshots/build`
-   - `/api/v1/repos/{repo_id}/artifacts/export`
-   - `/api/v1/repos/{repo_id}/mirrors/{mirror_id}/sync`
-   - `/api/v1/repos/{repo_id}/migrations`
+Route and schema drift is checked by:
 
-## Missing Request Schemas
-
-Request bodies are not yet schema-complete for:
-
-- repository registration
-- policy refresh and grant updates
-- federation planning
-- repository file read/search/path/query
-- repository blob read
-- graph refresh/query/search/traversal
-- graph refresh job status
-- search index refresh/status/compact
-- context build and parse
-- snapshot build and artifact export
-- workspace create/write/patch/search/commit/exec
-- workspace blob write/delete/upload/download
-- repository push and fetch remote bodies
-- mirror health and promotion bodies
-- admin storage compact and backup bodies
-- mirror sync and migration creation
-- federated global search, query, context, and graph bodies
-
-## Missing Response Schemas
-
-Response schemas are not yet complete for:
-
-- principal/auth mode
-- effective scope
-- capability grants
-- audit events
-- node/placement/mirror/migration records
-- repository/ref/remote/status records
-- workspace and file mutation results
-- blob read, mutation, upload, and download metadata
-- git push/fetch, mirror health/promotion, and storage compact/backup records
-- graph/context results
-- graph refresh job records and search index records
-- federated diagnostics, partial errors, and cross-repo graph results
-- snapshot/artifact records
+- `apps/api/test/treedb_web/route_openapi_inventory_test.exs`
+- `apps/api/test/treedb_web/openapi_contract_test.exs`
+- `packages/ts-sdk/test/utils/treedb-openapi-contract.test.ts`
+- `packages/ts-sdk/test/utils/treedb-generated-types.test.ts`
+- `packages/ts-sdk/test/utils/treedb-sdk-request-contract.test.ts`
 
 ## Missing Error Examples
 
@@ -104,63 +48,39 @@ Add examples for:
 - `backup_failed`
 - `storage_compaction_failed`
 
-## Binary Blob Follow-Ups
+## Known Intentional Open Maps
 
-Implemented blob routes are binary-safe but still use generic OpenAPI
-envelopes. Schema work should add typed contracts for:
+Some response fragments intentionally remain open maps because they contain
+opaque diagnostics, extension options, audit event data, or remote metadata.
+These use `additionalProperties: true` and must still pass public hygiene
+tests.
 
-- base64 blob read/write request and response bodies
-- raw upload headers (`x-treedb-expected-sha`,
-  `x-treedb-expected-content-hash`, `x-treedb-allow-protected`)
-- raw download metadata headers (`x-treedb-content-hash`,
-  `x-treedb-object-id`, `x-treedb-source`)
-- `payload_too_large`, malformed base64, hash mismatch, and
-  `workspace_revoked` examples
+Intentional open-map areas:
 
-Production hardening routes now cover resumable multipart blob uploads,
-artifact lifecycle metadata, retention cleanup, storage migration metadata, and
-guarded restore verification. These routes still use generic envelopes until
-OpenAPI schema generation adds fully typed request/response schemas.
+- audit event `data`
+- federation filters and diagnostics
+- graph and context options
+- storage diagnostics
+- error `details`
 
-## Transport, Sandbox, and Storage Follow-Ups
+## Generated SDK Type Coverage
 
-Transport, sandbox, and storage routes are documented with operation metadata
-but still use generic `OkEnvelope`/`ErrorEnvelope` schemas. Schema work should add typed
-contracts for:
+Generated type freshness is checked with:
 
-- explicit push/fetch refspec request bodies and sanitized remote response
-  payloads
-- mirror health and promotion result payloads
-- exec sandbox metadata, resource limits, and sandbox error envelopes
-- storage compaction per-file statistics and logical backup records
-
-Credential-ID based Git remotes, constrained external transport, external
-worker and microVM-profile exec, storage migration metadata, guarded restore
-verification, and artifact retention cleanup are now documented as
-production-hardening route/API surfaces. Fully generated schemas and external
-infrastructure conformance tests remain later API contract/release work.
-
-## Hand-Maintained SDK Types
-
-TreeDB SDK types are currently hand-maintained in:
-
-```text
-packages/ts-sdk/src/treedb/types.ts
+```bash
+cd packages/ts-sdk
+npm run treedb:check-types
 ```
 
-Export tests lock public TreeDB SDK surfaces. Future contract work should
-decide whether to generate these types from OpenAPI or keep hand-maintained
-types with explicit drift checks.
+Public SDK type names remain stable through aliases in
+`packages/ts-sdk/src/treedb/types.ts`.
 
-The SDK keeps the types hand-maintained and uses SDK/OpenAPI drift tests for
-critical TreeDB routes and package export subpaths. Full schema-generated SDK
-types remain deferred until route schemas are more complete.
+## Remaining Contract Work
 
-## Recommended Closure Order
+Remaining work is limited to quality improvements rather than broad schema gaps:
 
-1. Keep route inventory and `operationId` metadata complete in every PR.
-2. Add typed schemas for auth, error, effective scope, repository, workspace,
-   and file APIs.
-3. Add contract tests validating Phoenix responses against OpenAPI.
-4. Add SDK request construction tests against OpenAPI.
-5. Evaluate OpenAPI-generated SDK types once schema coverage is stable.
+- add richer examples for rare operational errors;
+- expand live infrastructure conformance tests;
+- tighten intentionally open diagnostic maps as server payloads become stable;
+- consider generated Phoenix validators if runtime schema validation becomes
+  useful.

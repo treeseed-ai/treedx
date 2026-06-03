@@ -10,6 +10,7 @@ defmodule TreeDb.Application do
 
     Application.put_env(:treedb, :data_dir, data_dir)
 
+    TreeDb.ConfigValidation.validate_boot!()
     :ok = validate_auth!()
     TreeDb.Store.init!(node_id: node_id())
 
@@ -25,6 +26,8 @@ defmodule TreeDb.Application do
     })
 
     children = [
+      TreeDb.Observability.Metrics,
+      TreeDb.Observability.Telemetry,
       TreeDb.Auth.JwksCache,
       TreeDbWeb.Endpoint
     ]

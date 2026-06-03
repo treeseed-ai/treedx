@@ -1,5 +1,9 @@
 # SDK TreeDB Integration Design
 
+This document records the original SDK integration design. The current SDK uses
+generated OpenAPI-backed TreeDB API types, no-clone `AgentSdk` remote mode,
+TreeDB-backed ports, registry routing, and global federation methods.
+
 ## Current SDK Construction
 
 `AgentSdk` currently constructs a local `ContentStore` and `ContentGraphRuntime` in `packages/ts-sdk/src/sdk.ts`.
@@ -11,7 +15,8 @@
 
 ## TreeDB Integration Choice
 
-MVP adds exported TreeDB clients plus adapter ports. Local SDK behavior remains unchanged by default.
+TreeDB clients, adapters, and ports are exported. Local SDK behavior remains
+unchanged by default.
 
 TreeDB mode is opt-in through explicit client/adapters or `AgentSdk({ treeDb: { enabled: true, ... } })`. TreeDB repository transport is separate from TreeSeed market dispatch and does not overload market/project remote dispatch.
 
@@ -46,18 +51,28 @@ TreeDB bearer tokens are passed as `authorization: Bearer <token>`.
 
 TreeDB API error envelopes are converted to `TreeDbApiError` with status, code, message, details, and payload. Network failures are wrapped as `TreeDbApiError` with `status = 0` and `code = "network_error"` so SDK callers can handle all TreeDB client failures consistently.
 
-Important server codes preserved by the SDK include `authentication_required`, `permission_denied`, `not_found`, `conflict`, `payload_too_large`, `unsupported_media_type`, `validation_error`, and `not_implemented`.
+Important server codes preserved by the SDK include `authentication_required`,
+`invalid_token`, `permission_denied`, `workspace_revoked`, `not_found`,
+`conflict`, `payload_too_large`, `unsupported_media_type`, `validation_error`,
+`service_unavailable`, federation errors, sandbox errors, storage errors, and
+transport errors.
 
 ## Registry Routing
 
 `TreeDbRegistryClient` resolves repository placement through existing registry endpoints.
 
-`TreeDbFederatedClient` routes writes to the placement primary node. Reads route to the primary node in MVP. Mirror read routing is typed but not enabled by default because mirror health/read URL selection is still skeletal server-side.
+`TreeDbFederatedClient` uses TreeDB registry and global endpoints for federated
+read/query workflows. Write federation remains scoped to the configured
+repository/placement surfaces.
 
-Global `/api/v1/search`, `/api/v1/query`, and `/api/v1/context/build` are not added in MVP. Federated query/search methods support single-repository routing only and throw `federated_query_not_implemented` for cross-repository fan-out.
+Global `/api/v1/search`, `/api/v1/query`, `/api/v1/context/build`, and
+`/api/v1/graph/query` are implemented. Multi-repository SDK calls delegate to
+TreeDB instead of client-side fan-out.
 
 ## Test Strategy
 
-MVP SDK tests use mocked `fetch` only. Live Phoenix contract tests are deferred.
+SDK tests include mocked request contract coverage, generated OpenAPI type
+freshness checks, package-local verification, and optional live contract checks
+that report `not configured` when credentials are absent.
 
 Existing local SDK tests remain local. The earlier package-graph self-reference failure is documented in `docs/research/sdk-baseline-verification.md` and has been fixed; the full SDK suite now passes.

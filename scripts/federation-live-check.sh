@@ -12,7 +12,7 @@ required=(
 
 for name in "${required[@]}"; do
   if [[ -z "${!name:-}" ]]; then
-    echo "Skipping federation live check: ${name} is not set."
+    echo "Federation live check not configured: ${name} is not set."
     exit 0
   fi
 done

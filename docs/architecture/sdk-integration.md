@@ -19,7 +19,12 @@ The SDK exposes port interfaces for auth, repository, repository query, graph, r
 
 ## Contract Strategy
 
-The SDK keeps TreeDB types hand-maintained. Drift tests parse `docs/api/openapi.yaml` and verify critical TreeDB routes and SDK exports. Full generated types and schema linting remain later contract work.
+TreeDB HTTP payload types are generated from `docs/api/openapi.yaml` into
+`packages/ts-sdk/src/treedb/generated/openapi-types.ts`. Public SDK type names
+remain stable through aliases in `packages/ts-sdk/src/treedb/types.ts`.
+
+Drift tests verify route inventory, OpenAPI schema coverage, generated type
+freshness, SDK request construction, and package subpath exports.
 
 ## Boundaries
 

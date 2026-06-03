@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ -z "${TREEDB_LIVE_URL:-}" || -z "${TREEDB_LIVE_TOKEN:-}" || -z "${TREEDB_LIVE_REPO_ID:-}" ]]; then
-  echo "Skipping TreeDB live SDK contract: TREEDB_LIVE_URL, TREEDB_LIVE_TOKEN, and TREEDB_LIVE_REPO_ID are required."
+  echo "TreeDB live SDK contract not configured: TREEDB_LIVE_URL, TREEDB_LIVE_TOKEN, and TREEDB_LIVE_REPO_ID are required."
   exit 0
 fi
 

@@ -17,7 +17,8 @@ TREEDB_LIVE_REPO_ID=repo_demo \
 ./scripts/sdk-live-contract.sh
 ```
 
-Without those environment variables, the script exits successfully with a skip message.
+Without those environment variables, the script reports `not configured` and
+exits successfully. This is an operational check result, not a skipped test.
 
 ## Mutating Check
 

@@ -1,7 +1,7 @@
 defmodule TreeDb.Files.PathPolicy do
   @moduledoc false
 
-  @protected_roots ~w(.git node_modules dist target _build deps .elixir_ls)
+  @protected_roots ~w(.git .ssh node_modules dist target _build deps .elixir_ls)
   @protected_names ~w(package-lock.json pnpm-lock.yaml yarn.lock Cargo.lock mix.lock poetry.lock Gemfile.lock id_rsa)
 
   def normalize(path, opts \\ []) do
@@ -20,6 +20,9 @@ defmodule TreeDb.Files.PathPolicy do
 
       String.contains?(path, "\\") ->
         {:error, error("validation_error", "path must use POSIX separators.")}
+
+      encoded_traversal?(path) ->
+        {:error, error("validation_error", "path traversal is not allowed.")}
 
       true ->
         parts =
@@ -82,4 +85,12 @@ defmodule TreeDb.Files.PathPolicy do
   end
 
   defp error(code, message), do: %{code: code, message: message}
+
+  defp encoded_traversal?(path) do
+    path
+    |> String.downcase()
+    |> String.replace("%2e", ".")
+    |> String.split("/", trim: true)
+    |> Enum.any?(&(&1 == ".."))
+  end
 end

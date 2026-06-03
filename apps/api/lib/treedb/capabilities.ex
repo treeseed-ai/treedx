@@ -161,6 +161,15 @@ defmodule TreeDb.Capabilities do
   end
 
   defp denied(details) do
+    capability =
+      details[:capability] ||
+        (details[:capabilities] && Enum.join(List.wrap(details[:capabilities]), ",")) ||
+        "unknown"
+
+    TreeDb.Observability.Metrics.incr("treedb_capability_denials_total", %{
+      capability: capability
+    })
+
     {:error,
      %{code: "permission_denied", message: "Permission denied.", details: Map.new(details)}}
   end

@@ -11,9 +11,12 @@ Use `POST /api/v1/repos/:repo_id/push` with `git:push`.
 - SSH push is available only when explicitly enabled with credential IDs and strict known_hosts.
 - Credential-bearing URLs are rejected.
 - Public responses and audit payloads redact local/file remote paths.
-- Non-dry-run push supports local path and `file://` remotes.
-- HTTP(S) non-dry-run returns `unsupported_transport` until authenticated
-  remote transport is implemented.
+- Non-dry-run push supports local path and `file://` remotes through the native
+  path.
+- Authenticated HTTPS and SSH push/fetch require `credentialId` and
+  `TREEDB_GIT_EXTERNAL_TRANSPORT_ENABLED=true`.
+- SSH also requires `TREEDB_GIT_SSH_ENABLED=true` and
+  `TREEDB_GIT_SSH_KNOWN_HOSTS`.
 
 ## Fetch
 

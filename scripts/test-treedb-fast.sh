@@ -19,7 +19,9 @@ CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedb-target}" cargo test --workspac
 (
   cd packages/ts-sdk
   npm run build
+  npm run treedb:check-types
   npm test
+  npm run treedb:contract
   npx vitest run --config ./vitest.config.ts \
     test/utils/treedb-sdk-exports.test.ts \
     test/utils/treedb-client.test.ts \

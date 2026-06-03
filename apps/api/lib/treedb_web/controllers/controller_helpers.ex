@@ -7,6 +7,7 @@ defmodule TreeDbWeb.ControllerHelpers do
 
   def error(conn, status, error) do
     conn
+    |> assign(:treedb_error_code, error[:code] || error["code"] || "internal_error")
     |> put_status(status)
     |> json(%{
       ok: false,
@@ -26,6 +27,7 @@ defmodule TreeDbWeb.ControllerHelpers do
   def status_for("invalid_audience"), do: 401
   def status_for("invalid_signature"), do: 401
   def status_for("auth_not_configured"), do: 500
+  def status_for("service_unavailable"), do: 503
   def status_for("permission_denied"), do: 403
   def status_for("not_found"), do: 404
   def status_for("graph_not_ready"), do: 404

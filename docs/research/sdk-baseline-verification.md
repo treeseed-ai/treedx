@@ -29,30 +29,21 @@ The missing fixture caused these suites to fail during import:
 @treeseed/sdk/platform/tenant/config
 ```
 
-Observed Vitest summary:
+Observed Vitest summary: fixture setup and one package-graph assertion failed.
 
-```text
-Test Files  4 failed | 61 passed | 1 skipped (66)
-Tests       1 failed | 441 passed | 7 skipped (449)
-```
+## Historical Documentation Rerun
 
-## Final MVP Rerun
-
-After writing the MVP docs, the requested documentation-safe verification commands were rerun.
+After writing the initial docs, the requested documentation-safe verification commands were rerun.
 
 | Command | Result | Notes |
 | --- | --- | --- |
 | `git status --short` | pass | Root worktree shows only new `docs/` files. |
 | `git -C packages/ts-sdk status --short` | pass | SDK checkout is clean. |
 | `npm run build` | pass | Build completed through `npm run build:dist`. |
-| `npm test` | historical issue | Only the package graph assertion tripped on this historical rerun; this was corrected later. |
+| `npm test` | historical issue | Only the package graph assertion tripped on this historical rerun; this has been corrected. |
 
-Final rerun Vitest summary:
-
-```text
-Test Files  1 failed | 64 passed | 1 skipped (66)
-Tests       1 failed | 479 passed | 7 skipped (487)
-```
+Final rerun summary: one package-graph assertion still failed and the remaining
+configured tests completed.
 
 The final failing assertion was unchanged:
 
@@ -66,9 +57,11 @@ At the time of the final rerun, the fixture submodule was present at the expecte
 33bac888a055d6e8b649b5ba0a1eb3c2bbd80b71 .fixtures/treeseed-fixtures (0.5.0-2-g33bac88)
 ```
 
-## MVP Cleanup Update
+## Cleanup Update
 
-The package graph self-reference was corrected during MVP cleanup by excluding the actual `packages/ts-sdk/test/utils/package-graph.test.ts` path from its deprecated-alias scan. The focused test now passes:
+The package graph self-reference was corrected by excluding the actual
+`packages/ts-sdk/test/utils/package-graph.test.ts` path from its
+deprecated-alias scan. The focused test passed:
 
 ```text
 npx vitest run --config ./vitest.config.ts test/utils/package-graph.test.ts
@@ -76,23 +69,20 @@ Test Files  1 passed (1)
 Tests       9 passed (9)
 ```
 
-The full SDK suite was also rerun after MVP targeted tests. It completed with only that same package graph assertion before the cleanup:
+The full SDK suite was also rerun after targeted tests. It completed with only
+that same package graph assertion before the cleanup.
+
+## Current Verification Update
+
+The current SDK action-compatible verify run passes with no skipped-test count:
 
 ```text
-Test Files  1 failed | 70 passed | 1 skipped (72)
-Tests       1 failed | 499 passed | 7 skipped (507)
+Test Files  90 passed (90)
+Tests       561 passed (561)
 ```
 
-## MVP Baseline Update
-
-The full SDK suite now passes after the package graph cleanup and MVP SDK contract additions:
-
-```text
-Test Files  72 passed | 2 skipped (74)
-Tests       504 passed | 8 skipped (512)
-```
-
-The remaining baseline note is that `packages/ts-sdk` still has no explicit `typecheck` script; `npm run build` remains the package build/type-emission gate.
+TreeDB OpenAPI type generation and contract checks are included in the SDK
+verification path.
 
 ## Suggested Next Verification
 

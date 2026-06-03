@@ -1,12 +1,16 @@
 # Snapshot, Mirror, And Migration Design
 
-## Current MVP State
+## Current State
 
-TreeDB has server-side auth, scoped capability grants, stable audit events, and planner-only federation access reduction. Mirror records exist in the registry, but MVP does not perform network sync. Federation planning intentionally does not execute global search/query. There is no repository snapshot, artifact export, or placement migration API before MVP.
+TreeDB has server-side auth, scoped capability grants, stable audit events,
+federation scope reduction and execution, mirror records, mirror sync,
+repository snapshots, artifact export/lifecycle, push/fetch, and placement
+migration APIs.
 
 ## Snapshot Contract
 
-MVP snapshots are repository/index oriented. They do not encode TreeSeed package, release, template, market, or product semantics.
+Snapshots are repository/index oriented. They do not encode TreeSeed package,
+release, template, market, or product semantics.
 
 Supported snapshot kinds:
 
@@ -34,7 +38,10 @@ Artifact bytes are created by Rust store code using `tar` and `zstd`, not shell 
 
 ## Mirror Sync Contract
 
-Mirror sync is gix-backed. MVP supports local file remotes and HTTP(S) where enabled by gix features. SSH remotes return a structured `unsupported_transport` error unless a future build enables and validates SSH transport.
+Mirror sync is gix-backed. Local and `file://` remotes use native paths.
+Authenticated HTTPS/SSH workflows use the constrained external transport when
+enabled and configured with logical credential IDs. SSH requires strict
+`known_hosts`.
 
 Mirror sync persists records under TreeDB-native federation files:
 
@@ -62,7 +69,7 @@ The TypeScript SDK receives generic snapshot, artifact, mirror sync, and migrati
 
 ## Security Boundaries
 
-MVP keeps these constraints:
+TreeDB keeps these constraints:
 
 - no SQL, Ecto, PostgreSQL, or SQLite
 - no shell Git implementation path

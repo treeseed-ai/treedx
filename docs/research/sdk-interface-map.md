@@ -55,12 +55,12 @@ The operations create or update content files, commit changes, optionally run ve
 
 The file also contains TreeSeed domain collections and defaults such as `objectives`, `questions`, `notes`, `proposals`, `decisions`, and `agents`. TreeDB should support the Git, file, workspace, branch, commit, diff, and verification primitives needed by these operations, but it must not encode the meaning of those collections.
 
-TreeDB adapter seams:
+TreeDB adapter mappings:
 
 - Replace direct workspace path access with TreeDB workspace sessions.
 - Map repository descriptors to TreeDB repository registration and placement records.
 - Map path policies to TreeDB path-scoped capabilities.
-- Map verification commands to future sandbox exec APIs.
+- Map verification commands to sandbox exec APIs.
 - Preserve TreeSeed content normalization in the SDK/core layer.
 
 ## File/Blob Operations
@@ -127,7 +127,8 @@ Authorization must happen before search or graph expansion. TreeDB must reduce r
 - `git commit`
 - `git rev-parse HEAD`
 
-Broader SDK Git behavior appears in workflow, workspace, release, package, template, and verification services and tests. Areas to inspect and keep mapped during later capabilities include:
+Broader SDK Git behavior appears in workflow, workspace, release, package,
+template, and verification services and tests. Areas to keep mapped include:
 
 - `src/operations/services/git-workflow.ts`
 - `src/workflow/worktrees.ts`
@@ -140,7 +141,9 @@ TreeDB mapping:
 - `currentBranch` maps to a TreeDB ref read.
 - `ensureWorktree` maps to a TreeDB workspace session or materialized worktree.
 - `commitFileChanges` maps to TreeDB write/patch/delete plus commit.
-- Fetch, push, status, diff, rebase, stage, and release workflows should map to Gitoxide/gix where practical.
+- Fetch, push, status, diff, workspace commit, and release-adjacent workflows map
+  to TreeDB/Gitoxide/gix where practical. Product release orchestration remains
+  SDK-side.
 - Shell Git should be retained only as an explicit compatibility fallback with audit events and clear operation boundaries.
 
 ## Remote Dispatch Operations
@@ -160,9 +163,12 @@ The current remote API is TreeSeed market/project oriented, not TreeDB oriented.
 
 TreeDB adapter seams:
 
-- Introduce a separate `RepositoryTransport` or `TreeDbRepositoryClient` in later implementation.
-- Keep SDK developer APIs stable and select local filesystem or remote TreeDB mode by configuration.
-- Use explicit repo/ref/path/workspace context for TreeDB calls instead of `repoRoot`-only dispatch.
+- Use `TreeDbClient`, TreeDB adapters, and port classes as the separate
+  repository transport.
+- Keep SDK developer APIs stable and select local filesystem or remote TreeDB
+  mode by configuration.
+- Use explicit repo/ref/path/workspace context for TreeDB calls instead of
+  `repoRoot`-only dispatch.
 
 ## Capability/Security Concepts
 
@@ -213,7 +219,8 @@ Shell usage categories in the SDK include:
 TreeDB implication:
 
 - TreeDB API should not expose raw shell as the primary edit path.
-- Future `TreeDb.Exec` must be capability gated, workspace scoped, audited, timeout bounded, and sandboxed.
+- `TreeDb.Exec` is capability gated, workspace scoped, audited, timeout
+  bounded, and sandboxed through explicit backends.
 - Shell execution should happen near the repository volume and inside a constrained workspace session.
 
 ## Auth/Token Assumptions
@@ -243,7 +250,7 @@ TreeDB must avoid querying all repositories and filtering unauthorized results a
 
 ## TreeDB Adapter Seams
 
-Primary seams for later implementation:
+Primary seams:
 
 1. Repository transport behind the SDK's content and workflow operations.
 2. File/blob transport for list, read, write, patch, delete, and commit.
@@ -253,7 +260,8 @@ Primary seams for later implementation:
 6. Capability translation from TreeSeed platform scopes into opaque TreeDB scoped grants.
 7. Exec transport for verification commands and agent shell needs.
 
-These seams should be introduced without finalizing TreeDB endpoint shapes in MVP.
+These seams are exposed through the SDK TreeDB clients, adapters, generated
+OpenAPI-backed API types, and local/remote ports.
 
 ## Domain Concepts That Must Remain Outside TreeDB
 
@@ -285,7 +293,7 @@ TreeDB can store, update, index, search, snapshot, and query files containing th
 5. Reusing market dispatch for TreeDB repository operations would blur product and repository-database boundaries.
 6. Failing to add repo/ref/path/workspace authorization would create security and data leakage risks.
 
-## Architecture Implications For MVP
+## Architecture Implications
 
 ### Elixir Object/Actor Model
 
@@ -295,7 +303,8 @@ Use Elixir/Phoenix as the actor, boundary, and lifecycle layer:
 - `TreeDb.Capabilities`: calculates effective scoped capabilities.
 - `TreeDb.Repos`: owns repository records and placement lookup.
 - `TreeDb.Workspaces`: supervises workspace sessions and leases.
-- `TreeDb.Git`: calls Rust Git operations and shell fallback.
+- `TreeDb.Git`: calls Rust Git operations and constrained external transport
+  only when explicitly configured.
 - `TreeDb.Store`: calls Rust storage operations.
 - `TreeDb.Graph`: supervises graph/index jobs.
 - `TreeDb.Exec`: supervises sandboxed commands.
@@ -317,7 +326,8 @@ Keep Rust functions deterministic and side-effect explicit:
 - no hidden global state
 - every function accepts data-dir, repo, or workspace context
 - return typed `Result<T, TreeDbError>`
-- share algorithms across Elixir API, CLI tooling, tests, and future SDK codegen
+- share algorithms across Elixir API, CLI tooling, tests, and generated SDK
+  contract code
 
 ### Rustler Decision
 
@@ -349,7 +359,8 @@ Sources:
 ## Initial Compatibility Issue List
 
 1. SDK fixture submodule missing; baseline tests cannot fully run.
-2. Package graph test had a self-referential retired-path assertion; this was corrected during the MVP cleanup and the full SDK suite now passes.
+2. Package graph test had a self-referential retired-path assertion; this was
+   corrected and the full SDK suite now passes.
 3. No `typecheck` script exists.
 4. SDK public API mixes generic repository/file behavior with TreeSeed market/product concepts.
 5. Current content store assumes local POSIX filesystem and direct Markdown file walking.

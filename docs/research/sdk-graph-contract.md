@@ -53,7 +53,9 @@ The current SDK stores local snapshots under `.treeseed/state/graph`. TreeDB doe
 
 ## Ranking Provider Notes
 
-The SDK supports pluggable ranking providers. TreeDB MVP uses built-in lexical plus graph-neighborhood scoring only. Plugin ranking integration is out of scope until SDK integration.
+The SDK supports pluggable ranking providers. TreeDB uses built-in lexical plus
+graph-neighborhood scoring and exposes authorization-filtered diagnostics when
+requested.
 
 ## Access Filtering Contract
 
@@ -67,4 +69,5 @@ The SDK scopes by model in the current local runtime. TreeDB scopes by actor, re
 - Unresolved links/imports map to SDK `Reference`.
 - Directory, ref, and commit provenance nodes use SDK-compatible `Reference` nodes with generic `entityType`.
 
-TreeDB does not encode TreeSeed product semantics. Future SDK integration can map generic TreeDB graph primitives into product-specific concepts outside TreeDB.
+TreeDB does not encode TreeSeed product semantics. SDK integration maps generic
+TreeDB graph primitives into product-specific concepts outside TreeDB.

@@ -1,0 +1,59 @@
+name: TreeDB Release Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - treedb
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TARGET_DIR: /tmp/treedb-target
+      RUSTLER_TARGET_DIR: /tmp/treedb-target
+      MIX_ENV: test
+      TREEDB_LIVE_URL: ${{ secrets.TREEDB_LIVE_URL }}
+      TREEDB_LIVE_TOKEN: ${{ secrets.TREEDB_LIVE_TOKEN }}
+      TREEDB_LIVE_REPO_ID: ${{ secrets.TREEDB_LIVE_REPO_ID }}
+      TREEDB_LIVE_NODE_A_URL: ${{ secrets.TREEDB_LIVE_NODE_A_URL }}
+      TREEDB_LIVE_NODE_A_TOKEN: ${{ secrets.TREEDB_LIVE_NODE_A_TOKEN }}
+      TREEDB_LIVE_NODE_A_REPO_ID: ${{ secrets.TREEDB_LIVE_NODE_A_REPO_ID }}
+      TREEDB_LIVE_NODE_B_URL: ${{ secrets.TREEDB_LIVE_NODE_B_URL }}
+      TREEDB_LIVE_NODE_B_TOKEN: ${{ secrets.TREEDB_LIVE_NODE_B_TOKEN }}
+      TREEDB_LIVE_NODE_B_REPO_ID: ${{ secrets.TREEDB_LIVE_NODE_B_REPO_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust target
+        uses: actions/cache@v4
+        with:
+          path: /tmp/treedb-target
+          key: ${{ runner.os }}-treedb-rust-${{ hashFiles('Cargo.lock', 'apps/api/native/**/Cargo.lock') }}
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: '27'
+          elixir-version: '1.17'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: packages/ts-sdk/package-lock.json
+
+      - name: Install scanner tools
+        run: |
+          cargo install cargo-audit --locked
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Run release gate
+        run: ./scripts/release-gate.sh

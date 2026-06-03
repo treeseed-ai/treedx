@@ -6,11 +6,18 @@ defmodule TreeDbWeb.Router do
     plug(TreeDbWeb.AuthPlug)
   end
 
+  scope "/", TreeDbWeb do
+    get("/metrics", MetricsController, :prometheus)
+  end
+
   scope "/api/v1", TreeDbWeb do
     pipe_through(:api)
 
     get("/health", HealthController, :health)
+    get("/ready", HealthController, :ready)
+    get("/health/deep", HealthController, :deep)
     get("/version", HealthController, :version)
+    get("/metrics", MetricsController, :json)
 
     get("/auth/whoami", AuthController, :whoami)
     get("/auth/mode", AuthController, :mode)
@@ -27,6 +34,7 @@ defmodule TreeDbWeb.Router do
     post("/context/build", GlobalQueryController, :context)
     post("/graph/query", GlobalQueryController, :graph)
     get("/admin/workspaces/quarantined", AdminWorkspaceController, :quarantined)
+    get("/admin/health/deep", HealthController, :admin_deep)
     get("/admin/storage/health", AdminStorageController, :health)
     post("/admin/storage/check", AdminStorageController, :check)
     post("/admin/storage/recover", AdminStorageController, :recover)

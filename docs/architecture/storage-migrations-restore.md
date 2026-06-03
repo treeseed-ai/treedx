@@ -1,8 +1,8 @@
 # Storage Migrations And Restore
 
-TreeDB storage remains append-only by default. Production storage hardening
-hardening adds logical migration records, guarded restore verification, and
-restore apply gates.
+TreeDB storage remains append-only by default. Storage hardening includes
+logical migration records, guarded restore verification, and restore apply
+gates.
 
 Admin storage migration endpoints:
 
