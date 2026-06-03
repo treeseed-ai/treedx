@@ -137,6 +137,92 @@ defmodule TreeDb.Mirrors do
     end
   end
 
+  def health(repo_id, mirror_id, _params, principal) do
+    with {:ok, _scope} <-
+           TreeDb.Capabilities.require_all(principal, ["mirror:read", "registry:read"], repo_id),
+         {:ok, mirror} <- get_mirror(repo_id, mirror_id) do
+      status =
+        cond do
+          mirror["status"] == "synced" and mirror["behindBy"] in [nil, 0] -> "healthy"
+          mirror["status"] == "failed" -> "unhealthy"
+          true -> "degraded"
+        end
+
+      result = %{
+        mirrorId: mirror_id,
+        repoId: repo_id,
+        status: status,
+        mirrorStatus: mirror["status"],
+        behindBy: mirror["behindBy"],
+        lastSeenCommit: mirror["lastSeenCommit"]
+      }
+
+      TreeDb.Audit.append("mirror.health_checked", %{
+        actor_id: principal["actorId"],
+        tenant_id: principal["tenantId"],
+        repo_id: repo_id,
+        operation: "mirror.health",
+        status: status,
+        data: %{mirrorId: mirror_id, behindBy: mirror["behindBy"]}
+      })
+
+      {:ok, %{health: result}}
+    end
+  end
+
+  def promote(repo_id, mirror_id, params, principal) do
+    dry_run = params["dryRun"] != false
+    capability = if dry_run, do: "migration:read", else: "migration:write"
+
+    with {:ok, _scope} <- TreeDb.Capabilities.require_capability(principal, capability, repo_id),
+         {:ok, mirror} <- get_mirror(repo_id, mirror_id),
+         :ok <- require_synced(mirror, params),
+         {:ok, placement} <- TreeDb.Store.get_repository_placement(repo_id) do
+      resulting =
+        (placement ||
+           %{
+             "repositoryId" => repo_id,
+             "primaryNodeId" => mirror["sourceNodeId"],
+             "mirrorNodeIds" => [],
+             "readPolicy" => "primary_or_mirror",
+             "writePolicy" => "primary_only",
+             "migrationState" => "stable"
+           })
+        |> Map.put("primaryNodeId", mirror["targetNodeId"])
+        |> Map.put("migrationState", if(dry_run, do: "planned", else: "stable"))
+
+      event = if(dry_run, do: "mirror.promotion_planned", else: "mirror.promoted")
+
+      result = %{
+        mirrorId: mirror_id,
+        repoId: repo_id,
+        dryRun: dry_run,
+        status: if(dry_run, do: "planned", else: "promoted"),
+        previousPlacement: placement,
+        resultingPlacement: resulting
+      }
+
+      result =
+        if dry_run do
+          result
+        else
+          {:ok, stored} = TreeDb.Store.put_repository_placement(resulting)
+          Map.put(result, :resultingPlacement, stored)
+        end
+
+      TreeDb.Audit.append(event, %{
+        actor_id: principal["actorId"],
+        tenant_id: principal["tenantId"],
+        repo_id: repo_id,
+        operation: "mirror.promote",
+        status: "ok",
+        data: %{mirrorId: mirror_id, dryRun: dry_run}
+      })
+
+      {:ok, %{promotion: result}}
+    end
+  end
+
   defp get_mirror(repo_id, mirror_id) do
     with {:ok, mirrors} <- TreeDb.Store.list_mirrors(repo_id) do
       case Enum.find(mirrors, &(&1["id"] == mirror_id)) do
@@ -171,6 +257,15 @@ defmodule TreeDb.Mirrors do
   defp sanitize_remote_input(nil), do: nil
 
   defp sanitize_remote_input(url) when is_binary(url) do
-    String.replace(url, ~r{//[^/@]+@}, "//")
+    TreeDb.Pushes.sanitize_remote_url(url)
+  end
+
+  defp require_synced(mirror, params) do
+    if params["requireSynced"] == true and
+         not (mirror["status"] == "synced" and mirror["behindBy"] in [nil, 0]) do
+      {:error, %{code: "conflict", message: "Mirror is not synced."}}
+    else
+      :ok
+    end
   end
 end

@@ -100,6 +100,46 @@ defmodule TreeDbWeb.BlobControllerTest do
     assert delete["result"]["op"] == "delete"
   end
 
+  test "workspace status and diff expose binary metadata without payload", %{
+    token: token,
+    workspace_id: workspace_id
+  } do
+    content = <<0, 159, 146, 150, 255>>
+
+    write =
+      build_conn()
+      |> auth_conn(token)
+      |> post("/api/v1/workspaces/#{workspace_id}/blobs/write", %{
+        "path" => "assets/status.bin",
+        "encoding" => "base64",
+        "contentBase64" => Base.encode64(content)
+      })
+      |> json!(200)
+
+    status =
+      build_conn()
+      |> auth_conn(token)
+      |> get("/api/v1/workspaces/#{workspace_id}/status")
+      |> json!(200)
+
+    entry = Enum.find(status["changes"], &(&1["path"] == "assets/status.bin"))
+    assert entry["binary"] == true
+    assert entry["encoding"] == "base64"
+    assert entry["contentHash"] == write["result"]["contentHash"]
+    refute Jason.encode!(status) =~ Base.encode64(content)
+    assert_public_hygiene!(status)
+
+    diff =
+      build_conn()
+      |> auth_conn(token)
+      |> get("/api/v1/workspaces/#{workspace_id}/diff")
+      |> json!(200)
+
+    assert diff["diff"] =~ "Binary file assets/status.bin added"
+    refute diff["diff"] =~ Base.encode64(content)
+    assert_public_hygiene!(diff)
+  end
+
   test "blob validation handles limits, malformed base64, and hash conflicts", %{
     token: token,
     workspace_id: workspace_id

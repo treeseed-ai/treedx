@@ -53,9 +53,9 @@ defmodule TreeDbWeb.RepoController do
     end
   end
 
-  def sync(conn, %{"repo_id" => repo_id}) do
+  def sync(conn, %{"repo_id" => repo_id} = params) do
     with {:ok, principal} <- require_principal(conn) do
-      handle_result(conn, TreeDb.Repos.sync(repo_id, principal))
+      handle_result(conn, TreeDb.Repos.sync(repo_id, params, principal))
     else
       {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
     end

@@ -78,6 +78,24 @@ defmodule TreeDbWeb.RegistryController do
     end
   end
 
+  def mirror_health(conn, params = %{"repo_id" => repo_id, "mirror_id" => mirror_id}) do
+    with {:ok, principal} <- require_principal(conn),
+         {:ok, result} <- TreeDb.Mirrors.health(repo_id, mirror_id, params, principal) do
+      ok(conn, result)
+    else
+      {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
+    end
+  end
+
+  def promote_mirror(conn, params = %{"repo_id" => repo_id, "mirror_id" => mirror_id}) do
+    with {:ok, principal} <- require_principal(conn),
+         {:ok, result} <- TreeDb.Mirrors.promote(repo_id, mirror_id, params, principal) do
+      ok(conn, result)
+    else
+      {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
+    end
+  end
+
   defp wrap({:ok, value}, key), do: {:ok, %{key => value}}
   defp wrap(error, _key), do: error
 end

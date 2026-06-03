@@ -126,3 +126,29 @@ pub struct FetchRemoteResult {
     pub after_head: Option<String>,
     pub status: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PushRemoteInput {
+    pub repo_path: String,
+    pub remote_url: Option<String>,
+    pub remote_name: Option<String>,
+    pub refspecs: Vec<String>,
+    pub dry_run: bool,
+    #[serde(default)]
+    pub expected_remote_head: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PushRemoteResult {
+    pub remote_name: String,
+    pub remote_url: Option<String>,
+    pub refspecs: Vec<String>,
+    pub updated_refs: Vec<String>,
+    pub rejected_refs: Vec<String>,
+    pub before_head: Option<String>,
+    pub after_head: Option<String>,
+    pub status: String,
+    pub backend: String,
+}

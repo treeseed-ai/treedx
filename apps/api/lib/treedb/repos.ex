@@ -90,25 +90,7 @@ defmodule TreeDb.Repos do
     end
   end
 
-  def sync(repo_id, principal) do
-    with {:ok, _scope} <- TreeDb.Capabilities.require_capability(principal, "git:fetch", repo_id),
-         {:ok, repo} when is_map(repo) <- TreeDb.Store.get_repository(repo_id),
-         {:ok, git} <- TreeDb.Git.inspect_repository(repo["localPath"]) do
-      TreeDb.Audit.append("git.fetch.completed", %{
-        actor_id: principal["actorId"],
-        tenant_id: principal["tenantId"],
-        repo_id: repo_id,
-        operation: "git.fetch",
-        status: "noop",
-        data: %{refreshed: false}
-      })
-
-      {:ok, %{repo: public_repo(repo), refreshed: false, git: public_git(git)}}
-    else
-      {:ok, nil} -> {:error, %{code: "not_found", message: "Repository not found."}}
-      other -> other
-    end
-  end
+  def sync(repo_id, params, principal), do: TreeDb.Pushes.fetch(repo_id, params, principal)
 
   defp normalize_registration(params) do
     name = params["name"]

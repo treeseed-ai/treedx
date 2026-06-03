@@ -1,19 +1,6 @@
 defmodule TreeDb.AdminStorage do
   @moduledoc false
 
-  @known_logs [
-    "catalog/manifest.tdb",
-    "catalog/repositories.tdb",
-    "catalog/capability_grants.tdb",
-    "catalog/policy_refreshes.tdb",
-    "workspaces/sessions.tdb",
-    "leases/leases.tdb",
-    "audit/events.tdb",
-    "federation/placements.tdb",
-    "federation/mirrors/mirrors.tdb",
-    "federation/migrations/migrations.tdb"
-  ]
-
   def health do
     data_dir = TreeDb.Store.data_dir()
 
@@ -34,16 +21,58 @@ defmodule TreeDb.AdminStorage do
     data_dir = TreeDb.Store.data_dir()
     errors = collect_errors(data_dir)
     records_checked = count_records(data_dir)
+    logs = known_logs()
 
     {:ok,
      %{
        check: %{
          status: if(errors == [], do: "ok", else: "error"),
-         filesChecked: length(@known_logs),
+         filesChecked: length(logs),
          recordsChecked: records_checked,
          errors: errors
        }
      }}
+  end
+
+  def compact(params, principal, request_id) do
+    input = %{
+      logs: params["logs"] || [],
+      dryRun: params["dryRun"] == true,
+      backupBefore: params["backupBefore"] != false
+    }
+
+    with {:ok, result} <- TreeDb.Store.compact_storage(input) do
+      TreeDb.Audit.append("storage.compacted", %{
+        actor_id: principal["actorId"],
+        tenant_id: principal["tenantId"],
+        operation: "storage.compact",
+        status: "ok",
+        request_id: request_id,
+        data: %{dryRun: result["dryRun"], fileCount: length(result["files"] || [])}
+      })
+
+      {:ok, %{compact: redact_compact(result)}}
+    end
+  end
+
+  def backup(params, principal, request_id) do
+    input = %{
+      include: params["include"] || [],
+      verify: params["verify"] != false
+    }
+
+    with {:ok, result} <- TreeDb.Store.create_backup(input) do
+      TreeDb.Audit.append("storage.backup_created", %{
+        actor_id: principal["actorId"],
+        tenant_id: principal["tenantId"],
+        operation: "storage.backup",
+        status: "ok",
+        request_id: request_id,
+        data: %{backupId: result["backupId"], verified: result["verified"]}
+      })
+
+      {:ok, %{backup: result}}
+    end
   end
 
   def recover(params, principal, request_id) do
@@ -76,7 +105,7 @@ defmodule TreeDb.AdminStorage do
   defp check_status(data_dir), do: if(collect_errors(data_dir) == [], do: "ok", else: "error")
 
   defp collect_errors(data_dir) do
-    @known_logs
+    known_logs()
     |> Enum.flat_map(fn relative_path ->
       path = Path.join(data_dir, relative_path)
 
@@ -108,9 +137,47 @@ defmodule TreeDb.AdminStorage do
   end
 
   defp count_records(data_dir) do
-    Enum.reduce(@known_logs, 0, fn relative_path, count ->
+    Enum.reduce(known_logs(), 0, fn relative_path, count ->
       path = Path.join(data_dir, relative_path)
       if File.exists?(path), do: count + Enum.count(File.stream!(path)), else: count
+    end)
+  end
+
+  defp known_logs do
+    case TreeDb.Store.list_tdb_logs() do
+      {:ok, logs} ->
+        logs
+
+      _ ->
+        [
+          "catalog/manifest.tdb",
+          "catalog/repositories.tdb",
+          "catalog/capability_grants.tdb",
+          "catalog/policy_refreshes.tdb",
+          "workspaces/sessions.tdb",
+          "workspaces/files.tdb",
+          "leases/leases.tdb",
+          "audit/events.tdb",
+          "federation/placements.tdb",
+          "federation/mirrors.tdb",
+          "federation/migrations.tdb"
+        ]
+    end
+  end
+
+  defp redact_compact(result) do
+    Map.update(result, "files", [], fn files ->
+      Enum.map(
+        files,
+        &Map.take(&1, [
+          "file",
+          "recordsBefore",
+          "recordsAfter",
+          "bytesBefore",
+          "bytesAfter",
+          "compacted"
+        ])
+      )
     end)
   end
 end

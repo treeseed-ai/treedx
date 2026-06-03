@@ -26,6 +26,8 @@ defmodule TreeDbWeb.Router do
     get("/admin/storage/health", AdminStorageController, :health)
     post("/admin/storage/check", AdminStorageController, :check)
     post("/admin/storage/recover", AdminStorageController, :recover)
+    post("/admin/storage/compact", AdminStorageController, :compact)
+    post("/admin/storage/backup", AdminStorageController, :backup)
 
     get("/node", NodeController, :show)
     get("/registry/nodes", RegistryController, :nodes)
@@ -39,6 +41,7 @@ defmodule TreeDbWeb.Router do
     get("/repos/:repo_id/refs", RepoController, :refs)
     get("/repos/:repo_id/remotes", RepoController, :remotes)
     post("/repos/:repo_id/sync", RepoController, :sync)
+    post("/repos/:repo_id/push", PushController, :push)
     post("/repos/:repo_id/files/search", RepoQueryController, :search)
     post("/repos/:repo_id/files/read", RepoQueryController, :read)
     post("/repos/:repo_id/blobs/read", BlobController, :read_repo)
@@ -61,6 +64,8 @@ defmodule TreeDbWeb.Router do
     get("/repos/:repo_id/mirrors", RegistryController, :mirrors)
     post("/repos/:repo_id/mirrors", RegistryController, :put_mirror)
     post("/repos/:repo_id/mirrors/:mirror_id/sync", RegistryController, :sync_mirror)
+    post("/repos/:repo_id/mirrors/:mirror_id/health", RegistryController, :mirror_health)
+    post("/repos/:repo_id/mirrors/:mirror_id/promote", RegistryController, :promote_mirror)
     post("/repos/:repo_id/migrations", MigrationController, :create)
     get("/repos/:repo_id/migrations/:migration_id", MigrationController, :show)
 

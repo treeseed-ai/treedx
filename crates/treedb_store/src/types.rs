@@ -494,3 +494,62 @@ pub struct WorkspacePolicyUpdateInput {
     pub policy_version: String,
     pub policy_hash: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StorageCompactInput {
+    #[serde(default)]
+    pub logs: Vec<String>,
+    #[serde(default)]
+    pub dry_run: bool,
+    #[serde(default = "default_backup_before")]
+    pub backup_before: bool,
+}
+
+fn default_backup_before() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StorageCompactFileResult {
+    pub file: String,
+    pub records_before: u64,
+    pub records_after: u64,
+    pub bytes_before: u64,
+    pub bytes_after: u64,
+    pub compacted: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StorageCompactResult {
+    pub status: String,
+    pub dry_run: bool,
+    pub backup_id: Option<String>,
+    pub files: Vec<StorageCompactFileResult>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StorageBackupInput {
+    #[serde(default)]
+    pub include: Vec<String>,
+    #[serde(default = "default_verify_backup")]
+    pub verify: bool,
+}
+
+fn default_verify_backup() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StorageBackupResult {
+    pub backup_id: String,
+    pub format: String,
+    pub uri: String,
+    pub checksum: String,
+    pub byte_length: u64,
+    pub verified: bool,
+}

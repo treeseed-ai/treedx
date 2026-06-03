@@ -95,6 +95,14 @@ defmodule TreeDb.Store do
   def read_artifact_bytes(snapshot_id),
     do: call_json(&TreeDb.Native.read_artifact_bytes/2, data_dir(), snapshot_id)
 
+  def compact_storage(input),
+    do: call_json(&TreeDb.Native.compact_storage/2, data_dir(), Jason.encode!(input))
+
+  def create_backup(input),
+    do: call_json(&TreeDb.Native.create_backup/2, data_dir(), Jason.encode!(input))
+
+  def list_tdb_logs, do: call_json(&TreeDb.Native.list_tdb_logs/1, data_dir())
+
   def put_mirror_sync(input),
     do: call_json(&TreeDb.Native.put_mirror_sync/2, data_dir(), Jason.encode!(input))
 

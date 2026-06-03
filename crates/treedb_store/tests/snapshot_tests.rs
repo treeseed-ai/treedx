@@ -1,5 +1,6 @@
 use base64::Engine;
 use chrono::Utc;
+use std::io::Read;
 use tempfile::tempdir;
 use treedb_store::*;
 
@@ -68,6 +69,65 @@ fn build_snapshot_writes_manifest_and_tar_zst_artifact() {
         .collect::<Vec<_>>();
     names.sort();
     assert_eq!(names, vec!["manifest.json", "repo/docs/readme.md"]);
+}
+
+#[test]
+fn snapshot_artifact_preserves_binary_files_and_checksums() {
+    let dir = tempdir().unwrap();
+    init_data_dir(
+        dir.path(),
+        InitOptions {
+            node_id: "node_local".to_string(),
+        },
+    )
+    .unwrap();
+    let bytes = vec![0, 159, 146, 150, 255, 10, 13];
+    let expected_hash = hash_bytes(&bytes);
+
+    let manifest = build_snapshot_artifact(
+        dir.path(),
+        SnapshotBuildInput {
+            snapshot_id: Some("snap_binary".to_string()),
+            repo_id: "repo_demo".to_string(),
+            ref_name: "refs/heads/main".to_string(),
+            commit_sha: "abc123".to_string(),
+            kind: "repository_snapshot".to_string(),
+            included_paths: vec!["assets/**".to_string()],
+            graph_version: None,
+            files: vec![SnapshotArtifactFileInput {
+                path: "assets/logo.bin".to_string(),
+                object_id: "blob_binary".to_string(),
+                content_base64: base64::engine::general_purpose::STANDARD.encode(&bytes),
+            }],
+            created_by_actor_id: Some("actor_demo".to_string()),
+        },
+    )
+    .unwrap();
+
+    assert_eq!(manifest.file_count, 1);
+    assert_eq!(manifest.total_bytes, bytes.len() as u64);
+    assert_eq!(manifest.files[0].content_hash, expected_hash);
+    assert!(!serde_json::to_string(&manifest)
+        .unwrap()
+        .contains(dir.path().to_string_lossy().as_ref()));
+
+    let artifact = read_artifact_bytes(dir.path(), &manifest.snapshot_id).unwrap();
+    let decoded = zstd::stream::decode_all(artifact.as_slice()).unwrap();
+    let mut archive = tar::Archive::new(decoded.as_slice());
+    let mut found = false;
+
+    for entry in archive.entries().unwrap() {
+        let mut entry = entry.unwrap();
+        let path = entry.path().unwrap().to_string_lossy().to_string();
+        if path == "repo/assets/logo.bin" {
+            let mut actual = Vec::new();
+            entry.read_to_end(&mut actual).unwrap();
+            assert_eq!(actual, bytes);
+            found = true;
+        }
+    }
+
+    assert!(found, "binary file was not present in snapshot artifact");
 }
 
 #[test]

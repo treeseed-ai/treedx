@@ -53,6 +53,9 @@ Request bodies are not yet schema-complete for:
 - snapshot build and artifact export
 - workspace create/write/patch/search/commit/exec
 - workspace blob write/delete/upload/download
+- repository push and fetch remote bodies
+- mirror health and promotion bodies
+- admin storage compact and backup bodies
 - mirror sync and migration creation
 
 ## Missing Response Schemas
@@ -67,6 +70,7 @@ Response schemas are not yet complete for:
 - repository/ref/remote/status records
 - workspace and file mutation results
 - blob read, mutation, upload, and download metadata
+- git push/fetch, mirror health/promotion, and storage compact/backup records
 - graph/context results
 - snapshot/artifact records
 
@@ -84,6 +88,11 @@ Add examples for:
 - `unsupported_media_type`
 - `payload_too_large`
 - `graph_not_ready`
+- `unsupported_transport`
+- `sandbox_unavailable`
+- `sandbox_policy_denied`
+- `backup_failed`
+- `storage_compaction_failed`
 
 ## Stage 2 Binary Blob Follow-Ups
 
@@ -100,6 +109,21 @@ envelopes. Later schema work should add typed contracts for:
 
 Resumable uploads, multipart upload, large artifact lifecycle, retention
 policy, and destructive storage repair remain later-stage work.
+
+## Stage 3 Transport, Sandbox, and Storage Follow-Ups
+
+Stage 3 routes are documented with operation metadata but still use generic
+`OkEnvelope`/`ErrorEnvelope` schemas. Later schema work should add typed
+contracts for:
+
+- explicit push/fetch refspec request bodies and sanitized remote response
+  payloads
+- mirror health and promotion result payloads
+- exec sandbox metadata, resource limits, and sandbox error envelopes
+- storage compaction per-file statistics and logical backup records
+
+Authenticated HTTPS push credentials, SSH push, external exec workers, public
+destructive restore, and off-node backup retention remain later-stage work.
 
 ## Hand-Maintained SDK Types
 

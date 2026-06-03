@@ -25,7 +25,7 @@ defmodule TreeDb.Exec do
            {:ok, cwd} <- Materializer.materialize(ctx),
            before <- Materializer.snapshot(cwd),
            started <- System.monotonic_time(:millisecond),
-           {:ok, result} <- Runner.run(command, cwd, timeout_ms, max_output),
+           {:ok, result} <- Runner.run(command, cwd, timeout_ms, max_output, params),
            after_snapshot <- Materializer.snapshot(cwd),
            changed_paths <- Materializer.changed_paths(before, after_snapshot),
            :ok <- enforce_read_only(mode, changed_paths),
@@ -43,12 +43,13 @@ defmodule TreeDb.Exec do
           status: "ok",
           data: %{
             mode: mode,
-            command: command,
             commandProfile: Policy.profile(mode),
             exitCode: result.exit_code,
             elapsedMs: elapsed_ms,
             truncated: result.truncated,
-            changedPaths: changed_paths
+            changedPaths: changed_paths,
+            sandbox:
+              Map.take(result.sandbox || %{}, [:backend, :network, :resourceLimits, :isolated])
           }
         })
 
@@ -59,7 +60,8 @@ defmodule TreeDb.Exec do
            stderr: result.stderr,
            elapsedMs: elapsed_ms,
            truncated: result.truncated,
-           changedPaths: changed_paths
+           changedPaths: changed_paths,
+           sandbox: result.sandbox || %{}
          }}
       end
 
@@ -71,7 +73,11 @@ defmodule TreeDb.Exec do
           workspace_id: workspace_id,
           operation: "workspace.exec",
           status: "error",
-          data: %{mode: mode, command: command, code: error[:code] || error["code"]}
+          data: %{
+            mode: mode,
+            commandProfile: Policy.profile(mode),
+            code: error[:code] || error["code"]
+          }
         })
 
         {:error, error}
@@ -81,7 +87,7 @@ defmodule TreeDb.Exec do
     end
   end
 
-  defp audit_started(ctx, workspace_id, mode, command) do
+  defp audit_started(ctx, workspace_id, mode, _command) do
     TreeDb.Audit.append("exec.started", %{
       actor_id: actor_id(ctx.principal),
       tenant_id: tenant_id(ctx.principal),
@@ -89,7 +95,7 @@ defmodule TreeDb.Exec do
       workspace_id: workspace_id,
       operation: "workspace.exec",
       status: "started",
-      data: %{mode: mode, command: command, commandProfile: Policy.profile(mode)}
+      data: %{mode: mode, commandProfile: Policy.profile(mode)}
     })
 
     :ok
@@ -187,27 +193,21 @@ defmodule TreeDb.Exec do
         Map.has_key?(after_snapshot, path) ->
           content = File.read!(after_snapshot[path].absolute)
 
-          if String.valid?(content) do
-            TreeDb.Store.put_workspace_file(%{
-              workspaceId: ctx.workspace["id"],
-              path: path,
-              op: "put",
-              encoding: "utf8",
-              contentBase64: Base.encode64(content),
-              expectedSha: nil,
-              baseSha: nil
-            })
-            |> case do
-              {:ok, _record} -> {:ok, path}
-              other -> other
-            end
-          else
-            {:error,
-             %{
-               code: "unsupported_media_type",
-               message: "Changed file is not valid UTF-8.",
-               details: %{path: path}
-             }}
+          encoding = if String.valid?(content), do: "utf8", else: "base64"
+
+          TreeDb.Store.put_workspace_file(%{
+            workspaceId: ctx.workspace["id"],
+            path: path,
+            op: "put",
+            encoding: encoding,
+            contentBase64: Base.encode64(content),
+            expectedSha: nil,
+            baseSha: nil,
+            contentType: content_type(path, content)
+          })
+          |> case do
+            {:ok, _record} -> {:ok, path}
+            other -> other
           end
 
         Map.has_key?(before, path) ->
@@ -249,6 +249,46 @@ defmodule TreeDb.Exec do
   defp capability_for("verification"), do: "workspace:exec:verification"
   defp capability_for("write_limited"), do: "workspace:exec:write_limited"
   defp capability_for(_), do: "workspace:exec:read_only"
+
+  defp content_type(path, content) do
+    case String.downcase(Path.extname(path)) do
+      ".png" ->
+        "image/png"
+
+      ".jpg" ->
+        "image/jpeg"
+
+      ".jpeg" ->
+        "image/jpeg"
+
+      ".gif" ->
+        "image/gif"
+
+      ".webp" ->
+        "image/webp"
+
+      ".svg" ->
+        "image/svg+xml"
+
+      ".pdf" ->
+        "application/pdf"
+
+      ".json" ->
+        "application/json"
+
+      ".txt" ->
+        "text/plain; charset=utf-8"
+
+      ".md" ->
+        "text/markdown; charset=utf-8"
+
+      _ ->
+        if(String.valid?(content),
+          do: "text/plain; charset=utf-8",
+          else: "application/octet-stream"
+        )
+    end
+  end
 
   defp coerce_int(value, _default) when is_integer(value), do: value
 

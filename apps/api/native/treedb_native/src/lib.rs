@@ -189,6 +189,36 @@ fn read_artifact_bytes<'a>(env: Env<'a>, data_dir: String, snapshot_id: String) 
 }
 
 #[rustler::nif(schedule = "DirtyIo")]
+fn compact_storage<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
+    match parse_json::<treedb_store::StorageCompactInput>(input_json) {
+        Ok(input) => match treedb_store::compact_storage(Path::new(&data_dir), input) {
+            Ok(result) => ok_json(env, result),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn create_backup<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
+    match parse_json::<treedb_store::StorageBackupInput>(input_json) {
+        Ok(input) => match treedb_store::create_backup(Path::new(&data_dir), input) {
+            Ok(result) => ok_json(env, result),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn list_tdb_logs<'a>(env: Env<'a>, data_dir: String) -> Term<'a> {
+    match treedb_store::list_tdb_logs(Path::new(&data_dir)) {
+        Ok(result) => ok_json(env, result),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
 fn put_mirror_sync<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
     match parse_json::<MirrorSyncRecord>(input_json) {
         Ok(input) => match treedb_store::put_mirror_sync(Path::new(&data_dir), input) {
@@ -573,6 +603,17 @@ fn changed_paths<'a>(env: Env<'a>, path: String, base_ref: String, head_ref: Str
 fn fetch_remote<'a>(env: Env<'a>, input_json: String) -> Term<'a> {
     match parse_json::<treedb_git::FetchRemoteInput>(input_json) {
         Ok(input) => match treedb_git::fetch_remote(input) {
+            Ok(record) => ok_json(env, record),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn push_remote<'a>(env: Env<'a>, input_json: String) -> Term<'a> {
+    match parse_json::<treedb_git::PushRemoteInput>(input_json) {
+        Ok(input) => match treedb_git::push_remote(input) {
             Ok(record) => ok_json(env, record),
             Err(error) => err_json(env, error.code(), error),
         },

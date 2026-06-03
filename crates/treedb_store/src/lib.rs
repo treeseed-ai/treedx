@@ -31,6 +31,7 @@ pub use policy::{
     get_connected_token, get_dev_token_by_hash, list_capability_grants, put_capability_grant,
     put_connected_token, put_dev_token, put_policy_refresh, resolve_effective_scope,
 };
+pub use recovery::{compact_storage, create_backup, list_tdb_logs};
 pub use snapshots::{
     build_snapshot_artifact, get_artifact, get_snapshot_manifest, read_artifact_bytes,
 };

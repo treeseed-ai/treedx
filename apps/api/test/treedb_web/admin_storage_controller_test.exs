@@ -35,6 +35,35 @@ defmodule TreeDbWeb.AdminStorageControllerTest do
     assert recover["recovered"] == false
   end
 
+  test "storage compact and backup endpoints are protected and redact paths", %{conn: conn} do
+    token = dev_token!(conn)
+
+    compact =
+      build_conn()
+      |> auth_conn(token)
+      |> post("/api/v1/admin/storage/compact", %{"dryRun" => true})
+      |> json!(200)
+
+    assert compact["compact"]["status"] == "ok"
+    assert compact["compact"]["dryRun"] == true
+    assert Enum.any?(compact["compact"]["files"], &(&1["file"] == "catalog/manifest.tdb"))
+    assert_public_hygiene!(compact)
+
+    backup =
+      build_conn()
+      |> auth_conn(token)
+      |> post("/api/v1/admin/storage/backup", %{
+        "include" => ["catalog", "workspaces"],
+        "verify" => true
+      })
+      |> json!(200)
+
+    assert backup["backup"]["format"] == "tar.zst"
+    assert backup["backup"]["uri"] =~ "treedb://backup/"
+    assert backup["backup"]["verified"] == true
+    assert_public_hygiene!(backup)
+  end
+
   test "store lock rejects live pid and replaces stale pid" do
     original = Application.get_env(:treedb, :data_dir)
 

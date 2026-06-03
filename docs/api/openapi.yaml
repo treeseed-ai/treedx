@@ -209,9 +209,17 @@ paths:
       operationId: syncRepository
       summary: Fetch repository updates.
       x-treedb-required-capabilities: [git:fetch]
-      x-treedb-stage: stage1-required
+      x-treedb-stage: stage3-required
       parameters: [ { $ref: "#/components/parameters/RepoId" } ]
       responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } }
+  /api/v1/repos/{repo_id}/push:
+    post:
+      operationId: pushRepository
+      summary: Push explicit repository refs to a remote.
+      x-treedb-required-capabilities: [git:push]
+      x-treedb-stage: stage3-required
+      parameters: [ { $ref: "#/components/parameters/RepoId" } ]
+      responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "409": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } }
   /api/v1/repos/{repo_id}/workspaces:
     post:
       operationId: createWorkspace
@@ -261,6 +269,10 @@ paths:
     post: { operationId: putMirror, summary: Create or update a repository mirror, x-treedb-required-capabilities: [mirror:write], x-treedb-stage: mvp, parameters: [ { $ref: "#/components/parameters/RepoId" } ], responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } }
   /api/v1/repos/{repo_id}/mirrors/{mirror_id}/sync:
     post: { operationId: syncMirror, summary: Record or execute mirror sync, x-treedb-required-capabilities: [mirror:write, git:fetch], x-treedb-stage: mvp, parameters: [ { $ref: "#/components/parameters/RepoId" }, { name: mirror_id, in: path, required: true, schema: { type: string } } ], responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } }
+  /api/v1/repos/{repo_id}/mirrors/{mirror_id}/health:
+    post: { operationId: checkMirrorHealth, summary: Check mirror health metadata, x-treedb-required-capabilities: [mirror:read, registry:read], x-treedb-stage: stage3-required, parameters: [ { $ref: "#/components/parameters/RepoId" }, { name: mirror_id, in: path, required: true, schema: { type: string } } ], responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "404": { $ref: "#/components/responses/Error" } } }
+  /api/v1/repos/{repo_id}/mirrors/{mirror_id}/promote:
+    post: { operationId: promoteMirror, summary: Plan or apply mirror promotion, x-treedb-required-capabilities: [migration:read, migration:write], x-treedb-stage: stage3-required, parameters: [ { $ref: "#/components/parameters/RepoId" }, { name: mirror_id, in: path, required: true, schema: { type: string } } ], responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "404": { $ref: "#/components/responses/Error" }, "409": { $ref: "#/components/responses/Error" } } }
   /api/v1/repos/{repo_id}/migrations:
     post: { operationId: createMigration, summary: Create a repository placement migration, x-treedb-required-capabilities: [migration:write], x-treedb-stage: mvp, parameters: [ { $ref: "#/components/parameters/RepoId" } ], responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "409": { $ref: "#/components/responses/Error" } } }
   /api/v1/repos/{repo_id}/migrations/{migration_id}:
@@ -293,7 +305,7 @@ paths:
   /api/v1/workspaces/{workspace_id}/commit:
     post: { operationId: commitWorkspace, summary: Commit workspace overlay changes, x-treedb-required-capabilities: [git:commit], x-treedb-stage: stage1-required, parameters: [ { $ref: "#/components/parameters/WorkspaceId" } ], responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "409": { $ref: "#/components/responses/Error" } } }
   /api/v1/workspaces/{workspace_id}/exec:
-    post: { operationId: execWorkspace, summary: Execute a command in workspace context, x-treedb-required-capabilities: [workspace:exec:*], x-treedb-stage: mvp, parameters: [ { $ref: "#/components/parameters/WorkspaceId" } ], responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "409": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } }
+    post: { operationId: execWorkspace, summary: Execute a command in workspace context, x-treedb-required-capabilities: [workspace:exec:*], x-treedb-stage: stage3-required, parameters: [ { $ref: "#/components/parameters/WorkspaceId" } ], responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "409": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" } } }
   /api/v1/admin/workspaces/quarantined:
     get:
       operationId: listQuarantinedWorkspaces
@@ -322,6 +334,20 @@ paths:
       x-treedb-required-capabilities: [policy:write]
       x-treedb-stage: stage1-required
       responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "409": { $ref: "#/components/responses/Error" } }
+  /api/v1/admin/storage/compact:
+    post:
+      operationId: compactAdminStorage
+      summary: Compact latest-record storage logs.
+      x-treedb-required-capabilities: [policy:write]
+      x-treedb-stage: stage3-required
+      responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "409": { $ref: "#/components/responses/Error" } }
+  /api/v1/admin/storage/backup:
+    post:
+      operationId: backupAdminStorage
+      summary: Create and verify a logical storage backup.
+      x-treedb-required-capabilities: [policy:read]
+      x-treedb-stage: stage3-required
+      responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" } }
 x-treedb-future:
   globalFederation:
     - /api/v1/search

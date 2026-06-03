@@ -81,3 +81,18 @@ Stage 1 adds:
 - `GET /api/v1/admin/storage/health`
 - `POST /api/v1/admin/storage/check`
 - `POST /api/v1/admin/storage/recover`
+
+Stage 3 adds:
+
+| Method | Path | Controller action | Required capability | Repo | Ref | Path | Workspace | Public | Audit event | Stage 3 note |
+|---|---|---|---|---:|---:|---:|---:|---:|---|---|
+| POST | `/api/v1/repos/:repo_id/push` | `PushController.push` | `git:push` | yes | source and destination refspec refs | no | no | no | `git.push.started`, `git.push.completed`, `git.push.failed` | explicit non-wildcard refspecs only; remote URLs are sanitized |
+| POST | `/api/v1/repos/:repo_id/sync` | `RepoController.sync` | `git:fetch` | yes | optional fetch refs | no | no | no | `git.fetch.completed` | request body accepts remote name/url/refspecs/dryRun |
+| POST | `/api/v1/repos/:repo_id/mirrors/:mirror_id/health` | `RegistryController.mirror_health` | `mirror:read`, `registry:read` | yes | no | no | no | no | `mirror.health_checked` | reports logical health only |
+| POST | `/api/v1/repos/:repo_id/mirrors/:mirror_id/promote` | `RegistryController.promote_mirror` | `migration:read` for dry-run, `migration:write` for apply | yes | no | no | no | no | `mirror.promotion_planned`, `mirror.promoted` | promotion requires synced mirror when requested |
+| POST | `/api/v1/admin/storage/compact` | `AdminStorageController.compact` | `policy:write` | no | no | no | no | no | `storage.compacted` | compacts latest-record logs, never audit logs |
+| POST | `/api/v1/admin/storage/backup` | `AdminStorageController.backup` | `policy:read` | no | no | no | no | no | `storage.backup_created` | returns logical backup URI only |
+
+Stage 3 also hardens `POST /api/v1/workspaces/:workspace_id/exec` with
+`TREEDB_EXEC_BACKEND`, sandbox metadata, network denial by default, and
+binary-safe `write_limited` overlay persistence.
