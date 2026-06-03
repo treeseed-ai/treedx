@@ -68,22 +68,21 @@ jobs:
       - name: Run release gate
         run: ./scripts/release-gate.sh
 
-  publish:
+  publish-plan:
     runs-on: ubuntu-latest
     needs: verify
     if: >-
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
-    environment: production
     permissions:
       contents: read
+    outputs:
+      image_tag: ${{ steps.docker_tag.outputs.image_tag }}
+      temp_prefix: ${{ steps.docker_tag.outputs.temp_prefix }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -114,10 +113,36 @@ jobs:
               echo "Docker image treeseed/treedb:${tag} already exists." >&2
               exit 1
             fi
-            echo "tags=treeseed/treedb:${tag}" >> "$GITHUB_OUTPUT"
+            echo "image_tag=treeseed/treedb:${tag}" >> "$GITHUB_OUTPUT"
           else
-            echo "tags=treeseed/treedb:latest" >> "$GITHUB_OUTPUT"
+            echo "image_tag=treeseed/treedb:latest" >> "$GITHUB_OUTPUT"
           fi
+
+          echo "temp_prefix=treeseed/treedb:ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+
+  build-publish-image:
+    needs: publish-plan
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -125,12 +150,45 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Publish Docker image
+      - name: Build and push architecture image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           target: prod
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ matrix.platform }}
           push: true
-          tags: ${{ steps.docker_tag.outputs.tags }}
+          tags: ${{ needs.publish-plan.outputs.temp_prefix }}-${{ matrix.arch }}
+          cache-from: type=gha,scope=treedb-prod-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=treedb-prod-${{ matrix.arch }}
+
+  publish:
+    needs:
+      - publish-plan
+      - build-publish-image
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Publish Docker manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker buildx imagetools create \
+            -t "${{ needs.publish-plan.outputs.image_tag }}" \
+            "${{ needs.publish-plan.outputs.temp_prefix }}-amd64" \
+            "${{ needs.publish-plan.outputs.temp_prefix }}-arm64"
+
+          docker buildx imagetools inspect "${{ needs.publish-plan.outputs.image_tag }}"

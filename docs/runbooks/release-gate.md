@@ -58,6 +58,12 @@ The GitHub workflow publishes Docker images only after the release gate passes.
 - Existing Docker Hub version tags are not overwritten.
 - Images are built as a multi-architecture manifest for `linux/amd64` and
   `linux/arm64`.
+- Architecture images are built on native GitHub-hosted runners
+  (`ubuntu-24.04` for `linux/amd64` and `ubuntu-24.04-arm` for `linux/arm64`)
+  and then combined into the published manifest. The workflow does not use QEMU
+  for release builds.
+- BuildKit cache is enabled per architecture for Docker layers plus Cargo and
+  Mix build caches.
 - The published runtime image omits optional shell Git tooling; deployments that
   enable authenticated external Git transport provide that tooling in a derived
   image or controlled worker environment.

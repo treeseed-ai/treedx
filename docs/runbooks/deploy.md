@@ -7,6 +7,8 @@ TreeDB production images are published to Docker Hub as `treeseed/treedb`.
   tags, for example `0.1.0` or `1.2.3-alpha.1`.
 - Published tags are multi-architecture images for `linux/amd64` and
   `linux/arm64`.
+- Release images are built on native GitHub-hosted AMD64 and ARM64 runners,
+  then assembled into one Docker manifest.
 - Versioned Docker tags come directly from git tags. There is no separate
   version file. Tags with build metadata such as `1.2.3+build.5` are not used
   because Docker tags cannot preserve `+` while keeping the image tag identical
