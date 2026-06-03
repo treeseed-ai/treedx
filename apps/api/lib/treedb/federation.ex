@@ -1,61 +1,89 @@
 defmodule TreeDb.Federation do
   @moduledoc false
 
+  @default_max_repos 25
+
   def plan_query(params, principal) do
+    capabilities = params["capabilities"] || ["files:search"]
+
+    with {:ok, payload} <-
+           plan(params, principal, %{
+             operation: :query,
+             required_capabilities: capabilities,
+             executable: false,
+             reason: "planner_only_mvp"
+           }) do
+      requested = payload.requestedScope
+
+      TreeDb.Audit.append("federated.query.started", %{
+        actor_id: principal["actorId"],
+        tenant_id: principal["tenantId"],
+        status: "started",
+        operation: "federation.query.plan",
+        requested_scope: requested
+      })
+
+      TreeDb.Audit.append(
+        if(payload.rejected == [],
+          do: "federated.query.completed",
+          else: "federated.query.rejected"
+        ),
+        %{
+          actor_id: principal["actorId"],
+          tenant_id: principal["tenantId"],
+          status: if(payload.rejected == [], do: "ok", else: "partial"),
+          operation: "federation.query.plan",
+          requested_scope: requested,
+          effective_scope: payload.effectiveScope,
+          data: %{
+            rejectedCount: length(payload.rejected),
+            allowedCount: length(payload.effectiveScope.repos)
+          }
+        }
+      )
+
+      {:ok, payload}
+    end
+  end
+
+  def plan(params, principal, opts) do
+    capabilities = Map.get(opts, :required_capabilities, ["files:search"])
+    executable = Map.get(opts, :executable, false)
+
     requested = %{
       repoIds: params["repoIds"] || [],
       refs: params["refs"] || %{},
       paths: params["paths"] || %{},
-      queryType: params["queryType"] || "text",
-      capabilities: params["capabilities"] || ["files:search"]
+      queryType: params["queryType"] || params["type"] || "text",
+      capabilities: capabilities
     }
 
-    TreeDb.Audit.append("federated.query.started", %{
-      actor_id: principal["actorId"],
-      tenant_id: principal["tenantId"],
-      status: "started",
-      operation: "federation.query.plan",
-      requested_scope: requested
-    })
-
-    {allowed, rejected} =
-      requested.repoIds
-      |> Enum.map(
-        &effective_repo_scope(
-          &1,
-          requested.refs[&1],
-          requested.paths[&1],
-          principal,
-          requested.capabilities
+    with :ok <- validate_repo_count(requested.repoIds) do
+      {allowed, rejected} =
+        requested.repoIds
+        |> Enum.map(
+          &effective_repo_scope(
+            &1,
+            requested.refs[&1],
+            requested.paths[&1],
+            principal,
+            capabilities
+          )
         )
-      )
-      |> Enum.reduce({[], []}, fn
-        {:ok, scope}, {allowed, rejected} -> {[scope | allowed], rejected}
-        {:error, entry}, {allowed, rejected} -> {allowed, [entry | rejected]}
-      end)
+        |> Enum.reduce({[], []}, fn
+          {:ok, scope}, {allowed, rejected} -> {[scope | allowed], rejected}
+          {:error, entry}, {allowed, rejected} -> {allowed, [entry | rejected]}
+        end)
 
-    payload = %{
-      requestedScope: requested,
-      effectiveScope: %{repos: Enum.reverse(allowed)},
-      rejected: Enum.reverse(rejected),
-      executable: false,
-      reason: "planner_only_mvp"
-    }
-
-    TreeDb.Audit.append(
-      if(rejected == [], do: "federated.query.completed", else: "federated.query.rejected"),
-      %{
-        actor_id: principal["actorId"],
-        tenant_id: principal["tenantId"],
-        status: if(rejected == [], do: "ok", else: "partial"),
-        operation: "federation.query.plan",
-        requested_scope: requested,
-        effective_scope: payload.effectiveScope,
-        data: %{rejectedCount: length(rejected), allowedCount: length(allowed)}
-      }
-    )
-
-    {:ok, payload}
+      {:ok,
+       %{
+         requestedScope: requested,
+         effectiveScope: %{repos: Enum.reverse(allowed)},
+         rejected: Enum.reverse(rejected),
+         executable: executable,
+         reason: Map.get(opts, :reason)
+       }}
+    end
   end
 
   def effective_repo_scope(
@@ -74,13 +102,17 @@ defmodule TreeDb.Federation do
          allowed_paths <- Enum.filter(paths, &TreeDb.Capabilities.allowed_path?(scope, &1)),
          true <- allowed_paths != [],
          {:ok, placement} when is_map(placement) <- TreeDb.Registry.placement(repo_id) do
+      node_id = placement["primaryNodeId"]
+      route = TreeDb.Federation.Router.route(node_id)
+
       {:ok,
        %{
          repoId: repo_id,
          ref: ref,
          paths: allowed_paths,
-         nodeId: placement["primaryNodeId"],
-         placement: placement,
+         nodeId: node_id,
+         source: route.source,
+         baseUrl: route.base_url,
          capabilities: required_capabilities
        }}
     else
@@ -99,4 +131,36 @@ defmodule TreeDb.Federation do
   defp normalize_paths([]), do: ["**"]
   defp normalize_paths(paths) when is_list(paths), do: paths
   defp normalize_paths(path) when is_binary(path), do: [path]
+
+  defp validate_repo_count(repo_ids) when is_list(repo_ids) do
+    max_repos =
+      System.get_env("TREEDB_FEDERATION_MAX_REPOS", "#{@default_max_repos}")
+      |> parse_int(@default_max_repos)
+
+    cond do
+      repo_ids == [] ->
+        {:error, %{code: "validation_error", message: "repoIds is required."}}
+
+      length(repo_ids) > max_repos ->
+        {:error,
+         %{
+           code: "validation_error",
+           message: "Too many repositories requested.",
+           details: %{maxRepos: max_repos}
+         }}
+
+      true ->
+        :ok
+    end
+  end
+
+  defp validate_repo_count(_),
+    do: {:error, %{code: "validation_error", message: "repoIds must be a list."}}
+
+  defp parse_int(value, default) do
+    case Integer.parse(to_string(value)) do
+      {int, ""} -> int
+      _ -> default
+    end
+  end
 end

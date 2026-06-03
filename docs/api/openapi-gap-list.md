@@ -57,6 +57,7 @@ Request bodies are not yet schema-complete for:
 - mirror health and promotion bodies
 - admin storage compact and backup bodies
 - mirror sync and migration creation
+- federated global search, query, context, and graph bodies
 
 ## Missing Response Schemas
 
@@ -72,6 +73,7 @@ Response schemas are not yet complete for:
 - blob read, mutation, upload, and download metadata
 - git push/fetch, mirror health/promotion, and storage compact/backup records
 - graph/context results
+- federated diagnostics, partial errors, and cross-repo graph results
 - snapshot/artifact records
 
 ## Missing Error Examples

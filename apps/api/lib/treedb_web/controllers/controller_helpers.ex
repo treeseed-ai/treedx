@@ -37,6 +37,11 @@ defmodule TreeDbWeb.ControllerHelpers do
   def status_for("workspace_revoked"), do: 409
   def status_for("migration_conflict"), do: 409
   def status_for("not_implemented"), do: 501
+  def status_for("federated_scope_empty"), do: 403
+  def status_for("federated_node_unavailable"), do: 502
+  def status_for("federated_node_timeout"), do: 502
+  def status_for("federated_partial_failure"), do: 502
+  def status_for("federated_route_not_configured"), do: 502
   def status_for("unsupported_transport"), do: 422
   def status_for("validation_error"), do: 422
   def status_for(_), do: 500

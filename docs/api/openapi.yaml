@@ -123,6 +123,38 @@ paths:
         "200": { $ref: "#/components/responses/Ok" }
         "401": { $ref: "#/components/responses/Error" }
         "403": { $ref: "#/components/responses/Error" }
+  /api/v1/search:
+    post:
+      operationId: federatedSearch
+      summary: Execute authorized federated repository search.
+      x-treedb-required-capabilities: [query:federated, files:search]
+      x-treedb-stage: stage4-required
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/TreeDbFederatedSearchRequest" } } } }
+      responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" }, "502": { $ref: "#/components/responses/Error" } }
+  /api/v1/query:
+    post:
+      operationId: federatedQuery
+      summary: Execute authorized federated repository query.
+      x-treedb-required-capabilities: [query:federated]
+      x-treedb-stage: stage4-required
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/TreeDbFederatedQueryRequest" } } } }
+      responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" }, "502": { $ref: "#/components/responses/Error" } }
+  /api/v1/context/build:
+    post:
+      operationId: federatedContextBuild
+      summary: Build an authorized federated context pack.
+      x-treedb-required-capabilities: [query:federated, graph:query]
+      x-treedb-stage: stage4-required
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/TreeDbFederatedContextRequest" } } } }
+      responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" }, "502": { $ref: "#/components/responses/Error" } }
+  /api/v1/graph/query:
+    post:
+      operationId: federatedGraphQuery
+      summary: Execute an authorized federated graph query.
+      x-treedb-required-capabilities: [query:federated, graph:query]
+      x-treedb-stage: stage4-required
+      requestBody: { content: { application/json: { schema: { $ref: "#/components/schemas/TreeDbFederatedGraphRequest" } } } }
+      responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" }, "422": { $ref: "#/components/responses/Error" }, "502": { $ref: "#/components/responses/Error" } }
   /api/v1/node:
     get:
       operationId: getLocalNode
@@ -348,11 +380,6 @@ paths:
       x-treedb-required-capabilities: [policy:read]
       x-treedb-stage: stage3-required
       responses: { "200": { $ref: "#/components/responses/Ok" }, "401": { $ref: "#/components/responses/Error" }, "403": { $ref: "#/components/responses/Error" } }
-x-treedb-future:
-  globalFederation:
-    - /api/v1/search
-    - /api/v1/query
-    - /api/v1/context/build
 components:
   securitySchemes:
     bearerAuth:
@@ -403,3 +430,13 @@ components:
     EffectiveScope: { type: object, additionalProperties: true }
     Repository: { type: object, additionalProperties: true }
     Workspace: { type: object, additionalProperties: true }
+    TreeDbFederatedDiagnostics: { type: object, additionalProperties: true }
+    TreeDbFederatedError: { type: object, additionalProperties: true }
+    TreeDbFederatedSearchRequest: { type: object, required: [repoIds, query], additionalProperties: true }
+    TreeDbFederatedSearchResponse: { type: object, additionalProperties: true }
+    TreeDbFederatedQueryRequest: { type: object, required: [repoIds, type], additionalProperties: true }
+    TreeDbFederatedQueryResponse: { type: object, additionalProperties: true }
+    TreeDbFederatedContextRequest: { type: object, required: [repoIds], additionalProperties: true }
+    TreeDbFederatedContextResponse: { type: object, additionalProperties: true }
+    TreeDbFederatedGraphRequest: { type: object, required: [repoIds], additionalProperties: true }
+    TreeDbFederatedGraphResponse: { type: object, additionalProperties: true }

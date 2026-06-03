@@ -96,3 +96,12 @@ Stage 3 adds:
 Stage 3 also hardens `POST /api/v1/workspaces/:workspace_id/exec` with
 `TREEDB_EXEC_BACKEND`, sandbox metadata, network denial by default, and
 binary-safe `write_limited` overlay persistence.
+
+Stage 4 adds:
+
+| Method | Path | Controller action | Required capability | Repo | Ref | Path | Workspace | Public | Audit event | Stage 4 note |
+|---|---|---|---|---:|---:|---:|---:|---:|---|---|
+| POST | `/api/v1/search` | `GlobalQueryController.search` | `query:federated`, `files:search` | yes | yes | yes | no | no | `federated.search.started`, `federated.search.completed`, `federated.search.partial` | executes only reduced authorized repository scopes |
+| POST | `/api/v1/query` | `GlobalQueryController.query` | `query:federated` plus query-specific file/git capability | yes | yes | yes | no | no | `federated.query.started`, `federated.query.completed`, `federated.query.partial` | `text`/`combined` use `files:search`; `changed_path` uses `git:diff`; others use `files:read` |
+| POST | `/api/v1/context/build` | `GlobalQueryController.context` | `query:federated`, `graph:query` | yes | yes | yes | no | no | `federated.context.started`, `federated.context.completed`, `federated.context.partial` | merges authorized context packs and applies a global budget |
+| POST | `/api/v1/graph/query` | `GlobalQueryController.graph` | `query:federated`, `graph:query` | yes | yes | yes | no | no | `federated.graph.started`, `federated.graph.completed`, `federated.graph.partial` | qualifies cross-repo graph IDs with `treedb://repo/...` |
