@@ -169,6 +169,9 @@ defmodule TreeDb.Store do
   def append_audit_event(input),
     do: call_json(&TreeDb.Native.append_audit_event/2, data_dir(), Jason.encode!(input))
 
+  def append_audit_events(inputs),
+    do: call_json(&TreeDb.Native.append_audit_events/2, data_dir(), Jason.encode!(inputs))
+
   def put_workspace(input),
     do: call_json(&TreeDb.Native.put_workspace/2, data_dir(), Jason.encode!(input))
 

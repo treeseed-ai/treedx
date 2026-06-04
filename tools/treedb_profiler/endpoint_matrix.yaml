@@ -1,0 +1,3390 @@
+{
+  "operations": [
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getHealth",
+      "path": "/api/v1/health",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "operations",
+        "read"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getVersion",
+      "path": "/api/v1/version",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "operations",
+        "read"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getWhoami",
+      "path": "/api/v1/auth/whoami",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "auth",
+        "read"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getAuthMode",
+      "path": "/api/v1/auth/mode",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "auth",
+        "read"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "createDevToken",
+      "path": "/api/v1/auth/dev-token",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "auth",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getEffectiveScope",
+      "path": "/api/v1/policy/effective-scope",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "policy",
+        "read"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "refreshPolicy",
+      "path": "/api/v1/policy/refresh",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "policy",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "listCapabilities",
+      "path": "/api/v1/policy/capabilities",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "policy",
+        "read"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "listCapabilityGrants",
+      "path": "/api/v1/policy/grants",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "policy",
+        "read"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "putCapabilityGrant",
+      "path": "/api/v1/policy/grants",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "policy",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "listAuditEvents",
+      "path": "/api/v1/audit/events",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "policy",
+        "read"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "planFederationQuery",
+      "path": "/api/v1/federation/query/plan",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "federation",
+        "read",
+        "write"
+      ],
+      "validation": {
+        "rule": "query_hits_expected_terms"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "federatedSearch",
+      "path": "/api/v1/search",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "federation",
+        "read",
+        "search"
+      ],
+      "validation": {
+        "rule": "search_hits_expected_terms"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "federatedQuery",
+      "path": "/api/v1/query",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "federation",
+        "read"
+      ],
+      "validation": {
+        "rule": "query_hits_expected_terms"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "federatedContextBuild",
+      "path": "/api/v1/context/build",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "context",
+        "federation",
+        "write"
+      ],
+      "validation": {
+        "rule": "context_within_budget"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "federatedGraphQuery",
+      "path": "/api/v1/graph/query",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "federation",
+        "graph",
+        "read"
+      ],
+      "validation": {
+        "rule": "query_hits_expected_terms"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getLocalNode",
+      "path": "/api/v1/node",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "read",
+        "registry"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "listRegistryNodes",
+      "path": "/api/v1/registry/nodes",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "read",
+        "registry"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getRepositoryPlacement",
+      "path": "/api/v1/registry/repos/{repo_id}/placement",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "registry",
+        "repository"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "putRepositoryPlacement",
+      "path": "/api/v1/registry/repos/{repo_id}/placement",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "registry",
+        "repository",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "registerRepository",
+      "path": "/api/v1/repos/register",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "repository"
+      ],
+      "validation": {
+        "rule": "repo_registered"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "listRepositories",
+      "path": "/api/v1/repos",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "repo_list_contains_registered"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getRepository",
+      "path": "/api/v1/repos/{repo_id}",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getRepositoryStatus",
+      "path": "/api/v1/repos/{repo_id}/status",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "listRepositoryRefs",
+      "path": "/api/v1/repos/{repo_id}/refs",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "refs_contain_expected_branches"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "listRepositoryRemotes",
+      "path": "/api/v1/repos/{repo_id}/remotes",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "syncRepository",
+      "path": "/api/v1/repos/{repo_id}/sync",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "repository",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "pushRepository",
+      "path": "/api/v1/repos/{repo_id}/push",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "repository",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "createWorkspace",
+      "path": "/api/v1/repos/{repo_id}/workspaces",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "repository",
+        "workspace",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "readRepositoryFile",
+      "path": "/api/v1/repos/{repo_id}/files/read",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "file_content_matches_expectation"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "readRepositoryBlob",
+      "path": "/api/v1/repos/{repo_id}/blobs/read",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "blob",
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "blob_hash_matches_expectation"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "searchRepositoryFiles",
+      "path": "/api/v1/repos/{repo_id}/files/search",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository",
+        "search"
+      ],
+      "validation": {
+        "rule": "search_hits_expected_terms"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "listRepositoryPaths",
+      "path": "/api/v1/repos/{repo_id}/paths/list",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "path_list_contains_expected_paths"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "queryRepository",
+      "path": "/api/v1/repos/{repo_id}/query",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "query_hits_expected_terms"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "refreshRepositoryGraph",
+      "path": "/api/v1/repos/{repo_id}/graph/refresh",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "graph",
+        "repository",
+        "write"
+      ],
+      "validation": {
+        "rule": "graph_refresh_has_version"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getGraphRefreshJob",
+      "path": "/api/v1/repos/{repo_id}/graph/refresh-jobs/{job_id}",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "graph_refresh",
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "graph",
+        "read",
+        "repository",
+        "write"
+      ],
+      "validation": {
+        "rule": "graph_query_has_expected_shape"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "queryRepositoryGraph",
+      "path": "/api/v1/repos/{repo_id}/graph/query",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "graph",
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "graph_query_has_expected_shape"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "searchGraphFiles",
+      "path": "/api/v1/repos/{repo_id}/graph/search-files",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "graph",
+        "read",
+        "repository",
+        "search"
+      ],
+      "validation": {
+        "rule": "graph_query_has_expected_shape"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "searchGraphSections",
+      "path": "/api/v1/repos/{repo_id}/graph/search-sections",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "graph",
+        "read",
+        "repository",
+        "search"
+      ],
+      "validation": {
+        "rule": "graph_query_has_expected_shape"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "searchGraphEntities",
+      "path": "/api/v1/repos/{repo_id}/graph/search-entities",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "graph",
+        "read",
+        "repository",
+        "search"
+      ],
+      "validation": {
+        "rule": "graph_query_has_expected_shape"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getGraphNode",
+      "path": "/api/v1/repos/{repo_id}/graph/nodes/{node_id}",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "graph_node",
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "graph",
+        "read",
+        "registry",
+        "repository"
+      ],
+      "validation": {
+        "rule": "graph_query_has_expected_shape"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "getRelatedGraphNodes",
+      "path": "/api/v1/repos/{repo_id}/graph/related",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "graph",
+        "read",
+        "registry",
+        "repository"
+      ],
+      "validation": {
+        "rule": "graph_query_has_expected_shape"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "getGraphSubgraph",
+      "path": "/api/v1/repos/{repo_id}/graph/subgraph",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "graph",
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "graph_query_has_expected_shape"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "buildContext",
+      "path": "/api/v1/repos/{repo_id}/context/build",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "context",
+        "repository",
+        "write"
+      ],
+      "validation": {
+        "rule": "context_within_budget"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "parseContextQuery",
+      "path": "/api/v1/repos/{repo_id}/context/parse-ctx",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "context",
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "query_hits_expected_terms"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "refreshSearchIndex",
+      "path": "/api/v1/repos/{repo_id}/search/index/refresh",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository",
+        "search",
+        "search-index",
+        "write"
+      ],
+      "validation": {
+        "rule": "search_hits_expected_terms"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getSearchIndexStatus",
+      "path": "/api/v1/repos/{repo_id}/search/index/status",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository",
+        "search",
+        "search-index"
+      ],
+      "validation": {
+        "rule": "search_hits_expected_terms"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "compactSearchIndex",
+      "path": "/api/v1/repos/{repo_id}/search/index/compact",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository",
+        "search",
+        "search-index",
+        "write"
+      ],
+      "validation": {
+        "rule": "search_hits_expected_terms"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "buildSnapshot",
+      "path": "/api/v1/repos/{repo_id}/snapshots/build",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "repository",
+        "snapshot",
+        "write"
+      ],
+      "validation": {
+        "rule": "snapshot_has_checksum"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getSnapshot",
+      "path": "/api/v1/repos/{repo_id}/snapshots/{snapshot_id}",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "snapshot"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository",
+        "snapshot"
+      ],
+      "validation": {
+        "rule": "snapshot_has_checksum"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "exportArtifact",
+      "path": "/api/v1/repos/{repo_id}/artifacts/export",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "snapshot"
+        ]
+      },
+      "tags": [
+        "artifact",
+        "repository",
+        "write"
+      ],
+      "validation": {
+        "rule": "artifact_has_metadata"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "listArtifacts",
+      "path": "/api/v1/repos/{repo_id}/artifacts",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "snapshot"
+        ]
+      },
+      "tags": [
+        "artifact",
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "artifact_has_metadata"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getArtifact",
+      "path": "/api/v1/repos/{repo_id}/artifacts/{artifact_id}",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "snapshot"
+        ]
+      },
+      "tags": [
+        "artifact",
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "artifact_has_metadata"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "DELETE",
+      "operationId": "deleteArtifact",
+      "path": "/api/v1/repos/{repo_id}/artifacts/{artifact_id}",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "snapshot"
+        ]
+      },
+      "tags": [
+        "artifact",
+        "destructive",
+        "repository"
+      ],
+      "validation": {
+        "rule": "artifact_has_metadata"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "listMirrors",
+      "path": "/api/v1/repos/{repo_id}/mirrors",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "putMirror",
+      "path": "/api/v1/repos/{repo_id}/mirrors",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "repository",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "syncMirror",
+      "path": "/api/v1/repos/{repo_id}/mirrors/{mirror_id}/sync",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "mirror",
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "repository",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "checkMirrorHealth",
+      "path": "/api/v1/repos/{repo_id}/mirrors/{mirror_id}/health",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "mirror",
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "operations",
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "promoteMirror",
+      "path": "/api/v1/repos/{repo_id}/mirrors/{mirror_id}/promote",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "mirror",
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "repository"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "createMigration",
+      "path": "/api/v1/repos/{repo_id}/migrations",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "repository",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getMigration",
+      "path": "/api/v1/repos/{repo_id}/migrations/{migration_id}",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "migration",
+          "registered_repo"
+        ]
+      },
+      "tags": [
+        "read",
+        "repository"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getWorkspace",
+      "path": "/api/v1/workspaces/{workspace_id}",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "read",
+        "workspace"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "closeWorkspace",
+      "path": "/api/v1/workspaces/{workspace_id}/close",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "workspace"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "listWorkspaceTree",
+      "path": "/api/v1/workspaces/{workspace_id}/tree",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "read",
+        "workspace"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "readWorkspaceFile",
+      "path": "/api/v1/workspaces/{workspace_id}/files",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "read",
+        "workspace"
+      ],
+      "validation": {
+        "rule": "file_path_matches_expectation"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "PUT",
+      "operationId": "writeWorkspaceFile",
+      "path": "/api/v1/workspaces/{workspace_id}/files",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "workspace",
+        "write"
+      ],
+      "validation": {
+        "rule": "file_path_matches_expectation"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "PATCH",
+      "operationId": "patchWorkspaceFile",
+      "path": "/api/v1/workspaces/{workspace_id}/files",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "workspace",
+        "write"
+      ],
+      "validation": {
+        "rule": "file_path_matches_expectation"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "DELETE",
+      "operationId": "deleteWorkspaceFile",
+      "path": "/api/v1/workspaces/{workspace_id}/files",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "destructive",
+        "workspace"
+      ],
+      "validation": {
+        "rule": "file_path_matches_expectation"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "writeWorkspaceBlob",
+      "path": "/api/v1/workspaces/{workspace_id}/blobs/write",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "blob",
+        "workspace",
+        "write"
+      ],
+      "validation": {
+        "rule": "blob_hash_matches_expectation"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "deleteWorkspaceBlob",
+      "path": "/api/v1/workspaces/{workspace_id}/blobs/delete",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "blob",
+        "destructive",
+        "workspace"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "downloadWorkspaceBlob",
+      "path": "/api/v1/workspaces/{workspace_id}/blobs/download",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "blob",
+        "workspace"
+      ],
+      "validation": {
+        "rule": "blob_hash_matches_expectation"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "PUT",
+      "operationId": "uploadWorkspaceBlob",
+      "path": "/api/v1/workspaces/{workspace_id}/blobs/upload",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "blob",
+        "workspace",
+        "write"
+      ],
+      "validation": {
+        "rule": "blob_hash_matches_expectation"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "createWorkspaceBlobUpload",
+      "path": "/api/v1/workspaces/{workspace_id}/blobs/uploads",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "blob",
+        "workspace",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "PUT",
+      "operationId": "uploadWorkspaceBlobPart",
+      "path": "/api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/parts/{part_number}",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "blob_upload",
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "blob",
+        "workspace",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "completeWorkspaceBlobUpload",
+      "path": "/api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/complete",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "blob_upload",
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "blob",
+        "workspace",
+        "write"
+      ],
+      "validation": {
+        "rule": "multipart_complete_matches_hash"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "DELETE",
+      "operationId": "abortWorkspaceBlobUpload",
+      "path": "/api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "blob_upload",
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "blob",
+        "workspace",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "searchWorkspace",
+      "path": "/api/v1/workspaces/{workspace_id}/search",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "read",
+        "search",
+        "workspace"
+      ],
+      "validation": {
+        "rule": "search_hits_expected_terms"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getWorkspaceStatus",
+      "path": "/api/v1/workspaces/{workspace_id}/status",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "read",
+        "workspace"
+      ],
+      "validation": {
+        "rule": "workspace_status_contains_mutation"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getWorkspaceDiff",
+      "path": "/api/v1/workspaces/{workspace_id}/diff",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "read",
+        "workspace"
+      ],
+      "validation": {
+        "rule": "workspace_diff_contains_mutation"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "commitWorkspace",
+      "path": "/api/v1/workspaces/{workspace_id}/commit",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "workspace",
+        "write"
+      ],
+      "validation": {
+        "rule": "workspace_commit_visible_on_branch"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "execWorkspace",
+      "path": "/api/v1/workspaces/{workspace_id}/exec",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "exec",
+        "workspace"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "listQuarantinedWorkspaces",
+      "path": "/api/v1/admin/workspaces/quarantined",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin",
+        "read",
+        "workspace"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getAdminStorageHealth",
+      "path": "/api/v1/admin/storage/health",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin",
+        "operations",
+        "read"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "checkAdminStorage",
+      "path": "/api/v1/admin/storage/check",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "recoverAdminStorage",
+      "path": "/api/v1/admin/storage/recover",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin",
+        "write"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "compactAdminStorage",
+      "path": "/api/v1/admin/storage/compact",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin",
+        "write"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "backupAdminStorage",
+      "path": "/api/v1/admin/storage/backup",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin",
+        "write"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "listStorageMigrations",
+      "path": "/api/v1/admin/storage/migrations",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin",
+        "read"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "planStorageMigration",
+      "path": "/api/v1/admin/storage/migrations/plan",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin",
+        "write"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "applyStorageMigration",
+      "path": "/api/v1/admin/storage/migrations/apply",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin",
+        "destructive"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "rollbackStorageMigration",
+      "path": "/api/v1/admin/storage/migrations/rollback",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin",
+        "destructive"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "verifyStorageRestore",
+      "path": "/api/v1/admin/storage/restore/verify",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin",
+        "destructive"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "restoreStorage",
+      "path": "/api/v1/admin/storage/restore",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin",
+        "destructive"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "POST",
+      "operationId": "cleanupArtifacts",
+      "path": "/api/v1/admin/artifacts/cleanup",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "snapshot"
+        ]
+      },
+      "tags": [
+        "admin",
+        "artifact",
+        "destructive"
+      ],
+      "validation": {
+        "rule": "artifact_has_metadata"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getReadiness",
+      "path": "/api/v1/ready",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "operations",
+        "read"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getDeepHealth",
+      "path": "/api/v1/health/deep",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "operations",
+        "read"
+      ],
+      "validation": {
+        "rule": "ok_envelope"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getAdminDeepHealth",
+      "path": "/api/v1/admin/health/deep",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "admin",
+        "operations",
+        "read"
+      ],
+      "validation": {
+        "rule": "storage_response_sanitized"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getMetrics",
+      "path": "/api/v1/metrics",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "operations",
+        "read"
+      ],
+      "validation": {
+        "rule": "metrics_shape_valid"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
+      "method": "GET",
+      "operationId": "getPrometheusMetrics",
+      "path": "/metrics",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": []
+      },
+      "tags": [
+        "operations",
+        "read"
+      ],
+      "validation": {
+        "rule": "metrics_shape_valid"
+      }
+    }
+  ]
+}

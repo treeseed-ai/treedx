@@ -52,6 +52,7 @@ defmodule TreeDb.Native do
     do: :erlang.nif_error(:nif_not_loaded)
 
   def append_audit_event(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
+  def append_audit_events(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
   def put_workspace(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
   def get_workspace(_data_dir, _workspace_id), do: :erlang.nif_error(:nif_not_loaded)
   def close_workspace(_data_dir, _workspace_id), do: :erlang.nif_error(:nif_not_loaded)

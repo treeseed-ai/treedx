@@ -1,0 +1,82 @@
+{
+  "blobs": {
+    "sizes": [
+      1024
+    ]
+  },
+  "content": {
+    "frontmatter": true,
+    "links": true,
+    "protectedPaths": true,
+    "sections": true
+  },
+  "description": "History-heavy fixture with many commits, branches, tags, and deterministic ref behavior.",
+  "history": {
+    "remotes": false,
+    "tags": 4
+  },
+  "id": "large-history",
+  "scale": {
+    "large": {
+      "binary": 10,
+      "branches": 50,
+      "commits": 750,
+      "json": 50,
+      "linksPerDoc": 2,
+      "markdown": 300,
+      "repos": 3,
+      "sectionsPerDoc": 3,
+      "text": 150,
+      "workspaceDeletes": 15,
+      "workspacePatches": 30,
+      "workspaceWrites": 60
+    },
+    "medium": {
+      "binary": 5,
+      "branches": 20,
+      "commits": 200,
+      "json": 20,
+      "linksPerDoc": 2,
+      "markdown": 100,
+      "repos": 2,
+      "sectionsPerDoc": 3,
+      "text": 50,
+      "workspaceDeletes": 5,
+      "workspacePatches": 10,
+      "workspaceWrites": 20
+    },
+    "small": {
+      "binary": 1,
+      "branches": 5,
+      "commits": 25,
+      "json": 5,
+      "linksPerDoc": 1,
+      "markdown": 20,
+      "repos": 1,
+      "sectionsPerDoc": 2,
+      "text": 10,
+      "workspaceDeletes": 1,
+      "workspacePatches": 2,
+      "workspaceWrites": 4
+    },
+    "xl": {
+      "binary": 25,
+      "branches": 100,
+      "commits": 2000,
+      "json": 100,
+      "linksPerDoc": 3,
+      "markdown": 800,
+      "repos": 4,
+      "sectionsPerDoc": 4,
+      "text": 400,
+      "workspaceDeletes": 40,
+      "workspacePatches": 80,
+      "workspaceWrites": 160
+    }
+  },
+  "searchTerms": [
+    "release",
+    "provenance",
+    "migration"
+  ]
+}

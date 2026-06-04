@@ -36,9 +36,9 @@ defmodule TreeDb.Files do
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
          {:ok, content} <- utf8_content(params["content"]),
          :ok <- enforce_size(content),
-         :ok <- expected_sha(ctx, path, params["expectedSha"]),
-         {:ok, base_sha} <- base_sha(ctx, path),
-         {:ok, record} <- put_overlay(ctx, path, content, params["expectedSha"], base_sha) do
+         {:ok, state} <- file_state(ctx, path),
+         :ok <- expected_sha_value(state.sha, params["expectedSha"]),
+         {:ok, record} <- put_overlay(ctx, path, content, params["expectedSha"], state.base_sha) do
       audit("file.written", ctx, %{
         workspaceId: workspace_id,
         path: path,
@@ -62,12 +62,11 @@ defmodule TreeDb.Files do
     with {:ok, ctx} <- writable_context(workspace_id, principal, "files:write"),
          {:ok, path} <- PathPolicy.normalize(params["path"]),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
-         {:ok, file} <- current_file(ctx, path),
-         :ok <- expected_sha_value(file.sha, params["expectedSha"]),
-         {:ok, patched} <- Patch.apply(file.content, params["patch"], path),
+         {:ok, state} <- existing_file_state(ctx, path),
+         :ok <- expected_sha_value(state.sha, params["expectedSha"]),
+         {:ok, patched} <- Patch.apply(state.content, params["patch"], path),
          :ok <- enforce_size(patched),
-         {:ok, base_sha} <- base_sha(ctx, path),
-         {:ok, record} <- put_overlay(ctx, path, patched, params["expectedSha"], base_sha) do
+         {:ok, record} <- put_overlay(ctx, path, patched, params["expectedSha"], state.base_sha) do
       audit("file.patched", ctx, %{
         workspaceId: workspace_id,
         path: path,
@@ -91,16 +90,15 @@ defmodule TreeDb.Files do
     with {:ok, ctx} <- writable_context(workspace_id, principal, "files:delete"),
          {:ok, path} <- PathPolicy.normalize(params["path"]),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
-         {:ok, file} <- current_file(ctx, path),
-         :ok <- expected_sha_value(file.sha, params["expectedSha"]),
-         {:ok, base_sha} <- base_sha(ctx, path),
+         {:ok, state} <- existing_file_state(ctx, path),
+         :ok <- expected_sha_value(state.sha, params["expectedSha"]),
          {:ok, _record} <-
            TreeDb.Store.put_workspace_file(%{
              workspaceId: workspace_id,
              path: path,
              op: "delete",
              expectedSha: params["expectedSha"],
-             baseSha: base_sha
+             baseSha: state.base_sha
            }) do
       audit("file.deleted", ctx, %{workspaceId: workspace_id, path: path})
       {:ok, %{path: path, status: "deleted"}}
@@ -267,26 +265,87 @@ defmodule TreeDb.Files do
   end
 
   defp current_file(ctx, path) do
+    with {:ok, state} <- existing_file_state(ctx, path) do
+      {:ok,
+       %{
+         path: state.path,
+         encoding: "utf8",
+         content: state.content,
+         sha: state.sha,
+         source: to_string(state.source),
+         stat: state.stat
+       }}
+    end
+  end
+
+  defp existing_file_state(ctx, path) do
+    with {:ok, state} <- file_state(ctx, path) do
+      if state.source == :missing do
+        {:error, %{code: "not_found", message: "File not found."}}
+      else
+        {:ok, state}
+      end
+    end
+  end
+
+  defp file_state(ctx, path) do
     with {:ok, overlay} <- TreeDb.Store.get_workspace_file(ctx.workspace["id"], path) do
       case overlay do
-        %{"op" => "delete"} ->
-          {:error, %{code: "not_found", message: "File not found."}}
+        %{"op" => "delete", "baseSha" => base_sha} ->
+          {:ok,
+           %{
+             source: :missing,
+             path: path,
+             content: nil,
+             sha: nil,
+             base_sha: base_sha,
+             stat: nil,
+             record: overlay
+           }}
 
         %{"op" => "put"} = record ->
           with {:ok, content} <- Overlay.read_overlay(record) do
             {:ok,
              %{
+               source: :overlay,
                path: path,
-               encoding: "utf8",
                content: content,
                sha: record["contentHash"],
-               source: "overlay",
-               stat: %{size: record["size"], mtime: record["updatedAt"]}
+               base_sha: record["baseSha"],
+               stat: %{size: record["size"], mtime: record["updatedAt"]},
+               record: record
              }}
           end
 
         nil ->
-          base_file(ctx, path)
+          case base_file(ctx, path) do
+            {:ok, file} ->
+              {:ok,
+               %{
+                 source: :base,
+                 path: path,
+                 content: file.content,
+                 sha: file.sha,
+                 base_sha: file.sha,
+                 stat: file.stat,
+                 record: nil
+               }}
+
+            {:error, %{code: "not_found"}} ->
+              {:ok,
+               %{
+                 source: :missing,
+                 path: path,
+                 content: nil,
+                 sha: nil,
+                 base_sha: nil,
+                 stat: nil,
+                 record: nil
+               }}
+
+            other ->
+              other
+          end
       end
     end
   end
@@ -386,35 +445,12 @@ defmodule TreeDb.Files do
     })
   end
 
-  defp expected_sha(ctx, path, expected) do
-    case current_file(ctx, path) do
-      {:ok, file} ->
-        expected_sha_value(file.sha, expected)
-
-      {:error, %{code: "not_found"}} ->
-        if expected in [nil, ""],
-          do: :ok,
-          else: {:error, %{code: "conflict", message: "expectedSha does not match."}}
-
-      other ->
-        other
-    end
-  end
-
   defp expected_sha_value(_actual, nil), do: :ok
   defp expected_sha_value(_actual, ""), do: :ok
   defp expected_sha_value(actual, actual), do: :ok
 
   defp expected_sha_value(_actual, _expected),
     do: {:error, %{code: "conflict", message: "expectedSha does not match."}}
-
-  defp base_sha(ctx, path) do
-    case base_file(ctx, path) do
-      {:ok, file} -> {:ok, file.sha}
-      {:error, %{code: "not_found"}} -> {:ok, nil}
-      other -> other
-    end
-  end
 
   defp merge_tree_entries(entries, overlays, path, include_deleted) do
     base =

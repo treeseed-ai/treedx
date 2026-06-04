@@ -13,6 +13,8 @@ defmodule TreeDb.Snapshots do
          :ok <- audit_started(ctx, params),
          {:ok, files} <- collect_files(ctx),
          {:ok, manifest} <- persist_snapshot(ctx, files) do
+      TreeDb.Artifacts.Index.upsert_from_manifest(manifest)
+
       TreeDb.Audit.append(
         "snapshot.built",
         audit_attrs(ctx, %{snapshotId: manifest["snapshotId"]})
@@ -67,6 +69,7 @@ defmodule TreeDb.Snapshots do
         }
       })
 
+      TreeDb.Artifacts.Index.upsert_from_manifest(manifest)
       {:ok, %{artifact: public_artifact(artifact, repo_id)}}
     else
       nil -> {:error, %{code: "artifact_not_found", message: "Artifact not found."}}

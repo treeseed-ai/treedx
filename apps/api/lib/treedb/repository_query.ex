@@ -2,7 +2,7 @@ defmodule TreeDb.RepositoryQuery do
   @moduledoc false
 
   alias TreeDb.Files.PathPolicy
-  alias TreeDb.RepositoryQuery.{Document, Filters, Links, Pagination, PathMatch, Sections, Sort}
+  alias TreeDb.RepositoryQuery.{Filters, Links, Pagination, PathMatch, Sections, Sort}
   alias TreeDb.Search.Ranking
 
   @default_query_limit 20
@@ -324,7 +324,7 @@ defmodule TreeDb.RepositoryQuery do
   defp read_files(ctx, paths, params) do
     paths
     |> Enum.map(fn path ->
-      Document.from_path(ctx.repo, ctx.ref, path,
+      TreeDb.RepositoryCache.document(ctx, path,
         encoding: params["encoding"] || "utf8",
         parse_frontmatter: params["parseFrontmatter"] != false
       )
@@ -333,7 +333,7 @@ defmodule TreeDb.RepositoryQuery do
   end
 
   defp filtered_entries(ctx, patterns, params) do
-    with {:ok, entries} <- TreeDb.Git.list_tree_recursive(ctx.repo["localPath"], ctx.ref, nil) do
+    with {:ok, entries} <- TreeDb.RepositoryCache.tree_entries(ctx) do
       allow_protected = truthy?(params["allowProtected"])
 
       entries =
@@ -357,24 +357,13 @@ defmodule TreeDb.RepositoryQuery do
   end
 
   defp searchable_documents(ctx, patterns, params) do
-    with {:ok, entries} <- filtered_entries(ctx, patterns, params) do
-      entries
-      |> Enum.filter(&(&1["kind"] == "blob"))
-      |> Enum.map(fn entry ->
-        case Document.from_entry(ctx.repo, ctx.ref, entry,
-               encoding: "utf8",
-               parse_frontmatter: true
-             ) do
-          {:ok, doc} -> {:ok, doc}
-          {:error, %{code: "unsupported_media_type"}} -> {:ok, nil}
-          other -> other
-        end
-      end)
-      |> collect_ok()
-      |> case do
-        {:ok, docs} -> {:ok, Enum.reject(docs, &is_nil/1)}
-        other -> other
-      end
+    with {:ok, documents} <- TreeDb.RepositoryCache.searchable_documents(ctx) do
+      allow_protected = truthy?(params["allowProtected"])
+
+      {:ok,
+       Enum.filter(documents, fn doc ->
+         entry_allowed?(%{"path" => doc["path"]}, ctx.scope, patterns, allow_protected)
+       end)}
     end
   end
 

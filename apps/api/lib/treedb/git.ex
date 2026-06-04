@@ -66,9 +66,14 @@ defmodule TreeDb.Git do
   end
 
   defp commit_worker(input_path) do
+    release_worker = Path.expand("bin/treedb_git_worker", File.cwd!())
+
     cond do
       executable = System.find_executable("treedb_git_worker") ->
         {:binary, executable, ["commit-overlay", input_path], []}
+
+      File.exists?(release_worker) ->
+        {:binary, release_worker, ["commit-overlay", input_path], []}
 
       File.exists?(Path.expand("../../target/debug/treedb_git_worker", File.cwd!())) ->
         {:binary, Path.expand("../../target/debug/treedb_git_worker", File.cwd!()),

@@ -28,6 +28,11 @@ defmodule TreeDb.Application do
     children = [
       TreeDb.Observability.Metrics,
       TreeDb.Observability.Telemetry,
+      TreeDb.RepositoryCache,
+      TreeDb.Graph.IndexCache,
+      TreeDb.Graph.RefreshCoordinator,
+      TreeDb.Artifacts.Index,
+      TreeDb.Audit.Writer,
       TreeDb.Auth.JwksCache,
       TreeDbWeb.Endpoint
     ]

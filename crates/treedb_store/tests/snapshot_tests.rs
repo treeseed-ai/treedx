@@ -5,6 +5,93 @@ use tempfile::tempdir;
 use treedb_store::*;
 
 #[test]
+fn repeated_identical_snapshot_reuses_existing_artifact() {
+    let dir = tempdir().unwrap();
+    init_data_dir(
+        dir.path(),
+        InitOptions {
+            node_id: "node_local".to_string(),
+        },
+    )
+    .unwrap();
+
+    let input = SnapshotBuildInput {
+        snapshot_id: None,
+        repo_id: "repo_demo".to_string(),
+        ref_name: "refs/heads/main".to_string(),
+        commit_sha: "abc123".to_string(),
+        kind: "repository_snapshot".to_string(),
+        included_paths: vec!["docs/**".to_string()],
+        graph_version: None,
+        files: vec![SnapshotArtifactFileInput {
+            path: "docs/readme.md".to_string(),
+            object_id: "blob1".to_string(),
+            content_base64: base64::engine::general_purpose::STANDARD.encode("hello"),
+        }],
+        created_by_actor_id: Some("actor_demo".to_string()),
+    };
+
+    let first = build_snapshot_artifact(dir.path(), input.clone()).unwrap();
+    let artifact_path = dir
+        .path()
+        .join("snapshots")
+        .join(&first.snapshot_id)
+        .join("artifact.tar.zst");
+    let first_modified = std::fs::metadata(&artifact_path)
+        .unwrap()
+        .modified()
+        .unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(20));
+
+    let second = build_snapshot_artifact(dir.path(), input).unwrap();
+    let second_modified = std::fs::metadata(&artifact_path)
+        .unwrap()
+        .modified()
+        .unwrap();
+
+    assert_eq!(first.snapshot_id, second.snapshot_id);
+    assert_eq!(
+        first.artifact.as_ref().unwrap().checksum,
+        second.artifact.as_ref().unwrap().checksum
+    );
+    assert_eq!(first_modified, second_modified);
+}
+
+#[test]
+fn changed_snapshot_input_creates_distinct_snapshot() {
+    let dir = tempdir().unwrap();
+    init_data_dir(
+        dir.path(),
+        InitOptions {
+            node_id: "node_local".to_string(),
+        },
+    )
+    .unwrap();
+
+    let mut input = SnapshotBuildInput {
+        snapshot_id: None,
+        repo_id: "repo_demo".to_string(),
+        ref_name: "refs/heads/main".to_string(),
+        commit_sha: "abc123".to_string(),
+        kind: "repository_snapshot".to_string(),
+        included_paths: vec!["docs/**".to_string()],
+        graph_version: None,
+        files: vec![SnapshotArtifactFileInput {
+            path: "docs/readme.md".to_string(),
+            object_id: "blob1".to_string(),
+            content_base64: base64::engine::general_purpose::STANDARD.encode("hello"),
+        }],
+        created_by_actor_id: Some("actor_demo".to_string()),
+    };
+
+    let first = build_snapshot_artifact(dir.path(), input.clone()).unwrap();
+    input.commit_sha = "def456".to_string();
+    let second = build_snapshot_artifact(dir.path(), input).unwrap();
+
+    assert_ne!(first.snapshot_id, second.snapshot_id);
+}
+
+#[test]
 fn build_snapshot_writes_manifest_and_tar_zst_artifact() {
     let dir = tempdir().unwrap();
     init_data_dir(

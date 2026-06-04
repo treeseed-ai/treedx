@@ -474,6 +474,17 @@ fn append_audit_event<'a>(env: Env<'a>, data_dir: String, input_json: String) ->
 }
 
 #[rustler::nif(schedule = "DirtyIo")]
+fn append_audit_events<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
+    match parse_json::<Vec<AuditEventInput>>(input_json) {
+        Ok(input) => match treedb_store::append_audit_events(Path::new(&data_dir), input) {
+            Ok(record) => ok_json(env, record),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
 fn put_workspace<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
     match parse_json::<WorkspaceInput>(input_json) {
         Ok(input) => match treedb_store::put_workspace(Path::new(&data_dir), input) {

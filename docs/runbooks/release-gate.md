@@ -44,6 +44,34 @@ expiration date.
 
 Live checks are environment-backed operational checks. When credentials are absent they report not configured and exit successfully. They are not test skips and do not reduce local or CI test coverage.
 
+## Workflow Architecture
+
+The GitHub workflow runs TreeDB verification independently on `linux/amd64` and
+`linux/arm64` runner streams. Each stream runs the same release gate on native
+hardware so architecture-specific Rust, native NIF, release, storage, and
+container issues are caught before publishing.
+
+For pushes to `main`, `staging`, and semantic-version tags, the workflow also
+runs an architecture-local profiler job after verification. The profiler uses
+the production profile Compose setup and writes YAML plus Markdown reports as
+workflow artifacts. Pull requests and ordinary branch pushes run verification
+only.
+
+Profile behavior is controlled with GitHub repository or environment variables:
+
+- `TREEDB_CI_PROFILE_MODE`, default `portfolio`
+- `TREEDB_CI_PROFILE_DURATION`, default `2m`
+- `TREEDB_CI_PROFILE_CONCURRENCY`, default `25`
+- `TREEDB_CI_PROFILE_SIZE`
+- `TREEDB_CI_PROFILE_FIXTURE`
+- `TREEDB_CI_PROFILE_SCENARIO`
+- `TREEDB_CI_PROFILE_LOAD_MODE`
+- `TREEDB_CI_PROFILE_ITERATIONS`
+
+The architecture image build runs only after the matching architecture has
+completed verification and after both profiler streams have succeeded. The final
+manifest is assembled only after both architecture images are pushed.
+
 ## Docker Hub Publishing
 
 The GitHub workflow publishes Docker images only after the release gate passes.
@@ -62,6 +90,10 @@ The GitHub workflow publishes Docker images only after the release gate passes.
   (`ubuntu-24.04` for `linux/amd64` and `ubuntu-24.04-arm` for `linux/arm64`)
   and then combined into the published manifest. The workflow does not use QEMU
   for release builds.
+- Architecture-specific Docker Hub tags are named after the final manifest tag:
+  `latest-amd64` and `latest-arm64` for `main`, or `<semver>-amd64` and
+  `<semver>-arm64` for version tags. The manifest tag remains `latest` or the
+  exact semantic-version git tag.
 - BuildKit cache is enabled per architecture for Docker layers plus Cargo and
   Mix build caches.
 - The published runtime image omits optional shell Git tooling; deployments that

@@ -4,7 +4,9 @@ defmodule TreeDb.Audit do
   alias TreeDb.Audit.Event
 
   def append(event_type, attrs \\ %{}) do
-    case TreeDb.Store.append_audit_event(Event.new(event_type, attrs)) do
+    event = Event.new(event_type, attrs)
+
+    case TreeDb.Audit.Writer.append(event) do
       {:ok, _} = result ->
         TreeDb.Observability.Metrics.record_audit_event(event_type, attrs)
         result
@@ -24,6 +26,7 @@ defmodule TreeDb.Audit do
   def list(query, principal) do
     with {:ok, _scope} <-
            TreeDb.Capabilities.require_capability(principal, "audit:read", query["repoId"]) do
+      TreeDb.Audit.flush()
       limit = coerce_int(query["limit"], 100)
 
       TreeDb.Store.list_audit_events(%{
@@ -53,4 +56,6 @@ defmodule TreeDb.Audit do
   end
 
   defp coerce_int(_value, default), do: default
+
+  def flush, do: TreeDb.Audit.Writer.flush()
 end

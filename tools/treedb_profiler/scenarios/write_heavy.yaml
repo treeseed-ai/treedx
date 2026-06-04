@@ -1,0 +1,29 @@
+{
+  "defaults": {
+    "allowOptionalUnavailable": true,
+    "failOnAssertionFailure": true
+  },
+  "description": "Workspace write, blob, commit, snapshot, and artifact workload.",
+  "id": "write_heavy",
+  "operationSelection": {
+    "excludeTags": [
+      "destructive",
+      "admin",
+      "exec"
+    ],
+    "includeTags": [
+      "write",
+      "workspace",
+      "blob",
+      "snapshot",
+      "artifact"
+    ]
+  },
+  "weights": {
+    "buildSnapshot": 4,
+    "getWorkspaceDiff": 10,
+    "getWorkspaceStatus": 10,
+    "writeWorkspaceBlob": 8,
+    "writeWorkspaceFile": 16
+  }
+}

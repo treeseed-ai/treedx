@@ -9,17 +9,8 @@ defmodule TreeDb.Graph do
          {:ok, _} <- TreeDb.Capabilities.require_capability(principal, "git:read", repo_id),
          {:ok, previous} <- Native.read_latest_graph_manifest(repo_id, ctx.ref),
          {:ok, refresh_plan} <- refresh_plan(params, previous),
-         {:ok, job} <-
-           RefreshJobs.start(
-             ctx,
-             params,
-             refresh_plan.mode,
-             refresh_plan.fallback_reason,
-             refresh_plan.stale
-           ),
-         {:ok, input} <- Builder.build_input(ctx, params, previous),
-         {:ok, index} <- Native.build_graph_index(input),
-         {:ok, manifest} <- Native.write_graph_segments(index),
+         {:ok, {job, index, manifest, refresh_plan}} <-
+           refresh_or_reuse(ctx, params, previous, refresh_plan),
          changed_paths <- authorized_changed_paths(ctx, params),
          indexed_count <- indexed_path_count(refresh_plan.mode, changed_paths, manifest),
          removed_count <- length(manifest["delta"]["removed"] || []),
@@ -144,8 +135,59 @@ defmodule TreeDb.Graph do
   def load_authorized_index(ctx, params) do
     with {:ok, manifest} <- Native.read_latest_graph_manifest(ctx.repo["id"], ctx.ref),
          {:ok, manifest} <- require_manifest(manifest),
-         {:ok, index} <- Native.read_graph_segments(ctx.repo["id"], manifest["graphVersion"]) do
+         {:ok, index} <-
+           TreeDb.Graph.IndexCache.get_or_load(ctx.repo["id"], manifest["graphVersion"], fn ->
+             Native.read_graph_segments(ctx.repo["id"], manifest["graphVersion"])
+           end) do
       {:ok, Filter.authorize(index, ctx.scope, params)}
+    end
+  end
+
+  defp refresh_or_reuse(ctx, params, previous, refresh_plan) do
+    case TreeDb.Graph.RefreshCoordinator.run(ctx, params, previous, refresh_plan, fn ->
+           build_refresh(ctx, params, previous, refresh_plan)
+         end) do
+      {:cached, manifest} ->
+        with {:ok, job} <-
+               RefreshJobs.start(ctx, params, "cached", nil, false),
+             {:ok, index} <-
+               TreeDb.Graph.IndexCache.get_or_load(ctx.repo["id"], manifest["graphVersion"], fn ->
+                 Native.read_graph_segments(ctx.repo["id"], manifest["graphVersion"])
+               end) do
+          {:ok, {job, index, manifest, %{refresh_plan | mode: "cached"}}}
+        end
+
+      {:cached_stale, manifest} ->
+        with {:ok, job} <-
+               RefreshJobs.start(ctx, params, "cached", "dedupe_timeout", true),
+             {:ok, index} <-
+               TreeDb.Graph.IndexCache.get_or_load(ctx.repo["id"], manifest["graphVersion"], fn ->
+                 Native.read_graph_segments(ctx.repo["id"], manifest["graphVersion"])
+               end) do
+          {:ok,
+           {job, index, manifest,
+            %{refresh_plan | mode: "cached", fallback_reason: "dedupe_timeout", stale: true}}}
+        end
+
+      other ->
+        other
+    end
+  end
+
+  defp build_refresh(ctx, params, previous, refresh_plan) do
+    with {:ok, job} <-
+           RefreshJobs.start(
+             ctx,
+             params,
+             refresh_plan.mode,
+             refresh_plan.fallback_reason,
+             refresh_plan.stale
+           ),
+         {:ok, input} <- Builder.build_input(ctx, params, previous),
+         {:ok, index} <- Native.build_graph_index(input),
+         {:ok, manifest} <- Native.write_graph_segments(index),
+         :ok <- TreeDb.Graph.IndexCache.put(index) do
+      {:ok, {job, index, manifest, refresh_plan}}
     end
   end
 

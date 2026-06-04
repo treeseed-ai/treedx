@@ -1,0 +1,80 @@
+services:
+  treedb-api:
+    build:
+      context: ..
+      target: prod
+    environment:
+      PHX_SERVER: "true"
+      PHX_HOST: 0.0.0.0
+      PORT: "4000"
+      TREEDB_DATA_DIR: /var/lib/treedb
+      TREEDB_AUTH_MODE: dev
+      TREEDB_REGISTRY_MODE: local
+      TREEDB_EXEC_BACKEND: direct_dev
+      TREEDB_AUDIT_ASYNC: "true"
+      TREEDB_REPO_DOC_CACHE_ENABLED: "true"
+      TREEDB_GRAPH_INDEX_CACHE_ENABLED: "true"
+      TREEDB_ARTIFACT_INDEX_ENABLED: "true"
+      SECRET_KEY_BASE: profile_profile_profile_profile_profile_profile_profile_profile_64
+      TREEDB_NODE_ID: node_local
+    ports:
+      - "4000:4000"
+    volumes:
+      - treedb-data:/var/lib/treedb
+    healthcheck:
+      test: ["CMD", "/bin/busybox", "wget", "-qO-", "http://127.0.0.1:4000/api/v1/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  treedb-profiler:
+    build:
+      context: ..
+      target: dev
+    working_dir: /workspace/treedb
+    depends_on:
+      treedb-api:
+        condition: service_healthy
+    environment:
+      MIX_ENV: dev
+      TREEDB_PROFILE_BASE_URL: ${TREEDB_PROFILE_BASE_URL:-http://treedb-api:4000}
+      TREEDB_PROFILE_LOAD_MODE: ${TREEDB_PROFILE_LOAD_MODE:-portfolio}
+      TREEDB_PROFILE_FIXTURE: ${TREEDB_PROFILE_FIXTURE:-small-docs}
+      TREEDB_PROFILE_SIZE: ${TREEDB_PROFILE_SIZE:-small}
+      TREEDB_PROFILE_SCENARIO: ${TREEDB_PROFILE_SCENARIO:-all}
+      TREEDB_PROFILE_ITERATIONS: ${TREEDB_PROFILE_ITERATIONS:-100000}
+      TREEDB_PROFILE_CONCURRENCY: ${TREEDB_PROFILE_CONCURRENCY:-100}
+      TREEDB_PROFILE_DURATION: ${TREEDB_PROFILE_DURATION:-10m}
+      TREEDB_PROFILE_TIMEOUT_MS: ${TREEDB_PROFILE_TIMEOUT_MS:-120000}
+      TREEDB_PROFILE_REPORT_FORMAT: ${TREEDB_PROFILE_REPORT_FORMAT:-both}
+      TREEDB_PROFILE_OUTPUT: ${TREEDB_PROFILE_OUTPUT:-target/profiles/compose-profile.yaml}
+      TREEDB_PROFILE_MARKDOWN_OUTPUT: ${TREEDB_PROFILE_MARKDOWN_OUTPUT:-target/profiles/compose-profile.md}
+      TREEDB_PROFILE_REPO_PREFIX: ${TREEDB_PROFILE_REPO_PREFIX:-profile-}
+      TREEDB_PROFILE_PORTFOLIO_INITIAL_REPOS: ${TREEDB_PROFILE_PORTFOLIO_INITIAL_REPOS:-1}
+      TREEDB_PROFILE_PORTFOLIO_MAX_REPOS: ${TREEDB_PROFILE_PORTFOLIO_MAX_REPOS:-1000}
+      TREEDB_PROFILE_PORTFOLIO_GROWTH_TARGET: ${TREEDB_PROFILE_PORTFOLIO_GROWTH_TARGET:-steady}
+      TREEDB_PROFILE_PORTFOLIO_MIN_REPO_AGE_BEFORE_DELETE: ${TREEDB_PROFILE_PORTFOLIO_MIN_REPO_AGE_BEFORE_DELETE:-30m}
+      TREEDB_PROFILE_INCLUDE_ADMIN: ${TREEDB_PROFILE_INCLUDE_ADMIN:-true}
+      TREEDB_PROFILE_INCLUDE_DESTRUCTIVE: ${TREEDB_PROFILE_INCLUDE_DESTRUCTIVE:-true}
+      TREEDB_PROFILE_INCLUDE_EXEC: ${TREEDB_PROFILE_INCLUDE_EXEC:-true}
+      TREEDB_PROFILE_INCLUDE_FEDERATION: ${TREEDB_PROFILE_INCLUDE_FEDERATION:-true}
+      TREEDB_PROFILE_HOST_UID: ${TREEDB_PROFILE_HOST_UID:-1000}
+      TREEDB_PROFILE_HOST_GID: ${TREEDB_PROFILE_HOST_GID:-1000}
+    volumes:
+      - ..:/workspace/treedb
+      - treedb-data:/var/lib/treedb
+    command: >
+      sh -lc "set +e;
+      umask 000;
+      set -- ./scripts/profile-treedb.sh --base-url \"$${TREEDB_PROFILE_BASE_URL}\" --auth-mode dev --load-mode \"$${TREEDB_PROFILE_LOAD_MODE}\" --fixture \"$${TREEDB_PROFILE_FIXTURE}\" --size \"$${TREEDB_PROFILE_SIZE}\" --scenario \"$${TREEDB_PROFILE_SCENARIO}\" --iterations \"$${TREEDB_PROFILE_ITERATIONS}\" --concurrency \"$${TREEDB_PROFILE_CONCURRENCY}\" --timeout-ms \"$${TREEDB_PROFILE_TIMEOUT_MS}\" --fixture-root /var/lib/treedb/profiler --repo-prefix \"$${TREEDB_PROFILE_REPO_PREFIX}\" --portfolio-repo-prefix \"$${TREEDB_PROFILE_REPO_PREFIX}\" --portfolio-initial-repos \"$${TREEDB_PROFILE_PORTFOLIO_INITIAL_REPOS}\" --portfolio-max-repos \"$${TREEDB_PROFILE_PORTFOLIO_MAX_REPOS}\" --portfolio-growth-target \"$${TREEDB_PROFILE_PORTFOLIO_GROWTH_TARGET}\" --portfolio-min-repo-age-before-delete \"$${TREEDB_PROFILE_PORTFOLIO_MIN_REPO_AGE_BEFORE_DELETE}\" --report-format \"$${TREEDB_PROFILE_REPORT_FORMAT}\" --markdown-output \"$${TREEDB_PROFILE_MARKDOWN_OUTPUT}\" --include-admin \"$${TREEDB_PROFILE_INCLUDE_ADMIN}\" --include-destructive \"$${TREEDB_PROFILE_INCLUDE_DESTRUCTIVE}\" --include-exec \"$${TREEDB_PROFILE_INCLUDE_EXEC}\" --include-federation \"$${TREEDB_PROFILE_INCLUDE_FEDERATION}\" --output \"$${TREEDB_PROFILE_OUTPUT}\";
+      if [ -n \"$${TREEDB_PROFILE_DURATION}\" ]; then
+        set -- \"$$@\" --duration \"$${TREEDB_PROFILE_DURATION}\";
+      fi;
+      \"$$@\";
+      status=\"$$?\";
+      chown -R \"$${TREEDB_PROFILE_HOST_UID}:$${TREEDB_PROFILE_HOST_GID}\" target/profiles 2>/dev/null || true;
+      exit \"$$status\""
+
+volumes:
+  treedb-data:

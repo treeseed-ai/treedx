@@ -1,0 +1,28 @@
+{
+  "defaults": {
+    "allowOptionalUnavailable": true,
+    "failOnAssertionFailure": true
+  },
+  "description": "Graph refresh, query, search index, and context workload.",
+  "id": "graph_context",
+  "operationSelection": {
+    "excludeTags": [
+      "destructive",
+      "admin",
+      "exec"
+    ],
+    "includeTags": [
+      "graph",
+      "context",
+      "search-index",
+      "search"
+    ]
+  },
+  "weights": {
+    "buildContext": 10,
+    "federatedGraphQuery": 4,
+    "queryRepositoryGraph": 16,
+    "searchGraphFiles": 12,
+    "searchGraphSections": 12
+  }
+}

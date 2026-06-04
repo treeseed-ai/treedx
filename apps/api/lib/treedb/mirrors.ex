@@ -72,7 +72,7 @@ defmodule TreeDb.Mirrors do
         dryRun: params["dryRun"] == true
       }
 
-      case TreeDb.Git.fetch_remote(input) do
+      case fetch_or_dry_run(repo, input) do
         {:ok, result} ->
           sync_record =
             put_sync_record(
@@ -231,6 +231,24 @@ defmodule TreeDb.Mirrors do
       end
     end
   end
+
+  defp fetch_or_dry_run(repo, %{dryRun: true} = input) do
+    with {:ok, git} <- TreeDb.Git.inspect_repository(repo["localPath"]) do
+      {:ok,
+       %{
+         "remoteName" => input.remoteName,
+         "remoteUrl" => input.remoteUrl,
+         "refspecs" => input.refspecs,
+         "updatedRefs" => [],
+         "receivedPack" => false,
+         "beforeHead" => git["head"],
+         "afterHead" => git["head"],
+         "status" => "dry_run"
+       }}
+    end
+  end
+
+  defp fetch_or_dry_run(_repo, input), do: TreeDb.Git.fetch_remote(input)
 
   defp put_sync_record(mirror, repo_id, result, started_at, status, error, remote_url) do
     TreeDb.Store.put_mirror_sync(%{

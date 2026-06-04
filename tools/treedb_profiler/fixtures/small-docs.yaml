@@ -1,0 +1,80 @@
+{
+  "blobs": {
+    "sizes": []
+  },
+  "content": {
+    "frontmatter": true,
+    "links": true,
+    "protectedPaths": true,
+    "sections": true
+  },
+  "description": "Tiny deterministic docs repo for smoke and correctness checks.",
+  "history": {
+    "remotes": false,
+    "tags": 1
+  },
+  "id": "small-docs",
+  "scale": {
+    "large": {
+      "binary": 2,
+      "branches": 4,
+      "commits": 20,
+      "json": 20,
+      "linksPerDoc": 3,
+      "markdown": 120,
+      "repos": 3,
+      "sectionsPerDoc": 4,
+      "text": 40,
+      "workspaceDeletes": 5,
+      "workspacePatches": 10,
+      "workspaceWrites": 20
+    },
+    "medium": {
+      "binary": 1,
+      "branches": 2,
+      "commits": 8,
+      "json": 5,
+      "linksPerDoc": 2,
+      "markdown": 40,
+      "repos": 2,
+      "sectionsPerDoc": 3,
+      "text": 10,
+      "workspaceDeletes": 2,
+      "workspacePatches": 4,
+      "workspaceWrites": 8
+    },
+    "small": {
+      "binary": 0,
+      "branches": 1,
+      "commits": 2,
+      "json": 1,
+      "linksPerDoc": 1,
+      "markdown": 8,
+      "repos": 1,
+      "sectionsPerDoc": 2,
+      "text": 2,
+      "workspaceDeletes": 1,
+      "workspacePatches": 1,
+      "workspaceWrites": 2
+    },
+    "xl": {
+      "binary": 4,
+      "branches": 6,
+      "commits": 40,
+      "json": 40,
+      "linksPerDoc": 4,
+      "markdown": 250,
+      "repos": 4,
+      "sectionsPerDoc": 5,
+      "text": 80,
+      "workspaceDeletes": 10,
+      "workspacePatches": 20,
+      "workspaceWrites": 40
+    }
+  },
+  "searchTerms": [
+    "release",
+    "provenance",
+    "migration"
+  ]
+}

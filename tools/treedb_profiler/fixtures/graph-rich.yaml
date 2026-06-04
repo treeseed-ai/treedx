@@ -1,0 +1,84 @@
+{
+  "blobs": {
+    "sizes": [
+      1024
+    ]
+  },
+  "content": {
+    "frontmatter": true,
+    "links": true,
+    "protectedPaths": true,
+    "sections": true
+  },
+  "description": "Dense deterministic links, entities, and sections for graph and context profiling.",
+  "history": {
+    "remotes": false,
+    "tags": 2
+  },
+  "id": "graph-rich",
+  "scale": {
+    "large": {
+      "binary": 5,
+      "branches": 6,
+      "commits": 60,
+      "json": 50,
+      "linksPerDoc": 8,
+      "markdown": 1000,
+      "repos": 3,
+      "sectionsPerDoc": 10,
+      "text": 150,
+      "workspaceDeletes": 15,
+      "workspacePatches": 30,
+      "workspaceWrites": 60
+    },
+    "medium": {
+      "binary": 2,
+      "branches": 3,
+      "commits": 20,
+      "json": 20,
+      "linksPerDoc": 5,
+      "markdown": 300,
+      "repos": 2,
+      "sectionsPerDoc": 8,
+      "text": 50,
+      "workspaceDeletes": 5,
+      "workspacePatches": 10,
+      "workspaceWrites": 20
+    },
+    "small": {
+      "binary": 0,
+      "branches": 2,
+      "commits": 5,
+      "json": 5,
+      "linksPerDoc": 3,
+      "markdown": 30,
+      "repos": 1,
+      "sectionsPerDoc": 5,
+      "text": 5,
+      "workspaceDeletes": 1,
+      "workspacePatches": 2,
+      "workspaceWrites": 4
+    },
+    "xl": {
+      "binary": 10,
+      "branches": 10,
+      "commits": 150,
+      "json": 100,
+      "linksPerDoc": 12,
+      "markdown": 3000,
+      "repos": 5,
+      "sectionsPerDoc": 12,
+      "text": 400,
+      "workspaceDeletes": 35,
+      "workspacePatches": 75,
+      "workspaceWrites": 150
+    }
+  },
+  "searchTerms": [
+    "release",
+    "provenance",
+    "migration",
+    "EntityAlpha",
+    "EntityBeta"
+  ]
+}

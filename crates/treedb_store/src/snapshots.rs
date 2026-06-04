@@ -23,6 +23,11 @@ pub fn build_snapshot_artifact(
             &input.included_paths,
         )
     });
+
+    if let Some(existing) = reusable_snapshot(data_dir, &snapshot_id, &input)? {
+        return Ok(existing);
+    }
+
     let tmp_dir = data_dir.join("tmp/snapshots").join(&snapshot_id);
     if tmp_dir.exists() {
         fs::remove_dir_all(&tmp_dir)?;
@@ -120,6 +125,35 @@ pub fn build_snapshot_artifact(
         &artifact,
     )?;
     Ok(manifest)
+}
+
+fn reusable_snapshot(
+    data_dir: &Path,
+    snapshot_id: &str,
+    input: &SnapshotBuildInput,
+) -> Result<Option<SnapshotManifestRecord>, StoreError> {
+    let Some(manifest) = get_snapshot_manifest(data_dir, snapshot_id)? else {
+        return Ok(None);
+    };
+
+    let artifact_path = data_dir
+        .join("snapshots")
+        .join(snapshot_id)
+        .join("artifact.tar.zst");
+
+    let reusable = manifest.repo_id == input.repo_id
+        && manifest.ref_name == input.ref_name
+        && manifest.commit_sha == input.commit_sha
+        && manifest.kind == input.kind
+        && manifest.included_paths == input.included_paths
+        && manifest.artifact.is_some()
+        && artifact_path.exists();
+
+    if reusable {
+        Ok(Some(manifest))
+    } else {
+        Ok(None)
+    }
 }
 
 pub fn get_snapshot_manifest(

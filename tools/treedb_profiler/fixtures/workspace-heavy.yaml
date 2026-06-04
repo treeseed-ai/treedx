@@ -1,0 +1,83 @@
+{
+  "blobs": {
+    "sizes": [
+      1024,
+      1048576
+    ]
+  },
+  "content": {
+    "frontmatter": true,
+    "links": true,
+    "protectedPaths": true,
+    "sections": true
+  },
+  "description": "Write, patch, delete, commit, snapshot, and artifact-heavy fixture.",
+  "history": {
+    "remotes": false,
+    "tags": 2
+  },
+  "id": "workspace-heavy",
+  "scale": {
+    "large": {
+      "binary": 25,
+      "branches": 6,
+      "commits": 50,
+      "json": 50,
+      "linksPerDoc": 3,
+      "markdown": 300,
+      "repos": 3,
+      "sectionsPerDoc": 4,
+      "text": 150,
+      "workspaceDeletes": 75,
+      "workspacePatches": 150,
+      "workspaceWrites": 250
+    },
+    "medium": {
+      "binary": 10,
+      "branches": 3,
+      "commits": 20,
+      "json": 20,
+      "linksPerDoc": 2,
+      "markdown": 100,
+      "repos": 2,
+      "sectionsPerDoc": 3,
+      "text": 50,
+      "workspaceDeletes": 20,
+      "workspacePatches": 40,
+      "workspaceWrites": 75
+    },
+    "small": {
+      "binary": 2,
+      "branches": 1,
+      "commits": 5,
+      "json": 5,
+      "linksPerDoc": 1,
+      "markdown": 20,
+      "repos": 1,
+      "sectionsPerDoc": 2,
+      "text": 10,
+      "workspaceDeletes": 3,
+      "workspacePatches": 5,
+      "workspaceWrites": 10
+    },
+    "xl": {
+      "binary": 50,
+      "branches": 10,
+      "commits": 100,
+      "json": 100,
+      "linksPerDoc": 4,
+      "markdown": 1000,
+      "repos": 4,
+      "sectionsPerDoc": 5,
+      "text": 500,
+      "workspaceDeletes": 200,
+      "workspacePatches": 400,
+      "workspaceWrites": 750
+    }
+  },
+  "searchTerms": [
+    "release",
+    "provenance",
+    "migration"
+  ]
+}

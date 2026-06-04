@@ -1,0 +1,83 @@
+{
+  "blobs": {
+    "sizes": [
+      1024,
+      1048576
+    ]
+  },
+  "content": {
+    "frontmatter": true,
+    "links": true,
+    "protectedPaths": true,
+    "sections": true
+  },
+  "description": "Mixed nested text, markdown, frontmatter, JSON, links, and binary files.",
+  "history": {
+    "remotes": false,
+    "tags": 2
+  },
+  "id": "medium-mixed",
+  "scale": {
+    "large": {
+      "binary": 100,
+      "branches": 6,
+      "commits": 75,
+      "json": 300,
+      "linksPerDoc": 4,
+      "markdown": 1500,
+      "repos": 5,
+      "sectionsPerDoc": 6,
+      "text": 1000,
+      "workspaceDeletes": 30,
+      "workspacePatches": 60,
+      "workspaceWrites": 120
+    },
+    "medium": {
+      "binary": 50,
+      "branches": 3,
+      "commits": 30,
+      "json": 100,
+      "linksPerDoc": 3,
+      "markdown": 500,
+      "repos": 3,
+      "sectionsPerDoc": 5,
+      "text": 300,
+      "workspaceDeletes": 10,
+      "workspacePatches": 20,
+      "workspaceWrites": 40
+    },
+    "small": {
+      "binary": 5,
+      "branches": 2,
+      "commits": 10,
+      "json": 20,
+      "linksPerDoc": 2,
+      "markdown": 80,
+      "repos": 1,
+      "sectionsPerDoc": 4,
+      "text": 40,
+      "workspaceDeletes": 3,
+      "workspacePatches": 6,
+      "workspaceWrites": 12
+    },
+    "xl": {
+      "binary": 250,
+      "branches": 10,
+      "commits": 150,
+      "json": 800,
+      "linksPerDoc": 5,
+      "markdown": 4000,
+      "repos": 8,
+      "sectionsPerDoc": 8,
+      "text": 2500,
+      "workspaceDeletes": 75,
+      "workspacePatches": 150,
+      "workspaceWrites": 300
+    }
+  },
+  "searchTerms": [
+    "release",
+    "provenance",
+    "migration"
+  ]
+}

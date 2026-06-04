@@ -1,0 +1,33 @@
+{
+  "defaults": {
+    "allowOptionalUnavailable": true,
+    "failOnAssertionFailure": true
+  },
+  "description": "Exercise all safe public TreeDB operations that have setup available.",
+  "id": "full_api",
+  "operationSelection": {
+    "excludeTags": [
+      "admin",
+      "destructive",
+      "exec"
+    ],
+    "includeTags": [
+      "read",
+      "write",
+      "repository",
+      "workspace",
+      "blob",
+      "graph",
+      "context",
+      "search",
+      "snapshot",
+      "artifact",
+      "federation",
+      "operations",
+      "auth",
+      "policy",
+      "registry"
+    ]
+  },
+  "weights": {}
+}

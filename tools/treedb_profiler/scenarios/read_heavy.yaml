@@ -1,0 +1,31 @@
+{
+  "defaults": {
+    "allowOptionalUnavailable": true,
+    "failOnAssertionFailure": true
+  },
+  "description": "Repository read, search, query, graph read, and context-heavy workload.",
+  "id": "read_heavy",
+  "operationSelection": {
+    "excludeTags": [
+      "write",
+      "destructive",
+      "admin",
+      "exec"
+    ],
+    "includeTags": [
+      "read",
+      "search",
+      "query",
+      "graph",
+      "context",
+      "repository"
+    ]
+  },
+  "weights": {
+    "buildContext": 4,
+    "listRepositoryPaths": 8,
+    "queryRepository": 12,
+    "readRepositoryFile": 10,
+    "searchRepositoryFiles": 20
+  }
+}

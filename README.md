@@ -240,6 +240,88 @@ Stop the service:
 docker compose down
 ```
 
+Run a full local performance profile:
+
+```bash
+scripts/profile-compose.sh portfolio
+```
+
+This starts a local TreeDB API service and a separate profiler service. The
+profiler waits for API health, then runs growing portfolio mode against all
+scenarios and the endpoint matrix with the default small scale workload:
+
+- load mode: `portfolio`
+- fixture: `small-docs`
+- scenario: `all`
+- size: `small`
+- iterations: `100000`
+- concurrency: `100`
+- duration: `10m`
+- report format: `both`
+- admin/destructive/exec/federation operations: enabled inside the isolated
+  profiling volume
+
+Reports are written to timestamped paths:
+
+```text
+target/profiles/portfolio-<timestamp>.yaml
+target/profiles/portfolio-<timestamp>.md
+```
+
+Check a specific result:
+
+```bash
+grep -E "totalErrors: 0|failed: 0|unaccounted: 0" target/profiles/portfolio-*.yaml
+```
+
+Repeatable profile modes:
+
+```bash
+scripts/profile-compose.sh smoke
+scripts/profile-compose.sh fixed
+scripts/profile-compose.sh portfolio
+scripts/profile-compose.sh read-heavy
+scripts/profile-compose.sh write-heavy
+scripts/profile-compose.sh graph
+scripts/profile-compose.sh binary
+scripts/profile-compose.sh admin
+scripts/profile-compose.sh soak
+```
+
+Each mode writes timestamped reports under `target/profiles/` unless
+`TREEDB_PROFILE_OUTPUT` and `TREEDB_PROFILE_MARKDOWN_OUTPUT` are set.
+
+Normal profile modes run the TreeDB API from the production release image while
+keeping dev auth enabled for local token setup. Use `--dev-api` to run the API
+through `mix phx.server` for development debugging:
+
+```bash
+scripts/profile-compose.sh portfolio --dev-api
+```
+
+Override any workload setting with `TREEDB_PROFILE_*` environment variables:
+
+```bash
+TREEDB_PROFILE_SIZE=medium \
+TREEDB_PROFILE_ITERATIONS=500 \
+TREEDB_PROFILE_CONCURRENCY=100 \
+TREEDB_PROFILE_DURATION=30m \
+TREEDB_PROFILE_OUTPUT=target/profiles/medium-c100.yaml \
+TREEDB_PROFILE_MARKDOWN_OUTPUT=target/profiles/medium-c100.md \
+scripts/profile-compose.sh portfolio
+```
+
+Clean up generated profiling data with:
+
+```bash
+docker compose -f profiles/compose.profile.yaml down -v --remove-orphans
+```
+
+See [Performance Profiling](docs/runbooks/performance-profiling.md) and
+[TreeDB Profiler](tools/treedb_profiler/README.md) for fixture families,
+portfolio growth mode, scenarios, concurrency behavior, and report
+interpretation.
+
 The development service mounts:
 
 - the repository at `/workspace/treedb`

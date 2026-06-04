@@ -1,6 +1,7 @@
 use crate::catalog::{list_records, put_record};
 use crate::error::StoreError;
 use crate::ids::audit_event_id;
+use crate::log::append_records;
 use crate::types::{AuditEventInput, AuditEventRecord, AuditQuery};
 use chrono::Utc;
 use std::cmp::Reverse;
@@ -34,6 +35,47 @@ pub fn append_audit_event(
     };
     put_record(data_dir, "audit/events.tdb", "audit_event", &id, &record)?;
     Ok(record)
+}
+
+pub fn append_audit_events(
+    data_dir: &Path,
+    inputs: Vec<AuditEventInput>,
+) -> Result<Vec<AuditEventRecord>, StoreError> {
+    let mut records = Vec::new();
+
+    for input in inputs {
+        let recorded_at = Utc::now();
+        let id = audit_event_id(
+            &input.event_type,
+            &recorded_at.to_rfc3339(),
+            input.request_id.as_deref(),
+        );
+        let record = AuditEventRecord {
+            id: id.clone(),
+            event_type: input.event_type,
+            actor_id: input.actor_id,
+            tenant_id: input.tenant_id,
+            repo_id: input.repo_id,
+            node_id: input.node_id,
+            workspace_id: input.workspace_id,
+            operation: input.operation,
+            status: input.status,
+            request_id: input.request_id,
+            requested_scope: input.requested_scope,
+            effective_scope: input.effective_scope,
+            data: input.data,
+            recorded_at,
+        };
+        records.push((id, record));
+    }
+
+    append_records(
+        &data_dir.join("audit/events.tdb"),
+        "audit_event",
+        records.clone(),
+    )?;
+
+    Ok(records.into_iter().map(|(_id, record)| record).collect())
 }
 
 pub fn list_audit_events(

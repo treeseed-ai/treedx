@@ -16,7 +16,7 @@ pub mod types;
 pub mod workspace;
 pub mod workspace_files;
 
-pub use audit::{append_audit_event, list_audit_events};
+pub use audit::{append_audit_event, append_audit_events, list_audit_events};
 pub use catalog::{
     get_node, get_repository, init_data_dir, list_nodes, list_repositories, put_repository,
     seed_dev_records, seed_local_records,

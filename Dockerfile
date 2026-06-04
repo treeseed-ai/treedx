@@ -65,6 +65,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     TREEDB_DATA_DIR=/var/lib/treedb \
     PHX_SERVER=true
 COPY --from=runtime-libs /bin/busybox /bin/sh
+COPY --from=runtime-libs /bin/busybox /bin/busybox
 COPY --from=runtime-libs /lib/ /lib/
 COPY --from=runtime-libs --chown=nonroot:nonroot /runtime/var/lib/treedb /var/lib/treedb
 WORKDIR /app

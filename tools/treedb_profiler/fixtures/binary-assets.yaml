@@ -1,0 +1,109 @@
+{
+  "blobs": {
+    "sizes": [
+      1024,
+      65536,
+      1048576
+    ]
+  },
+  "content": {
+    "frontmatter": true,
+    "links": true,
+    "protectedPaths": true,
+    "sections": true
+  },
+  "description": "Binary-safe fixture with multiple blob sizes and content types.",
+  "history": {
+    "remotes": false,
+    "tags": 1
+  },
+  "id": "binary-assets",
+  "scale": {
+    "large": {
+      "binary": 120,
+      "blobSizes": [
+        1024,
+        65536,
+        1048576,
+        8388608,
+        33554432
+      ],
+      "branches": 4,
+      "commits": 20,
+      "json": 10,
+      "linksPerDoc": 2,
+      "markdown": 25,
+      "repos": 3,
+      "sectionsPerDoc": 2,
+      "text": 10,
+      "workspaceDeletes": 5,
+      "workspacePatches": 10,
+      "workspaceWrites": 20
+    },
+    "medium": {
+      "binary": 40,
+      "blobSizes": [
+        1024,
+        65536,
+        1048576,
+        8388608
+      ],
+      "branches": 2,
+      "commits": 8,
+      "json": 5,
+      "linksPerDoc": 1,
+      "markdown": 10,
+      "repos": 2,
+      "sectionsPerDoc": 2,
+      "text": 5,
+      "workspaceDeletes": 2,
+      "workspacePatches": 4,
+      "workspaceWrites": 8
+    },
+    "small": {
+      "binary": 8,
+      "blobSizes": [
+        1024,
+        65536,
+        1048576
+      ],
+      "branches": 1,
+      "commits": 2,
+      "json": 1,
+      "linksPerDoc": 1,
+      "markdown": 3,
+      "repos": 1,
+      "sectionsPerDoc": 1,
+      "text": 1,
+      "workspaceDeletes": 0,
+      "workspacePatches": 0,
+      "workspaceWrites": 1
+    },
+    "xl": {
+      "binary": 300,
+      "blobSizes": [
+        1024,
+        65536,
+        1048576,
+        8388608,
+        33554432,
+        134217728
+      ],
+      "branches": 6,
+      "commits": 40,
+      "json": 20,
+      "linksPerDoc": 2,
+      "markdown": 50,
+      "repos": 4,
+      "sectionsPerDoc": 3,
+      "text": 20,
+      "workspaceDeletes": 10,
+      "workspacePatches": 20,
+      "workspaceWrites": 40
+    }
+  },
+  "searchTerms": [
+    "release",
+    "provenance"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "defaults": {
+    "allowOptionalUnavailable": true,
+    "failOnAssertionFailure": true
+  },
+  "description": "Blob read/write/upload/download and artifact lifecycle workload.",
+  "id": "blob_artifact",
+  "operationSelection": {
+    "excludeTags": [
+      "destructive",
+      "admin",
+      "exec"
+    ],
+    "includeTags": [
+      "blob",
+      "artifact",
+      "snapshot"
+    ]
+  },
+  "weights": {
+    "buildSnapshot": 4,
+    "downloadWorkspaceBlob": 10,
+    "listArtifacts": 4,
+    "readRepositoryBlob": 12,
+    "writeWorkspaceBlob": 10
+  }
+}

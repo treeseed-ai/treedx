@@ -4,9 +4,8 @@ defmodule TreeDb.Artifacts do
   def list(repo_id, _params, principal) do
     with {:ok, _scope} <- TreeDb.Capabilities.require_capability(principal, "files:read", repo_id) do
       artifacts =
-        read_jsonl("snapshots/artifacts.tdb")
-        |> Enum.filter(&(&1["repoId"] == repo_id))
-        |> Enum.reject(&deleted?/1)
+        repo_id
+        |> TreeDb.Artifacts.Index.list()
         |> Enum.map(&public_artifact/1)
 
       {:ok, %{artifacts: artifacts}}
@@ -16,12 +15,10 @@ defmodule TreeDb.Artifacts do
   def get(repo_id, artifact_id, principal) do
     with {:ok, _scope} <-
            TreeDb.Capabilities.require_capability(principal, "files:read", repo_id),
-         artifact when is_map(artifact) <- find_artifact(repo_id, artifact_id),
-         false <- deleted?(artifact) do
+         artifact when is_map(artifact) <- TreeDb.Artifacts.Index.get(repo_id, artifact_id) do
       {:ok, %{artifact: public_artifact(artifact)}}
     else
       nil -> {:error, %{code: "not_found", message: "Artifact not found."}}
-      true -> {:error, %{code: "not_found", message: "Artifact not found."}}
       {:error, error} -> {:error, error}
     end
   end
@@ -29,7 +26,7 @@ defmodule TreeDb.Artifacts do
   def delete(repo_id, artifact_id, principal) do
     with {:ok, _scope} <-
            TreeDb.Capabilities.require_capability(principal, "policy:write", repo_id),
-         artifact when is_map(artifact) <- find_artifact(repo_id, artifact_id) do
+         artifact when is_map(artifact) <- TreeDb.Artifacts.Index.get(repo_id, artifact_id) do
       record = %{
         artifactId: artifact_id,
         snapshotId: artifact["snapshotId"],
@@ -38,6 +35,7 @@ defmodule TreeDb.Artifacts do
       }
 
       append_jsonl!("snapshots/artifact_lifecycle.tdb", "artifact_lifecycle", record)
+      TreeDb.Artifacts.Index.mark_deleted(artifact_id, artifact["snapshotId"])
 
       TreeDb.Audit.append("artifact.deleted", %{
         actor_id: principal["actorId"],
@@ -61,7 +59,7 @@ defmodule TreeDb.Artifacts do
 
     expired =
       read_jsonl("snapshots/artifacts.tdb")
-      |> Enum.reject(&deleted?/1)
+      |> Enum.reject(&deleted_by_index?/1)
       |> Enum.filter(fn artifact ->
         case DateTime.from_iso8601(artifact["createdAt"] || "") do
           {:ok, created, _} -> DateTime.compare(created, cutoff) == :lt
@@ -77,6 +75,11 @@ defmodule TreeDb.Artifacts do
         deletedAt: now(),
         reason: "retention"
       })
+
+      TreeDb.Artifacts.Index.mark_deleted(
+        artifact["artifactId"] || artifact["artifact_id"],
+        artifact["snapshotId"]
+      )
     end)
 
     TreeDb.Audit.append("artifact.cleanup", %{
@@ -90,22 +93,6 @@ defmodule TreeDb.Artifacts do
     {:ok, %{cleanup: %{deletedCount: length(expired), retentionDays: retention_days}}}
   end
 
-  defp find_artifact(repo_id, artifact_id) do
-    Enum.find(read_jsonl("snapshots/artifacts.tdb"), fn artifact ->
-      artifact["repoId"] == repo_id and
-        (artifact["artifactId"] == artifact_id or artifact["artifact_id"] == artifact_id or
-           artifact["snapshotId"] == artifact_id)
-    end)
-  end
-
-  defp deleted?(artifact) do
-    artifact_id = artifact["artifactId"] || artifact["artifact_id"]
-
-    Enum.any?(read_jsonl("snapshots/artifact_lifecycle.tdb"), fn record ->
-      record["artifactId"] == artifact_id and record["status"] == "deleted"
-    end)
-  end
-
   defp public_artifact(artifact) do
     %{
       artifactId: artifact["artifactId"] || artifact["artifact_id"],
@@ -117,6 +104,13 @@ defmodule TreeDb.Artifacts do
       createdAt: artifact["createdAt"],
       status: "available"
     }
+  end
+
+  defp deleted_by_index?(artifact) do
+    artifact_id = artifact["artifactId"] || artifact["artifact_id"]
+    repo_id = artifact["repoId"]
+
+    is_nil(TreeDb.Artifacts.Index.get(repo_id, artifact_id))
   end
 
   defp read_jsonl(relative_path) do
