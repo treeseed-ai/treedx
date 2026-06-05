@@ -17,6 +17,7 @@ defmodule TreeDbProfiler.ScenarioRunner do
     OperationChain,
     PermissionMatrix,
     PortfolioState,
+    ProbePolicy,
     ProfileRequest,
     Reconciler,
     ReliabilityBudget,
@@ -149,6 +150,7 @@ defmodule TreeDbProfiler.ScenarioRunner do
 
     state
     |> Map.put(:samples, state.samples ++ scheduler.samples)
+    |> Map.put(:http_samples, (state[:http_samples] || state.samples) ++ scheduler.http_samples)
     |> Map.put(:assertions, state.assertions ++ scheduler.assertions)
     |> Map.put(:portfolio, portfolio_snapshot.final)
     |> Map.put(:portfolio_runtime, portfolio_snapshot)
@@ -275,6 +277,7 @@ defmodule TreeDbProfiler.ScenarioRunner do
     |> register_repos()
     |> run_federation_setup()
     |> configure_repo()
+    |> FederationScenario.setup_spillover_probe()
     |> create_workspace()
     |> mutate_workspace()
     |> refresh_graph_and_index()
@@ -1861,11 +1864,13 @@ defmodule TreeDbProfiler.ScenarioRunner do
   defp build_report(state, started) do
     operations = Stats.aggregate(state.samples)
     assertions = assertion_summary(state.assertions)
+    http_samples = measured_http_samples(state)
 
     coverage =
       EndpointMatrix.coverage(state.samples, state.opts, state[:covered_operation_ids] || [])
 
     summary = Stats.summary(state.samples, operations)
+    throughput = Stats.throughput_breakdown(state.samples, http_samples, state.opts)
     model = ModelState.from_state(state)
     openapi_validation = OpenApiResponseValidator.report(state.assertions)
 
@@ -1907,9 +1912,12 @@ defmodule TreeDbProfiler.ScenarioRunner do
         "includeFederation" => state.opts.include_federation,
         "federationMode" => state.opts.federation_mode
       },
+      "operationMix" => operation_mix_report(state.opts),
       "validation" => %{
         "semanticValidation" => state.opts.semantic_validation,
         "validationProbes" => state.opts.validation_probes,
+        "validationProbeMode" => state.opts.validation_probe_mode,
+        "probeSamplingRate" => state.opts.probe_sampling_rate,
         "strictQueryHitCounts" => state.opts.strict_query_hit_counts,
         "strictGraphExpectations" => state.opts.strict_graph_expectations,
         "strictSnapshotStability" => state.opts.strict_snapshot_stability,
@@ -1927,6 +1935,13 @@ defmodule TreeDbProfiler.ScenarioRunner do
       "operations" => operations,
       "categories" => Stats.category_aggregates(operations),
       "operationTypes" => Stats.operation_type_aggregates(operations),
+      "throughput" => throughput,
+      "resourceTuning" => resource_tuning_report(state),
+      "serverRuntime" => server_runtime_report(state),
+      "cache" => cache_report(state),
+      "workerPools" => worker_pool_report(state),
+      "saturation" => Stats.saturation_report(state.samples),
+      "federationLoadBalancing" => federation_load_balancing_report(state),
       "portfolio" => state[:portfolio] || %{},
       "federation" => state[:federation] || %{"mode" => state.opts.federation_mode},
       "modelState" => ModelState.report(model),
@@ -1943,7 +1958,7 @@ defmodule TreeDbProfiler.ScenarioRunner do
       "leakDetection" => LeakDetector.report(state),
       "permissionMatrix" => PermissionMatrix.report(state.samples, state.opts),
       "scheduler" => state[:scheduler] || %{},
-      "validationProbes" => validation_probe_report(state.assertions),
+      "validationProbes" => validation_probe_report(state.assertions, http_samples, state.opts),
       "concurrency" => concurrency_report(state[:portfolio_runtime], state.opts),
       "requestSamples" => state[:request_samples] || %{"failures" => [], "successes" => %{}},
       "errors" => error_report(state.samples),
@@ -1998,19 +2013,58 @@ defmodule TreeDbProfiler.ScenarioRunner do
     }
   end
 
-  defp validation_probe_report(samples_or_assertions)
+  defp measured_http_samples(state) do
+    samples = state[:http_samples] || state.samples
+    measured = get_in(state, [:timing, "measured"]) || %{}
+    started_at = measured["startedAt"]
+    ended_at = measured["endedAt"]
 
-  defp validation_probe_report(assertions) when is_list(assertions) do
+    Enum.filter(samples, fn sample ->
+      Map.get(sample, :counts_toward_total_http_rps, true) == true and
+        Map.get(sample, :measured_window, :measured) == :measured and
+        sample_in_measured_window?(sample, started_at, ended_at)
+    end)
+  end
+
+  defp sample_in_measured_window?(_sample, nil, _ended_at), do: true
+  defp sample_in_measured_window?(_sample, _started_at, nil), do: true
+
+  defp sample_in_measured_window?(sample, started_at, ended_at) do
+    with {:ok, sample_dt, _} <- DateTime.from_iso8601(sample.started_at),
+         {:ok, start_dt, _} <- DateTime.from_iso8601(started_at),
+         {:ok, end_dt, _} <- DateTime.from_iso8601(ended_at) do
+      DateTime.compare(sample_dt, start_dt) != :lt and DateTime.compare(sample_dt, end_dt) != :gt
+    else
+      _ -> true
+    end
+  end
+
+  defp validation_probe_report(samples_or_assertions, http_samples, opts)
+
+  defp validation_probe_report(assertions, http_samples, opts) when is_list(assertions) do
+    probe_samples =
+      Enum.filter(http_samples, &(Map.get(&1, :sample_kind) == :validation_probe))
+
     total = Enum.sum(Enum.map(assertions, &(Map.get(&1, :validationProbes, 0) || 0)))
+    total = max(total, length(probe_samples))
 
     failed =
-      assertions
-      |> Enum.filter(&(Map.get(&1, :validationProbes, 0) > 0 and &1.passed == false))
-      |> length()
+      case probe_samples do
+        [] ->
+          assertions
+          |> Enum.filter(&(Map.get(&1, :validationProbes, 0) > 0 and &1.passed == false))
+          |> length()
+
+        samples ->
+          Enum.count(samples, &(&1.ok != true))
+      end
 
     %{
       "total" => total,
       "failed" => failed,
+      "samplingRate" => Map.get(opts, :probe_sampling_rate),
+      "mode" => Map.get(opts, :validation_probe_mode),
+      "samplesRetained" => length(probe_samples),
       "byOperation" =>
         assertions
         |> Enum.group_by(&operation_id_for/1)
@@ -2024,6 +2078,275 @@ defmodule TreeDbProfiler.ScenarioRunner do
         end)
         |> Map.new()
     }
+  end
+
+  defp federation_load_balancing_report(state) do
+    counters =
+      get_in(state, [:metrics_after, "counters"]) || get_in(state, [:metrics_after, :counters]) ||
+        []
+
+    spillovers = metric_sum(counters, "treedb_federation_read_spillover_total")
+    failures = metric_sum(counters, "treedb_federation_read_spillover_failures_total")
+
+    %{
+      "enabled" =>
+        System.get_env("TREEDB_FEDERATION_LOAD_AWARE_READS", "true") not in ["false", "0"],
+      "readSpillovers" => spillovers,
+      "failures" => failures,
+      "byTargetNode" =>
+        counters
+        |> Enum.filter(
+          &(Map.get(&1, :name) == "treedb_federation_read_spillover_total" or
+              Map.get(&1, "name") == "treedb_federation_read_spillover_total")
+        )
+        |> Enum.reduce(%{}, fn counter, acc ->
+          labels = Map.get(counter, :labels) || Map.get(counter, "labels") || %{}
+          node = labels[:target_node] || labels["target_node"] || "unknown"
+          Map.update(acc, node, counter_value(counter), &(&1 + counter_value(counter)))
+        end)
+    }
+  end
+
+  defp metric_sum(counters, name) do
+    counters
+    |> Enum.filter(&(Map.get(&1, :name) == name or Map.get(&1, "name") == name))
+    |> Enum.map(&counter_value/1)
+    |> Enum.sum()
+  end
+
+  defp counter_value(counter), do: Map.get(counter, :value) || Map.get(counter, "value") || 0
+
+  defp operation_mix_report(opts) do
+    %{
+      "profilePurpose" => opts.profile_purpose,
+      "performanceWorkload" => opts.performance_workload,
+      "heavyOperationRate" => opts.heavy_operation_rate,
+      "repoGrowthRate" => opts.repo_growth_rate,
+      "snapshotRate" => opts.snapshot_rate,
+      "graphRefreshRate" => opts.graph_refresh_rate,
+      "importRate" => opts.import_rate,
+      "rateLimited" => %{}
+    }
+  end
+
+  defp resource_tuning_report(state) do
+    cpu_budget = System.get_env("TREEDB_RUNTIME_CPU_BUDGET")
+    memory_budget_mb = System.get_env("TREEDB_RUNTIME_MEMORY_BUDGET_MB")
+    cache_fraction = System.get_env("TREEDB_CACHE_MEMORY_FRACTION") || "0.25"
+    metrics = state[:metrics_after] || %{}
+
+    memory_budget_mb =
+      memory_budget_mb ||
+        case metric_gauge(metrics, "treedb_runtime_memory_budget_bytes") do
+          bytes when is_number(bytes) and bytes > 0 ->
+            Integer.to_string(div(round(bytes), 1_048_576))
+
+          _ ->
+            nil
+        end
+
+    %{
+      "cpuBudget" =>
+        parse_int_or_nil(cpu_budget) || metric_gauge(metrics, "treedb_runtime_cpu_budget"),
+      "memoryBudgetMb" => parse_int_or_nil(memory_budget_mb),
+      "cacheMemoryFraction" => parse_float_or_nil(cache_fraction),
+      "cacheBudgetMb" => cache_budget_mb(memory_budget_mb, cache_fraction),
+      "cachePolicy" => if(memory_budget_mb in [nil, ""], do: "entry_count", else: "memory_budget")
+    }
+  end
+
+  defp server_runtime_report(state) do
+    metrics = state[:metrics_after] || %{}
+
+    get_in(metrics, ["runtime"]) ||
+      %{
+        "beamMemoryBytes" => %{
+          "total" => metric_gauge(metrics, "treedb_runtime_beam_memory_bytes"),
+          "ets" => metric_gauge(metrics, "treedb_runtime_ets_memory_bytes"),
+          "binary" => metric_gauge(metrics, "treedb_runtime_binary_memory_bytes"),
+          "processes" => metric_gauge(metrics, "treedb_runtime_process_memory_bytes")
+        },
+        "memoryBudgetBytes" => metric_gauge(metrics, "treedb_runtime_memory_budget_bytes"),
+        "cacheBudgetBytes" => metric_gauge(metrics, "treedb_runtime_cache_budget_bytes"),
+        "cpuBudget" => metric_gauge(metrics, "treedb_runtime_cpu_budget")
+      }
+      |> reject_nil_deep()
+  end
+
+  defp cache_report(state) do
+    metrics = state[:metrics_after] || %{}
+
+    get_in(metrics, ["cache"]) ||
+      metrics
+      |> metric_entries("gauges", "treedb_cache_entries")
+      |> Enum.reduce(%{}, fn entry, acc ->
+        cache = cache_report_key(label(entry, "cache"))
+
+        Map.put(acc, cache, %{
+          "entries" => metric_value(entry),
+          "approxBytes" => cache_metric(metrics, "treedb_cache_approx_bytes", cache),
+          "hits" => cache_counter(metrics, "treedb_cache_hits_total", cache),
+          "misses" => cache_counter(metrics, "treedb_cache_misses_total", cache),
+          "evictions" => cache_counter(metrics, "treedb_cache_evictions_total", cache)
+        })
+      end)
+  end
+
+  defp worker_pool_report(state) do
+    metrics = state[:metrics_after] || %{}
+
+    get_in(metrics, ["workerPools"]) ||
+      metrics
+      |> metric_entries("gauges", "treedb_pool_size")
+      |> Enum.reduce(%{}, fn entry, acc ->
+        pool = pool_report_key(label(entry, "pool"))
+
+        Map.put(acc, pool, %{
+          "size" => metric_value(entry),
+          "active" => pool_gauge(metrics, "treedb_pool_active", pool),
+          "activeMax" => pool_gauge(metrics, "treedb_pool_active_max", pool),
+          "queueDepth" => pool_gauge(metrics, "treedb_pool_queue_depth", pool),
+          "queueDepthMax" => pool_gauge(metrics, "treedb_pool_queue_depth_max", pool),
+          "queueMax" => pool_gauge(metrics, "treedb_pool_queue_max", pool),
+          "pressure" => pressure_name(pool_gauge(metrics, "treedb_pool_pressure", pool)),
+          "rejections" => pool_counter(metrics, "treedb_pool_rejections_total", pool),
+          "queueTimeouts" => pool_counter(metrics, "treedb_pool_queue_timeouts_total", pool),
+          "executionTimeouts" =>
+            pool_counter(metrics, "treedb_pool_execution_timeouts_total", pool),
+          "waitMs" => histogram_summary(metrics, "treedb_pool_wait_ms", pool),
+          "executionMs" => histogram_summary(metrics, "treedb_pool_execution_ms", pool)
+        })
+      end)
+  end
+
+  defp metric_gauge(metrics, name), do: metric_value(find_metric(metrics, "gauges", name, %{}))
+
+  defp pool_gauge(metrics, name, pool),
+    do: metric_value(find_metric(metrics, "gauges", name, %{"pool" => pool_metric_key(pool)}))
+
+  defp cache_metric(metrics, name, cache),
+    do: metric_value(find_metric(metrics, "gauges", name, %{"cache" => cache_metric_key(cache)}))
+
+  defp cache_counter(metrics, name, cache) do
+    metrics
+    |> metric_entries("counters", name)
+    |> Enum.filter(&(label(&1, "cache") == cache_metric_key(cache)))
+    |> Enum.map(&metric_value/1)
+    |> Enum.reject(&is_nil/1)
+    |> Enum.sum()
+  end
+
+  defp pool_counter(metrics, name, pool) do
+    metrics
+    |> metric_entries("counters", name)
+    |> Enum.filter(&(label(&1, "pool") == pool_metric_key(pool)))
+    |> Enum.map(&metric_value/1)
+    |> Enum.reject(&is_nil/1)
+    |> Enum.sum()
+  end
+
+  defp histogram_summary(metrics, name, pool) do
+    case find_metric(metrics, "histograms", name, %{"pool" => pool_metric_key(pool)}) do
+      nil ->
+        %{}
+
+      entry ->
+        count = metric_field(entry, "count") || 0
+        sum = metric_field(entry, "sum") || 0
+
+        %{
+          "count" => count,
+          "mean" => if(count > 0, do: Float.round(sum / count, 3), else: nil)
+        }
+        |> reject_nil_deep()
+    end
+  end
+
+  defp find_metric(metrics, kind, name, labels) do
+    metrics
+    |> metric_entries(kind, name)
+    |> Enum.find(fn entry ->
+      Enum.all?(labels, fn {key, value} -> label(entry, key) == value end)
+    end)
+  end
+
+  defp metric_entries(metrics, kind, name) do
+    metrics
+    |> Map.get(kind, Map.get(metrics, String.to_atom(kind), []))
+    |> Enum.filter(&(metric_field(&1, "name") == name))
+  end
+
+  defp metric_value(nil), do: nil
+  defp metric_value(entry), do: metric_field(entry, "value")
+
+  defp metric_field(entry, key), do: Map.get(entry, key) || Map.get(entry, String.to_atom(key))
+
+  defp label(entry, key) do
+    labels = metric_field(entry, "labels") || %{}
+    Map.get(labels, key) || Map.get(labels, String.to_atom(key))
+  end
+
+  defp pool_report_key(pool), do: pool |> to_string() |> Macro.camelize() |> uncapitalize()
+  defp pool_metric_key(pool), do: pool |> to_string() |> Macro.underscore()
+  defp cache_report_key(cache), do: cache |> to_string() |> Macro.camelize() |> uncapitalize()
+  defp cache_metric_key(cache), do: cache |> to_string() |> Macro.underscore()
+
+  defp uncapitalize(<<first::binary-size(1), rest::binary>>),
+    do: String.downcase(first) <> rest
+
+  defp uncapitalize(other), do: other
+
+  defp pressure_name(0), do: "low"
+  defp pressure_name(1), do: "moderate"
+  defp pressure_name(2), do: "high"
+  defp pressure_name(3), do: "saturated"
+  defp pressure_name(value), do: value
+
+  defp reject_nil_deep(map) when is_map(map) do
+    map
+    |> Enum.reduce(%{}, fn
+      {_key, nil}, acc ->
+        acc
+
+      {key, value}, acc when is_map(value) ->
+        nested = reject_nil_deep(value)
+        if nested == %{}, do: acc, else: Map.put(acc, key, nested)
+
+      {key, value}, acc ->
+        Map.put(acc, key, value)
+    end)
+  end
+
+  defp parse_int_or_nil(nil), do: nil
+  defp parse_int_or_nil(""), do: nil
+
+  defp parse_int_or_nil(value) do
+    case Integer.parse(value) do
+      {number, _} -> number
+      _ -> nil
+    end
+  end
+
+  defp parse_float_or_nil(nil), do: nil
+  defp parse_float_or_nil(""), do: nil
+
+  defp parse_float_or_nil(value) do
+    case Float.parse(value) do
+      {number, _} -> number
+      _ -> nil
+    end
+  end
+
+  defp cache_budget_mb(nil, _fraction), do: nil
+  defp cache_budget_mb("", _fraction), do: nil
+
+  defp cache_budget_mb(memory_budget_mb, fraction) do
+    with mb when is_integer(mb) <- parse_int_or_nil(memory_budget_mb),
+         frac when is_float(frac) <- parse_float_or_nil(fraction) do
+      Float.round(mb * frac, 1)
+    else
+      _ -> nil
+    end
   end
 
   defp operation_id_for(assertion) do
@@ -2198,6 +2521,7 @@ defmodule TreeDbProfiler.ScenarioRunner do
       rule: request.validation_rule,
       semantic: state.opts.semantic_validation,
       validationProbes: length(probe_samples),
+      validationProbeSamples: maybe_retain_probe_samples(state.opts, probe_samples),
       openapiValidation: openapi,
       passed: assertion == :passed,
       error: assertion_error
@@ -2221,7 +2545,7 @@ defmodule TreeDbProfiler.ScenarioRunner do
       raise "profiler assertion failed for #{request.operation_id}: #{assertion_record.error}"
     end
 
-    ReplayLog.record(state.opts, request, sample, assertion_record)
+    ReplayLog.record(state.opts, request, sample, replay_assertion_record(assertion_record))
 
     {sample, response, assertion_record}
   end
@@ -2261,7 +2585,10 @@ defmodule TreeDbProfiler.ScenarioRunner do
 
         case Validation.validate(request.validation_rule, ctx) do
           :ok ->
-            probes = ValidationProbe.run(state, request, response)
+            probes =
+              if ProbePolicy.run_success_probes?(state.opts, request),
+                do: ValidationProbe.run(state, request, response),
+                else: %{samples: [], failures: []}
 
             if probes.failures == [] do
               {:passed, nil, probes.samples, []}
@@ -2270,10 +2597,22 @@ defmodule TreeDbProfiler.ScenarioRunner do
             end
 
           {:error, message} ->
-            {:failed, message, [], []}
+            probes =
+              if ProbePolicy.run_failure_probes?(state.opts, request),
+                do: ValidationProbe.run(state, request, response),
+                else: %{samples: [], failures: []}
+
+            {:failed, message, probes.samples, probes.failures}
         end
     end
   end
+
+  defp maybe_retain_probe_samples(_opts, probe_samples), do: probe_samples
+
+  defp replay_assertion_record(%{validationProbeSamples: _} = assertion_record),
+    do: Map.delete(assertion_record, :validationProbeSamples)
+
+  defp replay_assertion_record(assertion_record), do: assertion_record
 
   defp run_legacy_profile_assertion(response, rule) do
     assertion_fun = assertion_for_rule(rule)

@@ -77,6 +77,7 @@ scripts/profile-compose.sh graph
 scripts/profile-compose.sh binary
 scripts/profile-compose.sh admin
 scripts/profile-compose.sh soak
+scripts/profile-compose.sh performance
 ```
 
 Each profile maps to `profiles/compose.profile.<mode>.yaml` and can still be customized
@@ -94,6 +95,55 @@ repository bind-mounted for development profiling:
 ```bash
 scripts/profile-compose.sh portfolio --dev-api
 ```
+
+## Performance Mode And RPS
+
+Reliability profiles remain the strict correctness gate. Performance mode is a
+separate benchmark profile for RPS tuning:
+
+```bash
+scripts/profile-compose.sh performance
+```
+
+It defaults to a read-mostly portfolio workload, 150 concurrent workers, 10
+minutes of measured load, sampled validation probes, and a target of 100 primary
+workload requests per second. The target is reported, not enforced, unless
+`--fail-below-primary-rps` or `TREEDB_PROFILE_FAIL_BELOW_PRIMARY_RPS` is set.
+
+Reports distinguish:
+
+- `throughput.primary.requestsPerSecond`: primary generated workload requests.
+- `throughput.validationProbes.requestsPerSecond`: follow-up correctness probes.
+- `throughput.totalHttp.requestsPerSecond`: primary plus probe and auxiliary
+  profiler HTTP traffic during the measured window.
+
+Validation probes are real server load, so they are included in total HTTP RPS,
+but they are not counted as primary business throughput. This keeps the 100 RPS
+target honest while still showing the full pressure the profiler applied.
+
+Tune server resources for the performance profile with:
+
+```bash
+TREEDB_RUNTIME_CPU_BUDGET=8 \
+TREEDB_RUNTIME_MEMORY_BUDGET_MB=8192 \
+TREEDB_CACHE_MEMORY_FRACTION=0.35 \
+TREEDB_REPOSITORY_QUERY_POOL_SIZE=16 \
+TREEDB_WORKSPACE_WORKER_POOL_SIZE=16 \
+TREEDB_REPOSITORY_QUERY_MAX_QUEUE=2000 \
+scripts/profile-compose.sh performance
+```
+
+The report includes `resourceTuning`, `cache`, and `workerPools` sections when
+runtime metrics are available. Pool saturation appears in the `saturation`
+section as HTTP `503` `server_busy` responses grouped by operation, pool, and
+reason. That is a failure in reliability mode and a capacity signal in
+performance mode. Federation performance reports also include
+`federationLoadBalancing` for Git-backed repository read spillover to healthy
+mirrors. The federation performance spillover probe exercises repository file
+reads, repository search, repository query, and path listing. Graph, context,
+snapshot, and artifact reads remain primary-served unless the route is a remote
+primary, because Git bundle mirror sync does not replicate those derived records
+yet.
 
 ## Build
 

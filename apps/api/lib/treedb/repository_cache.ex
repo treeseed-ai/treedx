@@ -53,8 +53,8 @@ defmodule TreeDb.RepositoryCache do
     parse_frontmatter = Keyword.get(opts, :parse_frontmatter, true)
 
     if encoding == "utf8" and parse_frontmatter do
-      with {:ok, docs} <- searchable_documents(ctx),
-           doc when is_map(doc) <- Enum.find(docs, &(&1["path"] == path)) do
+      with {:ok, docs} <- document_lookup(ctx),
+           doc when is_map(doc) <- Map.get(docs, path) do
         {:ok, doc}
       else
         nil -> Document.from_path(ctx.repo, ctx.ref, path, opts)
@@ -65,6 +65,14 @@ defmodule TreeDb.RepositoryCache do
     end
   end
 
+  def document_lookup(ctx) do
+    get_or_load(ctx, :document_lookup, fn ->
+      with {:ok, docs} <- searchable_documents(ctx) do
+        {:ok, Map.new(docs, &{&1["path"], &1})}
+      end
+    end)
+  end
+
   defp get_or_load(ctx, kind, loader) do
     if Cache.enabled?("TREEDB_REPO_DOC_CACHE_ENABLED", true) and Process.whereis(__MODULE__) do
       Cache.get_or_load(
@@ -72,6 +80,7 @@ defmodule TreeDb.RepositoryCache do
         key(ctx, kind),
         Cache.int_env("TREEDB_REPO_DOC_CACHE_TTL_MS", 300_000),
         Cache.int_env("TREEDB_REPO_DOC_CACHE_MAX_ENTRIES", 256),
+        cache_max_bytes(),
         loader
       )
     else
@@ -82,6 +91,21 @@ defmodule TreeDb.RepositoryCache do
   defp key(ctx, kind),
     do:
       {kind, ctx.repo["id"], TreeDb.RepositoryStorage.path!(ctx.repo), ctx.ref, ctx.resolved_ref}
+
+  defp cache_max_bytes do
+    case System.get_env("TREEDB_REPO_DOC_CACHE_MAX_BYTES") do
+      nil -> TreeDb.Runtime.Resources.cache_budget_for(:repo_doc)
+      "" -> TreeDb.Runtime.Resources.cache_budget_for(:repo_doc)
+      value -> parse_positive_int(value) || TreeDb.Runtime.Resources.cache_budget_for(:repo_doc)
+    end
+  end
+
+  defp parse_positive_int(value) do
+    case Integer.parse(value) do
+      {int, _} when int > 0 -> int
+      _ -> nil
+    end
+  end
 
   defp collect_ok(results) do
     Enum.reduce_while(results, {:ok, []}, fn

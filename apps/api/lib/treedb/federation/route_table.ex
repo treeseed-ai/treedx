@@ -45,28 +45,70 @@ defmodule TreeDb.Federation.RouteTable do
 
   def resolve_read(repo_id, opts \\ []) do
     with {:ok, route} <- resolve(repo_id) do
-      local_node = TreeDb.Federation.NodeIdentity.node_id()
-
-      cond do
-        route["primaryNodeId"] == local_node ->
-          {:ok, Map.merge(route, %{"source" => "local", "servedByNodeId" => local_node})}
-
-        read_from_mirrors?() and local_node in (route["mirrorNodeIds"] || []) and
-            mirror_fresh?(repo_id, local_node, opts) ->
-          {:ok, Map.merge(route, %{"source" => "mirror", "servedByNodeId" => local_node})}
-
-        trusted_query?(route["primaryNodeId"]) ->
-          {:ok,
-           Map.merge(route, %{"source" => "remote", "servedByNodeId" => route["primaryNodeId"]})}
-
-        true ->
+      case resolve_read_candidate(route, opts) do
+        nil ->
           {:error,
            %{
              code: "federated_route_not_configured",
              message: "Federated read route is not configured."
            }}
+
+        candidate ->
+          {:ok, candidate}
       end
     end
+  end
+
+  def resolve_read_candidate(route_or_repo_id, opts \\ [])
+
+  def resolve_read_candidate(route, opts) when is_map(route) do
+    route
+    |> read_candidates(opts)
+    |> order_read_candidates(Keyword.get(opts, :pool, :repository_query), opts)
+    |> List.first()
+  end
+
+  def resolve_read_candidate(repo_id, opts) do
+    with {:ok, route} <- resolve(repo_id), do: resolve_read_candidate(route, opts)
+  end
+
+  def read_candidates(route_or_repo_id, opts \\ [])
+
+  def read_candidates(route, opts) when is_map(route) do
+    repo_id = route["repositoryId"]
+    local_node = TreeDb.Federation.NodeIdentity.node_id()
+    pool = Keyword.get(opts, :pool, :repository_query)
+    allow_mirrors? = Keyword.get(opts, :allow_mirrors?, true)
+    allow_remote_primary? = Keyword.get(opts, :allow_remote_primary?, true)
+
+    []
+    |> maybe_add(route["primaryNodeId"] == local_node, fn ->
+      candidate(route, "local", local_node, "local_primary", nil, pool)
+    end)
+    |> maybe_add(
+      allow_mirrors? and read_from_mirrors?() and local_node in (route["mirrorNodeIds"] || []) and
+        mirror_fresh?(repo_id, local_node, opts),
+      fn -> candidate(route, "mirror", local_node, "local_mirror", nil, pool) end
+    )
+    |> add_remote_mirrors(route, opts)
+    |> maybe_add(
+      allow_remote_primary? and route["primaryNodeId"] != local_node and
+        trusted_query?(route["primaryNodeId"]),
+      fn ->
+        candidate(
+          route,
+          "remote",
+          route["primaryNodeId"],
+          "remote_primary",
+          base_url(route["primaryNodeId"]),
+          pool
+        )
+      end
+    )
+  end
+
+  def read_candidates(repo_id, opts) do
+    with {:ok, route} <- resolve(repo_id), do: read_candidates(route, opts), else: (_ -> [])
   end
 
   def resolve_write(repo_id, _opts \\ []) do
@@ -153,6 +195,74 @@ defmodule TreeDb.Federation.RouteTable do
     end
   end
 
+  defp order_read_candidates(candidates, pool, opts) do
+    if load_aware_reads?() and Keyword.get(opts, :prefer_spillover?, true) do
+      threshold = load_aware_threshold()
+
+      {local, remote} =
+        Enum.split_with(candidates, fn candidate ->
+          candidate["servedByNodeId"] == TreeDb.Federation.NodeIdentity.node_id()
+        end)
+
+      local_pressure =
+        local
+        |> Enum.map(&get_in(&1, ["load", "pressure"]))
+        |> Enum.map(&TreeDb.Federation.NodeLoad.pressure_rank/1)
+        |> Enum.min(fn -> 0 end)
+
+      if local != [] and
+           local_pressure < TreeDb.Federation.NodeLoad.pressure_rank(threshold) do
+        local ++ TreeDb.Federation.NodeLoad.compare_candidates(remote, pool)
+      else
+        TreeDb.Federation.NodeLoad.compare_candidates(remote, pool) ++ local
+      end
+    else
+      candidates
+    end
+  end
+
+  defp add_remote_mirrors(candidates, route, opts) do
+    repo_id = route["repositoryId"]
+    pool = Keyword.get(opts, :pool, :repository_query)
+    local_node = TreeDb.Federation.NodeIdentity.node_id()
+    allow_mirrors? = Keyword.get(opts, :allow_mirrors?, true)
+
+    if allow_mirrors? and read_from_mirrors?() do
+      route
+      |> Map.get("mirrorNodeIds", [])
+      |> Enum.reject(&(&1 == local_node))
+      |> Enum.filter(&(trusted_query?(&1) and mirror_fresh?(repo_id, &1, opts)))
+      |> Enum.reduce(candidates, fn node_id, acc ->
+        maybe_add(acc, true, fn ->
+          candidate(route, "remote", node_id, "remote_mirror", base_url(node_id), pool)
+        end)
+      end)
+    else
+      candidates
+    end
+  end
+
+  defp maybe_add(candidates, true, fun), do: candidates ++ [fun.()]
+  defp maybe_add(candidates, _false, _fun), do: candidates
+
+  defp candidate(route, source, node_id, reason, base_url, pool) do
+    load =
+      if node_id == TreeDb.Federation.NodeIdentity.node_id() do
+        TreeDb.Federation.NodeLoad.local_pool_load(pool)
+      else
+        TreeDb.Federation.NodeLoad.load_for_candidate(%{"servedByNodeId" => node_id}, pool)
+      end
+
+    route
+    |> Map.merge(%{
+      "source" => source,
+      "servedByNodeId" => node_id,
+      "baseUrl" => base_url,
+      "reason" => reason,
+      "load" => load
+    })
+  end
+
   defp resolve_repo_id(repo_id_or_name) do
     value = to_string(repo_id_or_name)
 
@@ -216,12 +326,35 @@ defmodule TreeDb.Federation.RouteTable do
   defp read_from_mirrors?,
     do: System.get_env("TREEDB_FEDERATION_READ_FROM_MIRRORS", "true") not in ["false", "0"]
 
+  defp load_aware_reads?,
+    do: System.get_env("TREEDB_FEDERATION_LOAD_AWARE_READS", "true") not in ["false", "0"]
+
+  defp load_aware_threshold,
+    do: System.get_env("TREEDB_FEDERATION_LOAD_AWARE_READ_PRESSURE", "moderate")
+
   defp mirror_fresh?(repo_id, node_id, _opts) do
+    fresh_assignment?(repo_id, node_id) or fresh_public_mirror?(repo_id, node_id)
+  end
+
+  defp fresh_assignment?(repo_id, node_id) do
     case TreeDb.Store.list_mirror_assignments(repo_id) do
       {:ok, assignments} when is_list(assignments) ->
         Enum.any?(assignments, fn assignment ->
           assignment["targetNodeId"] == node_id and assignment["status"] in ["healthy", "synced"] and
-            fresh_enough?(assignment["lastSyncAt"])
+            fresh_enough?(assignment["lastSyncAt"] || assignment["lastSyncedAt"])
+        end)
+
+      _ ->
+        false
+    end
+  end
+
+  defp fresh_public_mirror?(repo_id, node_id) do
+    case TreeDb.Store.list_mirrors(repo_id) do
+      {:ok, mirrors} when is_list(mirrors) ->
+        Enum.any?(mirrors, fn mirror ->
+          mirror["targetNodeId"] == node_id and mirror["status"] in ["healthy", "synced"] and
+            mirror["behindBy"] in [nil, 0]
         end)
 
       _ ->

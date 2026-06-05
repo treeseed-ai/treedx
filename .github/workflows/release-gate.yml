@@ -1,6 +1,16 @@
 name: TreeDB Release Gate
 
 on:
+  workflow_dispatch:
+    inputs:
+      performance_profile:
+        description: Run optional 100 RPS performance profile
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
   pull_request:
   push:
     branches:
@@ -226,6 +236,71 @@ jobs:
             target/profiles/ci-*.md
             target/profiles/ci-*-replay.jsonl
             target/profiles/ci-*-failures.jsonl
+          if-no-files-found: ignore
+
+  profile-performance:
+    needs: verify
+    if: github.event_name == 'workflow_dispatch' && inputs.performance_profile == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    name: Performance Profile (${{ matrix.arch }})
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run optional performance profile
+        shell: bash
+        env:
+          TREEDB_PROFILE_DURATION: ${{ vars.TREEDB_CI_PERFORMANCE_PROFILE_DURATION }}
+          TREEDB_PROFILE_CONCURRENCY: ${{ vars.TREEDB_CI_PERFORMANCE_PROFILE_CONCURRENCY }}
+          TREEDB_PROFILE_TARGET_PRIMARY_RPS: ${{ vars.TREEDB_CI_PERFORMANCE_TARGET_PRIMARY_RPS }}
+          TREEDB_PROFILE_PROBE_SAMPLING_RATE: ${{ vars.TREEDB_CI_PERFORMANCE_PROBE_SAMPLING_RATE }}
+          TREEDB_RUNTIME_CPU_BUDGET: ${{ vars.TREEDB_CI_PERFORMANCE_CPU_BUDGET }}
+          TREEDB_RUNTIME_MEMORY_BUDGET_MB: ${{ vars.TREEDB_CI_PERFORMANCE_MEMORY_BUDGET_MB }}
+        run: |
+          set -euo pipefail
+
+          mode="performance"
+          export TREEDB_PROFILE_PROFILE_PURPOSE="performance"
+          export TREEDB_PROFILE_DURATION="${TREEDB_PROFILE_DURATION:-10m}"
+          export TREEDB_PROFILE_MINIMUM_MEASURED_DURATION="${TREEDB_PROFILE_DURATION}"
+          export TREEDB_PROFILE_DURATION_IS_CONTROLLING="true"
+          export TREEDB_PROFILE_ITERATIONS=""
+          export TREEDB_PROFILE_CONCURRENCY="${TREEDB_PROFILE_CONCURRENCY:-150}"
+          export TREEDB_PROFILE_TARGET_PRIMARY_RPS="${TREEDB_PROFILE_TARGET_PRIMARY_RPS:-100}"
+          export TREEDB_PROFILE_VALIDATION_PROBE_MODE="sampled"
+          export TREEDB_PROFILE_PROBE_SAMPLING_RATE="${TREEDB_PROFILE_PROBE_SAMPLING_RATE:-0.10}"
+          export TREEDB_RUNTIME_CPU_BUDGET="${TREEDB_RUNTIME_CPU_BUDGET:-4}"
+          export TREEDB_RUNTIME_MEMORY_BUDGET_MB="${TREEDB_RUNTIME_MEMORY_BUDGET_MB:-4096}"
+          export TREEDB_PROFILE_REPORT_FORMAT="both"
+          export TREEDB_PROFILE_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
+          export TREEDB_PROFILE_MARKDOWN_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"
+          export TREEDB_PROFILE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
+          export TREEDB_PROFILE_FAILURE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
+
+          ./scripts/profile-compose.sh "${mode}"
+
+      - name: Upload performance profile reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: treedb-performance-profile-${{ matrix.arch }}
+          path: |
+            target/profiles/performance-*.yaml
+            target/profiles/performance-*.md
+            target/profiles/performance-*-replay.jsonl
+            target/profiles/performance-*-failures.jsonl
           if-no-files-found: ignore
 
   publish-plan:

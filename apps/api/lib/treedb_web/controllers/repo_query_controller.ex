@@ -5,25 +5,25 @@ defmodule TreeDbWeb.RepoQueryController do
 
   def read(conn, %{"repo_id" => repo_id} = params),
     do:
-      maybe_proxy_repo_read(conn, repo_id, params, fn conn ->
+      maybe_proxy_repo_read(conn, repo_id, params, [pool: :repository_query], fn conn ->
         with_principal(conn, &TreeDb.RepositoryQuery.read(repo_id, params, &1))
       end)
 
   def paths(conn, %{"repo_id" => repo_id} = params),
     do:
-      maybe_proxy_repo_read(conn, repo_id, params, fn conn ->
+      maybe_proxy_repo_read(conn, repo_id, params, [pool: :repository_query], fn conn ->
         with_principal(conn, &TreeDb.RepositoryQuery.paths(repo_id, params, &1))
       end)
 
   def search(conn, %{"repo_id" => repo_id} = params),
     do:
-      maybe_proxy_repo_read(conn, repo_id, params, fn conn ->
+      maybe_proxy_repo_read(conn, repo_id, params, [pool: :repository_query], fn conn ->
         with_principal(conn, &TreeDb.RepositoryQuery.search(repo_id, params, &1))
       end)
 
   def query(conn, %{"repo_id" => repo_id} = params),
     do:
-      maybe_proxy_repo_read(conn, repo_id, params, fn conn ->
+      maybe_proxy_repo_read(conn, repo_id, params, [pool: :repository_query], fn conn ->
         with_principal(conn, &TreeDb.RepositoryQuery.query(repo_id, params, &1))
       end)
 

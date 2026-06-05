@@ -21,6 +21,8 @@ Modes:
   mirror-federation      three-node mirror cluster profile
   connected-library      three-node connected-library profile
   federation-soak        long three-node federation soak profile
+  performance            100 primary RPS target single-node benchmark
+  federation-performance three-node federation performance benchmark
 
 Environment overrides:
   Any TREEDB_PROFILE_* variable may be set before invoking this script.
@@ -69,7 +71,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$mode" in
-  smoke|fixed|portfolio|read-heavy|write-heavy|graph|binary|admin|soak|mirror-federation|connected-library|federation-soak)
+  smoke|fixed|portfolio|read-heavy|write-heavy|graph|binary|admin|soak|performance|mirror-federation|connected-library|federation-soak|federation-performance)
     ;;
   *)
     echo "Unknown profile mode: $mode" >&2
@@ -94,7 +96,7 @@ export TREEDB_PROFILE_HOST_UID="${TREEDB_PROFILE_HOST_UID:-$(id -u)}"
 export TREEDB_PROFILE_HOST_GID="${TREEDB_PROFILE_HOST_GID:-$(id -g)}"
 
 case "$mode" in
-  mirror-federation|connected-library|federation-soak)
+  mirror-federation|connected-library|federation-soak|federation-performance)
     compose_files=(-f profiles/compose.profile.federation.yaml)
     ;;
   *)
@@ -102,7 +104,7 @@ case "$mode" in
     ;;
 esac
 
-if [[ "$dev_api" == true && "$mode" == "mirror-federation" || "$dev_api" == true && "$mode" == "connected-library" || "$dev_api" == true && "$mode" == "federation-soak" ]]; then
+if [[ "$dev_api" == true && "$mode" == "mirror-federation" || "$dev_api" == true && "$mode" == "connected-library" || "$dev_api" == true && "$mode" == "federation-soak" || "$dev_api" == true && "$mode" == "federation-performance" ]]; then
   echo "--dev-api is only supported for single-node profile modes" >&2
   exit 1
 fi

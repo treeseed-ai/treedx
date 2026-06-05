@@ -3,7 +3,7 @@ defmodule TreeDb.Federation.MirrorTransfer do
 
   def export(repo_id) do
     with {:ok, repo} when is_map(repo) <- TreeDb.Store.get_repository(repo_id),
-         repo_path <- TreeDb.RepositoryStorage.path!(repo),
+         {:ok, repo_path} <- resolve_repository_path(repo),
          {:ok, bundle_path} <- create_bundle(repo_path),
          {:ok, refs} <- TreeDb.Git.list_refs(repo_path),
          {:ok, bundle} <- File.read(bundle_path) do
@@ -14,7 +14,7 @@ defmodule TreeDb.Federation.MirrorTransfer do
          repoId: repo_id,
          repositoryName: repo["repositoryName"] || repo["name"],
          defaultRef: repo["defaultRef"] || "refs/heads/main",
-         refs: refs["refs"] || refs,
+         refs: normalize_refs(refs),
          bundle: Base.encode64(bundle),
          bundleEncoding: "base64",
          sourceNodeId: TreeDb.Federation.NodeIdentity.node_id()
@@ -27,6 +27,82 @@ defmodule TreeDb.Federation.MirrorTransfer do
     end
   end
 
+  defp resolve_repository_path(repo) do
+    repo_name = repo["repositoryName"] || repo["name"]
+
+    repo
+    |> repository_path_candidates(repo_name)
+    |> Enum.find_value(fn path ->
+      case validate_git_path(path) do
+        :ok -> {:ok, path}
+        _ -> nil
+      end
+    end)
+    |> case do
+      {:ok, path} ->
+        {:ok, path}
+
+      nil ->
+        {:error,
+         %{
+           code: "not_found",
+           message: "Repository storage is not available for mirror export."
+         }}
+    end
+  end
+
+  defp repository_path_candidates(repo, repo_name) do
+    [
+      safe_path(fn -> TreeDb.RepositoryStorage.path!(repo) end),
+      managed_candidate(repo_name),
+      repo["localPath"],
+      repo[:localPath],
+      profiler_source_candidates(repo_name)
+    ]
+    |> List.flatten()
+    |> Enum.filter(&is_binary/1)
+    |> Enum.map(&Path.expand/1)
+    |> Enum.uniq()
+    |> Enum.filter(&inside_data_dir?/1)
+  end
+
+  defp safe_path(fun) do
+    fun.()
+  rescue
+    _ -> nil
+  end
+
+  defp managed_candidate(repo_name) when is_binary(repo_name) and repo_name != "",
+    do: TreeDb.RepositoryStorage.managed_path(repo_name)
+
+  defp managed_candidate(_), do: nil
+
+  defp profiler_source_candidates(repo_name) when is_binary(repo_name) and repo_name != "" do
+    data_dir = Path.expand(TreeDb.Store.data_dir())
+    pattern = Path.join([data_dir, "profiler", "*", "*", repo_name])
+
+    Path.wildcard(pattern)
+  end
+
+  defp profiler_source_candidates(_), do: []
+
+  defp inside_data_dir?(path) do
+    expanded = Path.expand(path)
+    data_dir = Path.expand(TreeDb.Store.data_dir())
+    expanded == data_dir or String.starts_with?(expanded, data_dir <> "/")
+  end
+
+  defp validate_git_path(path) do
+    with true <- File.exists?(path),
+         {:ok, git} <- TreeDb.Git.inspect_repository(path),
+         true <- git["exists"] == true,
+         true <- git["isGitRepository"] == true do
+      :ok
+    else
+      _ -> :error
+    end
+  end
+
   def import(repo_id, params, node_payload) do
     with repository_name when is_binary(repository_name) and repository_name != "" <-
            params["repositoryName"],
@@ -35,6 +111,7 @@ defmodule TreeDb.Federation.MirrorTransfer do
          {:ok, bundle_path} <- write_temp_bundle(bytes),
          {:ok, mirror_path} <- clone_mirror(repository_name, bundle_path),
          :ok <- File.rm(bundle_path),
+         {:ok, _repo} <- put_mirror_repository(repo_id, repository_name, params),
          {:ok, assignment} <- put_assignment(repo_id, params, node_payload),
          {:ok, route} <- update_route(repo_id, repository_name, params, assignment) do
       {:ok,
@@ -52,6 +129,34 @@ defmodule TreeDb.Federation.MirrorTransfer do
       {:error, error} when is_map(error) -> {:error, error}
       {:error, reason} -> {:error, git_error(reason)}
       other -> {:error, git_error(other)}
+    end
+  end
+
+  defp put_mirror_repository(repo_id, repository_name, params) do
+    input = %{
+      name: repository_name,
+      repositoryName: repository_name,
+      storageRelativePath: TreeDb.RepositoryStorage.mirror_relative_path(repository_name),
+      defaultRef: params["defaultRef"] || "refs/heads/main",
+      remoteUrl: nil
+    }
+
+    with {:ok, repo} <- TreeDb.Store.put_repository(input),
+         true <- repo["id"] == repo_id do
+      {:ok, repo}
+    else
+      false ->
+        {:error,
+         %{
+           code: "conflict",
+           message: "Mirror repository identity does not match the source repository."
+         }}
+
+      {:error, error} when is_map(error) ->
+        {:error, error}
+
+      other ->
+        other
     end
   end
 
@@ -102,7 +207,10 @@ defmodule TreeDb.Federation.MirrorTransfer do
     path =
       Path.join(System.tmp_dir!(), "treedb-import-#{System.unique_integer([:positive])}.bundle")
 
-    File.write(path, bytes)
+    case File.write(path, bytes) do
+      :ok -> {:ok, path}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   defp clone_mirror(repository_name, bundle_path) do
@@ -180,6 +288,11 @@ defmodule TreeDb.Federation.MirrorTransfer do
   end
 
   defp latest_ref_sha(_), do: nil
+
+  defp normalize_refs(%{"refs" => refs}) when is_list(refs), do: refs
+  defp normalize_refs(%{refs: refs}) when is_list(refs), do: refs
+  defp normalize_refs(refs) when is_list(refs), do: refs
+  defp normalize_refs(_), do: []
 
   defp sanitize_route(route),
     do: Map.take(route, ["repositoryId", "repositoryName", "primaryNodeId", "mirrorNodeIds"])

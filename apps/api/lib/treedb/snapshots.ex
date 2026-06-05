@@ -3,12 +3,17 @@ defmodule TreeDb.Snapshots do
 
   alias TreeDb.Files.PathPolicy
   alias TreeDb.RepositoryQuery.PathMatch
+  alias TreeDb.Runtime.Pool
 
   @default_kind "repository_snapshot"
   @default_max_file_bytes 10_485_760
   @default_max_total_bytes 104_857_600
 
   def build(repo_id, params, principal) do
+    Pool.run(:snapshot, fn -> do_build(repo_id, params, principal) end)
+  end
+
+  defp do_build(repo_id, params, principal) do
     with {:ok, ctx} <- build_context(repo_id, params, principal),
          :ok <- audit_started(ctx, params),
          {:ok, files} <- collect_files(ctx),
@@ -53,6 +58,10 @@ defmodule TreeDb.Snapshots do
   end
 
   def export(repo_id, params, principal) do
+    Pool.run(:snapshot, fn -> do_export(repo_id, params, principal) end)
+  end
+
+  defp do_export(repo_id, params, principal) do
     with {:ok, _scope} <-
            TreeDb.Capabilities.require_capability(principal, "artifact:export", repo_id),
          {:ok, manifest} <- manifest_for_export(repo_id, params, principal),

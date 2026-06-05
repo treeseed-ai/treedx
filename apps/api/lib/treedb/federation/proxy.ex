@@ -3,17 +3,32 @@ defmodule TreeDb.Federation.Proxy do
 
   @proxyable_methods ~w(GET POST PUT PATCH DELETE)
 
-  def maybe_proxy_repo_read(repo_id, conn, body \\ nil),
-    do: maybe_proxy_repo(repo_id, conn, body, :read)
+  def maybe_proxy_repo_read(repo_id, conn), do: maybe_proxy_repo(repo_id, conn, nil, :read, [])
 
-  def maybe_proxy_repo_write(repo_id, conn, body \\ nil),
-    do: maybe_proxy_repo(repo_id, conn, body, :write)
+  def maybe_proxy_repo_read(repo_id, conn, body),
+    do: maybe_proxy_repo(repo_id, conn, body, :read, [])
 
-  def maybe_proxy_repo(repo_id, conn, body \\ nil, mode \\ :write) do
+  def maybe_proxy_repo_read(repo_id, conn, body, opts),
+    do: maybe_proxy_repo(repo_id, conn, body, :read, opts)
+
+  def maybe_proxy_repo_write(repo_id, conn), do: maybe_proxy_repo(repo_id, conn, nil, :write, [])
+
+  def maybe_proxy_repo_write(repo_id, conn, body),
+    do: maybe_proxy_repo(repo_id, conn, body, :write, [])
+
+  def maybe_proxy_repo_write(repo_id, conn, body, opts),
+    do: maybe_proxy_repo(repo_id, conn, body, :write, opts)
+
+  def maybe_proxy_repo(repo_id, conn, body \\ nil, mode \\ :write, opts \\ []) do
     if internal_dispatch?(conn) do
       :local
     else
-      with {:ok, route} <- TreeDb.Federation.RouteTable.resolve_repo(repo_id, mode: mode) do
+      opts = Keyword.put_new(opts, :pool, infer_pool(conn))
+
+      with {:ok, route} <-
+             TreeDb.Federation.RouteTable.resolve_repo(repo_id, [mode: mode] ++ opts) do
+        record_route(route, mode)
+
         case route["source"] do
           "local" -> :local
           "mirror" -> :local
@@ -76,12 +91,18 @@ defmodule TreeDb.Federation.Proxy do
            payload
          ) do
       {:ok, status, _headers, response_body} when status in 200..299 ->
-        unwrap_proxy_response(response_body)
+        with {:proxy, status, headers, body} <- unwrap_proxy_response(response_body) do
+          {:proxy, status, route_headers(route) ++ headers, body}
+        end
 
       {:ok, status, _headers, response_body} ->
-        {:proxy, status, [], response_body}
+        {:proxy, status, route_headers(route), response_body}
 
       {:error, error} ->
+        TreeDb.Observability.Metrics.incr("treedb_federation_read_spillover_failures_total", %{
+          target_node: target_node_id
+        })
+
         {:error, error}
     end
   end
@@ -148,6 +169,42 @@ defmodule TreeDb.Federation.Proxy do
 
   defp internal_dispatch?(conn) do
     Plug.Conn.get_req_header(conn, "x-treedb-internal-dispatch") == ["true"]
+  end
+
+  defp infer_pool(conn) do
+    path = conn.request_path || ""
+
+    cond do
+      String.contains?(path, "/graph") or String.contains?(path, "/context") -> :graph
+      String.contains?(path, "/snapshots") or String.contains?(path, "/artifacts") -> :snapshot
+      true -> :repository_query
+    end
+  end
+
+  defp record_route(route, mode) do
+    TreeDb.Observability.Metrics.incr("treedb_federation_route_selected_total", %{
+      mode: to_string(mode),
+      route_source: route["source"] || "unknown",
+      reason: route["reason"] || "unknown",
+      target_node: route["servedByNodeId"] || ""
+    })
+
+    if mode == :read and route["source"] == "remote" and
+         route["reason"] in ["remote_mirror", "spillover"] do
+      TreeDb.Observability.Metrics.incr("treedb_federation_read_spillover_total", %{
+        target_node: route["servedByNodeId"] || "",
+        reason: route["reason"] || "unknown",
+        pool: get_in(route, ["load", "pool"]) || "unknown"
+      })
+    end
+  end
+
+  defp route_headers(route) do
+    [
+      {"x-treedb-route-source", route["source"] || "unknown"},
+      {"x-treedb-served-by-node-id", route["servedByNodeId"] || ""},
+      {"x-treedb-route-reason", route["reason"] || "unknown"}
+    ]
   end
 
   defp max_hops,

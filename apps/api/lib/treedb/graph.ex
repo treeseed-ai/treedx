@@ -2,8 +2,13 @@ defmodule TreeDb.Graph do
   @moduledoc false
 
   alias TreeDb.Graph.{Auth, Builder, ContextPack, Dsl, Filter, Native, RefreshJobs}
+  alias TreeDb.Runtime.Pool
 
   def refresh(repo_id, params, principal) do
+    Pool.run(:graph, fn -> do_refresh(repo_id, params, principal) end)
+  end
+
+  defp do_refresh(repo_id, params, principal) do
     with {:ok, ctx} <- Auth.context(repo_id, params, principal, "graph:refresh"),
          {:ok, _} <- TreeDb.Capabilities.require_capability(principal, "files:read", repo_id),
          {:ok, _} <- TreeDb.Capabilities.require_capability(principal, "git:read", repo_id),
@@ -64,6 +69,10 @@ defmodule TreeDb.Graph do
     do: search(repo_id, params, principal, "entities", "graph.entities_searched")
 
   def node(repo_id, node_id, params, principal) do
+    Pool.run(:graph, fn -> do_node(repo_id, node_id, params, principal) end)
+  end
+
+  defp do_node(repo_id, node_id, params, principal) do
     with {:ok, ctx} <- Auth.context(repo_id, params, principal, "graph:query"),
          {:ok, index} <- load_authorized_index(ctx, params),
          node when is_map(node) <- Enum.find(index["nodes"], &(&1["id"] == node_id)) do
@@ -76,6 +85,10 @@ defmodule TreeDb.Graph do
   end
 
   def query(repo_id, params, principal) do
+    Pool.run(:graph, fn -> do_query(repo_id, params, principal) end)
+  end
+
+  defp do_query(repo_id, params, principal) do
     with {:ok, ctx} <- Auth.context(repo_id, params, principal, "graph:query"),
          {:ok, index} <- load_authorized_index(ctx, params),
          {:ok, result} <- Native.query_graph(index, query_request(params)) do
@@ -89,6 +102,10 @@ defmodule TreeDb.Graph do
   end
 
   def related(repo_id, params, principal) do
+    Pool.run(:graph, fn -> do_related(repo_id, params, principal) end)
+  end
+
+  defp do_related(repo_id, params, principal) do
     with {:ok, ctx} <- Auth.context(repo_id, params, principal, "graph:query"),
          {:ok, index} <- load_authorized_index(ctx, params),
          node_id when is_binary(node_id) <- params["nodeId"],
@@ -106,6 +123,10 @@ defmodule TreeDb.Graph do
   end
 
   def subgraph(repo_id, params, principal) do
+    Pool.run(:graph, fn -> do_subgraph(repo_id, params, principal) end)
+  end
+
+  defp do_subgraph(repo_id, params, principal) do
     with {:ok, ctx} <- Auth.context(repo_id, params, principal, "graph:query"),
          {:ok, index} <- load_authorized_index(ctx, params),
          seed_ids when is_list(seed_ids) <- params["seedIds"],
@@ -122,7 +143,8 @@ defmodule TreeDb.Graph do
     end
   end
 
-  def build_context(repo_id, params, principal), do: ContextPack.build(repo_id, params, principal)
+  def build_context(repo_id, params, principal),
+    do: Pool.run(:graph, fn -> ContextPack.build(repo_id, params, principal) end)
 
   def parse_ctx(repo_id, params, principal) do
     with {:ok, ctx} <- Auth.context(repo_id, params, principal, "graph:query"),

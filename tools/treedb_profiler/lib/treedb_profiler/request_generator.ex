@@ -48,38 +48,58 @@ defmodule TreeDbProfiler.RequestGenerator do
 
     base =
       []
-      |> maybe_add(:create_repository, opts.portfolio_create_weight, create_repo?)
+      |> maybe_add(
+        :create_repository,
+        weight(opts, :create_repository, opts.portfolio_create_weight),
+        create_repo?
+      )
       |> maybe_add(
         :create_workspace,
-        if(ramping_workspaces?, do: 24, else: weight(opts, 1)),
+        if(ramping_workspaces?, do: 24, else: weight(opts, :create_workspace, 1)),
         can_create_workspace?
       )
       |> maybe_add(
         :write_workspace_file,
-        weight(opts, 12),
+        weight(opts, :write_workspace_file, 12),
         workspace? and not ramping_workspaces?
       )
-      |> maybe_add(:patch_workspace_file, weight(opts, 8), workspace? and not ramping_workspaces?)
+      |> maybe_add(
+        :patch_workspace_file,
+        weight(opts, :patch_workspace_file, 8),
+        workspace? and not ramping_workspaces?
+      )
       |> maybe_add(
         :delete_workspace_file,
-        weight(opts, 2),
+        weight(opts, :delete_workspace_file, 2),
         workspace? and opts.include_destructive and not ramping_workspaces?
       )
-      |> maybe_add(:read_repository_file, weight(opts, 20), snapshot.repos != [])
-      |> maybe_add(:list_repository_paths, weight(opts, 8), snapshot.repos != [])
-      |> maybe_add(:search_repository_files, weight(opts, 12), snapshot.repos != [])
-      |> maybe_add(:query_repository, weight(opts, 8), snapshot.repos != [])
-      |> maybe_add(:refresh_graph, weight(opts, 4), snapshot.repos != [])
-      |> maybe_add(:query_graph, weight(opts, 6), snapshot.repos != [])
-      |> maybe_add(:build_context, weight(opts, 6), snapshot.repos != [])
-      |> maybe_add(:build_snapshot, weight(opts, 2), snapshot.repos != [])
-      |> maybe_add(:export_artifact, weight(opts, 1), snapshot.snapshots != [])
-      |> maybe_add(:get_artifact, 1, artifact?)
+      |> maybe_add(
+        :read_repository_file,
+        weight(opts, :read_repository_file, 20),
+        snapshot.repos != []
+      )
+      |> maybe_add(
+        :list_repository_paths,
+        weight(opts, :list_repository_paths, 8),
+        snapshot.repos != []
+      )
+      |> maybe_add(
+        :search_repository_files,
+        weight(opts, :search_repository_files, 12),
+        snapshot.repos != []
+      )
+      |> maybe_add(:query_repository, weight(opts, :query_repository, 8), snapshot.repos != [])
+      |> maybe_add(:refresh_graph, weight(opts, :refresh_graph, 4), snapshot.repos != [])
+      |> maybe_add(:query_graph, weight(opts, :query_graph, 6), snapshot.repos != [])
+      |> maybe_add(:build_context, weight(opts, :build_context, 6), snapshot.repos != [])
+      |> maybe_add(:build_snapshot, weight(opts, :build_snapshot, 2), snapshot.repos != [])
+      |> maybe_add(:export_artifact, weight(opts, :export_artifact, 1), snapshot.snapshots != [])
+      |> maybe_add(:get_artifact, weight(opts, :get_artifact, 1), artifact?)
 
     maybe_add(
       base,
       :delete_repository,
-      opts.portfolio_delete_weight,
+      weight(opts, :delete_repository, opts.portfolio_delete_weight),
       deletion_supported?() and opts.include_destructive
     )
   end
@@ -676,9 +696,71 @@ defmodule TreeDbProfiler.RequestGenerator do
     end)
   end
 
-  defp weight(%{portfolio_growth_target: "sparse"}, base), do: max(div(base, 2), 1)
-  defp weight(%{portfolio_growth_target: "aggressive"}, base), do: base * 2
-  defp weight(_opts, base), do: base
+  defp weight(%{profile_purpose: "performance"} = opts, operation, base) do
+    opts
+    |> performance_mix()
+    |> Map.get(operation, base)
+    |> round_weight()
+  end
+
+  defp weight(%{portfolio_growth_target: "sparse"}, _operation, base), do: max(div(base, 2), 1)
+  defp weight(%{portfolio_growth_target: "aggressive"}, _operation, base), do: base * 2
+  defp weight(_opts, _operation, base), do: base
+
+  defp performance_mix(%{performance_workload: "read_mostly"}) do
+    %{
+      read_repository_file: 30,
+      search_repository_files: 20,
+      query_repository: 15,
+      list_repository_paths: 15,
+      query_graph: 8,
+      build_context: 5,
+      write_workspace_file: 4,
+      patch_workspace_file: 2,
+      build_snapshot: 1,
+      create_repository: 0.2,
+      refresh_graph: 1,
+      export_artifact: 0.2,
+      get_artifact: 1
+    }
+  end
+
+  defp performance_mix(%{performance_workload: "write_mixed"}) do
+    %{
+      write_workspace_file: 18,
+      patch_workspace_file: 14,
+      delete_workspace_file: 5,
+      workspace_status: 10,
+      read_repository_file: 12,
+      search_repository_files: 8,
+      query_repository: 8,
+      build_snapshot: 2,
+      refresh_graph: 2,
+      create_repository: 1
+    }
+  end
+
+  defp performance_mix(_opts) do
+    %{
+      read_repository_file: 20,
+      search_repository_files: 14,
+      query_repository: 12,
+      list_repository_paths: 10,
+      write_workspace_file: 10,
+      patch_workspace_file: 8,
+      delete_workspace_file: 3,
+      workspace_status: 6,
+      query_graph: 5,
+      build_context: 4,
+      refresh_graph: 2,
+      build_snapshot: 1,
+      export_artifact: 0.5,
+      create_repository: 0.5
+    }
+  end
+
+  defp round_weight(value) when is_float(value), do: trunc(value * 10)
+  defp round_weight(value), do: value
 
   defp deletion_supported?, do: false
 

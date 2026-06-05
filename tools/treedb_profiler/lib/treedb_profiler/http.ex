@@ -36,7 +36,8 @@ defmodule TreeDbProfiler.HTTP do
         )
       end)
 
-    {status, response_body, response_bytes, ok, error_code} = normalize_result(result)
+    {status, response_body, response_bytes, ok, error_code, error_details} =
+      normalize_result(result)
 
     sample = %{
       operation_id: meta.operation_id,
@@ -51,9 +52,15 @@ defmodule TreeDbProfiler.HTTP do
       status: status,
       ok: ok,
       error_code: error_code,
+      error_details: error_details,
       request_bytes: request_bytes,
       response_bytes: response_bytes,
-      assertion: :pending
+      assertion: :pending,
+      sample_kind: Keyword.get(opts, :sample_kind, :primary),
+      measured_window: Keyword.get(opts, :measured_window, :measured),
+      counts_toward_primary_rps: Keyword.get(opts, :counts_toward_primary_rps, true),
+      counts_toward_total_http_rps: Keyword.get(opts, :counts_toward_total_http_rps, true),
+      parent_request_id: Keyword.get(opts, :parent_request_id)
     }
 
     {sample, response_body}
@@ -82,17 +89,17 @@ defmodule TreeDbProfiler.HTTP do
     bytes = response_body_size(body)
     ok = response.status in 200..299
     error_code = error_code(body)
-    {response.status, body, bytes, ok, error_code}
+    {response.status, body, bytes, ok, error_code, error_details(body)}
   end
 
   defp normalize_result({:error, error}) do
     {0, %{"error" => %{"code" => "network_error", "message" => Exception.message(error)}}, 0,
-     false, "network_error"}
+     false, "network_error", %{}}
   end
 
   defp normalize_result({:raised, error, _stack}) do
     {0, %{"error" => %{"code" => "client_error", "message" => Exception.message(error)}}, 0,
-     false, "client_error"}
+     false, "client_error", %{}}
   end
 
   defp response_body_size(body) when is_binary(body), do: byte_size(body)
@@ -100,4 +107,6 @@ defmodule TreeDbProfiler.HTTP do
 
   defp error_code(%{"error" => %{"code" => code}}), do: code
   defp error_code(_), do: nil
+  defp error_details(%{"error" => %{"details" => details}}) when is_map(details), do: details
+  defp error_details(_), do: %{}
 end

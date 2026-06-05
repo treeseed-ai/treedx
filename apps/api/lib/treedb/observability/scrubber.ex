@@ -21,7 +21,12 @@ defmodule TreeDb.Observability.Scrubber do
                         "mode",
                         "status",
                         "capability",
-                        "check"
+                        "check",
+                        "pool",
+                        "cache",
+                        "reason",
+                        "route_source",
+                        "target_node"
                       ])
 
   def scrub(value), do: scrub_value(value, nil)

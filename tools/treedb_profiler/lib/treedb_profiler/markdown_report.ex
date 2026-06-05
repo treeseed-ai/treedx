@@ -7,6 +7,7 @@ defmodule TreeDbProfiler.MarkdownReport do
       "",
       summary(report),
       timing(report),
+      throughput(report),
       reliability_budget(report),
       workload(report),
       portfolio(report),
@@ -27,6 +28,8 @@ defmodule TreeDbProfiler.MarkdownReport do
       leak_detection(report),
       permission_matrix(report),
       restart_and_faults(report),
+      saturation(report),
+      federation_load_balancing(report),
       slowest(report),
       errors(report),
       assertions(report),
@@ -38,18 +41,28 @@ defmodule TreeDbProfiler.MarkdownReport do
 
   defp summary(report) do
     summary = report["summary"] || %{}
+    throughput = report["throughput"] || %{}
+    primary = throughput["primary"] || %{}
+    total_http = throughput["totalHttp"] || %{}
+    probes = throughput["validationProbes"] || %{}
+    target = throughput["target"] || %{}
 
     """
     ## Summary
 
-    - Total calls: #{summary["totalCalls"] || 0}
+    - Primary calls: #{summary["totalCalls"] || 0}
+    - Primary throughput: #{primary["requestsPerSecond"] || summary["throughputPerSecond"] || 0.0} requests/second
+    - Total HTTP calls: #{total_http["calls"] || summary["totalCalls"] || 0}
+    - Total HTTP throughput: #{total_http["requestsPerSecond"] || 0.0} requests/second
+    - Validation probe throughput: #{probes["requestsPerSecond"] || 0.0} requests/second
+    - Target primary RPS: #{target["primaryRps"] || "not set"}
+    - Target primary RPS met: #{target["primaryRpsMet"]}
     - Total errors: #{summary["totalErrors"] || 0}
     - Assertion failures: #{summary["assertionFailures"] || 0}
     - Race interference: #{summary["raceInterference"] || 0}
     - Correctness pass: #{summary["correctnessPass"]}
     - Success rate: #{format_rate(summary["successRate"] || 0.0)}%
     - Error rate: #{format_rate(summary["errorRate"] || 0.0)}%
-    - Throughput: #{summary["throughputPerSecond"] || 0.0} requests/second
     """
   end
 
@@ -77,6 +90,33 @@ defmodule TreeDbProfiler.MarkdownReport do
     - Measured duration satisfied: #{measured["durationSatisfied"]}
     - Stop reason: #{measured["stopReason"]}
     - Cleanup duration: #{cleanup["durationMs"] || 0} ms
+    """
+  end
+
+  defp throughput(report) do
+    throughput = report["throughput"] || %{}
+    primary = throughput["primary"] || %{}
+    probes = throughput["validationProbes"] || %{}
+    reconciliation = throughput["reconciliation"] || %{}
+    auxiliary = throughput["auxiliary"] || %{}
+    total = throughput["totalHttp"] || %{}
+    target = throughput["target"] || %{}
+
+    """
+    ## Throughput Breakdown
+
+    - Primary calls: #{primary["calls"] || 0}
+    - Primary RPS: #{primary["requestsPerSecond"] || 0.0}
+    - Validation probe calls: #{probes["calls"] || 0}
+    - Validation probe RPS: #{probes["requestsPerSecond"] || 0.0}
+    - Reconciliation calls: #{reconciliation["calls"] || 0}
+    - Reconciliation RPS: #{reconciliation["requestsPerSecond"] || 0.0}
+    - Auxiliary calls: #{auxiliary["calls"] || 0}
+    - Auxiliary RPS: #{auxiliary["requestsPerSecond"] || 0.0}
+    - Total HTTP calls: #{total["calls"] || 0}
+    - Total HTTP RPS: #{total["requestsPerSecond"] || 0.0}
+    - Target primary RPS: #{target["primaryRps"] || "not set"}
+    - Target ratio: #{target["primaryRpsRatio"] || "not set"}
     """
   end
 
@@ -371,6 +411,33 @@ defmodule TreeDbProfiler.MarkdownReport do
     - Injected: #{faults["injected"] || 0}
     - Recovered: #{faults["recovered"] || 0}
     - Failures: #{length(faults["failures"] || [])}
+    """
+  end
+
+  defp saturation(report) do
+    saturation = report["saturation"] || %{}
+    server_busy = saturation["serverBusy"] || %{}
+
+    """
+    ## Saturation And Queues
+
+    - Server busy responses: #{server_busy["total"] || 0}
+    - By operation: `#{inspect(server_busy["byOperation"] || %{})}`
+    - By pool: `#{inspect(server_busy["byPool"] || %{})}`
+    - By reason: `#{inspect(server_busy["byReason"] || %{})}`
+    """
+  end
+
+  defp federation_load_balancing(report) do
+    balancing = report["federationLoadBalancing"] || %{}
+
+    """
+    ## Federation Load-Aware Routing
+
+    - Enabled: #{balancing["enabled"]}
+    - Read spillovers: #{balancing["readSpillovers"] || 0}
+    - Failures: #{balancing["failures"] || 0}
+    - By target node: `#{inspect(balancing["byTargetNode"] || %{})}`
     """
   end
 

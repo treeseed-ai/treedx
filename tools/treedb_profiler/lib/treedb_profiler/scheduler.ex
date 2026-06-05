@@ -12,6 +12,7 @@ defmodule TreeDbProfiler.Scheduler do
 
     initial = %{
       samples: [],
+      http_samples: [],
       assertions: [],
       sampler: Sampler.new(opts.request_sample_limit),
       worker_count: opts.concurrency,
@@ -83,6 +84,7 @@ defmodule TreeDbProfiler.Scheduler do
       iterations: iterations,
       deadline: deadline,
       samples: [],
+      http_samples: [],
       assertions: [],
       sampler: Sampler.new(opts.request_sample_limit)
     })
@@ -91,10 +93,10 @@ defmodule TreeDbProfiler.Scheduler do
   defp do_worker_loop(ctx) do
     cond do
       stop_for_duration?(ctx.deadline) ->
-        Map.take(ctx, [:samples, :assertions, :sampler])
+        Map.take(ctx, [:samples, :http_samples, :assertions, :sampler])
 
       not claim_iteration(ctx.counter, ctx.iterations) ->
-        Map.take(ctx, [:samples, :assertions, :sampler])
+        Map.take(ctx, [:samples, :http_samples, :assertions, :sampler])
 
       true ->
         request =
@@ -110,6 +112,7 @@ defmodule TreeDbProfiler.Scheduler do
         do_worker_loop(%{
           ctx
           | samples: [sample | ctx.samples],
+            http_samples: http_samples_for(sample, assertion) ++ ctx.http_samples,
             assertions: [assertion | ctx.assertions],
             sampler: Sampler.add(ctx.sampler, sample)
         })
@@ -274,6 +277,7 @@ defmodule TreeDbProfiler.Scheduler do
     %{
       acc
       | samples: acc.samples ++ Enum.reverse(partial.samples),
+        http_samples: acc.http_samples ++ Enum.reverse(partial.http_samples),
         assertions: acc.assertions ++ Enum.reverse(partial.assertions),
         sampler: merge_sampler(acc.sampler, partial.sampler)
     }
@@ -320,6 +324,16 @@ defmodule TreeDbProfiler.Scheduler do
       error: inspect(reason)
     }
 
-    %{acc | samples: [sample | acc.samples], assertions: [assertion | acc.assertions]}
+    %{
+      acc
+      | samples: [sample | acc.samples],
+        http_samples: [sample | acc.http_samples],
+        assertions: [assertion | acc.assertions]
+    }
+  end
+
+  defp http_samples_for(primary_sample, assertion) do
+    probe_samples = Map.get(assertion, :validationProbeSamples, []) || []
+    [primary_sample | probe_samples]
   end
 end

@@ -3,6 +3,7 @@ defmodule TreeDb.RepositoryQuery do
 
   alias TreeDb.Files.PathPolicy
   alias TreeDb.RepositoryQuery.{Filters, Links, Pagination, PathMatch, Sections, Sort}
+  alias TreeDb.Runtime.Pool
   alias TreeDb.Search.Ranking
 
   @default_query_limit 20
@@ -12,6 +13,10 @@ defmodule TreeDb.RepositoryQuery do
   @snippet 160
 
   def read(repo_id, params, principal) do
+    Pool.run(:repository_query, fn -> do_read(repo_id, params, principal) end)
+  end
+
+  defp do_read(repo_id, params, principal) do
     with {:ok, ctx} <- context(repo_id, params, principal, "files:read"),
          {:ok, paths} <- read_paths(params),
          :ok <- authorize_direct_paths(ctx.scope, paths),
@@ -30,6 +35,10 @@ defmodule TreeDb.RepositoryQuery do
   end
 
   def paths(repo_id, params, principal) do
+    Pool.run(:repository_query, fn -> do_paths(repo_id, params, principal) end)
+  end
+
+  defp do_paths(repo_id, params, principal) do
     with {:ok, ctx} <- context(repo_id, params, principal, "files:read"),
          {:ok, patterns} <- PathMatch.normalize_patterns(params["paths"]),
          {:ok, entries} <- filtered_entries(ctx, patterns, params),
@@ -55,6 +64,10 @@ defmodule TreeDb.RepositoryQuery do
   end
 
   def search(repo_id, params, principal) do
+    Pool.run(:repository_query, fn -> do_search(repo_id, params, principal) end)
+  end
+
+  defp do_search(repo_id, params, principal) do
     with {:ok, ctx} <- context(repo_id, params, principal, "files:search"),
          :ok <- validate_query(params["query"], false),
          {:ok, patterns} <- PathMatch.normalize_patterns(params["paths"]),
@@ -93,6 +106,10 @@ defmodule TreeDb.RepositoryQuery do
   end
 
   def query(repo_id, params, principal) do
+    Pool.run(:repository_query, fn -> do_query(repo_id, params, principal) end)
+  end
+
+  defp do_query(repo_id, params, principal) do
     type = params["type"] || "text"
     capability = query_capability(type)
 
@@ -143,7 +160,8 @@ defmodule TreeDb.RepositoryQuery do
   end
 
   defp search_query(ctx, params) do
-    with {:ok, response} <- search(ctx.repo["id"], Map.put(params, "__ctx", ctx), ctx.principal) do
+    with {:ok, response} <-
+           do_search(ctx.repo["id"], Map.put(params, "__ctx", ctx), ctx.principal) do
       {:ok, response |> Map.put(:type, "text")}
     end
   end
@@ -263,7 +281,7 @@ defmodule TreeDb.RepositoryQuery do
 
   def context(repo_id, params, principal, capability) do
     with {:ok, scope} <- TreeDb.Capabilities.require_capability(principal, capability, repo_id),
-         {:ok, repo} when is_map(repo) <- TreeDb.Store.get_repository(repo_id),
+         {:ok, repo} when is_map(repo) <- repository_for_context(repo_id),
          ref <- params["ref"] || repo["defaultRef"] || "refs/heads/main",
          :ok <- TreeDb.Capabilities.require_ref(scope, ref),
          {:ok, resolved} <- TreeDb.Git.resolve_ref(TreeDb.RepositoryStorage.path!(repo), ref) do
@@ -278,6 +296,36 @@ defmodule TreeDb.RepositoryQuery do
     else
       {:ok, nil} -> {:error, %{code: "not_found", message: "Repository not found."}}
       other -> other
+    end
+  end
+
+  defp repository_for_context(repo_id) do
+    case TreeDb.Store.get_repository(repo_id) do
+      {:ok, repo} when is_map(repo) ->
+        {:ok, repo}
+
+      _ ->
+        mirror_repository_for_context(repo_id)
+    end
+  end
+
+  defp mirror_repository_for_context(repo_id) do
+    local_node = TreeDb.Federation.NodeIdentity.node_id()
+
+    with {:ok, route} when is_map(route) <- TreeDb.Store.get_federation_route(repo_id),
+         true <- local_node in (route["mirrorNodeIds"] || []),
+         repository_name when is_binary(repository_name) and repository_name != "" <-
+           route["repositoryName"] do
+      {:ok,
+       %{
+         "id" => repo_id,
+         "repositoryName" => repository_name,
+         "defaultRef" => route["defaultRef"] || "refs/heads/main",
+         "storageKind" => "mirror",
+         "storageRelativePath" => TreeDb.RepositoryStorage.mirror_relative_path(repository_name)
+       }}
+    else
+      _ -> {:ok, nil}
     end
   end
 

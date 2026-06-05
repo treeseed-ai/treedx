@@ -49,7 +49,12 @@ defmodule TreeDbWeb.InternalFederationController do
     with {:ok, _node_payload} <- TreeDb.Federation.NodeAuth.verify_conn(conn, "health") do
       ok(conn, %{
         nodeId: TreeDb.Federation.NodeIdentity.node_id(),
-        federation: %{status: "healthy"}
+        federation: %{status: "healthy"},
+        runtime: %{
+          pressure: to_string(TreeDb.Runtime.Resources.memory_snapshot().pressure),
+          memory: TreeDb.Runtime.Resources.memory_snapshot()
+        },
+        pools: TreeDb.Runtime.Pool.snapshot()
       })
     else
       {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
@@ -161,6 +166,7 @@ defmodule TreeDbWeb.InternalFederationController do
       request.headers
       |> Map.put("x-treedb-internal-dispatch", "true")
       |> Map.put("x-treedb-forward-hop", "0")
+      |> maybe_put_local_dev_authorization()
       |> Enum.map(fn {key, value} ->
         {String.to_charlist(key), String.to_charlist(to_string(value))}
       end)
@@ -198,6 +204,21 @@ defmodule TreeDbWeb.InternalFederationController do
 
   defp request_tuple(_method, url, headers, body),
     do: {String.to_charlist(url), headers, content_type(headers), body}
+
+  defp maybe_put_local_dev_authorization(headers) do
+    if TreeDb.Auth.mode() == "dev" do
+      case TreeDb.Auth.create_dev_token(%{
+             actorId: "actor_demo",
+             tenantId: "tenant_demo",
+             expiresInSeconds: 300
+           }) do
+        {:ok, %{accessToken: token}} -> Map.put(headers, "authorization", "Bearer #{token}")
+        _ -> headers
+      end
+    else
+      headers
+    end
+  end
 
   defp request_fingerprint(request) do
     :crypto.hash(

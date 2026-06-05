@@ -77,6 +77,7 @@ defmodule TreeDbProfiler.Stats do
       "successRate" => rate(total - errors - races, total),
       "correctnessPass" => assertion_failures == 0,
       "throughputPerSecond" => throughput(samples),
+      "throughputKind" => "primary",
       "slowestOperations" =>
         operations
         |> Enum.sort_by(&get_in(&1, ["latencyMs", "p95"]), :desc)
@@ -93,6 +94,46 @@ defmodule TreeDbProfiler.Stats do
     }
   end
 
+  def throughput_breakdown(primary_samples, http_samples, opts) do
+    validation_probe_samples = samples_of_kind(http_samples, :validation_probe)
+    reconciliation_samples = samples_of_kind(http_samples, :reconciliation)
+
+    auxiliary_samples =
+      Enum.reject(http_samples, fn sample ->
+        Map.get(sample, :sample_kind, :primary) in [:primary, :validation_probe, :reconciliation]
+      end)
+
+    primary = throughput_group(primary_samples)
+    validation = throughput_group(validation_probe_samples)
+    reconciliation = throughput_group(reconciliation_samples)
+    auxiliary = throughput_group(auxiliary_samples)
+    total_http = throughput_group(http_samples)
+    target = target_report(primary["requestsPerSecond"], opts)
+
+    %{
+      "targetPrimaryRps" => opts.target_primary_rps,
+      "primary" =>
+        Map.merge(primary, %{
+          "successRate" => success_rate(primary_samples),
+          "errorRate" => error_rate(primary_samples),
+          "measuredDurationMs" => duration_ms(primary_samples)
+        }),
+      "validationProbes" =>
+        Map.merge(validation, %{
+          "failed" => Enum.count(validation_probe_samples, &(&1.ok != true)),
+          "sampled" => opts.validation_probe_mode == "sampled",
+          "samplingRate" => opts.probe_sampling_rate
+        }),
+      "reconciliation" =>
+        Map.merge(reconciliation, %{
+          "failed" => Enum.count(reconciliation_samples, &(&1.ok != true))
+        }),
+      "auxiliary" => auxiliary,
+      "totalHttp" => total_http,
+      "target" => target
+    }
+  end
+
   def category_aggregates(operations) do
     operations
     |> Enum.group_by(& &1["category"])
@@ -105,6 +146,31 @@ defmodule TreeDbProfiler.Stats do
     |> Enum.group_by(& &1["operationType"])
     |> Enum.map(fn {type, ops} -> aggregate_operation_group(type, ops, "operationType") end)
     |> Enum.sort_by(& &1["operationType"])
+  end
+
+  def saturation_report(samples) do
+    busy = Enum.filter(samples, &(&1.error_code == "server_busy"))
+
+    %{
+      "serverBusy" => %{
+        "total" => length(busy),
+        "byOperation" => count_by(busy, & &1.operation_id),
+        "byPool" => count_by(busy, &busy_detail(&1, "pool")),
+        "byReason" => count_by(busy, &busy_detail(&1, "reason")),
+        "samples" =>
+          busy
+          |> Enum.take(25)
+          |> Enum.map(fn sample ->
+            %{
+              "operationId" => sample.operation_id,
+              "status" => sample.status,
+              "pool" => busy_detail(sample, "pool"),
+              "reason" => busy_detail(sample, "reason"),
+              "elapsedMs" => sample.duration_ms
+            }
+          end)
+      }
+    }
   end
 
   def latency([]), do: empty_latency()
@@ -228,6 +294,13 @@ defmodule TreeDbProfiler.Stats do
     end
   end
 
+  defp busy_detail(sample, key) do
+    details = Map.get(sample, :error_details) || %{}
+    to_string(details[key] || details[String.to_atom(key)] || "unknown")
+  rescue
+    _ -> "unknown"
+  end
+
   defp throughput([]), do: 0.0
 
   defp throughput(samples) do
@@ -246,6 +319,62 @@ defmodule TreeDbProfiler.Stats do
       _ ->
         duration_seconds = max((Enum.max(times) - Enum.min(times)) / 1000.0, 1.0)
         Float.round(length(samples) / duration_seconds, 3)
+    end
+  end
+
+  defp throughput_group(samples) do
+    %{
+      "calls" => length(samples),
+      "requestsPerSecond" => throughput(samples)
+    }
+  end
+
+  defp target_report(_primary_rps, %{target_primary_rps: nil}) do
+    %{
+      "primaryRps" => nil,
+      "primaryRpsMet" => nil,
+      "primaryRpsRatio" => nil
+    }
+  end
+
+  defp target_report(primary_rps, %{target_primary_rps: target}) do
+    %{
+      "primaryRps" => target,
+      "primaryRpsMet" => primary_rps >= target,
+      "primaryRpsRatio" => if(target > 0, do: Float.round(primary_rps / target, 4), else: nil)
+    }
+  end
+
+  defp samples_of_kind(samples, kind) do
+    Enum.filter(samples, &(Map.get(&1, :sample_kind, :primary) == kind))
+  end
+
+  defp success_rate(samples) do
+    total = length(samples)
+    success = Enum.count(samples, &(&1.ok == true and &1.assertion != :race_interference))
+    rate(success, total)
+  end
+
+  defp error_rate(samples) do
+    total = length(samples)
+    errors = Enum.count(samples, &(&1.ok != true and &1.assertion != :race_interference))
+    rate(errors, total)
+  end
+
+  defp duration_ms([]), do: 0
+
+  defp duration_ms(samples) do
+    times =
+      samples
+      |> Enum.map(&DateTime.from_iso8601(&1.started_at))
+      |> Enum.flat_map(fn
+        {:ok, dt, _} -> [DateTime.to_unix(dt, :millisecond)]
+        _ -> []
+      end)
+
+    case times do
+      [] -> 0
+      _ -> Enum.max(times) - Enum.min(times)
     end
   end
 end

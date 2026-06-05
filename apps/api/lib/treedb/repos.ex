@@ -282,21 +282,78 @@ defmodule TreeDb.Repos do
       true ->
         File.mkdir_p!(Path.dirname(destination))
 
-        case File.cp_r(source, destination) do
-          {:ok, _files} -> {:ok, destination}
-          :ok -> {:ok, destination}
-          {:error, _source, _target, reason} -> {:error, file_error(reason)}
-          {:error, reason} -> {:error, file_error(reason)}
+        case hardlink_copy(source, destination) do
+          :ok ->
+            {:ok, destination}
+
+          {:error, _reason} ->
+            File.rm_rf(destination)
+            recursive_copy(source, destination)
         end
     end
   end
 
-  defp file_error(reason),
-    do: %{
-      code: "internal_error",
-      message: "Repository import failed.",
-      details: %{reason: inspect(reason)}
-    }
+  defp hardlink_copy(source, destination) do
+    cond do
+      cp = System.find_executable("cp") ->
+        run_copy_command(cp, ["-al", source, destination])
+
+      File.exists?("/bin/busybox") ->
+        run_copy_command("/bin/busybox", ["cp", "-a", "-l", source, destination])
+
+      true ->
+        {:error, :unavailable}
+    end
+  end
+
+  defp run_copy_command(command, args) do
+    case System.cmd(command, args, stderr_to_stdout: true) do
+      {_output, 0} -> :ok
+      {output, _status} -> {:error, String.trim(output)}
+    end
+  rescue
+    error -> {:error, Exception.message(error)}
+  end
+
+  defp recursive_copy(source, destination) do
+    case File.cp_r(source, destination) do
+      {:ok, _files} ->
+        {:ok, destination}
+
+      :ok ->
+        {:ok, destination}
+
+      {:error, reason} ->
+        File.rm_rf(destination)
+        {:error, file_error(reason)}
+
+      {:error, reason, _path} ->
+        File.rm_rf(destination)
+        {:error, file_error(reason)}
+
+      {:error, _source, _target, reason} ->
+        File.rm_rf(destination)
+        {:error, file_error(reason)}
+    end
+  end
+
+  defp file_error(reason) do
+    case reason do
+      :enospc ->
+        %{
+          code: "service_unavailable",
+          message: "Repository import failed because storage is full.",
+          details: %{reason: "insufficient_storage"}
+        }
+
+      _ ->
+        %{
+          code: "internal_error",
+          message: "Repository import failed.",
+          details: %{reason: inspect(reason)}
+        }
+    end
+  end
 
   defp public_repo(repo) do
     %{

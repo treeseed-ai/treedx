@@ -6,7 +6,7 @@ defmodule TreeDbWeb.BlobController do
 
   def read_repo(conn, %{"repo_id" => repo_id} = params),
     do:
-      maybe_proxy_repo_read(conn, repo_id, params, fn conn ->
+      maybe_proxy_repo_read(conn, repo_id, params, [pool: :repository_query], fn conn ->
         with_principal(conn, &TreeDb.Blobs.read_repo(repo_id, params, &1))
       end)
 

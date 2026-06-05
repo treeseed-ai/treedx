@@ -2,6 +2,7 @@ defmodule TreeDb.Files do
   @moduledoc false
 
   alias TreeDb.Files.{Diff, Overlay, Patch, PathPolicy, Search}
+  alias TreeDb.Runtime.Pool
 
   @default_search_limit 20
   @max_search_limit 50
@@ -31,6 +32,10 @@ defmodule TreeDb.Files do
   end
 
   def write(workspace_id, params, principal) do
+    Pool.run(:workspace_mutation, fn -> do_write(workspace_id, params, principal) end)
+  end
+
+  defp do_write(workspace_id, params, principal) do
     with {:ok, ctx} <- writable_context(workspace_id, principal, "files:write"),
          {:ok, path} <- PathPolicy.normalize(params["path"]),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
@@ -59,6 +64,10 @@ defmodule TreeDb.Files do
   end
 
   def patch(workspace_id, params, principal) do
+    Pool.run(:workspace_mutation, fn -> do_patch(workspace_id, params, principal) end)
+  end
+
+  defp do_patch(workspace_id, params, principal) do
     with {:ok, ctx} <- writable_context(workspace_id, principal, "files:write"),
          {:ok, path} <- PathPolicy.normalize(params["path"]),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
@@ -87,6 +96,10 @@ defmodule TreeDb.Files do
   end
 
   def delete(workspace_id, params, principal) do
+    Pool.run(:workspace_mutation, fn -> do_delete(workspace_id, params, principal) end)
+  end
+
+  defp do_delete(workspace_id, params, principal) do
     with {:ok, ctx} <- writable_context(workspace_id, principal, "files:delete"),
          {:ok, path} <- PathPolicy.normalize(params["path"]),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
@@ -131,6 +144,10 @@ defmodule TreeDb.Files do
   end
 
   def status(workspace_id, _params, principal) do
+    Pool.run(:workspace_mutation, fn -> do_status(workspace_id, principal) end)
+  end
+
+  defp do_status(workspace_id, principal) do
     with {:ok, ctx} <- context(workspace_id, principal, "files:read"),
          {:ok, overlays} <- TreeDb.Store.list_workspace_files(workspace_id) do
       changes = Enum.map(overlays, &status_entry(ctx, &1))
@@ -140,6 +157,10 @@ defmodule TreeDb.Files do
   end
 
   def diff(workspace_id, _params, principal) do
+    Pool.run(:workspace_mutation, fn -> do_diff(workspace_id, principal) end)
+  end
+
+  defp do_diff(workspace_id, principal) do
     with {:ok, ctx} <- context(workspace_id, principal, "git:diff"),
          {:ok, overlays} <- TreeDb.Store.list_workspace_files(workspace_id) do
       diffs =
@@ -159,6 +180,10 @@ defmodule TreeDb.Files do
   end
 
   def commit(workspace_id, params, principal) do
+    Pool.run(:workspace_mutation, fn -> do_commit(workspace_id, params, principal) end)
+  end
+
+  defp do_commit(workspace_id, params, principal) do
     with {:ok, ctx} <- writable_context(workspace_id, principal, "git:commit"),
          :ok <- require_branch(ctx.workspace),
          {:ok, overlays} <- TreeDb.Store.list_workspace_files(workspace_id),

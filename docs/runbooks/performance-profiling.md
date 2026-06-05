@@ -95,6 +95,8 @@ scripts/profile-compose.sh soak
 scripts/profile-compose.sh mirror-federation
 scripts/profile-compose.sh connected-library
 scripts/profile-compose.sh federation-soak
+scripts/profile-compose.sh performance
+scripts/profile-compose.sh federation-performance
 ```
 
 Modes:
@@ -113,6 +115,10 @@ Modes:
 - `connected-library`: three-node connected-library profile with remote-owner
   authorization, scoped federation reads, and default write-denial checks.
 - `federation-soak`: longer three-node federation reliability profile.
+- `performance`: single-node read-mostly benchmark with a 100 primary RPS
+  target, sampled validation probes, and runtime resource tuning defaults.
+- `federation-performance`: three-node federation benchmark using the same
+  primary/total throughput reporting and resource tuning defaults.
 
 The script composes `profiles/compose.profile.yaml` with `profiles/compose.profile.<mode>.yaml`,
 cleans the profiling volume by default, and writes timestamped YAML and
@@ -178,6 +184,67 @@ overridden:
 - `TREEDB_GRAPH_INDEX_CACHE_ENABLED=true`
 - `TREEDB_ARTIFACT_INDEX_ENABLED=true`
 - `TREEDB_AUDIT_ASYNC=true`
+
+## Performance Benchmark Mode
+
+Use performance mode when the question is “how fast can this workload go?”
+rather than “did every verifier check run exhaustively?”:
+
+```bash
+scripts/profile-compose.sh performance
+```
+
+Default benchmark settings:
+
+- purpose: `performance`
+- workload: `read_mostly`
+- target primary RPS: `100`
+- concurrency: `150`
+- duration: `10m`
+- validation probe mode: `sampled`
+- probe sampling rate: `0.10`
+
+The YAML and Markdown reports separate primary workload throughput from total
+server load:
+
+- `throughput.primary.requestsPerSecond` excludes validation probes and is the
+  number compared with the 100 RPS target.
+- `throughput.validationProbes.requestsPerSecond` reports follow-up semantic
+  probe traffic.
+- `throughput.totalHttp.requestsPerSecond` includes primary requests, probes,
+  reconciliation, and auxiliary measured HTTP traffic.
+
+This distinction matters because probes legitimately consume server capacity,
+but counting them as primary workload would overstate business throughput.
+
+Performance mode also passes resource tuning knobs to the API container:
+
+```bash
+TREEDB_RUNTIME_CPU_BUDGET=8 \
+TREEDB_RUNTIME_MEMORY_BUDGET_MB=8192 \
+TREEDB_CACHE_MEMORY_FRACTION=0.35 \
+TREEDB_REPOSITORY_QUERY_POOL_SIZE=16 \
+TREEDB_WORKSPACE_WORKER_POOL_SIZE=16 \
+TREEDB_GRAPH_WORKER_POOL_SIZE=8 \
+TREEDB_REPOSITORY_QUERY_MAX_QUEUE=2000 \
+TREEDB_GRAPH_MAX_QUEUE=500 \
+scripts/profile-compose.sh performance
+```
+
+`TREEDB_RUNTIME_MEMORY_BUDGET_MB` and `TREEDB_CACHE_MEMORY_FRACTION` define the
+cache byte budget. Repository document and graph index caches evict by TTL,
+entry count, and approximate byte pressure. Worker pool sizes cap concurrent
+expensive repository, workspace, graph, snapshot, and import work; bounded
+queues absorb bursts behind those workers. Queue-full and queue-timeout
+saturation is reported as HTTP `503` with error code `server_busy`.
+
+Performance reports include `saturation` and `workerPools` sections. Federation
+performance reports also include `federationLoadBalancing`, which shows
+load-aware spillover for Git-backed repository reads to fresh trusted mirrors
+when local pool pressure is high enough. The spillover probe validates
+repository file reads, path listing, search, and query through a mirror. Graph,
+context, snapshot, and artifact reads stay primary-served until their derived
+state has an explicit replication path.
 
 ## Run A Small Profile
 

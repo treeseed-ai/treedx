@@ -5,15 +5,27 @@ defmodule TreeDbWeb.ContextController do
 
   def build(conn, %{"repo_id" => repo_id} = params),
     do:
-      maybe_proxy_repo_read(conn, repo_id, params, fn conn ->
-        with_principal(conn, &TreeDb.Graph.build_context(repo_id, params, &1))
-      end)
+      maybe_proxy_repo_read(
+        conn,
+        repo_id,
+        params,
+        [pool: :graph, allow_mirrors?: false],
+        fn conn ->
+          with_principal(conn, &TreeDb.Graph.build_context(repo_id, params, &1))
+        end
+      )
 
   def parse_ctx(conn, %{"repo_id" => repo_id} = params),
     do:
-      maybe_proxy_repo_read(conn, repo_id, params, fn conn ->
-        with_principal(conn, &TreeDb.Graph.parse_ctx(repo_id, params, &1))
-      end)
+      maybe_proxy_repo_read(
+        conn,
+        repo_id,
+        params,
+        [pool: :graph, allow_mirrors?: false],
+        fn conn ->
+          with_principal(conn, &TreeDb.Graph.parse_ctx(repo_id, params, &1))
+        end
+      )
 
   defp with_principal(conn, fun) do
     with {:ok, principal} <- require_principal(conn) do

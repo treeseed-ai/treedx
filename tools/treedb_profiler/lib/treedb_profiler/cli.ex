@@ -77,6 +77,19 @@ defmodule TreeDbProfiler.CLI do
     federation_exercise_promotion: :string,
     federation_exercise_write_proxy: :string,
     federation_exercise_connected_denials: :string,
+    profile_purpose: :string,
+    target_primary_rps: :float,
+    probe_sampling_rate: :float,
+    validation_probe_mode: :string,
+    include_probe_samples: :string,
+    include_total_throughput: :string,
+    performance_workload: :string,
+    heavy_operation_rate: :float,
+    repo_growth_rate: :float,
+    snapshot_rate: :float,
+    graph_refresh_rate: :float,
+    import_rate: :float,
+    fail_below_primary_rps: :float,
     profile_id: :string,
     repo_prefix: :string,
     fixture_root: :string,
@@ -107,9 +120,14 @@ defmodule TreeDbProfiler.CLI do
           IO.puts("TreeDB request details written to #{opts.request_detail_output}")
         end
 
+        primary_rps = get_in(report, ["throughput", "primary", "requestsPerSecond"]) || 0.0
+
+        below_required_rps? =
+          opts.fail_below_primary_rps && primary_rps < opts.fail_below_primary_rps
+
         if get_in(report, ["summary", "totalErrors"]) > 0 or
              get_in(report, ["assertions", "failed"]) > 0 or
-             get_in(report, ["reliabilityBudget", "passed"]) == false do
+             get_in(report, ["reliabilityBudget", "passed"]) == false or below_required_rps? do
           System.halt(2)
         end
 
@@ -154,6 +172,9 @@ defmodule TreeDbProfiler.CLI do
 
     repo_prefix = Keyword.get(opts, :repo_prefix, "profile-")
     portfolio_repo_prefix = Keyword.get(opts, :portfolio_repo_prefix, repo_prefix)
+    profile_purpose = Keyword.get(opts, :profile_purpose, "reliability")
+    default_probe_mode = if profile_purpose == "performance", do: "sampled", else: "all"
+    default_probe_sampling = if profile_purpose == "performance", do: 0.10, else: 1.0
 
     normalized = %{
       base_url: Keyword.get(opts, :base_url, "http://localhost:4000"),
@@ -252,6 +273,19 @@ defmodule TreeDbProfiler.CLI do
         parse_bool(Keyword.get(opts, :federation_exercise_write_proxy), false),
       federation_exercise_connected_denials:
         parse_bool(Keyword.get(opts, :federation_exercise_connected_denials), true),
+      profile_purpose: profile_purpose,
+      target_primary_rps: Keyword.get(opts, :target_primary_rps),
+      probe_sampling_rate: Keyword.get(opts, :probe_sampling_rate, default_probe_sampling),
+      validation_probe_mode: Keyword.get(opts, :validation_probe_mode, default_probe_mode),
+      include_probe_samples: parse_bool(Keyword.get(opts, :include_probe_samples), false),
+      include_total_throughput: parse_bool(Keyword.get(opts, :include_total_throughput), true),
+      performance_workload: Keyword.get(opts, :performance_workload, "balanced"),
+      heavy_operation_rate: Keyword.get(opts, :heavy_operation_rate, 0.05),
+      repo_growth_rate: Keyword.get(opts, :repo_growth_rate, 0.02),
+      snapshot_rate: Keyword.get(opts, :snapshot_rate, 0.02),
+      graph_refresh_rate: Keyword.get(opts, :graph_refresh_rate, 0.03),
+      import_rate: Keyword.get(opts, :import_rate, 0.01),
+      fail_below_primary_rps: Keyword.get(opts, :fail_below_primary_rps),
       profile_id: profile_id,
       repo_prefix: repo_prefix,
       fixture_root:
@@ -293,6 +327,24 @@ defmodule TreeDbProfiler.CLI do
              normalized.federation_mode,
              ["single_node", "mirror_cluster", "connected_library"],
              "federation-mode"
+           ),
+         :ok <-
+           validate_choice(
+             normalized.profile_purpose,
+             ["reliability", "performance", "soak"],
+             "profile-purpose"
+           ),
+         :ok <-
+           validate_choice(
+             normalized.validation_probe_mode,
+             ["all", "sampled", "failures_only", "off"],
+             "validation-probe-mode"
+           ),
+         :ok <-
+           validate_choice(
+             normalized.performance_workload,
+             ["read_mostly", "balanced", "write_mixed", "custom"],
+             "performance-workload"
            ),
          :ok <-
            validate_choice(
@@ -347,6 +399,21 @@ defmodule TreeDbProfiler.CLI do
              validate_positive(
                normalized.reconciliation_sample_size,
                "reconciliation-sample-size"
+             ),
+           :ok <- validate_rate(normalized.probe_sampling_rate, "probe-sampling-rate"),
+           :ok <-
+             validate_non_negative_float(normalized.heavy_operation_rate, "heavy-operation-rate"),
+           :ok <- validate_non_negative_float(normalized.repo_growth_rate, "repo-growth-rate"),
+           :ok <- validate_non_negative_float(normalized.snapshot_rate, "snapshot-rate"),
+           :ok <-
+             validate_non_negative_float(normalized.graph_refresh_rate, "graph-refresh-rate"),
+           :ok <- validate_non_negative_float(normalized.import_rate, "import-rate"),
+           :ok <-
+             validate_optional_positive_float(normalized.target_primary_rps, "target-primary-rps"),
+           :ok <-
+             validate_optional_positive_float(
+               normalized.fail_below_primary_rps,
+               "fail-below-primary-rps"
              ) do
         {:ok, normalized}
       end
@@ -369,6 +436,24 @@ defmodule TreeDbProfiler.CLI do
 
   defp validate_non_negative(value, label),
     do: if(value >= 0, do: :ok, else: {:error, "--#{label} must be non-negative"})
+
+  defp validate_rate(value, _label) when is_number(value) and value >= 0.0 and value <= 1.0,
+    do: :ok
+
+  defp validate_rate(_value, label), do: {:error, "--#{label} must be between 0.0 and 1.0"}
+
+  defp validate_non_negative_float(value, _label) when is_number(value) and value >= 0.0, do: :ok
+
+  defp validate_non_negative_float(_value, label),
+    do: {:error, "--#{label} must be non-negative"}
+
+  defp validate_optional_positive_float(nil, _label), do: :ok
+
+  defp validate_optional_positive_float(value, _label) when is_number(value) and value > 0.0,
+    do: :ok
+
+  defp validate_optional_positive_float(_value, label),
+    do: {:error, "--#{label} must be positive"}
 
   defp parse_duration(nil), do: nil
   defp parse_duration(""), do: nil
@@ -453,6 +538,13 @@ defmodule TreeDbProfiler.CLI do
       --federation-exercise-promotion true|false
       --federation-exercise-write-proxy true|false
       --federation-exercise-connected-denials true|false
+      --profile-purpose reliability|performance|soak
+      --target-primary-rps N
+      --probe-sampling-rate FLOAT
+      --validation-probe-mode all|sampled|failures_only|off
+      --include-total-throughput true|false
+      --performance-workload read_mostly|balanced|write_mixed|custom
+      --fail-below-primary-rps N
       --iterations N
       --duration 10m
       --concurrency N

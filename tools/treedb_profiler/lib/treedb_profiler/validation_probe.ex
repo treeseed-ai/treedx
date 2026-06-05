@@ -88,7 +88,7 @@ defmodule TreeDbProfiler.ValidationProbe do
     %{sample: mark_probe(sample, failures), failures: failures}
   end
 
-  defp execute_probe(_state, _request, _response, probe) do
+  defp execute_probe(_state, request, _response, probe) do
     sample = %{
       operation_id: "validationProbe",
       method: "INTERNAL",
@@ -104,7 +104,12 @@ defmodule TreeDbProfiler.ValidationProbe do
       error_code: "unsupported_probe",
       request_bytes: 0,
       response_bytes: 0,
-      assertion: :failed
+      assertion: :failed,
+      sample_kind: :validation_probe,
+      measured_window: :measured,
+      counts_toward_primary_rps: false,
+      counts_toward_total_http_rps: true,
+      parent_request_id: request_id(request)
     }
 
     %{sample: sample, failures: ["unsupported validation probe #{inspect(probe)}"]}
@@ -120,9 +125,17 @@ defmodule TreeDbProfiler.ValidationProbe do
         scenario: state.opts.scenario,
         fixture: state.opts.fixture
       },
-      [method: method, path: path] |> put_payload(body)
+      [method: method, path: path]
+      |> put_payload(body)
+      |> Keyword.put(:sample_kind, :validation_probe)
+      |> Keyword.put(:counts_toward_primary_rps, false)
+      |> Keyword.put(:counts_toward_total_http_rps, true)
+      |> Keyword.put(:parent_request_id, request.id)
     )
   end
+
+  defp request_id(%ProfileRequest{id: id}), do: id
+  defp request_id(_), do: nil
 
   defp put_payload(opts, nil), do: opts
   defp put_payload(opts, body) when is_binary(body), do: Keyword.put(opts, :body, body)

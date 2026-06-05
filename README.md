@@ -290,6 +290,8 @@ scripts/profile-compose.sh soak
 scripts/profile-compose.sh mirror-federation
 scripts/profile-compose.sh connected-library
 scripts/profile-compose.sh federation-soak
+scripts/profile-compose.sh performance
+scripts/profile-compose.sh federation-performance
 ```
 
 Each mode writes timestamped reports under `target/profiles/` unless
@@ -316,6 +318,15 @@ lineage, and live catalog sync is verified without service restart. The
 `mirror-federation` mode checks same-cluster write proxy and mirror reads. The
 `connected-library` mode checks remote-owner authorization and confirms writes
 are denied by default.
+
+Use `scripts/profile-compose.sh performance` for RPS tuning. It is separate
+from the reliability verifier profiles and defaults to a read-mostly portfolio
+workload, 150 concurrent workers, 10 minutes of measured load, sampled
+validation probes, and a 100 primary RPS target. Reports include both primary
+workload RPS and total HTTP RPS; total HTTP includes validation probes and other
+measured profiler traffic that affects server load. Tune the benchmark with
+`TREEDB_RUNTIME_CPU_BUDGET`, `TREEDB_RUNTIME_MEMORY_BUDGET_MB`,
+`TREEDB_CACHE_MEMORY_FRACTION`, and the `TREEDB_*_POOL_SIZE` variables.
 
 Override any workload setting with `TREEDB_PROFILE_*` environment variables:
 

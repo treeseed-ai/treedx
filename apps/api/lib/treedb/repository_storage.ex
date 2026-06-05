@@ -72,17 +72,14 @@ defmodule TreeDb.RepositoryStorage do
 
   def path!(repo) when is_map(repo) do
     cond do
+      storage_path = existing_storage_path(repo) ->
+        storage_path
+
       is_binary(repo["localPath"]) and Path.type(repo["localPath"]) == :absolute ->
         repo["localPath"]
 
       is_binary(repo[:localPath]) and Path.type(repo[:localPath]) == :absolute ->
         repo[:localPath]
-
-      is_binary(repo["storageRelativePath"]) and repo["storageRelativePath"] != "" ->
-        Path.expand(repo["storageRelativePath"], TreeDb.Store.data_dir())
-
-      is_binary(repo[:storageRelativePath]) and repo[:storageRelativePath] != "" ->
-        Path.expand(repo[:storageRelativePath], TreeDb.Store.data_dir())
 
       is_binary(repo["localPath"]) and repo["localPath"] != "" ->
         Path.expand(repo["localPath"], TreeDb.Store.data_dir())
@@ -93,6 +90,21 @@ defmodule TreeDb.RepositoryStorage do
       true ->
         repo_name = repo["repositoryName"] || repo[:repositoryName] || repo["name"] || repo[:name]
         managed_path(normalize_name(repo_name))
+    end
+  end
+
+  defp existing_storage_path(repo) do
+    storage_relative_path = repo["storageRelativePath"] || repo[:storageRelativePath]
+    local_path = repo["localPath"] || repo[:localPath]
+
+    cond do
+      is_binary(storage_relative_path) and storage_relative_path != "" and
+          (local_path in [nil, ""] or
+             File.exists?(Path.expand(storage_relative_path, TreeDb.Store.data_dir()))) ->
+        Path.expand(storage_relative_path, TreeDb.Store.data_dir())
+
+      true ->
+        nil
     end
   end
 

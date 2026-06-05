@@ -29,8 +29,11 @@ defmodule TreeDb.Application do
     children = [
       TreeDb.Observability.Metrics,
       TreeDb.Observability.Telemetry,
+      {Task.Supervisor, name: TreeDb.Runtime.Pool.TaskSupervisor},
+      TreeDb.Runtime.Pool,
       TreeDb.RepositoryCache,
       TreeDb.Graph.IndexCache,
+      TreeDb.Cache.Manager,
       TreeDb.Graph.RefreshCoordinator,
       TreeDb.Artifacts.Index,
       TreeDb.Audit.Writer,

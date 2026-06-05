@@ -134,6 +134,13 @@ freshness, and pushes a catalog update. A stale mirror is not eligible for reads
 when the requested ref/commit is missing or outside the configured staleness
 window.
 
+Git bundle mirrors currently serve Git-backed repository read traffic only:
+repository file reads, repository path listing, repository search, repository
+query, and repository blob reads. Derived-state endpoints such as graph,
+context, snapshots, and artifacts remain primary-served unless the selected
+route is a remote primary. Those derived indexes and lifecycle records require
+their own replication path before they can safely spill over to mirrors.
+
 ## Connected-Library Access
 
 Connected-library federation links independently owned TreeDB libraries.

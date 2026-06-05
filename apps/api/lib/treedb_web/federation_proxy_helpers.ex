@@ -4,16 +4,28 @@ defmodule TreeDbWeb.FederationProxyHelpers do
   import Plug.Conn
   import TreeDbWeb.ControllerHelpers
 
-  def maybe_proxy_repo_read(conn, repo_id, body \\ nil, fun) when is_function(fun, 1) do
-    case TreeDb.Federation.Proxy.maybe_proxy_repo_read(repo_id, conn, body) do
+  def maybe_proxy_repo_read(conn, repo_id, fun) when is_function(fun, 1),
+    do: maybe_proxy_repo_read(conn, repo_id, nil, [], fun)
+
+  def maybe_proxy_repo_read(conn, repo_id, body, fun) when is_function(fun, 1),
+    do: maybe_proxy_repo_read(conn, repo_id, body, [], fun)
+
+  def maybe_proxy_repo_read(conn, repo_id, body, opts, fun) when is_function(fun, 1) do
+    case TreeDb.Federation.Proxy.maybe_proxy_repo_read(repo_id, conn, body, opts) do
       :local -> fun.(conn)
       {:proxy, status, headers, body} -> send_proxy_response(conn, status, headers, body)
       {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
     end
   end
 
-  def maybe_proxy_repo_write(conn, repo_id, body \\ nil, fun) when is_function(fun, 1) do
-    case TreeDb.Federation.Proxy.maybe_proxy_repo_write(repo_id, conn, body) do
+  def maybe_proxy_repo_write(conn, repo_id, fun) when is_function(fun, 1),
+    do: maybe_proxy_repo_write(conn, repo_id, nil, [], fun)
+
+  def maybe_proxy_repo_write(conn, repo_id, body, fun) when is_function(fun, 1),
+    do: maybe_proxy_repo_write(conn, repo_id, body, [], fun)
+
+  def maybe_proxy_repo_write(conn, repo_id, body, opts, fun) when is_function(fun, 1) do
+    case TreeDb.Federation.Proxy.maybe_proxy_repo_write(repo_id, conn, body, opts) do
       :local -> fun.(conn)
       {:proxy, status, headers, body} -> send_proxy_response(conn, status, headers, body)
       {:error, error} -> error(conn, status_for(error[:code] || error["code"]), error)
