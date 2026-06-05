@@ -16,7 +16,9 @@ fn corrupt_payload_checksum_returns_recovery_error() {
         dir.path(),
         RepositoryInput {
             name: "demo".to_string(),
-            local_path: "/var/lib/treedb/repos/bare/demo.git".to_string(),
+            repository_name: Some("demo".to_string()),
+            local_path: Some("/var/lib/treedb/repos/bare/demo.git".to_string()),
+            storage_relative_path: Some("repositories/demo".to_string()),
             default_ref: None,
             remote_url: None,
         },
@@ -46,8 +48,10 @@ fn compaction_preserves_latest_records_and_skips_audit_logs() {
         put_repository(
             dir.path(),
             RepositoryInput {
-                name: "demo".to_string(),
-                local_path: format!("/var/lib/treedb/repos/bare/{name}.git"),
+                name: name.to_string(),
+                repository_name: Some(name.to_string()),
+                local_path: Some(format!("/var/lib/treedb/repos/bare/{name}.git")),
+                storage_relative_path: Some(format!("repositories/{name}")),
                 default_ref: None,
                 remote_url: None,
             },

@@ -15,7 +15,9 @@ fn backup_result_uses_logical_uri_and_verifies_archive() {
         dir.path(),
         RepositoryInput {
             name: "backup-demo".to_string(),
-            local_path: "/var/lib/treedb/repos/bare/backup-demo.git".to_string(),
+            repository_name: Some("backup-demo".to_string()),
+            local_path: Some("/var/lib/treedb/repos/bare/backup-demo.git".to_string()),
+            storage_relative_path: Some("repositories/backup-demo".to_string()),
             default_ref: None,
             remote_url: None,
         },

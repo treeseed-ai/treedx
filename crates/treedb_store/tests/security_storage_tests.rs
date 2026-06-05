@@ -71,7 +71,9 @@ fn malformed_record_checksum_is_rejected() {
         dir.path(),
         RepositoryInput {
             name: "checksum-demo".to_string(),
-            local_path: "/var/lib/treedb/repos/bare/checksum-demo.git".to_string(),
+            repository_name: Some("checksum-demo".to_string()),
+            local_path: Some("/var/lib/treedb/repos/bare/checksum-demo.git".to_string()),
+            storage_relative_path: Some("repositories/checksum-demo".to_string()),
             default_ref: None,
             remote_url: None,
         },

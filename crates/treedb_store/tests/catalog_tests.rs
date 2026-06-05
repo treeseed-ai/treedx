@@ -49,7 +49,9 @@ fn repository_records_persist_and_ids_are_deterministic() {
     .unwrap();
     let input = RepositoryInput {
         name: "demo".to_string(),
-        local_path: "/var/lib/treedb/repos/bare/demo.git".to_string(),
+        repository_name: Some("demo".to_string()),
+        local_path: Some("/var/lib/treedb/repos/bare/demo.git".to_string()),
+        storage_relative_path: Some("repositories/demo".to_string()),
         default_ref: None,
         remote_url: Some("https://example.invalid/demo.git".to_string()),
     };
