@@ -18,8 +18,13 @@ federation checks.
 The root release gate does not own the full multi-language SDK toolchain. SDK
 package verification is handled by the SDK workflows and local SDK package gate.
 
-The root release gate verifies only the TreeDB service repository. The
-TypeScript, Python, Rust, and Elixir SDK packages have independent SDK CI/CD.
+The root release gate verifies only the TreeDB service repository. It is
+path-filtered for service, native, storage, Docker, profile, and release-gate
+files on pull requests and branch pushes. Git tag pushes run the release gate
+without custom tag-diff filtering so release verification stays reliable.
+
+The TypeScript, Python, Rust, and Elixir SDK packages have independent
+package-level release gates.
 
 ## Checklist
 
@@ -61,14 +66,18 @@ The GitHub workflow runs TreeDB verification independently on `linux/amd64` and
 hardware so architecture-specific Rust, native NIF, release, storage, and
 container issues are caught before publishing.
 
-For pushes to `main`, `staging`, and semantic-version tags, the workflow also
-runs architecture-local profiler jobs after verification. The base profiler uses
-the production profile Compose setup. Federation profiler jobs run both
-three-node mirror-cluster and connected-library profiles so release publishing
-is gated on local API behavior, live catalog sync, proxy routing, mirror policy,
-connected-library access policy, OpenAPI response validation, semantic
-assertions, and reliability budgets. Pull requests and ordinary branch pushes
-run verification only.
+The `TreeDB Release Gate` workflow preserves the release sequence:
+verification runs first, release-path profile jobs run after verification, and
+publishing waits for the required profile streams. Profiles are broad
+acceptance tests and can stop a release. The base profiler uses the production
+profile Compose setup. Federation profiler jobs run both three-node
+mirror-cluster and connected-library profiles. Performance profiles run by
+default on `main`, `staging`, and tag pushes; Docker publishing waits for the
+performance profile on publish-path pushes. The performance profile records the
+target-RPS result in its reports, but missing the target RPS is not a release
+failure by itself. The performance profile blocks release only for profiler
+execution errors, service errors, assertion failures, or response validation
+failures.
 
 Profile behavior is controlled with GitHub repository or environment variables:
 
@@ -101,22 +110,18 @@ images are pushed.
 
 ## SDK Release Relationship
 
-SDK-affecting changes should require these GitHub checks:
+SDK-affecting changes should require these package-level GitHub checks:
 
-- `SDK Spec / validate-sdk-spec`
-- `SDK Packages / typescript-sdk`
-- `SDK Packages / python-sdk`
-- `SDK Packages / rust-sdk`
-- `SDK Packages / elixir-sdk`
-- `SDK Conformance / typescript-conformance`
-- `SDK Conformance / python-conformance`
-- `SDK Conformance / rust-conformance`
-- `SDK Conformance / elixir-conformance`
+- `SDK Spec Release Gate / SDK Spec Release Gate`
+- `TypeScript SDK Release Gate / TypeScript SDK Release Gate`
+- `Python SDK Release Gate / Python SDK Release Gate`
+- `Rust SDK Release Gate / Rust SDK Release Gate`
+- `Elixir SDK Release Gate / Elixir SDK Release Gate`
 
 For a full release candidate, require both:
 
 1. Root `TreeDB Release Gate`
-2. SDK package verification
+2. Relevant SDK package release gates
 
 Local SDK package verification is:
 
@@ -124,9 +129,9 @@ Local SDK package verification is:
 ./scripts/test-sdk-packages.sh
 ```
 
-`SDK Integration` is optional and secret-backed in Phase 14. It verifies live or
-not-configured SDK integration behavior, but executable live conformance remains
-later work.
+SDK release gates build and upload package artifacts but do not publish to npm,
+PyPI, crates.io, or Hex. Service release publishing remains gated by the root
+verification and required profile streams.
 
 ## Docker Hub Publishing
 

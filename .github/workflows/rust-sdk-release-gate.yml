@@ -1,0 +1,76 @@
+name: Rust SDK Release Gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "packages/rust-sdk/**"
+      - "packages/sdk-spec/**"
+      - "docs/api/openapi.yaml"
+      - "docs/api/openapi.json"
+      - "scripts/test-sdk-live-conformance.sh"
+      - ".github/workflows/rust-sdk-release-gate.yml"
+  push:
+    branches:
+      - "**"
+    tags:
+      - "*"
+    paths:
+      - "packages/rust-sdk/**"
+      - "packages/sdk-spec/**"
+      - "docs/api/openapi.yaml"
+      - "docs/api/openapi.json"
+      - "scripts/test-sdk-live-conformance.sh"
+      - ".github/workflows/rust-sdk-release-gate.yml"
+
+jobs:
+  release-gate:
+    name: Rust SDK Release Gate
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/rust-sdk/target
+          key: ${{ runner.os }}-rust-sdk-${{ hashFiles('packages/rust-sdk/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-sdk-
+
+      - name: Check generated OpenAPI metadata
+        run: node scripts/check_treedb_generated_types.mjs
+        working-directory: packages/rust-sdk
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+        working-directory: packages/rust-sdk
+
+      - name: Run clippy
+        run: cargo clippy --all-targets -- -D warnings
+        working-directory: packages/rust-sdk
+
+      - name: Run tests
+        run: cargo test
+        working-directory: packages/rust-sdk
+
+      - name: Package crate artifact
+        run: cargo package --locked
+        working-directory: packages/rust-sdk
+
+      - name: Upload crate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-sdk-crate
+          path: packages/rust-sdk/target/package/*.crate
+          if-no-files-found: error

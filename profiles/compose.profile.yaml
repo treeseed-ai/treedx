@@ -126,6 +126,7 @@ services:
       TREEDB_PROFILE_GRAPH_REFRESH_RATE: ${TREEDB_PROFILE_GRAPH_REFRESH_RATE:-0.03}
       TREEDB_PROFILE_IMPORT_RATE: ${TREEDB_PROFILE_IMPORT_RATE:-0.01}
       TREEDB_PROFILE_FAIL_BELOW_PRIMARY_RPS: ${TREEDB_PROFILE_FAIL_BELOW_PRIMARY_RPS:-}
+      TREEDB_PROFILE_RELIABILITY_BUDGET: ${TREEDB_PROFILE_RELIABILITY_BUDGET:-}
       TREEDB_PROFILE_HOST_UID: ${TREEDB_PROFILE_HOST_UID:-1000}
       TREEDB_PROFILE_HOST_GID: ${TREEDB_PROFILE_HOST_GID:-1000}
     volumes:
@@ -143,6 +144,7 @@ services:
       if [ -n \"$${TREEDB_PROFILE_PROBE_SAMPLING_RATE}\" ]; then set -- \"$$@\" --probe-sampling-rate \"$${TREEDB_PROFILE_PROBE_SAMPLING_RATE}\"; fi;
       if [ -n \"$${TREEDB_PROFILE_VALIDATION_PROBE_MODE}\" ]; then set -- \"$$@\" --validation-probe-mode \"$${TREEDB_PROFILE_VALIDATION_PROBE_MODE}\"; fi;
       if [ -n \"$${TREEDB_PROFILE_FAIL_BELOW_PRIMARY_RPS}\" ]; then set -- \"$$@\" --fail-below-primary-rps \"$${TREEDB_PROFILE_FAIL_BELOW_PRIMARY_RPS}\"; fi;
+      if [ -n \"$${TREEDB_PROFILE_RELIABILITY_BUDGET}\" ]; then set -- \"$$@\" --reliability-budget \"$${TREEDB_PROFILE_RELIABILITY_BUDGET}\"; fi;
       if [ -n \"$${TREEDB_PROFILE_ITERATIONS}\" ]; then
         set -- \"$$@\" --iterations \"$${TREEDB_PROFILE_ITERATIONS}\";
       fi;

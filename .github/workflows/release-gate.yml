@@ -6,17 +6,81 @@ on:
       performance_profile:
         description: Run optional 100 RPS performance profile
         required: false
-        default: 'false'
+        default: "false"
         type: choice
         options:
-          - 'false'
-          - 'true'
+          - "false"
+          - "true"
   pull_request:
+    paths:
+      - "apps/api/**"
+      - "apps/api/native/**"
+      - "config/**"
+      - "lib/**"
+      - "test/**"
+      - "native/**"
+      - "profiles/**"
+      - "tools/treedb_profiler/**"
+      - "scripts/release-gate.sh"
+      - "scripts/test-all.sh"
+      - "scripts/test-treedb-fast.sh"
+      - "scripts/openapi-check.sh"
+      - "scripts/storage-recovery-check.sh"
+      - "scripts/security-check.sh"
+      - "scripts/mvp-smoke.sh"
+      - "scripts/federation-live-check.sh"
+      - "scripts/profile-compose.sh"
+      - "scripts/profile-treedb.sh"
+      - "scripts/profile-treedb-smoke.sh"
+      - "Dockerfile"
+      - "docker-compose*.yml"
+      - "compose*.yml"
+      - "mix.exs"
+      - "mix.lock"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "apps/api/mix.exs"
+      - "apps/api/mix.lock"
+      - "docs/api/openapi.yaml"
+      - "docs/api/openapi.json"
+      - ".github/workflows/release-gate.yml"
   push:
     branches:
-      - '**'
+      - "**"
     tags:
-      - '*'
+      - "*"
+    paths:
+      - "apps/api/**"
+      - "apps/api/native/**"
+      - "config/**"
+      - "lib/**"
+      - "test/**"
+      - "native/**"
+      - "profiles/**"
+      - "tools/treedb_profiler/**"
+      - "scripts/release-gate.sh"
+      - "scripts/test-all.sh"
+      - "scripts/test-treedb-fast.sh"
+      - "scripts/openapi-check.sh"
+      - "scripts/storage-recovery-check.sh"
+      - "scripts/security-check.sh"
+      - "scripts/mvp-smoke.sh"
+      - "scripts/federation-live-check.sh"
+      - "scripts/profile-compose.sh"
+      - "scripts/profile-treedb.sh"
+      - "scripts/profile-treedb-smoke.sh"
+      - "Dockerfile"
+      - "docker-compose*.yml"
+      - "compose*.yml"
+      - "mix.exs"
+      - "mix.lock"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "apps/api/mix.exs"
+      - "apps/api/mix.lock"
+      - "docs/api/openapi.yaml"
+      - "docs/api/openapi.json"
+      - ".github/workflows/release-gate.yml"
 
 env:
   CARGO_TARGET_DIR: /tmp/treedb-target
@@ -90,8 +154,8 @@ jobs:
         env:
           ImageOS: ubuntu24
         with:
-          otp-version: '27'
-          elixir-version: '1.17'
+          otp-version: "27"
+          elixir-version: "1.17"
 
       - name: Install scanner tools
         shell: bash
@@ -165,6 +229,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          mkdir -p target/profiles
+
           mode="${TREEDB_CI_PROFILE_MODE:-portfolio}"
           export TREEDB_PROFILE_DURATION="${TREEDB_PROFILE_DURATION:-10m}"
           export TREEDB_PROFILE_ITERATIONS="${TREEDB_PROFILE_ITERATIONS:-}"
@@ -180,6 +246,13 @@ jobs:
 
           ./scripts/profile-compose.sh "${mode}"
 
+      - name: Capture compose logs
+        if: failure()
+        shell: bash
+        run: |
+          mkdir -p target/profiles
+          docker compose logs --no-color > "target/profiles/profile-compose-${{ matrix.arch }}.log" 2>&1 || true
+
       - name: Upload profile reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -190,6 +263,7 @@ jobs:
             target/profiles/ci-*.md
             target/profiles/ci-*-replay.jsonl
             target/profiles/ci-*-failures.jsonl
+            target/profiles/*.log
           if-no-files-found: ignore
 
   profile-federation:
@@ -237,6 +311,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          mkdir -p target/profiles
+
           if [[ "${TREEDB_CI_FEDERATION_PROFILE_ENABLED:-true}" == "false" ]]; then
             echo "Federation profile disabled by TREEDB_CI_FEDERATION_PROFILE_ENABLED=false"
             exit 0
@@ -258,6 +334,13 @@ jobs:
 
           ./scripts/profile-compose.sh "${mode}"
 
+      - name: Capture compose logs
+        if: failure()
+        shell: bash
+        run: |
+          mkdir -p target/profiles
+          docker compose logs --no-color > "target/profiles/federation-compose-${{ matrix.mode }}-${{ matrix.arch }}.log" 2>&1 || true
+
       - name: Upload federation profile reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -268,6 +351,7 @@ jobs:
             target/profiles/ci-*.md
             target/profiles/ci-*-replay.jsonl
             target/profiles/ci-*-failures.jsonl
+            target/profiles/*.log
           if-no-files-found: ignore
 
   profile-performance:
@@ -303,7 +387,7 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Run optional performance profile
+      - name: Run performance profile
         shell: bash
         env:
           TREEDB_PROFILE_DURATION: ${{ vars.TREEDB_CI_PERFORMANCE_PROFILE_DURATION }}
@@ -314,6 +398,26 @@ jobs:
           TREEDB_RUNTIME_MEMORY_BUDGET_MB: ${{ vars.TREEDB_CI_PERFORMANCE_MEMORY_BUDGET_MB }}
         run: |
           set -euo pipefail
+
+          mkdir -p target/profiles
+          cat > target/profiles/performance-errors-only-budget.json <<'JSON'
+          {
+            "maxTotalErrors": 0,
+            "maxAssertionFailures": 0,
+            "maxOpenApiFailures": 0,
+            "maxReconciliationDrift": 0,
+            "maxUnverifiedRaces": 0,
+            "maxValidationProbeFailures": 0,
+            "maxNegativeTestFailures": 0,
+            "maxMetamorphicFailures": 0,
+            "maxEndpointConsistencyFailures": 0,
+            "maxDelayedConsistencyFailures": 0,
+            "maxPermissionMatrixFailures": 0,
+            "minMeasuredDurationRatio": 0,
+            "maxRaceInterferenceRate": 1000000,
+            "maxP99MsByCategory": {}
+          }
+          JSON
 
           mode="performance"
           export TREEDB_PROFILE_PROFILE_PURPOSE="performance"
@@ -327,6 +431,8 @@ jobs:
           export TREEDB_PROFILE_PROBE_SAMPLING_RATE="${TREEDB_PROFILE_PROBE_SAMPLING_RATE:-0.10}"
           export TREEDB_RUNTIME_CPU_BUDGET="${TREEDB_RUNTIME_CPU_BUDGET:-4}"
           export TREEDB_RUNTIME_MEMORY_BUDGET_MB="${TREEDB_RUNTIME_MEMORY_BUDGET_MB:-4096}"
+          export TREEDB_PROFILE_FAIL_BELOW_PRIMARY_RPS=""
+          export TREEDB_PROFILE_RELIABILITY_BUDGET="target/profiles/performance-errors-only-budget.json"
           export TREEDB_PROFILE_REPORT_FORMAT="both"
           export TREEDB_PROFILE_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
           export TREEDB_PROFILE_MARKDOWN_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"
@@ -334,6 +440,13 @@ jobs:
           export TREEDB_PROFILE_FAILURE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
 
           ./scripts/profile-compose.sh "${mode}"
+
+      - name: Capture compose logs
+        if: failure()
+        shell: bash
+        run: |
+          mkdir -p target/profiles
+          docker compose logs --no-color > "target/profiles/performance-compose-${{ matrix.arch }}.log" 2>&1 || true
 
       - name: Upload performance profile reports
         if: always()
@@ -345,6 +458,7 @@ jobs:
             target/profiles/performance-*.md
             target/profiles/performance-*-replay.jsonl
             target/profiles/performance-*-failures.jsonl
+            target/profiles/*.log
           if-no-files-found: ignore
 
   publish-plan:
@@ -405,10 +519,12 @@ jobs:
       - publish-plan
       - profile
       - profile-federation
+      - profile-performance
     if: >-
       needs.publish-plan.result == 'success' &&
       needs.profile.result == 'success' &&
-      needs.profile-federation.result == 'success'
+      needs.profile-federation.result == 'success' &&
+      needs.profile-performance.result == 'success'
     strategy:
       fail-fast: false
       matrix:

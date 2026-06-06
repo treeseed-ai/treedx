@@ -1,0 +1,79 @@
+name: SDK Spec Release Gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "packages/sdk-spec/**"
+      - "packages/ts-sdk/sdk-manifest.yaml"
+      - "packages/python-sdk/sdk-manifest.yaml"
+      - "packages/rust-sdk/sdk-manifest.yaml"
+      - "packages/elixir-sdk/sdk-manifest.yaml"
+      - "docs/api/openapi.yaml"
+      - "docs/api/openapi.json"
+      - "docs/architecture/treedb-sdk-spec-implementation-plan.md"
+      - "docs/runbooks/sdk-release.md"
+      - "docs/runbooks/sdk-conformance.md"
+      - "scripts/check-sdk-docs.sh"
+      - ".github/workflows/sdk-spec-release-gate.yml"
+  push:
+    branches:
+      - "**"
+    tags:
+      - "*"
+    paths:
+      - "packages/sdk-spec/**"
+      - "packages/ts-sdk/sdk-manifest.yaml"
+      - "packages/python-sdk/sdk-manifest.yaml"
+      - "packages/rust-sdk/sdk-manifest.yaml"
+      - "packages/elixir-sdk/sdk-manifest.yaml"
+      - "docs/api/openapi.yaml"
+      - "docs/api/openapi.json"
+      - "docs/architecture/treedb-sdk-spec-implementation-plan.md"
+      - "docs/runbooks/sdk-release.md"
+      - "docs/runbooks/sdk-conformance.md"
+      - "scripts/check-sdk-docs.sh"
+      - ".github/workflows/sdk-spec-release-gate.yml"
+
+jobs:
+  release-gate:
+    name: SDK Spec Release Gate
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: packages/sdk-spec/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: packages/sdk-spec
+
+      - name: Validate SDK spec
+        run: npm run validate
+        working-directory: packages/sdk-spec
+
+      - name: Check OpenAPI coverage
+        run: npm run check-openapi-coverage
+        working-directory: packages/sdk-spec
+
+      - name: Check SDK manifests
+        run: npm run check-sdk-manifests
+        working-directory: packages/sdk-spec
+
+      - name: Render capability matrix
+        run: npm run render-capability-matrix
+        working-directory: packages/sdk-spec
+
+      - name: Run SDK spec tests
+        run: npm test
+        working-directory: packages/sdk-spec
+
+      - name: Check SDK documentation
+        run: ./scripts/check-sdk-docs.sh

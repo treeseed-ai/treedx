@@ -1,0 +1,81 @@
+name: TypeScript SDK Release Gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "packages/ts-sdk/**"
+      - "packages/sdk-spec/**"
+      - "docs/api/openapi.yaml"
+      - "docs/api/openapi.json"
+      - "scripts/test-sdk-live-conformance.sh"
+      - ".github/workflows/ts-sdk-release-gate.yml"
+  push:
+    branches:
+      - "**"
+    tags:
+      - "*"
+    paths:
+      - "packages/ts-sdk/**"
+      - "packages/sdk-spec/**"
+      - "docs/api/openapi.yaml"
+      - "docs/api/openapi.json"
+      - "scripts/test-sdk-live-conformance.sh"
+      - ".github/workflows/ts-sdk-release-gate.yml"
+
+jobs:
+  release-gate:
+    name: TypeScript SDK Release Gate
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: packages/ts-sdk/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: packages/ts-sdk
+
+      - name: Check generated OpenAPI metadata
+        run: npm run treedb:check-generated
+        working-directory: packages/ts-sdk
+
+      - name: Build
+        run: npm run build
+        working-directory: packages/ts-sdk
+
+      - name: Run unit, adapter, and generated tests
+        run: npm run test:treedb-unit
+        working-directory: packages/ts-sdk
+
+      - name: Run conformance tests
+        run: npm run test:treedb-conformance
+        working-directory: packages/ts-sdk
+
+      - name: Run integration tests
+        run: npm run test:treedb-integration
+        working-directory: packages/ts-sdk
+
+      - name: Run full test suite
+        run: npm test
+        working-directory: packages/ts-sdk
+
+      - name: Pack npm artifact
+        run: |
+          mkdir -p release-artifacts
+          npm pack --pack-destination ./release-artifacts
+        working-directory: packages/ts-sdk
+
+      - name: Upload npm package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ts-sdk-npm-package
+          path: packages/ts-sdk/release-artifacts/*.tgz
+          if-no-files-found: error

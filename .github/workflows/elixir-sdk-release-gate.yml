@@ -1,0 +1,80 @@
+name: Elixir SDK Release Gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "packages/elixir-sdk/**"
+      - "packages/sdk-spec/**"
+      - "docs/api/openapi.yaml"
+      - "docs/api/openapi.json"
+      - "scripts/test-sdk-live-conformance.sh"
+      - ".github/workflows/elixir-sdk-release-gate.yml"
+  push:
+    branches:
+      - "**"
+    tags:
+      - "*"
+    paths:
+      - "packages/elixir-sdk/**"
+      - "packages/sdk-spec/**"
+      - "docs/api/openapi.yaml"
+      - "docs/api/openapi.json"
+      - "scripts/test-sdk-live-conformance.sh"
+      - ".github/workflows/elixir-sdk-release-gate.yml"
+
+jobs:
+  release-gate:
+    name: Elixir SDK Release Gate
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: "27"
+          elixir-version: "1.17.3"
+
+      - name: Cache Mix dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/elixir-sdk/deps
+            packages/elixir-sdk/_build
+          key: ${{ runner.os }}-elixir-sdk-${{ hashFiles('packages/elixir-sdk/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-elixir-sdk-
+
+      - name: Install Hex
+        run: mix local.hex --force
+        working-directory: packages/elixir-sdk
+
+      - name: Install dependencies
+        run: mix deps.get
+        working-directory: packages/elixir-sdk
+
+      - name: Check generated OpenAPI metadata
+        run: mix run scripts/check_treedb_generated_types.exs
+        working-directory: packages/elixir-sdk
+
+      - name: Check formatting
+        run: mix format --check-formatted
+        working-directory: packages/elixir-sdk
+
+      - name: Run tests
+        run: mix test
+        working-directory: packages/elixir-sdk
+
+      - name: Build Hex package artifact
+        run: MIX_ENV=prod mix hex.build
+        working-directory: packages/elixir-sdk
+
+      - name: Upload Hex package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: elixir-sdk-hex-package
+          path: packages/elixir-sdk/tree_db_sdk-*.tar
+          if-no-files-found: error

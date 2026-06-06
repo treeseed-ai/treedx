@@ -116,18 +116,28 @@ the direct conformance surface.
 
 ## CI Workflows
 
-TreeDB SDK verification is split from the root TreeDB service release gate.
+TreeDB SDK verification is split from the root TreeDB service release gate and
+from each other package. Each SDK package has its own release gate so package
+changes can be tested and released independently without running unrelated
+language toolchains.
 
 | Workflow | Scope | Required For |
 | --- | --- | --- |
-| SDK Spec | sdk-spec validation, OpenAPI declared endpoint checks, manifests, matrix | SDK spec, OpenAPI, conformance catalog changes |
-| SDK Packages | language package build/test/generated checks | language SDK package changes |
-| SDK Conformance | shared scenario catalog loading and not-configured adapters | conformance catalog and SDK conformance adapter changes |
-| SDK Integration | optional live/not-configured integration tests | manual/live SDK integration verification |
+| SDK Spec Release Gate | sdk-spec validation, OpenAPI coverage, manifests, matrix, docs gate | SDK spec, OpenAPI, manifest, conformance catalog, and SDK docs changes |
+| TypeScript SDK Release Gate | TypeScript generated metadata, build, tests, npm package artifact | `packages/ts-sdk` changes |
+| Python SDK Release Gate | Python generated metadata, build, pytest, twine check, dist artifacts | `packages/python-sdk` changes |
+| Rust SDK Release Gate | Rust generated metadata, fmt, clippy, tests, crate artifact | `packages/rust-sdk` changes |
+| Elixir SDK Release Gate | Elixir generated metadata, format, tests, Hex artifact | `packages/elixir-sdk` changes |
 
 The root `TreeDB Release Gate` workflow remains focused on the TreeDB service,
 native crates, API contract, storage, security, containers, and operational
-checks. SDK workflows should be required for SDK-affecting changes.
+checks. Branch and pull request runs are path-filtered. Tag pushes run release
+gates without custom tag-diff filtering so release-tag verification remains
+reliable.
+
+Grouped SDK workflows are no longer authoritative. Package-level release gates
+build and upload artifacts only; publishing to npm, PyPI, crates.io, and Hex is
+manual or future work.
 
 Equivalent local commands:
 

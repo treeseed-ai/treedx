@@ -21,17 +21,21 @@ authority.
 
 ## Required Checks
 
-SDK-affecting release candidates should pass:
+SDK-affecting release candidates should pass the package-level release gate for
+the affected package:
 
-- `SDK Spec`
-- `SDK Packages`
-- `SDK Conformance`
-- SDK documentation gate
-- Root OpenAPI gate
-- Focused TreeSeed regression when TypeScript SDK changes affect package
-  dependency behavior
+- `SDK Spec Release Gate`
+- `TypeScript SDK Release Gate`
+- `Python SDK Release Gate`
+- `Rust SDK Release Gate`
+- `Elixir SDK Release Gate`
 
-`SDK Integration` remains optional/manual and secret-backed; required live SDK conformance uses the local harness.
+Also run the SDK documentation gate, the root OpenAPI gate, and focused
+TreeSeed regression when TypeScript SDK changes affect package dependency
+behavior.
+
+Package release gates build and upload package artifacts. They do not publish
+to npm, PyPI, crates.io, or Hex in this pass.
 
 ## Local Verification
 
@@ -81,38 +85,38 @@ SDK gate.
 
 Required SDK workflow checks for SDK-affecting changes:
 
-- `SDK Spec / validate-sdk-spec`
-- `SDK Packages / typescript-sdk`
-- `SDK Packages / python-sdk`
-- `SDK Packages / rust-sdk`
-- `SDK Packages / elixir-sdk`
-- `SDK Conformance / typescript-conformance`
-- `SDK Conformance / python-conformance`
-- `SDK Conformance / rust-conformance`
-- `SDK Conformance / elixir-conformance`
+- `SDK Spec Release Gate / SDK Spec Release Gate`
+- `TypeScript SDK Release Gate / TypeScript SDK Release Gate`
+- `Python SDK Release Gate / Python SDK Release Gate`
+- `Rust SDK Release Gate / Rust SDK Release Gate`
+- `Elixir SDK Release Gate / Elixir SDK Release Gate`
 
-Optional/manual integration checks:
+Package release gates use the same branch/tag strategy as the root service gate:
+pull requests and branch pushes are path-filtered, while tag pushes run release
+gates without custom tag-diff filtering.
 
-- `SDK Integration / typescript-integration`
-- `SDK Integration / python-integration`
-- `SDK Integration / rust-integration`
-- `SDK Integration / elixir-integration`
+Produced artifacts:
 
-`SDK Integration` remains optional/manual for externally supplied services; the required conformance path starts TreeDB locally.
+- TypeScript: npm tarball uploaded as `ts-sdk-npm-package`
+- Python: wheel and source distribution uploaded as `python-sdk-dist`
+- Rust: crate archive uploaded as `rust-sdk-crate`
+- Elixir: Hex tarball uploaded as `elixir-sdk-hex-package`
+
+Publishing remains manual or future work.
 
 See `docs/runbooks/sdk-conformance.md` for shared scenario catalog rules and
 current adapter behavior.
 
 ## Optional Live Integration
 
-`SDK Integration` reads:
+Optional external live integration reads:
 
 - `TREEDB_SDK_BASE_URL`
 - `TREEDB_SDK_TOKEN`
 
-The manual workflow input `base_url` overrides the base URL secret. If no base
-URL is configured, SDK integration tests pass by reporting or skipping
-not-configured behavior. This is expected in Phase 14.
+If a future optional live workflow is run manually, a `base_url` input should
+override the base URL secret. If no base URL is configured, SDK integration
+tests pass by reporting or skipping not-configured behavior.
 
 Current conformance adapters validate scenario catalog loading and execute live dispatch when the local harness configures TreeDB. Optional integration tests still pass cleanly without external service config.
 
@@ -144,11 +148,10 @@ Record final SDK baseline results in
 A full release candidate is ready when:
 
 - Root `TreeDB Release Gate` passes.
-- `SDK Spec` workflow passes.
-- `SDK Packages` workflow passes.
-- `SDK Conformance` workflow passes.
-- `SDK Integration` is either not configured and cleanly reports not configured,
-  or configured and passes.
+- Relevant package-level SDK release gates pass.
+- Package artifacts are uploaded for affected SDK packages.
+- Optional live integration is either not configured and cleanly reports not
+  configured, or configured and passes.
 - `scripts/test-sdk-packages.sh` passes locally or in release candidate
   automation.
 - `scripts/check-sdk-docs.sh` passes.

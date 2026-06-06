@@ -1,0 +1,95 @@
+name: Python SDK Release Gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "packages/python-sdk/**"
+      - "packages/sdk-spec/**"
+      - "docs/api/openapi.yaml"
+      - "docs/api/openapi.json"
+      - "scripts/test-sdk-live-conformance.sh"
+      - ".github/workflows/python-sdk-release-gate.yml"
+  push:
+    branches:
+      - "**"
+    tags:
+      - "*"
+    paths:
+      - "packages/python-sdk/**"
+      - "packages/sdk-spec/**"
+      - "docs/api/openapi.yaml"
+      - "docs/api/openapi.json"
+      - "scripts/test-sdk-live-conformance.sh"
+      - ".github/workflows/python-sdk-release-gate.yml"
+
+jobs:
+  release-gate:
+    name: Python SDK Release Gate
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: packages/python-sdk/pyproject.toml
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+        working-directory: packages/python-sdk
+
+      - name: Install package and dev dependencies
+        run: python -m pip install -e ".[dev]"
+        working-directory: packages/python-sdk
+
+      - name: Install package validation tools
+        run: python -m pip install twine
+        working-directory: packages/python-sdk
+
+      - name: Check generated OpenAPI metadata
+        run: python scripts/check_treedb_generated_types.py
+        working-directory: packages/python-sdk
+
+      - name: Build package distributions
+        run: python -m build
+        working-directory: packages/python-sdk
+
+      - name: Run unit tests
+        run: python -m pytest tests/unit
+        working-directory: packages/python-sdk
+
+      - name: Run adapter tests
+        run: python -m pytest tests/adapters
+        working-directory: packages/python-sdk
+
+      - name: Run generated metadata tests
+        run: python -m pytest tests/generated
+        working-directory: packages/python-sdk
+
+      - name: Run conformance tests
+        run: python -m pytest tests/conformance
+        working-directory: packages/python-sdk
+
+      - name: Run integration tests
+        run: python -m pytest tests/integration
+        working-directory: packages/python-sdk
+
+      - name: Run full test suite
+        run: python -m pytest
+        working-directory: packages/python-sdk
+
+      - name: Validate package metadata
+        run: python -m twine check dist/*
+        working-directory: packages/python-sdk
+
+      - name: Upload Python package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-sdk-dist
+          path: packages/python-sdk/dist/*
+          if-no-files-found: error
