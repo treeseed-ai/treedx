@@ -10,10 +10,21 @@ require_file() {
   test -f "$1" || fail "missing required file $1"
 }
 
+search_q() {
+  local pattern="$1"
+  shift
+
+  if command -v rg >/dev/null 2>&1; then
+    rg -q "$pattern" "$@"
+  else
+    grep -ERq "$pattern" "$@"
+  fi
+}
+
 require_text() {
   local file="$1"
   local pattern="$2"
-  rg -q "$pattern" "$file" || fail "missing '$pattern' in $file"
+  search_q "$pattern" "$file" || fail "missing '$pattern' in $file"
 }
 
 for file in \
@@ -38,7 +49,7 @@ stale_set_repo="set repo""Id"
 stale_opt_in="treeDb"'\.'"enabled"
 stale_pattern="${stale_repo_env}|${stale_missing_repo}|${stale_set_repo}|${stale_opt_in}"
 
-if rg -q "$stale_pattern" \
+if search_q "$stale_pattern" \
   packages/sdk-spec \
   packages/ts-sdk/README.md \
   packages/python-sdk/README.md \
@@ -52,7 +63,7 @@ if rg -q "$stale_pattern" \
   fail "stale TreeDB repository-id or opt-in wording found"
 fi
 
-if rg -q "Repository ID" docs/runbooks/sdk-remote-mode.md; then
+if search_q "Repository ID" docs/runbooks/sdk-remote-mode.md; then
   fail "stale Repository ID wording found in sdk-remote-mode runbook"
 fi
 
@@ -79,11 +90,11 @@ do
     require_text "$readme" "$topic"
   done
 
-  if ! rg -q "Authenticate|Auth" "$readme"; then
+  if ! search_q "Authenticate|Auth" "$readme"; then
     fail "missing auth topic in $readme"
   fi
 
-  if ! rg -q "TreeDbApiError|TreeDbSdk\\.Error" "$readme"; then
+  if ! search_q "TreeDbApiError|TreeDbSdk\\.Error" "$readme"; then
     fail "missing language error type in $readme"
   fi
 done
