@@ -55,7 +55,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 FROM debian:bookworm-slim AS runtime-libs
 RUN apt-get update \
   && apt-get upgrade -y \
-  && apt-get install -y --no-install-recommends ca-certificates libssl3 libtinfo6 \
+  && apt-get install -y --no-install-recommends ca-certificates libssl3 libtinfo6 util-linux \
   && groupadd --gid 65532 nonroot \
   && useradd --uid 65532 --gid 65532 --no-create-home --shell /usr/sbin/nologin nonroot \
   && mkdir -p /runtime/var/lib/treedb \
@@ -71,6 +71,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
 COPY --from=runtime-libs --chown=nonroot:nonroot /runtime/var/lib/treedb /var/lib/treedb
 WORKDIR /app
 COPY --from=build --chown=nonroot:nonroot /workspace/treedb/apps/api/_build/prod/rel/treedb ./
-USER nonroot:nonroot
+COPY --chown=root:root docker-entrypoint.sh /usr/local/bin/treedb-entrypoint
+RUN chmod 0755 /usr/local/bin/treedb-entrypoint
 EXPOSE 4000
+ENTRYPOINT ["/usr/local/bin/treedb-entrypoint"]
 CMD ["/app/bin/treedb", "start"]
