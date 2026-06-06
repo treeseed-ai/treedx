@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 use std::process::Command;
 
-use treedb_sdk::generated::openapi_types::TREE_DB_OPENAPI_OPERATIONS;
+use treedx_sdk::generated::openapi_types::TREEDX_OPENAPI_OPERATIONS;
 
 fn endpoint_strings_from_sdk_spec() -> BTreeSet<String> {
     let text = std::fs::read_to_string("../sdk-spec/spec/endpoints.yaml").unwrap();
@@ -20,7 +20,7 @@ fn endpoint_strings_from_sdk_spec() -> BTreeSet<String> {
 #[test]
 fn generated_openapi_metadata_is_fresh() {
     let output = Command::new("node")
-        .arg("scripts/check_treedb_generated_types.mjs")
+        .arg("scripts/check_treedx_generated_types.mjs")
         .output()
         .expect("run generated metadata freshness check");
     assert!(
@@ -33,7 +33,7 @@ fn generated_openapi_metadata_is_fresh() {
 
 #[test]
 fn generated_operations_include_declared_sdk_spec_endpoints() {
-    let generated = TREE_DB_OPENAPI_OPERATIONS
+    let generated = TREEDX_OPENAPI_OPERATIONS
         .iter()
         .map(|operation| format!("{} {}", operation.method, operation.path))
         .collect::<BTreeSet<_>>();

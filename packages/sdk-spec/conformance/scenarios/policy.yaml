@@ -19,10 +19,10 @@ scenarios:
   steps:
   - name: execute
     action: policy.capabilities
-    description: Execute policy.capabilities through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute policy.capabilities through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: policy.grants_lifecycle
   capabilityId: policy.capabilities_grants
   title: Policy / Grants Lifecycle
@@ -37,10 +37,10 @@ scenarios:
   steps:
   - name: execute
     action: policy.grants_lifecycle
-    description: Execute policy.grants_lifecycle through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute policy.grants_lifecycle through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: policy.refresh
   capabilityId: policy.capabilities_grants
   title: Policy / Refresh
@@ -55,7 +55,7 @@ scenarios:
   steps:
   - name: execute
     action: policy.refresh
-    description: Execute policy.refresh through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute policy.refresh through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.

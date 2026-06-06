@@ -1,10 +1,10 @@
-defmodule TreeDbSdk.AuthTest do
+defmodule TreeDxSdk.AuthTest do
   use ExUnit.Case, async: true
 
   test "static bearer auth resolves authorization header" do
-    config = %TreeDbSdk.Config{token: "secret"}
+    config = %TreeDxSdk.Config{token: "secret"}
 
     assert {:ok, {"Authorization", "Bearer secret"}} =
-             TreeDbSdk.Auth.resolve_authorization_header(config)
+             TreeDxSdk.Auth.resolve_authorization_header(config)
   end
 end

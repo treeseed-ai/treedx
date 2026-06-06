@@ -29,4 +29,4 @@ scenarios:
     assertions:
       - Workspace IDs are preserved across create, get, and close operations.
       - Closed workspace state is surfaced without transport-specific wrappers.
-      - Workspace errors preserve TreeDbApiError-compatible fields.
+      - Workspace errors preserve TreeDxApiError-compatible fields.

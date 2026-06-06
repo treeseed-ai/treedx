@@ -1,7 +1,7 @@
 version: 0.1.0
 status: draft
 
-errorType: TreeDbApiError
+errorType: TreeDxApiError
 
 fields:
   status:
@@ -9,7 +9,7 @@ fields:
     description: HTTP status code, or 0 for network-level failures.
   code:
     type: string
-    description: Stable TreeDB error code.
+    description: Stable TreeDX error code.
   message:
     type: string
     description: Human-readable diagnostic message.
@@ -60,8 +60,8 @@ stableCodes:
   - service_unavailable
 
 rules:
-  - SDKs must preserve TreeDB error codes without language-specific remapping.
-  - SDKs must expose network failures as TreeDbApiError-compatible failures with status 0 and code network_error.
+  - SDKs must preserve TreeDX error codes without language-specific remapping.
+  - SDKs must expose network failures as TreeDxApiError-compatible failures with status 0 and code network_error.
   - SDKs may add idiomatic helpers but must keep status, code, message, details, and payload available.
   - SDKs must not log bearer tokens, credentials, hidden paths, local filesystem paths, or binary payload snippets in error messages.
   - SDKs must preserve original response payloads when safe and available.

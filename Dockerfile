@@ -29,39 +29,39 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 FROM base AS dev
-WORKDIR /workspace/treedb/apps/api
+WORKDIR /workspace/treedx/apps/api
 ENV MIX_ENV=dev \
-    TREEDB_DATA_DIR=/var/lib/treedb
+    TREEDX_DATA_DIR=/var/lib/treedx
 EXPOSE 4000
 ENTRYPOINT ["tini", "--"]
 CMD ["mix", "phx.server"]
 
 FROM base AS build
-WORKDIR /workspace/treedb
+WORKDIR /workspace/treedx
 ENV MIX_ENV=prod \
-    TREEDB_DATA_DIR=/var/lib/treedb
+    TREEDX_DATA_DIR=/var/lib/treedx
 COPY . .
-WORKDIR /workspace/treedb/apps/api
+WORKDIR /workspace/treedx/apps/api
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
   --mount=type=cache,target=/usr/local/cargo/git \
-  --mount=type=cache,target=/workspace/treedb/target \
-  --mount=type=cache,target=/workspace/treedb/apps/api/deps \
+  --mount=type=cache,target=/workspace/treedx/target \
+  --mount=type=cache,target=/workspace/treedx/apps/api/deps \
   mix deps.get --only prod \
   && mix compile \
-  && cargo build --release -p treedb_git --bin treedb_git_worker \
+  && cargo build --release -p treedx_git --bin treedx_git_worker \
   && mix release \
-  && cc ../../docker-healthcheck.c -O2 -o _build/prod/rel/treedb/bin/treedb_healthcheck \
-  && cp ../../target/release/treedb_git_worker _build/prod/rel/treedb/bin/treedb_git_worker \
-  && release_vsn="$(cut -d' ' -f2 _build/prod/rel/treedb/releases/start_erl.data)" \
-  && erts_vsn="$(cut -d' ' -f1 _build/prod/rel/treedb/releases/start_erl.data)" \
-  && ln -s "$release_vsn" _build/prod/rel/treedb/releases/current \
-  && ln -s "erts-$erts_vsn" _build/prod/rel/treedb/erts-current
+  && cc ../../docker-healthcheck.c -O2 -o _build/prod/rel/treedx/bin/treedx_healthcheck \
+  && cp ../../target/release/treedx_git_worker _build/prod/rel/treedx/bin/treedx_git_worker \
+  && release_vsn="$(cut -d' ' -f2 _build/prod/rel/treedx/releases/start_erl.data)" \
+  && erts_vsn="$(cut -d' ' -f1 _build/prod/rel/treedx/releases/start_erl.data)" \
+  && ln -s "$release_vsn" _build/prod/rel/treedx/releases/current \
+  && ln -s "erts-$erts_vsn" _build/prod/rel/treedx/erts-current
 
 FROM debian:bookworm-slim AS runtime-root
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates dpkg-dev libssl3 libstdc++6 libtinfo6 zlib1g \
   && arch="$(dpkg-architecture -qDEB_HOST_MULTIARCH)" \
-  && mkdir -p "/runtime-root/usr/lib/${arch}" /runtime-root/etc/ssl/certs /runtime-root/var/lib/treedb \
+  && mkdir -p "/runtime-root/usr/lib/${arch}" /runtime-root/etc/ssl/certs /runtime-root/var/lib/treedx \
   && cp -a /etc/ssl/certs/ca-certificates.crt /runtime-root/etc/ssl/certs/ \
   && for lib in \
     "/usr/lib/${arch}/libcrypto.so.3" \
@@ -71,29 +71,29 @@ RUN apt-get update \
     "/usr/lib/${arch}/libtinfo.so.6" \
     "/usr/lib/${arch}/libz.so.1"; \
     do cp -L "$lib" "/runtime-root/usr/lib/${arch}/"; done \
-  && chown -R 65532:65532 /runtime-root/var/lib/treedb \
+  && chown -R 65532:65532 /runtime-root/var/lib/treedx \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 FROM gcr.io/distroless/cc-debian12:nonroot AS prod
 ENV LANG=C.UTF-8 \
-    TREEDB_DATA_DIR=/var/lib/treedb \
+    TREEDX_DATA_DIR=/var/lib/treedx \
     PHX_SERVER=true \
     BINDIR=/app/erts-current/bin \
     ROOTDIR=/app \
     EMU=beam \
     PROGNAME=erl \
     RELEASE_ROOT=/app \
-    RELEASE_NAME=treedb \
+    RELEASE_NAME=treedx \
     RELEASE_COMMAND=start \
     RELEASE_MODE=embedded \
-    RELEASE_NODE=treedb \
+    RELEASE_NODE=treedx \
     RELEASE_TMP=/app/tmp \
     RELEASE_DISTRIBUTION=none \
     RELEASE_SYS_CONFIG=/app/releases/current/sys
 COPY --from=runtime-root /runtime-root/ /
 WORKDIR /app
-COPY --from=build --chown=65532:65532 /workspace/treedb/apps/api/_build/prod/rel/treedb ./
+COPY --from=build --chown=65532:65532 /workspace/treedx/apps/api/_build/prod/rel/treedx ./
 USER 65532:65532
 EXPOSE 4000
-CMD ["/app/erts-current/bin/erlexec", "+fnu", "-noshell", "-s", "elixir", "start_cli", "-mode", "embedded", "-setcookie", "treedb", "-config", "/app/releases/current/sys", "-boot", "/app/releases/current/start", "-boot_var", "RELEASE_LIB", "/app/lib", "-args_file", "/app/releases/current/vm.args", "-extra", "--no-halt"]
+CMD ["/app/erts-current/bin/erlexec", "+fnu", "-noshell", "-s", "elixir", "start_cli", "-mode", "embedded", "-setcookie", "treedx", "-config", "/app/releases/current/sys", "-boot", "/app/releases/current/start", "-boot_var", "RELEASE_LIB", "/app/lib", "-args_file", "/app/releases/current/vm.args", "-extra", "--no-halt"]

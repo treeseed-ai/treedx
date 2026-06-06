@@ -62,7 +62,7 @@ scenarios:
     description: Run global context and graph operations through the SDK facade.
   assertions:
   - Global responses preserve reduced authorized scopes.
-  - Context and graph outputs remain generic TreeDB data.
+  - Context and graph outputs remain generic TreeDX data.
 - id: federation.partial_failure
   capabilityId: federation.global_query
   title: Surface sanitized federated partial failures.
@@ -80,7 +80,7 @@ scenarios:
     action: federation.query
     description: Run a federated query with a partial downstream failure.
   assertions:
-  - Partial failures expose TreeDbApiError-compatible metadata when fatal.
+  - Partial failures expose TreeDxApiError-compatible metadata when fatal.
   - Non-fatal partial failures are sanitized and do not expose hidden paths or credentials.
 - id: federation.catalog
   capabilityId: federation.catalog_peers_routes
@@ -105,10 +105,10 @@ scenarios:
   steps:
   - name: execute
     action: federation.catalog
-    description: Execute federation.catalog through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute federation.catalog through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: federation.catalog_sync_push
   capabilityId: federation.catalog_peers_routes
   title: Federation / Catalog Sync Push
@@ -123,10 +123,10 @@ scenarios:
   steps:
   - name: execute
     action: federation.catalog_sync_push
-    description: Execute federation.catalog_sync_push through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute federation.catalog_sync_push through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: federation.peers_lifecycle
   capabilityId: federation.catalog_peers_routes
   title: Federation / Peers Lifecycle
@@ -141,10 +141,10 @@ scenarios:
   steps:
   - name: execute
     action: federation.peers_lifecycle
-    description: Execute federation.peers_lifecycle through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute federation.peers_lifecycle through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: federation.routes
   capabilityId: federation.catalog_peers_routes
   title: Federation / Routes
@@ -159,10 +159,10 @@ scenarios:
   steps:
   - name: execute
     action: federation.routes
-    description: Execute federation.routes through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute federation.routes through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: federation.internal_health_proxy
   capabilityId: federation.internal_node_operations
   title: Federation / Internal Health Proxy
@@ -181,10 +181,10 @@ scenarios:
   steps:
   - name: execute
     action: federation.internal_health_proxy
-    description: Execute federation.internal_health_proxy through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute federation.internal_health_proxy through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: federation.internal_mirror_export_import
   capabilityId: federation.internal_node_operations
   title: Federation / Internal Mirror Export Import
@@ -199,7 +199,7 @@ scenarios:
   steps:
   - name: execute
     action: federation.internal_mirror_export_import
-    description: Execute federation.internal_mirror_export_import through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute federation.internal_mirror_export_import through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.

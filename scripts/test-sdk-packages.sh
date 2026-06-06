@@ -20,7 +20,7 @@ section "TypeScript SDK"
 (
   cd packages/ts-sdk
   npm ci
-  npm run treedb:check-generated
+  npm run treedx:check-generated
   npm run build
   npm test
 )
@@ -29,7 +29,7 @@ section "Python SDK"
 (
   cd packages/python-sdk
   python3 -m pip install -e ".[dev]"
-  python3 scripts/check_treedb_generated_types.py
+  python3 scripts/check_treedx_generated_types.py
   python3 -m build
   python3 -m pytest
 )
@@ -37,7 +37,7 @@ section "Python SDK"
 section "Rust SDK"
 (
   cd packages/rust-sdk
-  node scripts/check_treedb_generated_types.mjs
+  node scripts/check_treedx_generated_types.mjs
   cargo fmt --all -- --check
   cargo clippy --all-targets -- -D warnings
   cargo test
@@ -47,7 +47,7 @@ section "Elixir SDK"
 (
   cd packages/elixir-sdk
   mix deps.get
-  mix run scripts/check_treedb_generated_types.exs
+  mix run scripts/check_treedx_generated_types.exs
   mix format --check-formatted
   mix test
 )

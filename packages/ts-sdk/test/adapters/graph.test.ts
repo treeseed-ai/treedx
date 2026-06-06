@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GraphAdapter } from '../../src/treedb/index.js';
+import { GraphAdapter } from '../../src/treedx/index.js';
 import { MockTransport } from './mock.js';
 
 describe('GraphAdapter', () => {

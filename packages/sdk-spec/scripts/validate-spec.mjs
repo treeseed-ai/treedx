@@ -142,19 +142,19 @@ for (const endpoint of endpointGroupRecords) {
 }
 
 if (errors) {
-  const openapiErrorCodes = new Set(openapi?.components?.schemas?.TreeDbErrorCode?.enum ?? []);
+  const openapiErrorCodes = new Set(openapi?.components?.schemas?.TreeDxErrorCode?.enum ?? []);
   const stableCodes = new Set(errors.stableCodes ?? []);
   const requiredErrorFields = ["status", "code", "message", "details", "payload"];
 
   for (const code of stableCodes) {
     if (!openapiErrorCodes.has(code)) {
-      fail(`errors.yaml stable code is missing from OpenAPI TreeDbErrorCode enum: ${code}`);
+      fail(`errors.yaml stable code is missing from OpenAPI TreeDxErrorCode enum: ${code}`);
     }
   }
 
   for (const code of openapiErrorCodes) {
     if (!stableCodes.has(code)) {
-      fail(`OpenAPI TreeDbErrorCode enum is missing from errors.yaml stableCodes: ${code}`);
+      fail(`OpenAPI TreeDxErrorCode enum is missing from errors.yaml stableCodes: ${code}`);
     }
   }
 
@@ -201,8 +201,8 @@ if (auth) {
 if (pagination) {
   const pageFields = new Set(pagination.pageFields ?? []);
 
-  if (pagination.concepts?.TreeDbCursor?.encoding !== "opaque") {
-    fail("pagination TreeDbCursor.encoding must be opaque");
+  if (pagination.concepts?.TreeDxCursor?.encoding !== "opaque") {
+    fail("pagination TreeDxCursor.encoding must be opaque");
   }
 
   for (const fieldName of ["items", "nextCursor", "hasMore"]) {
@@ -427,8 +427,8 @@ if (testing) {
     fail("compatibility must not be listed in sharedTestRoots");
   }
 
-  if (testing.testRootPolicy?.compatibility?.requiredForTreeDbLanguageSdks !== false) {
-    fail("compatibility must not be required for TreeDB language SDKs");
+  if (testing.testRootPolicy?.compatibility?.requiredForTreeDxLanguageSdks !== false) {
+    fail("compatibility must not be required for TreeDX language SDKs");
   }
 
   if (requiredCategories.conformance?.fixtureSource !== "packages/sdk-spec/conformance") {

@@ -3,8 +3,8 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::adapters::common::{json_request, segment};
-use crate::error::TreeDbResult;
-use crate::transport::{Transport, TreeDbHttpMethod};
+use crate::error::TreeDxResult;
+use crate::transport::{Transport, TreeDxHttpMethod};
 
 #[derive(Clone)]
 pub struct WorkspacesAdapter {
@@ -16,10 +16,10 @@ impl WorkspacesAdapter {
         Self { transport }
     }
 
-    pub async fn create(&self, repo_id: &str, body: Value) -> TreeDbResult<Value> {
+    pub async fn create(&self, repo_id: &str, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             format!("/api/v1/repos/{}/workspaces", segment(repo_id)),
             Some(body),
             None,
@@ -27,10 +27,10 @@ impl WorkspacesAdapter {
         .await
     }
 
-    pub async fn get(&self, workspace_id: &str) -> TreeDbResult<Value> {
+    pub async fn get(&self, workspace_id: &str) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             format!("/api/v1/workspaces/{}", segment(workspace_id)),
             None,
             None,
@@ -38,10 +38,10 @@ impl WorkspacesAdapter {
         .await
     }
 
-    pub async fn close(&self, workspace_id: &str, body: Value) -> TreeDbResult<Value> {
+    pub async fn close(&self, workspace_id: &str, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             format!("/api/v1/workspaces/{}/close", segment(workspace_id)),
             Some(body),
             None,

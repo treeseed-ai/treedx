@@ -60,10 +60,10 @@ scenarios:
   steps:
   - name: execute
     action: graph.refresh_job_node
-    description: Execute graph.refresh_job_node through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute graph.refresh_job_node through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: graph.related_subgraph
   capabilityId: graph.expanded_repository
   title: Graph / Related Subgraph
@@ -78,10 +78,10 @@ scenarios:
   steps:
   - name: execute
     action: graph.related_subgraph
-    description: Execute graph.related_subgraph through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute graph.related_subgraph through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: graph.search_entities_files_sections
   capabilityId: graph.expanded_repository
   title: Graph / Search Entities Files Sections
@@ -96,7 +96,7 @@ scenarios:
   steps:
   - name: execute
     action: graph.search_entities_files_sections
-    description: Execute graph.search_entities_files_sections through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute graph.search_entities_files_sections through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.

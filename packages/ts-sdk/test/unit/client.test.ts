@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { TreeDbClient } from '../../src/treedb/index.js';
+import { TreeDxClient } from '../../src/treedx/index.js';
 import { MockTransport } from '../adapters/mock.js';
 
-describe('TreeDbClient', () => {
+describe('TreeDxClient', () => {
   it('creates all generic module adapters', () => {
-    const client = new TreeDbClient({ baseUrl: 'http://treedb.test', transport: new MockTransport() });
+    const client = new TreeDxClient({ baseUrl: 'http://treedx.test', transport: new MockTransport() });
     expect(client.repositories).toBeDefined();
     expect(client.workspaces).toBeDefined();
     expect(client.files).toBeDefined();
@@ -24,7 +24,7 @@ describe('TreeDbClient', () => {
 
   it('uses custom transport for convenience methods', async () => {
     const transport = new MockTransport();
-    const client = new TreeDbClient({ baseUrl: 'http://treedb.test', transport });
+    const client = new TreeDxClient({ baseUrl: 'http://treedx.test', transport });
     await client.version();
     expect(transport.last()).toMatchObject({ method: 'GET', path: '/api/v1/version' });
   });

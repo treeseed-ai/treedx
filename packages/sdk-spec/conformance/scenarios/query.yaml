@@ -19,7 +19,7 @@ scenarios:
         action: query.readFile
         description: Read repository file content through the SDK facade.
     assertions:
-      - File content and metadata are exposed as generic TreeDB query data.
+      - File content and metadata are exposed as generic TreeDX query data.
       - Path arguments remain repository-relative.
   - id: query.paths_list
     capabilityId: query.repository
@@ -58,7 +58,7 @@ scenarios:
         description: Search repository files through the SDK facade.
     assertions:
       - Search filters and sort options map to OpenAPI-aligned payloads.
-      - Results preserve path and match metadata returned by TreeDB.
+      - Results preserve path and match metadata returned by TreeDX.
   - id: query.changed_paths
     capabilityId: query.repository
     title: Query changed repository paths.
@@ -76,7 +76,7 @@ scenarios:
         action: query.repository
         description: Run a repository query for changed paths through the SDK facade.
     assertions:
-      - Query payload remains generic TreeDB query data.
+      - Query payload remains generic TreeDX query data.
       - Changed path results preserve server-owned metadata.
   - id: query.pagination
     capabilityId: query.repository

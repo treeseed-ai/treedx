@@ -7,11 +7,11 @@ use serde_json::Value;
 use url::Url;
 
 use crate::auth::resolve_authorization_header;
-use crate::config::TreeDbConfig;
-use crate::error::{TreeDbApiError, TreeDbResult};
+use crate::config::TreeDxConfig;
+use crate::error::{TreeDxApiError, TreeDxResult};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum TreeDbHttpMethod {
+pub enum TreeDxHttpMethod {
     Get,
     Post,
     Put,
@@ -19,7 +19,7 @@ pub enum TreeDbHttpMethod {
     Delete,
 }
 
-impl TreeDbHttpMethod {
+impl TreeDxHttpMethod {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Get => "GET",
@@ -32,8 +32,8 @@ impl TreeDbHttpMethod {
 }
 
 #[derive(Clone, Debug)]
-pub struct TreeDbRequest {
-    pub method: TreeDbHttpMethod,
+pub struct TreeDxRequest {
+    pub method: TreeDxHttpMethod,
     pub path: String,
     pub query: BTreeMap<String, String>,
     pub headers: BTreeMap<String, String>,
@@ -41,8 +41,8 @@ pub struct TreeDbRequest {
     pub binary_body: Option<Bytes>,
 }
 
-impl TreeDbRequest {
-    pub fn new(method: TreeDbHttpMethod, path: impl Into<String>) -> Self {
+impl TreeDxRequest {
+    pub fn new(method: TreeDxHttpMethod, path: impl Into<String>) -> Self {
         Self {
             method,
             path: path.into(),
@@ -55,7 +55,7 @@ impl TreeDbRequest {
 }
 
 #[derive(Clone, Debug)]
-pub struct TreeDbResponse<T = Value> {
+pub struct TreeDxResponse<T = Value> {
     pub status: u16,
     pub headers: BTreeMap<String, String>,
     pub data: T,
@@ -63,17 +63,17 @@ pub struct TreeDbResponse<T = Value> {
 
 #[async_trait]
 pub trait Transport: Send + Sync {
-    async fn request(&self, request: TreeDbRequest) -> TreeDbResult<TreeDbResponse>;
+    async fn request(&self, request: TreeDxRequest) -> TreeDxResult<TreeDxResponse>;
 }
 
 #[derive(Clone, Debug)]
 pub struct ReqwestTransport {
-    config: TreeDbConfig,
+    config: TreeDxConfig,
     client: reqwest::Client,
 }
 
 impl ReqwestTransport {
-    pub fn new(config: TreeDbConfig) -> Self {
+    pub fn new(config: TreeDxConfig) -> Self {
         let mut builder = reqwest::Client::builder();
         if let Some(timeout) = config.timeout {
             builder = builder.timeout(timeout);
@@ -82,7 +82,7 @@ impl ReqwestTransport {
         Self { config, client }
     }
 
-    fn url_for(&self, request: &TreeDbRequest) -> TreeDbResult<Url> {
+    fn url_for(&self, request: &TreeDxRequest) -> TreeDxResult<Url> {
         let base = self.config.base_url.trim_end_matches('/');
         let path = if request.path.starts_with('/') {
             request.path.clone()
@@ -90,7 +90,7 @@ impl ReqwestTransport {
             format!("/{}", request.path)
         };
         let mut url = Url::parse(&format!("{base}{path}"))
-            .map_err(|error| TreeDbApiError::network(format!("invalid TreeDB URL: {error}")))?;
+            .map_err(|error| TreeDxApiError::network(format!("invalid TreeDX URL: {error}")))?;
         {
             let mut pairs = url.query_pairs_mut();
             for (key, value) in &request.query {
@@ -100,7 +100,7 @@ impl ReqwestTransport {
         Ok(url)
     }
 
-    fn headers_from(&self, request: &TreeDbRequest) -> TreeDbResult<HeaderMap> {
+    fn headers_from(&self, request: &TreeDxRequest) -> TreeDxResult<HeaderMap> {
         let mut headers = HeaderMap::new();
         for (key, value) in self
             .config
@@ -109,10 +109,10 @@ impl ReqwestTransport {
             .chain(request.headers.iter())
         {
             let name = HeaderName::from_bytes(key.as_bytes()).map_err(|error| {
-                TreeDbApiError::network(format!("invalid header name: {error}"))
+                TreeDxApiError::network(format!("invalid header name: {error}"))
             })?;
             let value = HeaderValue::from_str(value).map_err(|error| {
-                TreeDbApiError::network(format!("invalid header value: {error}"))
+                TreeDxApiError::network(format!("invalid header value: {error}"))
             })?;
             headers.insert(name, value);
         }
@@ -122,14 +122,14 @@ impl ReqwestTransport {
 
 #[async_trait]
 impl Transport for ReqwestTransport {
-    async fn request(&self, request: TreeDbRequest) -> TreeDbResult<TreeDbResponse> {
+    async fn request(&self, request: TreeDxRequest) -> TreeDxResult<TreeDxResponse> {
         let url = self.url_for(&request)?;
         let method = match request.method {
-            TreeDbHttpMethod::Get => reqwest::Method::GET,
-            TreeDbHttpMethod::Post => reqwest::Method::POST,
-            TreeDbHttpMethod::Put => reqwest::Method::PUT,
-            TreeDbHttpMethod::Patch => reqwest::Method::PATCH,
-            TreeDbHttpMethod::Delete => reqwest::Method::DELETE,
+            TreeDxHttpMethod::Get => reqwest::Method::GET,
+            TreeDxHttpMethod::Post => reqwest::Method::POST,
+            TreeDxHttpMethod::Put => reqwest::Method::PUT,
+            TreeDxHttpMethod::Patch => reqwest::Method::PATCH,
+            TreeDxHttpMethod::Delete => reqwest::Method::DELETE,
         };
         let mut builder = self
             .client
@@ -148,7 +148,7 @@ impl Transport for ReqwestTransport {
         let response = builder
             .send()
             .await
-            .map_err(|error| TreeDbApiError::network(error.to_string()))?;
+            .map_err(|error| TreeDxApiError::network(error.to_string()))?;
         let status = response.status().as_u16();
         let headers = response
             .headers()
@@ -171,27 +171,27 @@ impl Transport for ReqwestTransport {
             response
                 .json::<Value>()
                 .await
-                .map_err(|error| TreeDbApiError::network(error.to_string()))?
+                .map_err(|error| TreeDxApiError::network(error.to_string()))?
         } else if content_type.starts_with("text/") {
             Value::String(
                 response
                     .text()
                     .await
-                    .map_err(|error| TreeDbApiError::network(error.to_string()))?,
+                    .map_err(|error| TreeDxApiError::network(error.to_string()))?,
             )
         } else {
             let _ = response
                 .bytes()
                 .await
-                .map_err(|error| TreeDbApiError::network(error.to_string()))?;
+                .map_err(|error| TreeDxApiError::network(error.to_string()))?;
             Value::Null
         };
 
         if !(200..300).contains(&status) {
-            return Err(TreeDbApiError::from_response(status, data));
+            return Err(TreeDxApiError::from_response(status, data));
         }
 
-        Ok(TreeDbResponse {
+        Ok(TreeDxResponse {
             status,
             headers,
             data,

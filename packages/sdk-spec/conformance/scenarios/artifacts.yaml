@@ -20,7 +20,7 @@ scenarios:
         description: Export repository artifact data through the SDK facade.
     assertions:
       - Export request uses generic repository and artifact options.
-      - Export response preserves artifact identifiers returned by TreeDB.
+      - Export response preserves artifact identifiers returned by TreeDX.
   - id: artifacts.list_get_delete
     capabilityId: artifacts.lifecycle
     title: List, read, and delete repository artifacts.
@@ -43,5 +43,5 @@ scenarios:
         action: artifacts.getDelete
         description: Read and delete an artifact through the SDK facade.
     assertions:
-      - Artifact metadata remains generic TreeDB data.
+      - Artifact metadata remains generic TreeDX data.
       - Delete result is exposed without transport-specific wrappers.

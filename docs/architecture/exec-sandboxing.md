@@ -1,6 +1,6 @@
 # Exec Sandboxing
 
-TreeDB uses `TreeDb.Exec.Backend` with explicit configured modes:
+TreeDX uses `TreeDx.Exec.Backend` with explicit configured modes:
 
 - `direct_dev`
 - `container_sandbox`
@@ -8,7 +8,7 @@ TreeDB uses `TreeDb.Exec.Backend` with explicit configured modes:
 - `firecracker_or_microvm`
 
 `direct_dev` preserves the local development runner but is explicitly disabled in
-connected/prod mode unless `TREEDB_ALLOW_DIRECT_EXEC_IN_PROD=true`.
+connected/prod mode unless `TREEDX_ALLOW_DIRECT_EXEC_IN_PROD=true`.
 
 `container_sandbox` builds a Docker invocation with no network, read-only
 container filesystem, clean environment, workspace-scoped mounts, and resource
@@ -20,4 +20,4 @@ HTTP. When configured, the request can be signed and contains only
 workspace-scoped execution metadata.
 
 `firecracker_or_microvm` uses the same worker protocol with a microVM profile.
-TreeDB does not orchestrate Firecracker directly.
+TreeDX does not orchestrate Firecracker directly.

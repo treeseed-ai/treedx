@@ -1,7 +1,7 @@
-# TreeDB Rust SDK
+# TreeDX Rust SDK
 
-`treedb-sdk` is the generic Rust SDK for TreeDB. The library crate is
-`treedb_sdk`. It implements the shared `packages/sdk-spec` architecture, follows
+`treedx-sdk` is the generic Rust SDK for TreeDX. The library crate is
+`treedx_sdk`. It implements the shared `packages/sdk-spec` architecture, follows
 `docs/api/openapi.yaml`, and does not encode TreeSeed product semantics.
 `packages/trsd-sdk` is a downstream TreeSeed consumer/reference only.
 
@@ -21,15 +21,15 @@ cargo test
 Consumers use the library crate:
 
 ```rust
-use treedb_sdk::{TreeDbClient, TreeDbConfig, TreeDbApiError};
+use treedx_sdk::{TreeDxClient, TreeDxConfig, TreeDxApiError};
 ```
 
 ## Configure Client
 
 ```rust
-use treedb_sdk::{TreeDbClient, TreeDbConfig};
+use treedx_sdk::{TreeDxClient, TreeDxConfig};
 
-let client = TreeDbClient::new(TreeDbConfig {
+let client = TreeDxClient::new(TreeDxConfig {
     base_url: "http://localhost:4000".to_string(),
     token: Some("token".to_string()),
     ..Default::default()
@@ -42,13 +42,13 @@ or embedding.
 ## Authenticate
 
 Bearer authentication uses the `Authorization: Bearer <token>` header. Tokens
-may come from `TreeDbConfig.token` or an auth provider. The SDK must not place
+may come from `TreeDxConfig.token` or an auth provider. The SDK must not place
 production identity in request JSON and must not log bearer tokens.
 
 ## Basic Health Call
 
 ```rust
-# async fn example(client: treedb_sdk::TreeDbClient) -> treedb_sdk::TreeDbResult<()> {
+# async fn example(client: treedx_sdk::TreeDxClient) -> treedx_sdk::TreeDxResult<()> {
 let health = client.health().await?;
 let version = client.version().await?;
 # Ok(())
@@ -60,7 +60,7 @@ let version = client.version().await?;
 Repository-scoped query helpers live under `client.query()`:
 
 ```rust
-# async fn example(client: treedb_sdk::TreeDbClient) -> treedb_sdk::TreeDbResult<()> {
+# async fn example(client: treedx_sdk::TreeDxClient) -> treedx_sdk::TreeDxResult<()> {
 let results = client
     .query()
     .search_files("repo_demo", serde_json::json!({
@@ -86,7 +86,7 @@ Workspace-scoped file helpers live under `client.workspaces()` and
 `client.files()`:
 
 ```rust
-# async fn example(client: treedb_sdk::TreeDbClient) -> treedb_sdk::TreeDbResult<()> {
+# async fn example(client: treedx_sdk::TreeDxClient) -> treedx_sdk::TreeDxResult<()> {
 let workspace = client
     .workspaces()
     .create("repo_demo", serde_json::json!({ "ref": "refs/heads/main" }))
@@ -124,7 +124,7 @@ Binary helpers use `bytes::Bytes` and do not expose string constructors for
 binary upload bodies.
 
 ```rust
-# async fn example(client: treedb_sdk::TreeDbClient) -> treedb_sdk::TreeDbResult<()> {
+# async fn example(client: treedx_sdk::TreeDxClient) -> treedx_sdk::TreeDxResult<()> {
 client
     .blobs()
     .upload("workspace_123", bytes::Bytes::from_static(&[1, 2, 3]), None)
@@ -140,7 +140,7 @@ Multipart helpers expose create, part upload, complete, and abort.
 ## Graph And Context Query
 
 ```rust
-# async fn example(client: treedb_sdk::TreeDbClient) -> treedb_sdk::TreeDbResult<()> {
+# async fn example(client: treedx_sdk::TreeDxClient) -> treedx_sdk::TreeDxResult<()> {
 client.graph().refresh("repo_demo", serde_json::json!({})).await?;
 let graph = client.graph().query("repo_demo", serde_json::json!({ "query": "MATCH ..." })).await?;
 let context = client.context().build("repo_demo", serde_json::json!({ "query": "ctx docs" })).await?;
@@ -151,11 +151,11 @@ let parsed = client.context().parse("repo_demo", serde_json::json!({ "source": "
 
 ## Federated Query
 
-Federation helpers use portfolio/global TreeDB routes rather than a single
+Federation helpers use portfolio/global TreeDX routes rather than a single
 configured repository:
 
 ```rust
-# async fn example(client: treedb_sdk::TreeDbClient) -> treedb_sdk::TreeDbResult<()> {
+# async fn example(client: treedx_sdk::TreeDxClient) -> treedx_sdk::TreeDxResult<()> {
 let plan = client.federation().plan(serde_json::json!({ "query": "release provenance" })).await?;
 let results = client.federation().search(serde_json::json!({ "query": "release provenance" })).await?;
 # Ok(())
@@ -165,28 +165,28 @@ let results = client.federation().search(serde_json::json!({ "query": "release p
 ## Scoped Admin And Internal Modules
 
 Full OpenAPI coverage includes sensitive scoped modules: Admin, Audit, Policy,
-SearchIndex, and FederationInternal. These APIs require appropriate TreeDB
+SearchIndex, and FederationInternal. These APIs require appropriate TreeDX
 credentials and should be used carefully against production systems. They remain
-generic TreeDB APIs and do not encode TreeSeed product semantics.
+generic TreeDX APIs and do not encode TreeSeed product semantics.
 
 The raw operation fallback validates method/path pairs against generated OpenAPI
 metadata before dispatch.
 
 ## Error Handling
 
-Errors are exposed as `TreeDbApiError` with `status`, `code`, `message`,
+Errors are exposed as `TreeDxApiError` with `status`, `code`, `message`,
 `details`, and `payload`. Network failures use `status=0` and
 `code="network_error"`.
 
 ## Pagination
 
-`TreeDbPage` and `TreeDbCursor` preserve opaque server-owned cursor values and
+`TreeDxPage` and `TreeDxCursor` preserve opaque server-owned cursor values and
 `nextCursor`/`hasMore` metadata.
 
 ## Binary And Multipart
 
 Binary payloads use `bytes::Bytes`. Multipart part numbers are passed through to
-TreeDB without SDK renumbering.
+TreeDX without SDK renumbering.
 
 ## Conformance
 
@@ -200,14 +200,14 @@ cargo test
 
 ## Integration
 
-Integration tests call a live TreeDB server only when `TREEDB_BASE_URL` is set.
+Integration tests call a live TreeDX server only when `TREEDX_BASE_URL` is set.
 Without that environment variable, they pass cleanly by reporting
 not-configured behavior.
 
 ## Development Commands
 
 ```bash
-node scripts/check_treedb_generated_types.mjs
+node scripts/check_treedx_generated_types.mjs
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo test

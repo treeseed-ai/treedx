@@ -1,5 +1,5 @@
 services:
-  treedb-api:
+  treedx-api:
     build:
       context: .
       target: prod
@@ -7,15 +7,15 @@ services:
       PHX_SERVER: "true"
       PHX_HOST: 0.0.0.0
       PORT: "4000"
-      TREEDB_DATA_DIR: /var/lib/treedb
-      TREEDB_AUTH_MODE: connected
-      TREEDB_REGISTRY_MODE: connected
-      TREEDB_NODE_ID: node_local
+      TREEDX_DATA_DIR: /var/lib/treedx
+      TREEDX_AUTH_MODE: connected
+      TREEDX_REGISTRY_MODE: connected
+      TREEDX_NODE_ID: node_local
     ports:
       - "4000:4000"
     volumes:
-      - treedb-data:/var/lib/treedb
+      - treedx-data:/var/lib/treedx
     restart: unless-stopped
 
 volumes:
-  treedb-data:
+  treedx-data:

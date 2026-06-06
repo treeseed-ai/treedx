@@ -4,5 +4,5 @@
 **/deps
 **/priv/native
 **/.elixir_ls
-/tools/treedb_profiler/treedb_profiler
+/tools/treedx_profiler/treedx_profiler
 repomix-snapshot.xml

@@ -25,7 +25,7 @@ scenarios:
         action: mirrors.healthPromote
         description: Check mirror health and promote through the SDK facade.
     assertions:
-      - Mirror configuration remains generic TreeDB data.
+      - Mirror configuration remains generic TreeDX data.
       - Health and promote responses preserve server-owned status metadata.
   - id: mirrors.sync
     capabilityId: mirrors.lifecycle
@@ -45,4 +45,4 @@ scenarios:
         description: Sync a repository mirror through the SDK facade.
     assertions:
       - Sync results expose sanitized remote metadata.
-      - Sync errors preserve TreeDbApiError-compatible fields.
+      - Sync errors preserve TreeDxApiError-compatible fields.

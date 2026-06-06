@@ -1,9 +1,9 @@
-defmodule TreeDb.MixProject do
+defmodule TreeDx.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :treedb,
+      app: :treedx,
       version: "0.1.0",
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -15,7 +15,7 @@ defmodule TreeDb.MixProject do
 
   def application do
     [
-      mod: {TreeDb.Application, []},
+      mod: {TreeDx.Application, []},
       extra_applications: [:logger, :runtime_tools, :inets, :ssl, :public_key]
     ]
   end

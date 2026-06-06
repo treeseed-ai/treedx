@@ -10,13 +10,13 @@ The gate is complete only when the command exits successfully.
 
 ## Scope
 
-The root release gate verifies the TreeDB service repository and the generic
-TreeDB SDK release set together: Elixir service tests, native Rust crates used
+The root release gate verifies the TreeDX service repository and the generic
+TreeDX SDK release set together: Elixir service tests, native Rust crates used
 by the service, OpenAPI contract checks, security scanners, storage recovery,
 smoke tests, container behavior, profile acceptance tests, `packages/sdk-spec`,
 and the TypeScript, Python, Rust, and Elixir SDK packages.
 
-The root release gate verifies only the TreeDB service repository. It is
+The root release gate verifies only the TreeDX service repository. It is
 path-filtered for service, native, storage, Docker, profile, and release-gate
 files on pull requests and branch pushes. Git tag pushes run the release gate
 without custom tag-diff filtering so release verification stays reliable.
@@ -39,7 +39,7 @@ where the primary API service gate or required profile gates fail.
 - Logs, metrics, audit payloads, and public responses are scrubbed.
 - OpenAPI server contract checks pass.
 - `cargo audit` passes.
-- Syft writes `target/treedb-sbom.spdx.json`.
+- Syft writes `target/treedx-sbom.spdx.json`.
 - Trivy reports no high or critical findings for the production service image.
 - The profiler image builds and receives an advisory vulnerability scan.
 - Container smoke verification passes.
@@ -49,9 +49,9 @@ where the primary API service gate or required profile gates fail.
 
 ## Scanner Policy
 
-The security scanner gate is strict for the production `treeseed/treedb`
+The security scanner gate is strict for the production `treeseed/treedx`
 service image. Missing `cargo-audit`, `syft`, `trivy`, `docker`, or `cargo`
-fails the release gate. The Debian-based `treeseed/treedb-profiler` image is
+fails the release gate. The Debian-based `treeseed/treedx-profiler` image is
 also built, SBOMed, and scanned, but that scan is advisory because the image is
 an operational profiling utility rather than the production API runtime.
 Accepted vulnerability records, when needed, live in
@@ -64,7 +64,7 @@ Live checks are environment-backed operational checks. When credentials are abse
 
 ## Workflow Architecture
 
-The GitHub workflow runs TreeDB verification independently on `linux/amd64` and
+The GitHub workflow runs TreeDX verification independently on `linux/amd64` and
 `linux/arm64` runner streams. Each stream runs the same release gate on native
 hardware so architecture-specific Rust, native NIF, release, storage, container,
 and SDK package issues are caught before publishing.
@@ -77,7 +77,7 @@ language SDK tests and the required profile jobs. They then run in parallel.
 Final Docker manifest publishing waits for both Docker architecture images and
 all SDK package artifacts, keeping service and SDK release outputs synchronized.
 
-The `TreeDB Release Gate` workflow preserves the release sequence:
+The `TreeDX Release Gate` workflow preserves the release sequence:
 verification runs first, release-path profile jobs run after verification, and
 publishing waits for the required profile streams. Profiles are broad
 acceptance tests and can stop a release. The base profiler uses the production
@@ -90,29 +90,29 @@ failure by itself. The performance profile blocks release only for profiler
 execution errors, service errors, assertion failures, or response validation
 failures.
 
-Profile Compose starts API nodes from the stripped `treeseed/treedb` production
+Profile Compose starts API nodes from the stripped `treeseed/treedx` production
 image target and runs profiling from the separate Debian-based
-`treeseed/treedb-profiler` image. The service image does not contain profiler
+`treeseed/treedx-profiler` image. The service image does not contain profiler
 tooling. Profile behavior is controlled with GitHub repository or environment
 variables:
 
-- `TREEDB_CI_PROFILE_MODE`, default `portfolio`
-- `TREEDB_CI_PROFILE_DURATION`, default `10m`
-- `TREEDB_CI_PROFILE_CONCURRENCY`, default `25`
-- `TREEDB_CI_PROFILE_SIZE`
-- `TREEDB_CI_PROFILE_FIXTURE`
-- `TREEDB_CI_PROFILE_SCENARIO`
-- `TREEDB_CI_PROFILE_LOAD_MODE`
-- `TREEDB_CI_PROFILE_ITERATIONS`
+- `TREEDX_CI_PROFILE_MODE`, default `portfolio`
+- `TREEDX_CI_PROFILE_DURATION`, default `10m`
+- `TREEDX_CI_PROFILE_CONCURRENCY`, default `25`
+- `TREEDX_CI_PROFILE_SIZE`
+- `TREEDX_CI_PROFILE_FIXTURE`
+- `TREEDX_CI_PROFILE_SCENARIO`
+- `TREEDX_CI_PROFILE_LOAD_MODE`
+- `TREEDX_CI_PROFILE_ITERATIONS`
 
 Federation profile behavior is controlled separately:
 
-- `TREEDB_CI_FEDERATION_PROFILE_ENABLED`, default `true` on release-path pushes
-- `TREEDB_CI_FEDERATION_PROFILE_MODES`, default
+- `TREEDX_CI_FEDERATION_PROFILE_ENABLED`, default `true` on release-path pushes
+- `TREEDX_CI_FEDERATION_PROFILE_MODES`, default
   `mirror-federation,connected-library`
-- `TREEDB_CI_FEDERATION_PROFILE_DURATION`, default `10m`
-- `TREEDB_CI_FEDERATION_PROFILE_CONCURRENCY`, default `25`
-- `TREEDB_CI_FEDERATION_PROFILE_SIZE`, default `small`
+- `TREEDX_CI_FEDERATION_PROFILE_DURATION`, default `10m`
+- `TREEDX_CI_FEDERATION_PROFILE_CONCURRENCY`, default `25`
+- `TREEDX_CI_FEDERATION_PROFILE_SIZE`, default `small`
 
 Duration means measured load after setup completes. Setup, image build, health
 waits, fixture import, catalog convergence, and report finalization are recorded
@@ -126,25 +126,25 @@ pushed.
 
 ## SDK Release Relationship
 
-SDK-affecting changes are handled by the integrated `TreeDB Release Gate`.
+SDK-affecting changes are handled by the integrated `TreeDX Release Gate`.
 Relevant GitHub checks are:
 
-- `TreeDB Release Gate / SDK Spec`
-- `TreeDB Release Gate / TypeScript SDK Test (amd64)`
-- `TreeDB Release Gate / TypeScript SDK Test (arm64)`
-- `TreeDB Release Gate / Python SDK Test (amd64)`
-- `TreeDB Release Gate / Python SDK Test (arm64)`
-- `TreeDB Release Gate / Rust SDK Test (amd64)`
-- `TreeDB Release Gate / Rust SDK Test (arm64)`
-- `TreeDB Release Gate / Elixir SDK Test (amd64)`
-- `TreeDB Release Gate / Elixir SDK Test (arm64)`
+- `TreeDX Release Gate / SDK Spec`
+- `TreeDX Release Gate / TypeScript SDK Test (amd64)`
+- `TreeDX Release Gate / TypeScript SDK Test (arm64)`
+- `TreeDX Release Gate / Python SDK Test (amd64)`
+- `TreeDX Release Gate / Python SDK Test (arm64)`
+- `TreeDX Release Gate / Rust SDK Test (amd64)`
+- `TreeDX Release Gate / Rust SDK Test (arm64)`
+- `TreeDX Release Gate / Elixir SDK Test (amd64)`
+- `TreeDX Release Gate / Elixir SDK Test (arm64)`
 
 For release-path pushes, package artifact jobs also run after profile gates:
 
-- `TreeDB Release Gate / Package TypeScript SDK`
-- `TreeDB Release Gate / Package Python SDK`
-- `TreeDB Release Gate / Package Rust SDK`
-- `TreeDB Release Gate / Package Elixir SDK`
+- `TreeDX Release Gate / Package TypeScript SDK`
+- `TreeDX Release Gate / Package Python SDK`
+- `TreeDX Release Gate / Package Rust SDK`
+- `TreeDX Release Gate / Package Elixir SDK`
 
 Local SDK package verification is:
 
@@ -160,10 +160,10 @@ waits for SDK package artifacts on release-path pushes.
 
 The GitHub workflow publishes Docker images only after the release gate passes.
 
-- Pushes to `main` publish `treeseed/treedb:latest` and
-  `treeseed/treedb-profiler:latest`.
-- Git tags publish `treeseed/treedb:<tag>` and
-  `treeseed/treedb-profiler:<tag>`.
+- Pushes to `main` publish `treeseed/treedx:latest` and
+  `treeseed/treedx-profiler:latest`.
+- Git tags publish `treeseed/treedx:<tag>` and
+  `treeseed/treedx-profiler:<tag>`.
 - Release tags must be semantic versions without a `v` prefix, such as
   `0.1.0` or `1.2.3-alpha.1`.
 - Build metadata tags such as `1.2.3+build.5` are not used for Docker

@@ -1,5 +1,5 @@
 {
-  "name": "@treedb/sdk-spec",
+  "name": "@treedx/sdk-spec",
   "private": true,
   "license": "Apache-2.0",
   "type": "module",

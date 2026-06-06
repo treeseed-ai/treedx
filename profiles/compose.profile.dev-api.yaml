@@ -1,29 +1,29 @@
 services:
-  treedb-api:
+  treedx-api:
     build:
       context: ..
       target: dev
-    working_dir: /workspace/treedb/apps/api
+    working_dir: /workspace/treedx/apps/api
     command: sh -lc "mix deps.get && mix phx.server"
     environment:
       MIX_ENV: dev
-      MIX_BUILD_PATH: /tmp/treedb-mix-build
+      MIX_BUILD_PATH: /tmp/treedx-mix-build
       PHX_SERVER: "true"
       PHX_HOST: 0.0.0.0
       PORT: "4000"
-      TREEDB_DATA_DIR: /var/lib/treedb
-      TREEDB_AUTH_MODE: dev
-      TREEDB_REGISTRY_MODE: local
-      TREEDB_DEV_HOT_RELOAD: "true"
-      TREEDB_EXEC_BACKEND: direct_dev
-      TREEDB_AUDIT_ASYNC: "true"
-      TREEDB_REPO_DOC_CACHE_ENABLED: "true"
-      TREEDB_GRAPH_INDEX_CACHE_ENABLED: "true"
-      TREEDB_ARTIFACT_INDEX_ENABLED: "true"
-      TREEDB_NODE_ID: node_local
+      TREEDX_DATA_DIR: /var/lib/treedx
+      TREEDX_AUTH_MODE: dev
+      TREEDX_REGISTRY_MODE: local
+      TREEDX_DEV_HOT_RELOAD: "true"
+      TREEDX_EXEC_BACKEND: direct_dev
+      TREEDX_AUDIT_ASYNC: "true"
+      TREEDX_REPO_DOC_CACHE_ENABLED: "true"
+      TREEDX_GRAPH_INDEX_CACHE_ENABLED: "true"
+      TREEDX_ARTIFACT_INDEX_ENABLED: "true"
+      TREEDX_NODE_ID: node_local
     volumes:
-      - ..:/workspace/treedb
-      - treedb-data:/var/lib/treedb
+      - ..:/workspace/treedx
+      - treedx-data:/var/lib/treedx
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:4000/api/v1/health"]
       interval: 5s

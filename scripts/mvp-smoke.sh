@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TREEDB_URL="${TREEDB_URL:-http://localhost:4000}"
-TREEDB_KEEP_RUNNING="${TREEDB_KEEP_RUNNING:-0}"
-TREEDB_SMOKE_COMPOSE_FILE="${TREEDB_SMOKE_COMPOSE_FILE:-profiles/compose.profile.yaml}"
+TREEDX_URL="${TREEDX_URL:-http://localhost:4000}"
+TREEDX_KEEP_RUNNING="${TREEDX_KEEP_RUNNING:-0}"
+TREEDX_SMOKE_COMPOSE_FILE="${TREEDX_SMOKE_COMPOSE_FILE:-profiles/compose.profile.yaml}"
 TOKEN=""
 FIXTURE_DIR=""
 
 compose() {
-  docker compose -f "$TREEDB_SMOKE_COMPOSE_FILE" "$@"
+  docker compose -f "$TREEDX_SMOKE_COMPOSE_FILE" "$@"
 }
 
 cleanup() {
   local status=$?
   if [[ $status -ne 0 ]]; then
-    compose logs --tail=120 treedb-api || true
+    compose logs --tail=120 treedx-api || true
   fi
-  if [[ "$TREEDB_KEEP_RUNNING" != "1" ]]; then
+  if [[ "$TREEDX_KEEP_RUNNING" != "1" ]]; then
     compose down || true
   fi
   if [[ -n "$FIXTURE_DIR" ]]; then
@@ -60,25 +60,25 @@ else console.log(String(value));
 }
 
 compose down -v --remove-orphans >/dev/null 2>&1 || true
-compose up -d --build treedb-api
+compose up -d --build treedx-api
 
 for _ in $(seq 1 120); do
-  if curl -fsS "$TREEDB_URL/api/v1/health" >/dev/null; then
+  if curl -fsS "$TREEDX_URL/api/v1/health" >/dev/null; then
     break
   fi
   sleep 3
 done
 
-curl -fsS "$TREEDB_URL/api/v1/health" >/dev/null
+curl -fsS "$TREEDX_URL/api/v1/health" >/dev/null
 
 TOKEN="$(
-  curl -fsS -X POST "$TREEDB_URL/api/v1/auth/dev-token" \
+  curl -fsS -X POST "$TREEDX_URL/api/v1/auth/dev-token" \
     -H 'content-type: application/json' \
     -d '{}' | json_get '.accessToken'
 )"
 
 AUTH=(-H "authorization: Bearer $TOKEN" -H 'content-type: application/json')
-REPO_PATH="/var/lib/treedb/imports/mvp-smoke"
+REPO_PATH="/var/lib/treedx/imports/mvp-smoke"
 
 FIXTURE_DIR="$(mktemp -d)"
 fixture_repo="$FIXTURE_DIR/imports/mvp-smoke"
@@ -87,7 +87,7 @@ mkdir -p "$fixture_repo/docs" "$fixture_repo/plain"
 set -euo pipefail
 cd "$fixture_repo"
 git init -b main
-git config user.name 'TreeDB Smoke'
+git config user.name 'TreeDX Smoke'
 git config user.email 'smoke@example.invalid'
 cat > docs/readme.md <<'DOC'
 ---
@@ -102,60 +102,60 @@ echo 'mvp provenance plain fixture' > plain/search.txt
 git add .
 git commit -m 'Initial smoke fixture'
 )
-compose cp "$FIXTURE_DIR/imports" "treedb-api:/var/lib/treedb/imports"
+compose cp "$FIXTURE_DIR/imports" "treedx-api:/var/lib/treedx/imports"
 
 repo_json="$(
-  curl -fsS -X POST "$TREEDB_URL/api/v1/admin/repos/import-local" \
+  curl -fsS -X POST "$TREEDX_URL/api/v1/admin/repos/import-local" \
     "${AUTH[@]}" \
     -d '{"repositoryName":"mvp-smoke","sourceRelativePath":"imports/mvp-smoke"}'
 )"
 repo_id="$(json_get '.repo.repoId' <<<"$repo_json")"
 
 workspace_json="$(
-  curl -fsS -X POST "$TREEDB_URL/api/v1/repos/$repo_id/workspaces" \
+  curl -fsS -X POST "$TREEDX_URL/api/v1/repos/$repo_id/workspaces" \
     "${AUTH[@]}" \
     -d '{"baseRef":"refs/heads/main","branchName":"refs/heads/agent/mvp-smoke","mode":"writable","allowedPaths":["docs/**","plain/**"]}'
 )"
 workspace_id="$(json_get '.workspaceId' <<<"$workspace_json")"
 
-curl -fsS -X POST "$TREEDB_URL/api/v1/repos/$repo_id/files/search" \
+curl -fsS -X POST "$TREEDX_URL/api/v1/repos/$repo_id/files/search" \
   "${AUTH[@]}" \
   -d '{"paths":["docs/**","plain/**"],"query":"mvp provenance"}' >/dev/null
 
-curl -fsS -X PUT "$TREEDB_URL/api/v1/workspaces/$workspace_id/files?path=docs/readme.md" \
+curl -fsS -X PUT "$TREEDX_URL/api/v1/workspaces/$workspace_id/files?path=docs/readme.md" \
   "${AUTH[@]}" \
   -d '{"content":"---\ntitle: Smoke Updated\nstatus: published\n---\n# Smoke Updated\n\nmvp committed smoke update\n"}' >/dev/null
 
 commit_json="$(
-  curl -fsS -X POST "$TREEDB_URL/api/v1/workspaces/$workspace_id/commit" \
+  curl -fsS -X POST "$TREEDX_URL/api/v1/workspaces/$workspace_id/commit" \
     "${AUTH[@]}" \
-    -d '{"message":"MVP smoke update","author":{"name":"TreeDB Smoke","email":"smoke@example.invalid"}}'
+    -d '{"message":"MVP smoke update","author":{"name":"TreeDX Smoke","email":"smoke@example.invalid"}}'
 )"
 commit_sha="$(json_get '.commitSha' <<<"$commit_json")"
 branch_name="$(json_get '.branchName' <<<"$commit_json")"
 
 graph_json="$(
-  curl -fsS -X POST "$TREEDB_URL/api/v1/repos/$repo_id/graph/refresh" \
+  curl -fsS -X POST "$TREEDX_URL/api/v1/repos/$repo_id/graph/refresh" \
     "${AUTH[@]}" \
     -d "{\"ref\":\"$branch_name\",\"paths\":[\"docs/**\",\"plain/**\"]}"
 )"
 graph_version="$(json_get '.graphVersion' <<<"$graph_json")"
 
 snapshot_json="$(
-  curl -fsS -X POST "$TREEDB_URL/api/v1/repos/$repo_id/snapshots/build" \
+  curl -fsS -X POST "$TREEDX_URL/api/v1/repos/$repo_id/snapshots/build" \
     "${AUTH[@]}" \
     -d "{\"ref\":\"$branch_name\",\"kind\":\"repository_snapshot\",\"paths\":[\"docs/**\"],\"includeGraph\":true}"
 )"
 snapshot_id="$(json_get '.snapshot.snapshotId' <<<"$snapshot_json")"
 
 artifact_json="$(
-  curl -fsS -X POST "$TREEDB_URL/api/v1/repos/$repo_id/artifacts/export" \
+  curl -fsS -X POST "$TREEDX_URL/api/v1/repos/$repo_id/artifacts/export" \
     "${AUTH[@]}" \
     -d "{\"snapshotId\":\"$snapshot_id\"}"
 )"
 artifact_checksum="$(json_get '.artifact.checksum' <<<"$artifact_json")"
 
-curl -fsS "$TREEDB_URL/api/v1/audit/events?repoId=$repo_id&limit=50" "${AUTH[@]}" >/dev/null
+curl -fsS "$TREEDX_URL/api/v1/audit/events?repoId=$repo_id&limit=50" "${AUTH[@]}" >/dev/null
 
 cat <<SUMMARY
 MVP smoke passed

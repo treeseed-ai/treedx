@@ -1,0 +1,61 @@
+defmodule TreeDx.Audit do
+  @moduledoc false
+
+  alias TreeDx.Audit.Event
+
+  def append(event_type, attrs \\ %{}) do
+    event = Event.new(event_type, attrs)
+
+    case TreeDx.Audit.Writer.append(event) do
+      {:ok, _} = result ->
+        TreeDx.Observability.Metrics.record_audit_event(event_type, attrs)
+        result
+
+      other ->
+        TreeDx.Observability.Metrics.incr("treedx_audit_append_failures_total")
+        other
+    end
+  end
+
+  def append_auth(event_type, attrs, status, data \\ %{}) do
+    append(event_type, Map.merge(Map.new(attrs), %{status: status, data: data}))
+  end
+
+  def append_policy(event_type, attrs), do: append(event_type, attrs)
+
+  def list(query, principal) do
+    with {:ok, _scope} <-
+           TreeDx.Capabilities.require_capability(principal, "audit:read", query["repoId"]) do
+      TreeDx.Audit.flush()
+      limit = coerce_int(query["limit"], 100)
+
+      TreeDx.Store.list_audit_events(%{
+        actorId: query["actorId"],
+        tenantId: query["tenantId"],
+        repoId: query["repoId"],
+        eventType: query["eventType"],
+        limit: limit
+      })
+      |> case do
+        {:ok, events} ->
+          {:ok, %{events: events, page: %{limit: min(limit, 500), hasMore: false}}}
+
+        other ->
+          other
+      end
+    end
+  end
+
+  defp coerce_int(value, _default) when is_integer(value), do: value
+
+  defp coerce_int(value, default) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, _} -> int
+      _ -> default
+    end
+  end
+
+  defp coerce_int(_value, default), do: default
+
+  def flush, do: TreeDx.Audit.Writer.flush()
+end

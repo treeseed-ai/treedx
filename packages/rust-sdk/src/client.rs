@@ -8,14 +8,14 @@ use crate::adapters::{
     MirrorsAdapter, ObservabilityAdapter, PolicyAdapter, QueryAdapter, RegistryAdapter,
     RepositoriesAdapter, SearchIndexAdapter, SnapshotsAdapter, WorkspacesAdapter,
 };
-use crate::config::TreeDbConfig;
-use crate::error::TreeDbResult;
-use crate::generated::openapi_types::TREE_DB_OPENAPI_OPERATIONS;
-use crate::transport::{ReqwestTransport, Transport, TreeDbHttpMethod};
+use crate::config::TreeDxConfig;
+use crate::error::TreeDxResult;
+use crate::generated::openapi_types::TREEDX_OPENAPI_OPERATIONS;
+use crate::transport::{ReqwestTransport, Transport, TreeDxHttpMethod};
 
 #[derive(Clone)]
-pub struct TreeDbClient {
-    config: TreeDbConfig,
+pub struct TreeDxClient {
+    config: TreeDxConfig,
     transport: Arc<dyn Transport>,
     repositories: RepositoriesAdapter,
     workspaces: WorkspacesAdapter,
@@ -39,13 +39,13 @@ pub struct TreeDbClient {
     federation_internal: FederationInternalAdapter,
 }
 
-impl TreeDbClient {
-    pub fn new(config: TreeDbConfig) -> Self {
+impl TreeDxClient {
+    pub fn new(config: TreeDxConfig) -> Self {
         let transport = Arc::new(ReqwestTransport::new(config.clone()));
         Self::with_transport(config, transport)
     }
 
-    pub fn with_transport(config: TreeDbConfig, transport: Arc<dyn Transport>) -> Self {
+    pub fn with_transport(config: TreeDxConfig, transport: Arc<dyn Transport>) -> Self {
         Self {
             config,
             repositories: RepositoriesAdapter::new(transport.clone()),
@@ -72,7 +72,7 @@ impl TreeDbClient {
         }
     }
 
-    pub fn config(&self) -> &TreeDbConfig {
+    pub fn config(&self) -> &TreeDxConfig {
         &self.config
     }
     pub fn transport(&self) -> &Arc<dyn Transport> {
@@ -139,33 +139,33 @@ impl TreeDbClient {
         &self.federation_internal
     }
 
-    pub async fn health(&self) -> TreeDbResult<Value> {
+    pub async fn health(&self) -> TreeDxResult<Value> {
         self.observability.health().await
     }
-    pub async fn version(&self) -> TreeDbResult<Value> {
+    pub async fn version(&self) -> TreeDxResult<Value> {
         crate::adapters::common::json_request(
             &self.transport,
-            crate::transport::TreeDbHttpMethod::Get,
+            crate::transport::TreeDxHttpMethod::Get,
             "/api/v1/version",
             None,
             None,
         )
         .await
     }
-    pub async fn whoami(&self) -> TreeDbResult<Value> {
+    pub async fn whoami(&self) -> TreeDxResult<Value> {
         crate::adapters::common::json_request(
             &self.transport,
-            crate::transport::TreeDbHttpMethod::Get,
+            crate::transport::TreeDxHttpMethod::Get,
             "/api/v1/auth/whoami",
             None,
             None,
         )
         .await
     }
-    pub async fn effective_scope(&self) -> TreeDbResult<Value> {
+    pub async fn effective_scope(&self) -> TreeDxResult<Value> {
         crate::adapters::common::json_request(
             &self.transport,
-            crate::transport::TreeDbHttpMethod::Get,
+            crate::transport::TreeDxHttpMethod::Get,
             "/api/v1/policy/effective-scope",
             None,
             None,
@@ -173,10 +173,10 @@ impl TreeDbClient {
         .await
     }
 
-    pub async fn auth_mode(&self) -> TreeDbResult<Value> {
+    pub async fn auth_mode(&self) -> TreeDxResult<Value> {
         crate::adapters::common::json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             "/api/v1/auth/mode",
             None,
             None,
@@ -184,10 +184,10 @@ impl TreeDbClient {
         .await
     }
 
-    pub async fn create_dev_token(&self, body: Option<Value>) -> TreeDbResult<Value> {
+    pub async fn create_dev_token(&self, body: Option<Value>) -> TreeDxResult<Value> {
         crate::adapters::common::json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             "/api/v1/auth/dev-token",
             body,
             None,
@@ -197,17 +197,17 @@ impl TreeDbClient {
 
     pub async fn operation(
         &self,
-        method: TreeDbHttpMethod,
+        method: TreeDxHttpMethod,
         path: &str,
         options: OperationOptions,
-    ) -> TreeDbResult<Value> {
+    ) -> TreeDxResult<Value> {
         let method_name = method.as_str();
-        if !TREE_DB_OPENAPI_OPERATIONS
+        if !TREEDX_OPENAPI_OPERATIONS
             .iter()
             .any(|operation| operation.method == method_name && operation.path == path)
         {
-            return Err(crate::error::TreeDbApiError::network(format!(
-                "unknown TreeDB OpenAPI operation: {method_name} {path}"
+            return Err(crate::error::TreeDxApiError::network(format!(
+                "unknown TreeDX OpenAPI operation: {method_name} {path}"
             )));
         }
         let mut resolved = path.to_string();
@@ -216,7 +216,7 @@ impl TreeDbClient {
             rest.find('}').map(|end| &rest[..end])
         }) {
             let value = options.path_params.get(name).ok_or_else(|| {
-                crate::error::TreeDbApiError::network(format!(
+                crate::error::TreeDxApiError::network(format!(
                     "missing path parameter {name} for {method_name} {path}"
                 ))
             })?;
@@ -244,12 +244,12 @@ pub struct OperationOptions {
 }
 
 #[derive(Clone)]
-pub struct TreeDbRegistryClient {
+pub struct TreeDxRegistryClient {
     registry: RegistryAdapter,
 }
 
-impl TreeDbRegistryClient {
-    pub fn new(client: &TreeDbClient) -> Self {
+impl TreeDxRegistryClient {
+    pub fn new(client: &TreeDxClient) -> Self {
         Self {
             registry: client.registry().clone(),
         }
@@ -261,12 +261,12 @@ impl TreeDbRegistryClient {
 }
 
 #[derive(Clone)]
-pub struct TreeDbFederatedClient {
+pub struct TreeDxFederatedClient {
     federation: FederationAdapter,
 }
 
-impl TreeDbFederatedClient {
-    pub fn new(client: &TreeDbClient) -> Self {
+impl TreeDxFederatedClient {
+    pub fn new(client: &TreeDxClient) -> Self {
         Self {
             federation: client.federation().clone(),
         }

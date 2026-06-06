@@ -15,23 +15,23 @@ RUN apt-get update \
   && mix local.rebar --force \
   && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /workspace/treedb
-COPY tools/treedb_profiler tools/treedb_profiler
+WORKDIR /workspace/treedx
+COPY tools/treedx_profiler tools/treedx_profiler
 COPY docs/api/openapi.json docs/api/openapi.json
 
-WORKDIR /workspace/treedb/tools/treedb_profiler
+WORKDIR /workspace/treedx/tools/treedx_profiler
 RUN mix deps.get \
   && mix escript.build \
   && mkdir -p /out \
-  && cp treedb_profiler /out/treedb_profiler
+  && cp treedx_profiler /out/treedx_profiler
 
 FROM debian:bookworm-slim AS profiler
 
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     MIX_ENV=prod \
-    TREEDB_PROFILER_ROOT=/workspace/treedb/tools/treedb_profiler \
-    TREEDB_OPENAPI_PATH=/workspace/treedb/docs/api/openapi.json
+    TREEDX_PROFILER_ROOT=/workspace/treedx/tools/treedx_profiler \
+    TREEDX_OPENAPI_PATH=/workspace/treedx/docs/api/openapi.json
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
@@ -43,26 +43,26 @@ RUN apt-get update \
     libtinfo6 \
   && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /workspace/treedb
+WORKDIR /workspace/treedx
 
 COPY --from=profiler-build /usr/local/lib/erlang /usr/local/lib/erlang
 COPY --from=profiler-build /usr/local/bin/erl /usr/local/bin/erl
 COPY --from=profiler-build /usr/local/bin/escript /usr/local/bin/escript
 COPY --from=profiler-build /usr/local/bin/epmd /usr/local/bin/epmd
-COPY --from=profiler-build /out/treedb_profiler /usr/local/bin/treedb_profiler
-COPY docker-profiler-entrypoint.sh /usr/local/bin/treedb-profiler-entrypoint
-COPY tools/treedb_profiler/endpoint_matrix.yaml tools/treedb_profiler/endpoint_matrix.yaml
-COPY tools/treedb_profiler/fixtures tools/treedb_profiler/fixtures
-COPY tools/treedb_profiler/scenarios tools/treedb_profiler/scenarios
-COPY tools/treedb_profiler/reliability_budget.yaml tools/treedb_profiler/reliability_budget.yaml
+COPY --from=profiler-build /out/treedx_profiler /usr/local/bin/treedx_profiler
+COPY docker-profiler-entrypoint.sh /usr/local/bin/treedx-profiler-entrypoint
+COPY tools/treedx_profiler/endpoint_matrix.yaml tools/treedx_profiler/endpoint_matrix.yaml
+COPY tools/treedx_profiler/fixtures tools/treedx_profiler/fixtures
+COPY tools/treedx_profiler/scenarios tools/treedx_profiler/scenarios
+COPY tools/treedx_profiler/reliability_budget.yaml tools/treedx_profiler/reliability_budget.yaml
 COPY docs/api/openapi.json docs/api/openapi.json
 
-RUN chmod 0755 /usr/local/bin/treedb_profiler /usr/local/bin/treedb-profiler-entrypoint \
-  && mkdir -p /workspace/treedb/target/profiles /var/lib/treedb/profiler \
-  && echo "treedb-profiler:x:65532:65532:TreeDB profiler:/workspace/treedb:/usr/sbin/nologin" >> /etc/passwd \
-  && echo "treedb-profiler:x:65532:" >> /etc/group \
-  && chown -R 65532:65532 /workspace/treedb /var/lib/treedb
+RUN chmod 0755 /usr/local/bin/treedx_profiler /usr/local/bin/treedx-profiler-entrypoint \
+  && mkdir -p /workspace/treedx/target/profiles /var/lib/treedx/profiler \
+  && echo "treedx-profiler:x:65532:65532:TreeDX profiler:/workspace/treedx:/usr/sbin/nologin" >> /etc/passwd \
+  && echo "treedx-profiler:x:65532:" >> /etc/group \
+  && chown -R 65532:65532 /workspace/treedx /var/lib/treedx
 
 USER 65532:65532
 
-ENTRYPOINT ["/usr/local/bin/treedb-profiler-entrypoint"]
+ENTRYPOINT ["/usr/local/bin/treedx-profiler-entrypoint"]

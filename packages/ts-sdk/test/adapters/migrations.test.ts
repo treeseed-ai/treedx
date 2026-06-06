@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MigrationsAdapter } from '../../src/treedb/index.js';
+import { MigrationsAdapter } from '../../src/treedx/index.js';
 import { MockTransport } from './mock.js';
 
 describe('MigrationsAdapter', () => {

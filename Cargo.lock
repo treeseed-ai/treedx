@@ -2891,7 +2891,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "treedb_git"
+name = "treedx_git"
 version = "0.1.0"
 dependencies = [
  "base64",
@@ -2904,7 +2904,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "treedb_graph"
+name = "treedx_graph"
 version = "0.1.0"
 dependencies = [
  "blake3",
@@ -2917,7 +2917,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "treedb_native"
+name = "treedx_native"
 version = "0.1.0"
 dependencies = [
  "base64",
@@ -2925,13 +2925,13 @@ dependencies = [
  "rustler",
  "serde",
  "serde_json",
- "treedb_git",
- "treedb_graph",
- "treedb_store",
+ "treedx_git",
+ "treedx_graph",
+ "treedx_store",
 ]
 
 [[package]]
-name = "treedb_store"
+name = "treedx_store"
 version = "0.1.0"
 dependencies = [
  "base64",

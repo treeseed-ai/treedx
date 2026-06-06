@@ -14,15 +14,15 @@ require_tool syft
 require_tool trivy
 require_tool docker
 
-CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedb-target}" cargo audit
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedx-target}" cargo audit
 
 mkdir -p target
-syft dir:. -o spdx-json=target/treedb-sbom.spdx.json
+syft dir:. -o spdx-json=target/treedx-sbom.spdx.json
 
-docker build -t treedb-security-scan:local -f Dockerfile --target prod .
-syft treedb-security-scan:local -o spdx-json=target/treedb-image-sbom.spdx.json
-trivy image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL treedb-security-scan:local
+docker build -t treedx-security-scan:local -f Dockerfile --target prod .
+syft treedx-security-scan:local -o spdx-json=target/treedx-image-sbom.spdx.json
+trivy image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL treedx-security-scan:local
 
-docker build -t treedb-profiler-security-scan:local -f Dockerfile.profiler --target profiler .
-syft treedb-profiler-security-scan:local -o spdx-json=target/treedb-profiler-image-sbom.spdx.json
-trivy image --exit-code 0 --ignore-unfixed --severity HIGH,CRITICAL treedb-profiler-security-scan:local
+docker build -t treedx-profiler-security-scan:local -f Dockerfile.profiler --target profiler .
+syft treedx-profiler-security-scan:local -o spdx-json=target/treedx-profiler-image-sbom.spdx.json
+trivy image --exit-code 0 --ignore-unfixed --severity HIGH,CRITICAL treedx-profiler-security-scan:local

@@ -2,12 +2,12 @@
 set -euo pipefail
 
 required=(
-  TREEDB_LIVE_NODE_A_URL
-  TREEDB_LIVE_NODE_A_TOKEN
-  TREEDB_LIVE_NODE_A_REPO_ID
-  TREEDB_LIVE_NODE_B_URL
-  TREEDB_LIVE_NODE_B_TOKEN
-  TREEDB_LIVE_NODE_B_REPO_ID
+  TREEDX_LIVE_NODE_A_URL
+  TREEDX_LIVE_NODE_A_TOKEN
+  TREEDX_LIVE_NODE_A_REPO_ID
+  TREEDX_LIVE_NODE_B_URL
+  TREEDX_LIVE_NODE_B_TOKEN
+  TREEDX_LIVE_NODE_B_REPO_ID
 )
 
 for name in "${required[@]}"; do
@@ -18,9 +18,9 @@ for name in "${required[@]}"; do
 done
 
 curl -fsS \
-  -H "authorization: Bearer ${TREEDB_LIVE_NODE_A_TOKEN}" \
+  -H "authorization: Bearer ${TREEDX_LIVE_NODE_A_TOKEN}" \
   -H "content-type: application/json" \
-  -d "{\"repoIds\":[\"${TREEDB_LIVE_NODE_A_REPO_ID}\",\"${TREEDB_LIVE_NODE_B_REPO_ID}\"],\"query\":\"release\",\"includeErrors\":true,\"limit\":5}" \
-  "${TREEDB_LIVE_NODE_A_URL%/}/api/v1/search" >/dev/null
+  -d "{\"repoIds\":[\"${TREEDX_LIVE_NODE_A_REPO_ID}\",\"${TREEDX_LIVE_NODE_B_REPO_ID}\"],\"query\":\"release\",\"includeErrors\":true,\"limit\":5}" \
+  "${TREEDX_LIVE_NODE_A_URL%/}/api/v1/search" >/dev/null
 
 echo "Federation live check passed."

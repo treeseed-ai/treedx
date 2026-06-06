@@ -5,8 +5,8 @@ use bytes::Bytes;
 use serde_json::Value;
 
 use crate::adapters::common::{binary_request, json_request, segment};
-use crate::error::TreeDbResult;
-use crate::transport::{Transport, TreeDbHttpMethod};
+use crate::error::TreeDxResult;
+use crate::transport::{Transport, TreeDxHttpMethod};
 
 #[derive(Clone)]
 pub struct BlobsAdapter {
@@ -18,10 +18,10 @@ impl BlobsAdapter {
         Self { transport }
     }
 
-    pub async fn read(&self, repo_id: &str, body: Value) -> TreeDbResult<Value> {
+    pub async fn read(&self, repo_id: &str, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             format!("/api/v1/repos/{}/blobs/read", segment(repo_id)),
             Some(body),
             None,
@@ -29,10 +29,10 @@ impl BlobsAdapter {
         .await
     }
 
-    pub async fn write(&self, workspace_id: &str, body: Value) -> TreeDbResult<Value> {
+    pub async fn write(&self, workspace_id: &str, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             format!("/api/v1/workspaces/{}/blobs/write", segment(workspace_id)),
             Some(body),
             None,
@@ -40,10 +40,10 @@ impl BlobsAdapter {
         .await
     }
 
-    pub async fn delete(&self, workspace_id: &str, body: Value) -> TreeDbResult<Value> {
+    pub async fn delete(&self, workspace_id: &str, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             format!("/api/v1/workspaces/{}/blobs/delete", segment(workspace_id)),
             Some(body),
             None,
@@ -55,10 +55,10 @@ impl BlobsAdapter {
         &self,
         workspace_id: &str,
         query: BTreeMap<String, String>,
-    ) -> TreeDbResult<Value> {
+    ) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             format!(
                 "/api/v1/workspaces/{}/blobs/download",
                 segment(workspace_id)
@@ -74,10 +74,10 @@ impl BlobsAdapter {
         workspace_id: &str,
         bytes: Bytes,
         query: BTreeMap<String, String>,
-    ) -> TreeDbResult<Value> {
+    ) -> TreeDxResult<Value> {
         binary_request(
             &self.transport,
-            TreeDbHttpMethod::Put,
+            TreeDxHttpMethod::Put,
             format!("/api/v1/workspaces/{}/blobs/upload", segment(workspace_id)),
             bytes,
             Some(query),
@@ -89,10 +89,10 @@ impl BlobsAdapter {
         &self,
         workspace_id: &str,
         body: Value,
-    ) -> TreeDbResult<Value> {
+    ) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             format!("/api/v1/workspaces/{}/blobs/uploads", segment(workspace_id)),
             Some(body),
             None,
@@ -106,10 +106,10 @@ impl BlobsAdapter {
         upload_id: &str,
         part_number: u32,
         bytes: Bytes,
-    ) -> TreeDbResult<Value> {
+    ) -> TreeDxResult<Value> {
         binary_request(
             &self.transport,
-            TreeDbHttpMethod::Put,
+            TreeDxHttpMethod::Put,
             format!(
                 "/api/v1/workspaces/{}/blobs/uploads/{}/parts/{}",
                 segment(workspace_id),
@@ -127,10 +127,10 @@ impl BlobsAdapter {
         workspace_id: &str,
         upload_id: &str,
         body: Value,
-    ) -> TreeDbResult<Value> {
+    ) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             format!(
                 "/api/v1/workspaces/{}/blobs/uploads/{}/complete",
                 segment(workspace_id),
@@ -146,10 +146,10 @@ impl BlobsAdapter {
         &self,
         workspace_id: &str,
         upload_id: &str,
-    ) -> TreeDbResult<Value> {
+    ) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Delete,
+            TreeDxHttpMethod::Delete,
             format!(
                 "/api/v1/workspaces/{}/blobs/uploads/{}",
                 segment(workspace_id),

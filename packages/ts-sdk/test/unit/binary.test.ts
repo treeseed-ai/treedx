@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertBinaryBody, isBinaryBody, toUint8Array } from '../../src/treedb/index.js';
+import { assertBinaryBody, isBinaryBody, toUint8Array } from '../../src/treedx/index.js';
 
 describe('binary helpers', () => {
   it('accepts binary-safe values', async () => {

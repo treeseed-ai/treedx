@@ -1,17 +1,17 @@
-defmodule TreeDbSdk.FederationAdapterTest do
+defmodule TreeDxSdk.FederationAdapterTest do
   use ExUnit.Case, async: true
 
   test "all constructs expected request" do
-    {:ok, pid} = TreeDbSdk.Test.MockTransport.start_link()
-    client = TreeDbSdk.Test.MockTransport.client(pid)
-    TreeDbSdk.Federation.plan(client, %{})
-    TreeDbSdk.Federation.search(client, %{})
-    TreeDbSdk.Federation.query(client, %{})
-    TreeDbSdk.Federation.context_build(client, %{})
-    TreeDbSdk.Federation.graph_query(client, %{})
+    {:ok, pid} = TreeDxSdk.Test.MockTransport.start_link()
+    client = TreeDxSdk.Test.MockTransport.client(pid)
+    TreeDxSdk.Federation.plan(client, %{})
+    TreeDxSdk.Federation.search(client, %{})
+    TreeDxSdk.Federation.query(client, %{})
+    TreeDxSdk.Federation.context_build(client, %{})
+    TreeDxSdk.Federation.graph_query(client, %{})
 
     assert Enum.any?(
-             TreeDbSdk.Test.MockTransport.requests(pid),
+             TreeDxSdk.Test.MockTransport.requests(pid),
              &(&1.method == :post and &1.path == "/api/v1/graph/query")
            )
   end

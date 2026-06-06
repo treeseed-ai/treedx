@@ -2,14 +2,14 @@ from pathlib import Path
 
 import yaml
 
-from treedb_sdk import TreeDbClient
-from treedb_sdk.conformance import TreeDbConformanceAdapter, TreeDbConformanceScenario
-from treedb_sdk.transport import TreeDbRequest, TreeDbResponse
+from treedx_sdk import TreeDxClient
+from treedx_sdk.conformance import TreeDxConformanceAdapter, TreeDxConformanceScenario
+from treedx_sdk.transport import TreeDxRequest, TreeDxResponse
 
 
 class MockTransport:
-    def request(self, request: TreeDbRequest) -> TreeDbResponse[object]:
-        return TreeDbResponse(status=200, headers={}, data={"ok": True})
+    def request(self, request: TreeDxRequest) -> TreeDxResponse[object]:
+        return TreeDxResponse(status=200, headers={}, data={"ok": True})
 
 
 def load_scenarios() -> list[dict[str, object]]:
@@ -30,7 +30,7 @@ def test_scenario_catalog_loads() -> None:
 
 def test_conformance_adapter_reports_not_configured() -> None:
     raw = load_scenarios()[0]
-    scenario = TreeDbConformanceScenario(
+    scenario = TreeDxConformanceScenario(
         id=str(raw["id"]),
         capability_id=str(raw["capabilityId"]),
         title=str(raw["title"]),
@@ -39,6 +39,6 @@ def test_conformance_adapter_reports_not_configured() -> None:
         steps=list(raw["steps"]),  # type: ignore[arg-type]
         assertions=list(raw["assertions"]),  # type: ignore[arg-type]
     )
-    client = TreeDbClient(base_url="http://treedb.test", transport=MockTransport())
-    result = TreeDbConformanceAdapter(client).run_scenario(scenario)
+    client = TreeDxClient(base_url="http://treedx.test", transport=MockTransport())
+    result = TreeDxConformanceAdapter(client).run_scenario(scenario)
     assert result.status == "not_configured"

@@ -4,18 +4,18 @@ from typing import Any
 
 import pytest
 
-from treedb_sdk.transport import TreeDbRequest, TreeDbResponse
+from treedx_sdk.transport import TreeDxRequest, TreeDxResponse
 
 
 class _MockTransport:
     def __init__(self) -> None:
-        self.requests: list[TreeDbRequest] = []
+        self.requests: list[TreeDxRequest] = []
 
-    def request(self, request: TreeDbRequest) -> TreeDbResponse[Any]:
+    def request(self, request: TreeDxRequest) -> TreeDxResponse[Any]:
         self.requests.append(request)
-        return TreeDbResponse(status=200, headers={}, data={"ok": True})
+        return TreeDxResponse(status=200, headers={}, data={"ok": True})
 
-    def last(self) -> TreeDbRequest:
+    def last(self) -> TreeDxRequest:
         if not self.requests:
             raise AssertionError("No request recorded")
         return self.requests[-1]

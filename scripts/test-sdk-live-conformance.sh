@@ -25,19 +25,19 @@ section() {
   printf '\n==> %s\n' "$1"
 }
 
-section "Start local TreeDB"
+section "Start local TreeDX"
 (
   cd apps/api
   MIX_ENV=dev \
-  TREEDB_AUTH_MODE=dev \
-  TREEDB_ENV=dev \
-  TREEDB_DATA_DIR="${tmp}/data" \
+  TREEDX_AUTH_MODE=dev \
+  TREEDX_ENV=dev \
+  TREEDX_DATA_DIR="${tmp}/data" \
   PORT="${port}" \
   PHX_SERVER=true \
-  CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedb-target}" \
-  RUSTLER_TARGET_DIR="${RUSTLER_TARGET_DIR:-/tmp/treedb-target}" \
+  CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedx-target}" \
+  RUSTLER_TARGET_DIR="${RUSTLER_TARGET_DIR:-/tmp/treedx-target}" \
   mix run --no-halt
-) >"${tmp}/treedb.log" 2>&1 &
+) >"${tmp}/treedx.log" 2>&1 &
 server_pid="$!"
 
 base_url="http://127.0.0.1:${port}"
@@ -49,8 +49,8 @@ for _ in {1..120}; do
 done
 
 if ! curl -fsS "${base_url}/api/v1/health" >/dev/null 2>&1; then
-  cat "${tmp}/treedb.log" >&2 || true
-  printf 'TreeDB did not become healthy at %s\n' "${base_url}" >&2
+  cat "${tmp}/treedx.log" >&2 || true
+  printf 'TreeDX did not become healthy at %s\n' "${base_url}" >&2
   exit 1
 fi
 
@@ -65,16 +65,16 @@ print(payload.get("token") or payload.get("accessToken") or payload.get("devToke
 PY
 )"
 
-export TREEDB_BASE_URL="${base_url}"
-export TREEDB_TOKEN="${token}"
-export TREEDB_CONFORMANCE_REF="refs/heads/main"
-export TREEDB_CONFORMANCE_ALLOW_ADMIN=1
-export TREEDB_CONFORMANCE_ALLOW_INTERNAL=1
-export TREEDB_CONFORMANCE_ALLOW_DESTRUCTIVE=1
-export TREEDB_CONFORMANCE_TMP="${tmp}"
+export TREEDX_BASE_URL="${base_url}"
+export TREEDX_TOKEN="${token}"
+export TREEDX_CONFORMANCE_REF="refs/heads/main"
+export TREEDX_CONFORMANCE_ALLOW_ADMIN=1
+export TREEDX_CONFORMANCE_ALLOW_INTERNAL=1
+export TREEDX_CONFORMANCE_ALLOW_DESTRUCTIVE=1
+export TREEDX_CONFORMANCE_TMP="${tmp}"
 
 section "TypeScript conformance"
-(cd packages/ts-sdk && npm ci && npm run test:treedb-conformance)
+(cd packages/ts-sdk && npm ci && npm run test:treedx-conformance)
 
 section "Python conformance"
 (cd packages/python-sdk && python3 -m pip install -e ".[dev]" && python3 -m pytest tests/conformance)

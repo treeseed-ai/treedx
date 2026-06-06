@@ -7,6 +7,6 @@ Security readiness is managed through:
 - [Security incident runbook](../runbooks/security-incident.md)
 
 Accepted vulnerabilities are exceptional and time-limited. Add an entry to
-`docs/security/accepted-vulnerabilities.md` only when a required TreeDB scanner
+`docs/security/accepted-vulnerabilities.md` only when a required TreeDX scanner
 finds a high or critical issue that cannot be fixed immediately and the release
 owner accepts the documented residual risk.

@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use crate::config::TreeDbConfig;
-use crate::error::TreeDbResult;
+use crate::config::TreeDxConfig;
+use crate::error::TreeDxResult;
 
 #[async_trait]
 pub trait AuthProvider: Send + Sync {
-    async fn get_token(&self) -> TreeDbResult<String>;
+    async fn get_token(&self) -> TreeDxResult<String>;
 }
 
 #[derive(Clone, Debug)]
@@ -25,7 +25,7 @@ impl StaticBearerTokenAuthProvider {
 
 #[async_trait]
 impl AuthProvider for StaticBearerTokenAuthProvider {
-    async fn get_token(&self) -> TreeDbResult<String> {
+    async fn get_token(&self) -> TreeDxResult<String> {
         Ok(self.token.clone())
     }
 }
@@ -35,8 +35,8 @@ pub fn create_auth_provider(token: Option<String>) -> Option<Arc<dyn AuthProvide
 }
 
 pub async fn resolve_authorization_header(
-    config: &TreeDbConfig,
-) -> TreeDbResult<Option<(String, String)>> {
+    config: &TreeDxConfig,
+) -> TreeDxResult<Option<(String, String)>> {
     let provider = match &config.auth_provider {
         Some(provider) => Some(provider.clone()),
         None => create_auth_provider(config.token.clone()),

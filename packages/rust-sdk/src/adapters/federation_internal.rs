@@ -3,8 +3,8 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::adapters::common::{json_request, segment};
-use crate::error::TreeDbResult;
-use crate::transport::{Transport, TreeDbHttpMethod};
+use crate::error::TreeDxResult;
+use crate::transport::{Transport, TreeDxHttpMethod};
 
 #[derive(Clone)]
 pub struct FederationInternalAdapter {
@@ -16,30 +16,30 @@ impl FederationInternalAdapter {
         Self { transport }
     }
 
-    pub async fn health(&self) -> TreeDbResult<Value> {
+    pub async fn health(&self) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             "/api/v1/internal/federation/health",
             None,
             None,
         )
         .await
     }
-    pub async fn proxy(&self, body: Value) -> TreeDbResult<Value> {
+    pub async fn proxy(&self, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             "/api/v1/internal/federation/proxy",
             Some(body),
             None,
         )
         .await
     }
-    pub async fn export_mirror(&self, repo_id: &str, body: Value) -> TreeDbResult<Value> {
+    pub async fn export_mirror(&self, repo_id: &str, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             format!(
                 "/api/v1/internal/federation/repos/{}/mirror/export",
                 segment(repo_id)
@@ -49,10 +49,10 @@ impl FederationInternalAdapter {
         )
         .await
     }
-    pub async fn import_mirror(&self, repo_id: &str, body: Value) -> TreeDbResult<Value> {
+    pub async fn import_mirror(&self, repo_id: &str, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             format!(
                 "/api/v1/internal/federation/repos/{}/mirror/import",
                 segment(repo_id)

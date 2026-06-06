@@ -1,4 +1,4 @@
-sdk: treedb-rust
+sdk: treedx-rust
 language: rust
 version: 0.1.0
 sdkSpecVersion: 0.1.0

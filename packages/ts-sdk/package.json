@@ -1,38 +1,38 @@
 {
-  "name": "@treedb/ts-sdk",
+  "name": "@treedx/ts-sdk",
   "version": "0.1.0",
   "private": true,
-  "description": "Generic TypeScript SDK for TreeDB.",
+  "description": "Generic TypeScript SDK for TreeDX.",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {
     "node": ">=22"
   },
-  "types": "./dist/treedb/index.d.ts",
+  "types": "./dist/treedx/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/treedb/index.d.ts",
-      "default": "./dist/treedb/index.js"
+      "types": "./dist/treedx/index.d.ts",
+      "default": "./dist/treedx/index.js"
     },
-    "./treedb": {
-      "types": "./dist/treedb/index.d.ts",
-      "default": "./dist/treedb/index.js"
+    "./treedx": {
+      "types": "./dist/treedx/index.d.ts",
+      "default": "./dist/treedx/index.js"
     },
-    "./treedb/client": {
-      "types": "./dist/treedb/client/index.d.ts",
-      "default": "./dist/treedb/client/index.js"
+    "./treedx/client": {
+      "types": "./dist/treedx/client/index.d.ts",
+      "default": "./dist/treedx/client/index.js"
     },
-    "./treedb/types": {
-      "types": "./dist/treedb/types/index.d.ts",
-      "default": "./dist/treedb/types/index.js"
+    "./treedx/types": {
+      "types": "./dist/treedx/types/index.d.ts",
+      "default": "./dist/treedx/types/index.js"
     },
-    "./treedb/adapters": {
-      "types": "./dist/treedb/adapters/index.d.ts",
-      "default": "./dist/treedb/adapters/index.js"
+    "./treedx/adapters": {
+      "types": "./dist/treedx/adapters/index.d.ts",
+      "default": "./dist/treedx/adapters/index.js"
     },
-    "./treedb/conformance": {
-      "types": "./dist/treedb/conformance/index.d.ts",
-      "default": "./dist/treedb/conformance/index.js"
+    "./treedx/conformance": {
+      "types": "./dist/treedx/conformance/index.d.ts",
+      "default": "./dist/treedx/conformance/index.js"
     }
   },
   "files": [
@@ -43,11 +43,11 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run --config ./vitest.config.ts",
-    "test:treedb-unit": "vitest run --config ./vitest.config.ts test/unit test/adapters test/generated",
-    "test:treedb-conformance": "vitest run --config ./vitest.config.ts test/conformance",
-    "test:treedb-integration": "vitest run --config ./vitest.config.ts test/integration",
-    "treedb:generate": "node scripts/generate-treedb-openapi-types.mjs",
-    "treedb:check-generated": "node scripts/check-treedb-generated-types.mjs"
+    "test:treedx-unit": "vitest run --config ./vitest.config.ts test/unit test/adapters test/generated",
+    "test:treedx-conformance": "vitest run --config ./vitest.config.ts test/conformance",
+    "test:treedx-integration": "vitest run --config ./vitest.config.ts test/integration",
+    "treedx:generate": "node scripts/generate-treedx-openapi-types.mjs",
+    "treedx:check-generated": "node scripts/check-treedx-generated-types.mjs"
   },
   "dependencies": {},
   "devDependencies": {

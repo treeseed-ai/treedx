@@ -1,6 +1,6 @@
 # Git Remote Workflows Runbook
 
-TreeDB provides explicit repository fetch and push operations.
+TreeDX provides explicit repository fetch and push operations.
 
 ## Push
 
@@ -14,9 +14,9 @@ Use `POST /api/v1/repos/:repo_id/push` with `git:push`.
 - Non-dry-run push supports local path and `file://` remotes through the native
   path.
 - Authenticated HTTPS and SSH push/fetch require `credentialId` and
-  `TREEDB_GIT_EXTERNAL_TRANSPORT_ENABLED=true`.
-- SSH also requires `TREEDB_GIT_SSH_ENABLED=true` and
-  `TREEDB_GIT_SSH_KNOWN_HOSTS`.
+  `TREEDX_GIT_EXTERNAL_TRANSPORT_ENABLED=true`.
+- SSH also requires `TREEDX_GIT_SSH_ENABLED=true` and
+  `TREEDX_GIT_SSH_KNOWN_HOSTS`.
 - The published production image does not include the shell `git` binary. Native
   local and `file://` push paths continue to work without it. Deployments that
   enable authenticated external transport should provide `git` in a derived

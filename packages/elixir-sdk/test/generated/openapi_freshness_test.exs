@@ -1,9 +1,9 @@
-defmodule TreeDbSdk.Generated.OpenApiFreshnessTest do
+defmodule TreeDxSdk.Generated.OpenApiFreshnessTest do
   use ExUnit.Case, async: true
 
   test "generated metadata is fresh" do
     {output, status} =
-      System.cmd("mix", ["run", "scripts/check_treedb_generated_types.exs"],
+      System.cmd("mix", ["run", "scripts/check_treedx_generated_types.exs"],
         stderr_to_stdout: true
       )
 
@@ -13,7 +13,7 @@ defmodule TreeDbSdk.Generated.OpenApiFreshnessTest do
   test "generated operations include sdk-spec declared endpoints" do
     generated =
       MapSet.new(
-        Enum.map(TreeDbSdk.Generated.OpenApiTypes.operations(), &(&1.method <> " " <> &1.path))
+        Enum.map(TreeDxSdk.Generated.OpenApiTypes.operations(), &(&1.method <> " " <> &1.path))
       )
 
     endpoints =

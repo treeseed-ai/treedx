@@ -3,8 +3,8 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::adapters::common::json_request;
-use crate::error::TreeDbResult;
-use crate::transport::{Transport, TreeDbHttpMethod};
+use crate::error::TreeDxResult;
+use crate::transport::{Transport, TreeDxHttpMethod};
 
 #[derive(Clone)]
 pub struct ObservabilityAdapter {
@@ -16,10 +16,10 @@ impl ObservabilityAdapter {
         Self { transport }
     }
 
-    pub async fn health(&self) -> TreeDbResult<Value> {
+    pub async fn health(&self) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             "/api/v1/health",
             None,
             None,
@@ -27,10 +27,10 @@ impl ObservabilityAdapter {
         .await
     }
 
-    pub async fn ready(&self) -> TreeDbResult<Value> {
+    pub async fn ready(&self) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             "/api/v1/ready",
             None,
             None,
@@ -38,10 +38,10 @@ impl ObservabilityAdapter {
         .await
     }
 
-    pub async fn deep_health(&self) -> TreeDbResult<Value> {
+    pub async fn deep_health(&self) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             "/api/v1/health/deep",
             None,
             None,
@@ -49,10 +49,10 @@ impl ObservabilityAdapter {
         .await
     }
 
-    pub async fn metrics(&self) -> TreeDbResult<Value> {
+    pub async fn metrics(&self) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             "/api/v1/metrics",
             None,
             None,

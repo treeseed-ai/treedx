@@ -1,6 +1,6 @@
-# TreeDB Observability And Operations
+# TreeDX Observability And Operations
 
-TreeDB exposes operational signals through sanitized health endpoints, in-memory
+TreeDX exposes operational signals through sanitized health endpoints, in-memory
 metrics, protected diagnostics, audit records, and production JSON logs.
 
 ## Health Model
@@ -17,7 +17,7 @@ audit append path availability, and optional auth-provider checks.
 
 ## Metrics
 
-TreeDB exposes both:
+TreeDX exposes both:
 
 - `/metrics` for Prometheus text scraping.
 - `/api/v1/metrics` for JSON diagnostics.
@@ -39,4 +39,4 @@ scrubs secret-like values and filesystem paths before serialization.
 
 Operational endpoints are part of the public API contract in
 `docs/api/openapi.yaml`. SDK verification is handled independently from the
-TreeDB service release gate.
+TreeDX service release gate.

@@ -1,4 +1,4 @@
-from treedb_sdk.pagination import create_page, get_next_cursor, is_treedb_page
+from treedx_sdk.pagination import create_page, get_next_cursor, is_treedx_page
 
 
 def test_page_helpers_preserve_cursor_metadata() -> None:
@@ -7,4 +7,4 @@ def test_page_helpers_preserve_cursor_metadata() -> None:
     assert page.next_cursor == "next"
     assert page.has_more is True
     assert get_next_cursor(page) == "next"
-    assert is_treedb_page(page)
+    assert is_treedx_page(page)

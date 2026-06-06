@@ -52,6 +52,6 @@ rules:
   - SDKs must support binary-safe upload and download.
   - SDKs must not coerce binary payloads through UTF-8 text strings.
   - SDKs must not log binary payload snippets.
-  - SDKs must preserve content type, byte length, and digest metadata when returned by TreeDB.
+  - SDKs must preserve content type, byte length, and digest metadata when returned by TreeDX.
   - Multipart helpers must expose create, put part, complete, and abort operations.
-  - Multipart part numbers must be stable integers passed through to TreeDB without SDK renumbering.
+  - Multipart part numbers must be stable integers passed through to TreeDX without SDK renumbering.

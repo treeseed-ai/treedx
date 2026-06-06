@@ -4,7 +4,7 @@
 
 The end-to-end contract proves that a repository can be registered, queried,
 updated, indexed, snapshotted, audited, federated, and replayed without putting
-TreeSeed product semantics into TreeDB.
+TreeSeed product semantics into TreeDX.
 
 ## Current Baseline
 
@@ -12,19 +12,19 @@ The baseline includes dev and connected auth, scoped capabilities, audit
 listing, repository query, workspace file/blob operations, graph/context
 segments, search indexes, snapshots/artifacts, mirror sync records, push/fetch,
 placement migration records, storage operations, global federation execution,
-and TypeScript SDK TreeDB clients.
+and TypeScript SDK TreeDX clients.
 
 ## Verification Shape
 
 The required fast layer is:
 
-- `apps/api/test/treedb_web/end_to_end_mvp_test.exs`
-- `packages/ts-sdk/test/utils/treedb-e2e-contract.test.ts`
+- `apps/api/test/treedx_web/end_to_end_mvp_test.exs`
+- `packages/ts-sdk/test/utils/treedx-e2e-contract.test.ts`
 
 The optional deployment layer is:
 
 - `scripts/mvp-smoke.sh`
-- `packages/ts-sdk/test/utils/treedb-live-contract.test.ts` when live env vars are set
+- `packages/ts-sdk/test/utils/treedx-live-contract.test.ts` when live env vars are set
 
 ## Federation Scope
 
@@ -39,8 +39,8 @@ The dynamic fixture repository contains:
 - Markdown and MDX files
 - YAML frontmatter
 - headings and Markdown links
-- a generic unresolved `treedb://` reference
-- `treedb provenance` as a unique searchable phrase
+- a generic unresolved `treedx://` reference
+- `treedx provenance` as a unique searchable phrase
 - files outside a restricted actor path scope
 
 Shell Git is used only to create this test fixture repository.
@@ -55,24 +55,24 @@ build, artifact export, migration dry-run, audit listing, and replay.
 
 ## Restart And Recovery
 
-The restart check calls `TreeDb.Store.init!/1` against the same data directory and verifies repository, placement, audit events, latest graph manifest, and snapshot manifest replay.
+The restart check calls `TreeDx.Store.init!/1` against the same data directory and verifies repository, placement, audit events, latest graph manifest, and snapshot manifest replay.
 
 ## SDK No-Clone Contract
 
-The SDK mocked test constructs `TreeDbClient`, `TreeDbRepositoryAdapter`, and `TreeDbGraphAdapter` without a local repository clone. Content model path routing is provided through `contentPathMap`.
+The SDK mocked test constructs `TreeDxClient`, `TreeDxRepositoryAdapter`, and `TreeDxGraphAdapter` without a local repository clone. Content model path routing is provided through `contentPathMap`.
 
 ## Boundary
 
-TreeSeed product-domain semantics remain outside TreeDB. Live checks are
+TreeSeed product-domain semantics remain outside TreeDX. Live checks are
 environment-backed and report `not configured` when credentials are absent.
 
 ## Verification Commands
 
 ```bash
-CARGO_TARGET_DIR=/tmp/treedb-target cargo test --workspace
+CARGO_TARGET_DIR=/tmp/treedx-target cargo test --workspace
 cd apps/api
-CARGO_TARGET_DIR=/tmp/treedb-target RUSTLER_TARGET_DIR=/tmp/treedb-target mix test test/treedb_web/end_to_end_mvp_test.exs
+CARGO_TARGET_DIR=/tmp/treedx-target RUSTLER_TARGET_DIR=/tmp/treedx-target mix test test/treedx_web/end_to_end_mvp_test.exs
 cd ../..
 cd packages/ts-sdk
-npx vitest run --config ./vitest.config.ts test/utils/treedb-e2e-contract.test.ts test/utils/treedb-live-contract.test.ts
+npx vitest run --config ./vitest.config.ts test/utils/treedx-e2e-contract.test.ts test/utils/treedx-live-contract.test.ts
 ```

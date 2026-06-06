@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { TreeDbApiError } from '../../src/treedb/index.js';
+import { TreeDxApiError } from '../../src/treedx/index.js';
 
-describe('TreeDbApiError', () => {
+describe('TreeDxApiError', () => {
   it('preserves response error envelope fields', () => {
     const payload = { error: { code: 'permission_denied', message: 'Denied', details: { scope: 'repo' } } };
-    const error = TreeDbApiError.fromResponse(403, payload);
+    const error = TreeDxApiError.fromResponse(403, payload);
     expect(error.status).toBe(403);
     expect(error.code).toBe('permission_denied');
     expect(error.message).toBe('Denied');
@@ -13,7 +13,7 @@ describe('TreeDbApiError', () => {
   });
 
   it('wraps network failures consistently', () => {
-    const error = TreeDbApiError.network('offline');
+    const error = TreeDxApiError.network('offline');
     expect(error.status).toBe(0);
     expect(error.code).toBe('network_error');
   });

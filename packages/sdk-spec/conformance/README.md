@@ -1,7 +1,7 @@
-# TreeDB SDK Conformance
+# TreeDX SDK Conformance
 
 This directory contains the shared black-box conformance scenario catalog for
-TreeDB SDKs. TypeScript, Python, Rust, and Elixir SDKs must run these scenarios
+TreeDX SDKs. TypeScript, Python, Rust, and Elixir SDKs must run these scenarios
 through their public SDK facades once language package conformance adapters
 exist.
 
@@ -20,7 +20,7 @@ scenario defines:
 - `id`: unique lowercase dotted scenario id.
 - `capabilityId`: capability from `../spec/capabilities.yaml`.
 - `kind`: `black_box`.
-- `required`: whether every TreeDB language SDK must support the behavior.
+- `required`: whether every TreeDX language SDK must support the behavior.
 - `serverRequired`: `true`, `false`, or `conditional`.
 - `endpointRefs`: OpenAPI endpoint strings owned by the capability.
 - `fixtures`: `repos`, `requests`, and `expected` arrays.
@@ -53,4 +53,4 @@ scenario steps through the SDK public facade. Generated OpenAPI clients and
 private adapters are not the direct conformance surface.
 
 `packages/trsd-sdk` compatibility tests are downstream TreeSeed migration
-safety tests. They do not define TreeDB SDK conformance.
+safety tests. They do not define TreeDX SDK conformance.

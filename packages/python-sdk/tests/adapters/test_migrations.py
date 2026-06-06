@@ -1,4 +1,4 @@
-from treedb_sdk.adapters import MigrationsAdapter
+from treedx_sdk.adapters import MigrationsAdapter
 
 
 def test_migrations_endpoints(MockTransport) -> None:  # type: ignore[no-untyped-def]

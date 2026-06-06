@@ -1,5 +1,5 @@
-use treedb_sdk::auth::{AuthProvider, resolve_authorization_header};
-use treedb_sdk::{StaticBearerTokenAuthProvider, TreeDbConfig};
+use treedx_sdk::auth::{AuthProvider, resolve_authorization_header};
+use treedx_sdk::{StaticBearerTokenAuthProvider, TreeDxConfig};
 
 #[tokio::test]
 async fn static_bearer_token_provider_returns_token() {
@@ -9,7 +9,7 @@ async fn static_bearer_token_provider_returns_token() {
 
 #[tokio::test]
 async fn authorization_header_uses_bearer_scheme() {
-    let config = TreeDbConfig {
+    let config = TreeDxConfig {
         token: Some("secret".to_string()),
         ..Default::default()
     };

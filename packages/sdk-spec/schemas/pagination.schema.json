@@ -8,10 +8,10 @@
     "status": { "type": "string" },
     "concepts": {
       "type": "object",
-      "required": ["TreeDbPage", "TreeDbCursor"],
+      "required": ["TreeDxPage", "TreeDxCursor"],
       "additionalProperties": true,
       "properties": {
-        "TreeDbPage": {
+        "TreeDxPage": {
           "type": "object",
           "required": ["fields"],
           "additionalProperties": true,
@@ -19,7 +19,7 @@
             "fields": { "type": "object" }
           }
         },
-        "TreeDbCursor": {
+        "TreeDxCursor": {
           "type": "object",
           "required": ["encoding", "sdkBehavior"],
           "additionalProperties": true,

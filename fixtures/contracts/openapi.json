@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "TreeDB MVP API Contract",
+    "title": "TreeDX MVP API Contract",
     "version": "0.10.0",
-    "description": "Compact MVP fixture for implemented TreeDB MVP routes. docs/api/openapi.yaml is the human-readable contract."
+    "description": "Compact MVP fixture for implemented TreeDX MVP routes. docs/api/openapi.yaml is the human-readable contract."
   },
   "servers": [{ "url": "http://localhost:4000" }],
   "security": [{ "bearerAuth": [] }],
@@ -63,8 +63,8 @@
       "bearerAuth": { "type": "http", "scheme": "bearer" }
     },
     "responses": {
-      "Ok": { "description": "TreeDB ok envelope", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OkEnvelope" } } } },
-      "Error": { "description": "TreeDB error envelope", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } } }
+      "Ok": { "description": "TreeDX ok envelope", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OkEnvelope" } } } },
+      "Error": { "description": "TreeDX error envelope", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } } }
     },
     "schemas": {
       "OkEnvelope": { "type": "object", "required": ["ok"], "properties": { "ok": { "const": true } }, "additionalProperties": true },
@@ -84,7 +84,7 @@
       "AuditEvent": { "type": "object", "properties": { "eventType": { "type": "string" }, "recordedAt": { "type": "string" } } }
     }
   },
-  "x-treedb-future": {
+  "x-treedx-future": {
     "globalFederation": ["/api/v1/search", "/api/v1/query", "/api/v1/context/build"]
   }
 }

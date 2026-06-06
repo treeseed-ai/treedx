@@ -2,7 +2,7 @@
 
 ## Scope
 
-SDK release readiness covers `packages/sdk-spec` plus the generic TreeDB
+SDK release readiness covers `packages/sdk-spec` plus the generic TreeDX
 language SDK packages:
 
 - `packages/ts-sdk`
@@ -10,8 +10,8 @@ language SDK packages:
 - `packages/rust-sdk`
 - `packages/elixir-sdk`
 
-SDK release readiness is part of root TreeDB service release readiness. The
-single `TreeDB Release Gate` validates the service, native crates used by the
+SDK release readiness is part of root TreeDX service release readiness. The
+single `TreeDX Release Gate` validates the service, native crates used by the
 service, storage, security, OpenAPI service checks, containers, operational
 profile gates, `packages/sdk-spec`, and all four generic language SDKs.
 
@@ -21,7 +21,7 @@ authority.
 
 ## Required Checks
 
-SDK-affecting release candidates should pass the integrated `TreeDB Release
+SDK-affecting release candidates should pass the integrated `TreeDX Release
 Gate` SDK checks:
 
 - `SDK Spec`
@@ -75,7 +75,7 @@ npm ci
 npx vitest run --config ./vitest.config.ts \
   test/utils/sdk.test.ts \
   test/utils/graph.test.ts \
-  test/utils/treedb-backends.test.ts
+  test/utils/treedx-backends.test.ts
 npm run build
 ```
 
@@ -88,24 +88,24 @@ SDK gate.
 
 ## GitHub Workflow Verification
 
-Required SDK checks live in the `TreeDB Release Gate` workflow:
+Required SDK checks live in the `TreeDX Release Gate` workflow:
 
-- `TreeDB Release Gate / SDK Spec`
-- `TreeDB Release Gate / TypeScript SDK Test (amd64)`
-- `TreeDB Release Gate / TypeScript SDK Test (arm64)`
-- `TreeDB Release Gate / Python SDK Test (amd64)`
-- `TreeDB Release Gate / Python SDK Test (arm64)`
-- `TreeDB Release Gate / Rust SDK Test (amd64)`
-- `TreeDB Release Gate / Rust SDK Test (arm64)`
-- `TreeDB Release Gate / Elixir SDK Test (amd64)`
-- `TreeDB Release Gate / Elixir SDK Test (arm64)`
+- `TreeDX Release Gate / SDK Spec`
+- `TreeDX Release Gate / TypeScript SDK Test (amd64)`
+- `TreeDX Release Gate / TypeScript SDK Test (arm64)`
+- `TreeDX Release Gate / Python SDK Test (amd64)`
+- `TreeDX Release Gate / Python SDK Test (arm64)`
+- `TreeDX Release Gate / Rust SDK Test (amd64)`
+- `TreeDX Release Gate / Rust SDK Test (arm64)`
+- `TreeDX Release Gate / Elixir SDK Test (amd64)`
+- `TreeDX Release Gate / Elixir SDK Test (arm64)`
 
 Release-path package jobs:
 
-- `TreeDB Release Gate / Package TypeScript SDK`
-- `TreeDB Release Gate / Package Python SDK`
-- `TreeDB Release Gate / Package Rust SDK`
-- `TreeDB Release Gate / Package Elixir SDK`
+- `TreeDX Release Gate / Package TypeScript SDK`
+- `TreeDX Release Gate / Package Python SDK`
+- `TreeDX Release Gate / Package Rust SDK`
+- `TreeDX Release Gate / Package Elixir SDK`
 
 The workflow is path-filtered for pull requests and branch pushes, while tag
 pushes run release gates without custom tag-diff filtering.
@@ -126,14 +126,14 @@ current adapter behavior.
 
 Optional external live integration reads:
 
-- `TREEDB_SDK_BASE_URL`
-- `TREEDB_SDK_TOKEN`
+- `TREEDX_SDK_BASE_URL`
+- `TREEDX_SDK_TOKEN`
 
 If a future optional live workflow is run manually, a `base_url` input should
 override the base URL secret. If no base URL is configured, SDK integration
 tests pass by reporting or skipping not-configured behavior.
 
-Current conformance adapters validate scenario catalog loading and execute live dispatch when the local harness configures TreeDB. Optional integration tests still pass cleanly without external service config.
+Current conformance adapters validate scenario catalog loading and execute live dispatch when the local harness configures TreeDX. Optional integration tests still pass cleanly without external service config.
 
 ## Final Baseline Verification
 
@@ -151,7 +151,7 @@ Python packaging tooling is required for the complete implemented SDK gate. If i
 
 ```bash
 cd packages/python-sdk
-python3 scripts/check_treedb_generated_types.py
+python3 scripts/check_treedx_generated_types.py
 python3 -m compileall -q src tests
 ```
 
@@ -162,7 +162,7 @@ Record final SDK baseline results in
 
 A full release candidate is ready when:
 
-- Root `TreeDB Release Gate` passes.
+- Root `TreeDX Release Gate` passes.
 - Integrated SDK spec and language SDK test jobs pass.
 - Package artifacts are uploaded for affected SDK packages.
 - Optional live integration is either not configured and cleanly reports not
@@ -177,7 +177,7 @@ A full release candidate is ready when:
 Python reports `No module named pip`: install `pip` or virtualenv tooling for
 the local Python interpreter. CI uses `actions/setup-python` and upgrades pip.
 
-TypeScript or TreeSeed reports missing `dist` from `@treedb/ts-sdk`: run
+TypeScript or TreeSeed reports missing `dist` from `@treedx/ts-sdk`: run
 `npm run build` in `packages/ts-sdk` before focused `packages/trsd-sdk`
 regression.
 

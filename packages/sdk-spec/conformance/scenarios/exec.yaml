@@ -21,7 +21,7 @@ scenarios:
     assertions:
       - Command execution respects workspace policy boundaries.
       - Output is sanitized and does not expose hidden host paths or credentials.
-      - Execution failures preserve TreeDbApiError-compatible fields.
+      - Execution failures preserve TreeDxApiError-compatible fields.
   - id: exec.write_limited
     capabilityId: exec.workspace
     title: Execute write-limited workspace commands within policy boundaries.
@@ -42,6 +42,6 @@ scenarios:
         action: exec.runDenied
         description: Exercise denied command behavior through the SDK facade.
     assertions:
-      - Write-limited commands respect TreeDB policy boundaries.
-      - Denied operations surface TreeDbApiError-compatible errors.
+      - Write-limited commands respect TreeDX policy boundaries.
+      - Denied operations surface TreeDxApiError-compatible errors.
       - Output is sanitized and does not expose hidden host paths or credentials.

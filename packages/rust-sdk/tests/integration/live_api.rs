@@ -1,15 +1,15 @@
-use treedb_sdk::{TreeDbClient, TreeDbConfig};
+use treedx_sdk::{TreeDxClient, TreeDxConfig};
 
 #[tokio::test]
 async fn live_health_is_optional() {
-    let Ok(base_url) = std::env::var("TREEDB_BASE_URL") else {
-        eprintln!("TreeDB integration not configured: TREEDB_BASE_URL is absent");
+    let Ok(base_url) = std::env::var("TREEDX_BASE_URL") else {
+        eprintln!("TreeDX integration not configured: TREEDX_BASE_URL is absent");
         return;
     };
 
-    let client = TreeDbClient::new(TreeDbConfig {
+    let client = TreeDxClient::new(TreeDxConfig {
         base_url,
-        token: std::env::var("TREEDB_TOKEN").ok(),
+        token: std::env::var("TREEDX_TOKEN").ok(),
         ..Default::default()
     });
     client.health().await.unwrap();

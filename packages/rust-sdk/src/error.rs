@@ -3,7 +3,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 #[error("{message}")]
-pub struct TreeDbApiError {
+pub struct TreeDxApiError {
     pub status: u16,
     pub code: String,
     pub message: String,
@@ -11,9 +11,9 @@ pub struct TreeDbApiError {
     pub payload: Option<Value>,
 }
 
-pub type TreeDbResult<T> = Result<T, TreeDbApiError>;
+pub type TreeDxResult<T> = Result<T, TreeDxApiError>;
 
-impl TreeDbApiError {
+impl TreeDxApiError {
     pub fn from_response(status: u16, payload: Value) -> Self {
         let error = payload.get("error").unwrap_or(&payload);
         let code = error
@@ -24,7 +24,7 @@ impl TreeDbApiError {
         let message = error
             .get("message")
             .and_then(Value::as_str)
-            .unwrap_or("TreeDB request failed")
+            .unwrap_or("TreeDX request failed")
             .to_string();
         let details = error.get("details").cloned();
 

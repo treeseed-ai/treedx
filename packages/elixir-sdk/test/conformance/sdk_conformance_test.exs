@@ -1,4 +1,4 @@
-defmodule TreeDbSdk.ConformanceTest do
+defmodule TreeDxSdk.ConformanceTest do
   use ExUnit.Case, async: true
 
   defp scenarios do
@@ -14,8 +14,8 @@ defmodule TreeDbSdk.ConformanceTest do
   end
 
   test "scenario catalog loads and reports not configured" do
-    client = TreeDbSdk.Client.new(base_url: "http://localhost:4000")
-    adapter = TreeDbSdk.Conformance.Adapter.new(client)
+    client = TreeDxSdk.Client.new(base_url: "http://localhost:4000")
+    adapter = TreeDxSdk.Conformance.Adapter.new(client)
     scenarios = scenarios()
     assert scenarios != []
 
@@ -24,7 +24,7 @@ defmodule TreeDbSdk.ConformanceTest do
       assert scenario["capabilityId"] != ""
 
       assert %{status: :not_configured} =
-               TreeDbSdk.Conformance.Adapter.run_scenario(adapter, scenario)
+               TreeDxSdk.Conformance.Adapter.run_scenario(adapter, scenario)
     end
   end
 end

@@ -1,16 +1,16 @@
-defmodule TreeDbSdk.MixProject do
+defmodule TreeDxSdk.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :tree_db_sdk,
+      app: :treedx_sdk,
       version: "0.1.0",
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
-      description: "Generic Elixir SDK for TreeDB.",
+      description: "Generic Elixir SDK for TreeDX.",
       package: [
         licenses: ["Apache-2.0"],
-        links: %{"Repository" => "https://github.com/treeseed-ai/treedb"},
+        links: %{"Repository" => "https://github.com/treeseed-ai/treedx"},
         files: ["lib", "mix.exs", "README.md", "sdk-manifest.yaml"]
       ],
       deps: deps()

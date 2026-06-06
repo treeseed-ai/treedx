@@ -1,4 +1,4 @@
-defmodule TreeDbSdk.ErrorTest do
+defmodule TreeDxSdk.ErrorTest do
   use ExUnit.Case, async: true
 
   test "from_response preserves envelope fields" do
@@ -10,7 +10,7 @@ defmodule TreeDbSdk.ErrorTest do
       }
     }
 
-    error = TreeDbSdk.Error.from_response(401, payload)
+    error = TreeDxSdk.Error.from_response(401, payload)
     assert error.status == 401
     assert error.code == "invalid_token"
     assert error.message == "bad"
@@ -19,7 +19,7 @@ defmodule TreeDbSdk.ErrorTest do
   end
 
   test "network error uses stable code" do
-    error = TreeDbSdk.Error.network("offline")
+    error = TreeDxSdk.Error.network("offline")
     assert error.status == 0
     assert error.code == "network_error"
   end

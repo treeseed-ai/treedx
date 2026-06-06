@@ -1,6 +1,6 @@
 # Federation Routing Runbook
 
-TreeDB federation is a live routing fabric. Any node that receives a request can
+TreeDX federation is a live routing fabric. Any node that receives a request can
 coordinate it across the repositories in its trusted catalog. There is no
 separate coordinator service; coordination is a request-time role.
 
@@ -41,22 +41,22 @@ valid node token is rejected.
 ## Configuration
 
 ```text
-TREEDB_FEDERATION_ENABLED=true
-TREEDB_FEDERATION_NODE_ID=node_a
-TREEDB_FEDERATION_NODE_BASE_URL=http://node-a:4000
-TREEDB_FEDERATION_PARENTS=node_parent=http://node-parent:4000
-TREEDB_FEDERATION_AUTO_TRUST_PARENTS=true
-TREEDB_FEDERATION_CATALOG_SYNC_INTERVAL_MS=5000
-TREEDB_FEDERATION_CATALOG_PUSH_ENABLED=true
-TREEDB_FEDERATION_WRITE_PROXY_ENABLED=true
-TREEDB_FEDERATION_WRITE_PROXY_MAX_HOPS=1
-TREEDB_FEDERATION_READ_FROM_MIRRORS=true
-TREEDB_FEDERATION_MAX_MIRROR_STALENESS_MS=30000
-TREEDB_FEDERATION_TRANSITIVE_DISCOVERY=false
-TREEDB_FEDERATION_TRANSITIVE_TRUST=false
-TREEDB_FEDERATION_MODE=single_node
-TREEDB_FEDERATION_NODE_PRIVATE_KEY_PATH=/var/lib/treedb/keys/node-private.pem
-TREEDB_FEDERATION_NODE_PUBLIC_KEY_PATH=/var/lib/treedb/keys/node-public.pem
+TREEDX_FEDERATION_ENABLED=true
+TREEDX_FEDERATION_NODE_ID=node_a
+TREEDX_FEDERATION_NODE_BASE_URL=http://node-a:4000
+TREEDX_FEDERATION_PARENTS=node_parent=http://node-parent:4000
+TREEDX_FEDERATION_AUTO_TRUST_PARENTS=true
+TREEDX_FEDERATION_CATALOG_SYNC_INTERVAL_MS=5000
+TREEDX_FEDERATION_CATALOG_PUSH_ENABLED=true
+TREEDX_FEDERATION_WRITE_PROXY_ENABLED=true
+TREEDX_FEDERATION_WRITE_PROXY_MAX_HOPS=1
+TREEDX_FEDERATION_READ_FROM_MIRRORS=true
+TREEDX_FEDERATION_MAX_MIRROR_STALENESS_MS=30000
+TREEDX_FEDERATION_TRANSITIVE_DISCOVERY=false
+TREEDX_FEDERATION_TRANSITIVE_TRUST=false
+TREEDX_FEDERATION_MODE=single_node
+TREEDX_FEDERATION_NODE_PRIVATE_KEY_PATH=/var/lib/treedx/keys/node-private.pem
+TREEDX_FEDERATION_NODE_PUBLIC_KEY_PATH=/var/lib/treedx/keys/node-public.pem
 ```
 
 Configured parents are trusted by the child for catalog sync. Children are not
@@ -69,12 +69,12 @@ optionally node B. This lineage helps nodes discover each other live, but every
 node still applies local trust states before it imports routes or accepts
 forwarded operations.
 
-If node identity key files do not exist, TreeDB creates persistent local key
+If node identity key files do not exist, TreeDX creates persistent local key
 material at startup. Only public identity material is advertised in catalogs.
 
 ## Live Catalog Sync
 
-Catalog sync runs without restarting TreeDB:
+Catalog sync runs without restarting TreeDX:
 
 1. A node pulls catalogs from trusted parents or peers.
 2. A node imports logical peer, repository, route, capacity, and mirror records.
@@ -83,7 +83,7 @@ Catalog sync runs without restarting TreeDB:
 5. Local route tables are updated immediately.
 
 Push sync sends local catalog deltas after repository, route, mirror, capacity,
-or trust changes. If a route lookup misses, TreeDB can trigger a bounded
+or trust changes. If a route lookup misses, TreeDX can trigger a bounded
 on-demand sync and retry before returning a sanitized route error.
 
 Federation catalogs contain logical metadata only. They must not include local
@@ -93,7 +93,7 @@ refs, hidden paths, snippets, request bodies, or binary payloads.
 Catalog sync is live. Adding a parent, registering a node, trusting a peer,
 creating a repository, changing placement, syncing a mirror, or promoting a
 mirror updates route state through push, pull, or bounded on-demand sync without
-restarting TreeDB.
+restarting TreeDX.
 
 ## Routing
 
@@ -105,7 +105,7 @@ trusted proxy path.
 Writes are primary-owned. If the receiving node is not primary and write proxy
 is enabled for the trusted route, the node proxies to the primary with a node
 token, original request ID, forwarding metadata, and an idempotency key. If
-proxying is disabled, TreeDB returns a route-required response so the client can
+proxying is disabled, TreeDX returns a route-required response so the client can
 target the primary directly.
 
 Workspace requests route by workspace ID after creation. Repository reads,
@@ -129,7 +129,7 @@ writes. Automatic promotion is not enabled by default.
 
 Mirror transfer uses Git data, not filesystem paths. The source exports a bundle
 or equivalent repository data, the target imports it under its own
-`$TREEDB_DATA_DIR/mirrors/<repositoryName>` path, verifies refs/commits, records
+`$TREEDX_DATA_DIR/mirrors/<repositoryName>` path, verifies refs/commits, records
 freshness, and pushes a catalog update. A stale mirror is not eligible for reads
 when the requested ref/commit is missing or outside the configured staleness
 window.
@@ -143,7 +143,7 @@ their own replication path before they can safely spill over to mirrors.
 
 ## Connected-Library Access
 
-Connected-library federation links independently owned TreeDB libraries.
+Connected-library federation links independently owned TreeDX libraries.
 Repository advertisements are private unless explicitly published to trusted
 peers. Advertisements may expose selected refs, path globs, and capabilities
 such as `files:search`, `graph:query`, or `context:build`.
@@ -157,11 +157,11 @@ mirror requests are denied by default in connected-library mode.
 ## Managed Repository Storage
 
 Normal public APIs use canonical repository names and repository-relative file
-paths. TreeDB derives storage internally:
+paths. TreeDX derives storage internally:
 
 ```text
-$TREEDB_DATA_DIR/repositories/<repositoryName>
-$TREEDB_DATA_DIR/mirrors/<repositoryName>
+$TREEDX_DATA_DIR/repositories/<repositoryName>
+$TREEDX_DATA_DIR/mirrors/<repositoryName>
 ```
 
 Use `POST /api/v1/repos` to create managed repositories. Use
@@ -177,7 +177,7 @@ paths.
 4. `POST /api/v1/federation/catalog/sync` refreshes trusted catalogs without a
    restart.
 5. `/api/v1/ready` remains the traffic gate for each node.
-6. Metrics named `treedb_federation_*` show sync, route, proxy, and mirror
+6. Metrics named `treedx_federation_*` show sync, route, proxy, and mirror
    behavior.
 7. A read for a repository whose primary is remote succeeds through the ingress
    node when the peer is trusted for query.
@@ -199,7 +199,7 @@ scripts/profile-compose.sh mirror-federation
 scripts/profile-compose.sh connected-library
 ```
 
-Both profiles start three production-image TreeDB nodes and a profiler service.
+Both profiles start three production-image TreeDX nodes and a profiler service.
 They verify catalog convergence, route resolution, proxy behavior, mirror or
 connected-library access policy, OpenAPI response schemas, semantic assertions,
 and the measured load duration.

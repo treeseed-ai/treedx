@@ -2,7 +2,7 @@
 
 ## SDK Public Exports
 
-`packages/ts-sdk/src/index.ts` exports the primary public SDK surface. Important TreeDB-relevant exports include:
+`packages/ts-sdk/src/index.ts` exports the primary public SDK surface. Important TreeDX-relevant exports include:
 
 - `AgentSdk` and `ScopedAgentSdk`
 - `ContentGraphRuntime`
@@ -15,7 +15,7 @@
 - platform operation and runner client helpers
 - repository operation helpers from `src/operations/repository-operations.ts`
 - `TreeseedWorkflowSdk` and `TreeseedOperationsSdk`
-- many TreeSeed market, workflow, capacity, release, and platform domain types that must remain outside TreeDB
+- many TreeSeed market, workflow, capacity, release, and platform domain types that must remain outside TreeDX
 
 Important package export subpaths from `packages/ts-sdk/package.json`:
 
@@ -32,7 +32,7 @@ Important package export subpaths from `packages/ts-sdk/package.json`:
 - `./graph`
 - `./models`
 
-TreeDB should not replace this developer-facing SDK surface with raw TreeDB endpoints. It should provide a repository transport/backend that the SDK can select while keeping the public SDK experience stable.
+TreeDX should not replace this developer-facing SDK surface with raw TreeDX endpoints. It should provide a repository transport/backend that the SDK can select while keeping the public SDK experience stable.
 
 ## Repository Operations
 
@@ -53,13 +53,13 @@ The repository descriptor includes:
 
 The operations create or update content files, commit changes, optionally run verification commands, and return navigation details such as changed paths, branch, commit SHA, and workspace path.
 
-The file also contains TreeSeed domain collections and defaults such as `objectives`, `questions`, `notes`, `proposals`, `decisions`, and `agents`. TreeDB should support the Git, file, workspace, branch, commit, diff, and verification primitives needed by these operations, but it must not encode the meaning of those collections.
+The file also contains TreeSeed domain collections and defaults such as `objectives`, `questions`, `notes`, `proposals`, `decisions`, and `agents`. TreeDX should support the Git, file, workspace, branch, commit, diff, and verification primitives needed by these operations, but it must not encode the meaning of those collections.
 
-TreeDB adapter mappings:
+TreeDX adapter mappings:
 
-- Replace direct workspace path access with TreeDB workspace sessions.
-- Map repository descriptors to TreeDB repository registration and placement records.
-- Map path policies to TreeDB path-scoped capabilities.
+- Replace direct workspace path access with TreeDX workspace sessions.
+- Map repository descriptors to TreeDX repository registration and placement records.
+- Map path policies to TreeDX path-scoped capabilities.
 - Map verification commands to sandbox exec APIs.
 - Preserve TreeSeed content normalization in the SDK/core layer.
 
@@ -75,12 +75,12 @@ TreeDB adapter mappings:
 - commits through `GitRuntime`
 - merges base content and `.agent-worktrees` content by latest update timestamp
 
-TreeDB adapter seams:
+TreeDX adapter seams:
 
-- `list`, `get`, and `search` can map to TreeDB file listing, blob reads, and search/index endpoints.
-- `create` and `update` can map to TreeDB workspace write plus commit endpoints.
+- `list`, `get`, and `search` can map to TreeDX file listing, blob reads, and search/index endpoints.
+- `create` and `update` can map to TreeDX workspace write plus commit endpoints.
 - Frontmatter parsing, serialization, field aliasing, filtering, sorting, mutation normalization, and version checks should remain reusable pure TypeScript functions.
-- The storage backend should be swappable, so the codebase does not duplicate the same content algorithms for local filesystem and remote TreeDB modes.
+- The storage backend should be swappable, so the codebase does not duplicate the same content algorithms for local filesystem and remote TreeDX modes.
 
 ## Graph Operations
 
@@ -93,12 +93,12 @@ TreeDB adapter seams:
 - persist graph snapshots and serialized indexes under generated graph state
 - support lexical search, graph traversal, context packs, DSL parsing, reference resolution, and path explanations
 
-TreeDB adapter seams:
+TreeDX adapter seams:
 
-- TreeDB Rust graph/search should implement generic file, section, entity, edge, rank, and context-pack primitives.
-- TreeSeed model registry definitions should stay outside TreeDB and supply product-specific interpretation only at the SDK/core layer.
-- Graph parsing and ranking should be implemented once around generic repository documents, with adapters for TypeScript SDK compatibility and Rust TreeDB core execution.
-- TreeDB should index repository data and expose repository-scoped graph/search/context results without learning TreeSeed market semantics.
+- TreeDX Rust graph/search should implement generic file, section, entity, edge, rank, and context-pack primitives.
+- TreeSeed model registry definitions should stay outside TreeDX and supply product-specific interpretation only at the SDK/core layer.
+- Graph parsing and ranking should be implemented once around generic repository documents, with adapters for TypeScript SDK compatibility and Rust TreeDX core execution.
+- TreeDX should index repository data and expose repository-scoped graph/search/context results without learning TreeSeed market semantics.
 
 ## Context/Query Operations
 
@@ -111,9 +111,9 @@ Context/query behavior is exposed through:
 - `declarativeContextFormatToGraphView`
 - `declarativeContextPurposeToGraphStage`
 
-TreeDB should provide generic context/query primitives over repository files, sections, entities, and edges. SDK-specific request compilers can translate TreeSeed model and context concepts into TreeDB repository graph queries.
+TreeDX should provide generic context/query primitives over repository files, sections, entities, and edges. SDK-specific request compilers can translate TreeSeed model and context concepts into TreeDX repository graph queries.
 
-Authorization must happen before search or graph expansion. TreeDB must reduce repo/ref/path scope first, then query only permitted indexes or segments.
+Authorization must happen before search or graph expansion. TreeDX must reduce repo/ref/path scope first, then query only permitted indexes or segments.
 
 ## Repository/Git Operations
 
@@ -136,13 +136,13 @@ template, and verification services and tests. Areas to keep mapped include:
 - release and workspace services under `src/operations/services`
 - workflow lifecycle and worktree tests under `test/utils`
 
-TreeDB mapping:
+TreeDX mapping:
 
-- `currentBranch` maps to a TreeDB ref read.
-- `ensureWorktree` maps to a TreeDB workspace session or materialized worktree.
-- `commitFileChanges` maps to TreeDB write/patch/delete plus commit.
+- `currentBranch` maps to a TreeDX ref read.
+- `ensureWorktree` maps to a TreeDX workspace session or materialized worktree.
+- `commitFileChanges` maps to TreeDX write/patch/delete plus commit.
 - Fetch, push, status, diff, workspace commit, and release-adjacent workflows map
-  to TreeDB/Gitoxide/gix where practical. Product release orchestration remains
+  to TreeDX/Gitoxide/gix where practical. Product release orchestration remains
   SDK-side.
 - Shell Git should be retained only as an explicit compatibility fallback with audit events and clear operation boundaries.
 
@@ -159,15 +159,15 @@ Current behavior:
 - SDK operations are listed centrally in `src/sdk-dispatch.ts`.
 - Dispatch capabilities are listed centrally in `src/dispatch.ts`.
 
-The current remote API is TreeSeed market/project oriented, not TreeDB oriented. TreeDB should not overload market dispatch with repository database semantics.
+The current remote API is TreeSeed market/project oriented, not TreeDX oriented. TreeDX should not overload market dispatch with repository database semantics.
 
-TreeDB adapter seams:
+TreeDX adapter seams:
 
-- Use `TreeDbClient`, TreeDB adapters, and port classes as the separate
+- Use `TreeDxClient`, TreeDX adapters, and port classes as the separate
   repository transport.
-- Keep SDK developer APIs stable and select local filesystem or remote TreeDB
+- Keep SDK developer APIs stable and select local filesystem or remote TreeDX
   mode by configuration.
-- Use explicit repo/ref/path/workspace context for TreeDB calls instead of
+- Use explicit repo/ref/path/workspace context for TreeDX calls instead of
   `repoRoot`-only dispatch.
 
 ## Capability/Security Concepts
@@ -180,13 +180,13 @@ Current SDK auth and capability concepts are string-based and product/platform o
 - `src/platform-operations.ts`: platform scopes include `platform:repository:write`, `platform:runners:claim`, and operation management scopes.
 - `src/dispatch.ts`: dispatch capabilities define execution class and allowed targets.
 
-TreeDB implication:
+TreeDX implication:
 
-- TreeDB needs opaque scoped capability records with tenant, repo, ref, path, workspace, and operation dimensions.
-- SDK calls to TreeDB must include token plus repository/ref/path/workspace context.
-- TreeDB should verify credentials and compute effective scope server-side.
+- TreeDX needs opaque scoped capability records with tenant, repo, ref, path, workspace, and operation dimensions.
+- SDK calls to TreeDX must include token plus repository/ref/path/workspace context.
+- TreeDX should verify credentials and compute effective scope server-side.
 - Production identity must not come from request JSON.
-- String scopes may still exist as opaque claims, but TreeDB authorization must be tied to Git/repository boundaries.
+- String scopes may still exist as opaque claims, but TreeDX authorization must be tied to Git/repository boundaries.
 
 ## Local Filesystem Assumptions
 
@@ -201,7 +201,7 @@ The SDK currently assumes local filesystem access in many places:
 - graph and index snapshots written to generated local files
 - verification commands run in a local cwd
 
-TreeDB compatibility requires a storage abstraction where these behaviors can be backed by remote file/blob/workspace APIs without duplicating parsing, filtering, graph, and model logic.
+TreeDX compatibility requires a storage abstraction where these behaviors can be backed by remote file/blob/workspace APIs without duplicating parsing, filtering, graph, and model logic.
 
 ## Shell Command Assumptions
 
@@ -216,10 +216,10 @@ Shell usage categories in the SDK include:
 - script/PTY usage for workspace command tests
 - verification command execution
 
-TreeDB implication:
+TreeDX implication:
 
-- TreeDB API should not expose raw shell as the primary edit path.
-- `TreeDb.Exec` is capability gated, workspace scoped, audited, timeout
+- TreeDX API should not expose raw shell as the primary edit path.
+- `TreeDx.Exec` is capability gated, workspace scoped, audited, timeout
   bounded, and sandboxed through explicit backends.
 - Shell execution should happen near the repository volume and inside a constrained workspace session.
 
@@ -227,17 +227,17 @@ TreeDB implication:
 
 The current SDK supports bearer-token remote calls, device flow, token refresh, personal access tokens, service credentials, project API keys, and trusted user assertions. These are TreeSeed/API concepts today.
 
-TreeDB should define its own verifier boundary:
+TreeDX should define its own verifier boundary:
 
-- standalone/dev mode: local dev tokens and policy files under the TreeDB data directory
+- standalone/dev mode: local dev tokens and policy files under the TreeDX data directory
 - connected mode: signed credentials and opaque control-plane claims
 - all modes: actor identity and effective capabilities resolved before repository operations
 
 ## Repository Access Assumptions
 
-Current SDK repository access is largely implied by local checkout access, branch conventions, path policies, and platform operation scopes. This is not sufficient for TreeDB.
+Current SDK repository access is largely implied by local checkout access, branch conventions, path policies, and platform operation scopes. This is not sufficient for TreeDX.
 
-TreeDB needs explicit access inputs:
+TreeDX needs explicit access inputs:
 
 - repository ID
 - ref or branch pattern
@@ -246,9 +246,9 @@ TreeDB needs explicit access inputs:
 - operation capability
 - tenant/project/actor opaque claims
 
-TreeDB must avoid querying all repositories and filtering unauthorized results at the end.
+TreeDX must avoid querying all repositories and filtering unauthorized results at the end.
 
-## TreeDB Adapter Seams
+## TreeDX Adapter Seams
 
 Primary seams:
 
@@ -256,16 +256,16 @@ Primary seams:
 2. File/blob transport for list, read, write, patch, delete, and commit.
 3. Workspace transport for branch/session creation and scoped materialization.
 4. Graph/search transport for repository-scoped indexes and context packs.
-5. Auth context propagation from SDK clients to TreeDB.
-6. Capability translation from TreeSeed platform scopes into opaque TreeDB scoped grants.
+5. Auth context propagation from SDK clients to TreeDX.
+6. Capability translation from TreeSeed platform scopes into opaque TreeDX scoped grants.
 7. Exec transport for verification commands and agent shell needs.
 
-These seams are exposed through the SDK TreeDB clients, adapters, generated
+These seams are exposed through the SDK TreeDX clients, adapters, generated
 OpenAPI-backed API types, and local/remote ports.
 
-## Domain Concepts That Must Remain Outside TreeDB
+## Domain Concepts That Must Remain Outside TreeDX
 
-These are SDK, market, core, platform, or control-plane concepts, not TreeDB concepts:
+These are SDK, market, core, platform, or control-plane concepts, not TreeDX concepts:
 
 - objectives
 - questions
@@ -282,15 +282,15 @@ These are SDK, market, core, platform, or control-plane concepts, not TreeDB con
 - workday/team inbox/capacity concepts
 - platform operations and commerce workflows
 
-TreeDB can store, update, index, search, snapshot, and query files containing these concepts, but it must not understand their product meaning.
+TreeDX can store, update, index, search, snapshot, and query files containing these concepts, but it must not understand their product meaning.
 
 ## Breaking-Change Risks
 
-1. Replacing SDK methods with raw TreeDB endpoints would break the developer experience.
-2. Moving TreeSeed model semantics into TreeDB would violate the repository-database boundary.
+1. Replacing SDK methods with raw TreeDX endpoints would break the developer experience.
+2. Moving TreeSeed model semantics into TreeDX would violate the repository-database boundary.
 3. Treating local path access as permanent would block remote/federated repository operation.
 4. Keeping Git shell commands as the default implementation would violate the Gitoxide/gix direction.
-5. Reusing market dispatch for TreeDB repository operations would blur product and repository-database boundaries.
+5. Reusing market dispatch for TreeDX repository operations would blur product and repository-database boundaries.
 6. Failing to add repo/ref/path/workspace authorization would create security and data leakage risks.
 
 ## Architecture Implications
@@ -299,17 +299,17 @@ TreeDB can store, update, index, search, snapshot, and query files containing th
 
 Use Elixir/Phoenix as the actor, boundary, and lifecycle layer:
 
-- `TreeDb.Auth`: verifies credentials and resolves actor claims.
-- `TreeDb.Capabilities`: calculates effective scoped capabilities.
-- `TreeDb.Repos`: owns repository records and placement lookup.
-- `TreeDb.Workspaces`: supervises workspace sessions and leases.
-- `TreeDb.Git`: calls Rust Git operations and constrained external transport
+- `TreeDx.Auth`: verifies credentials and resolves actor claims.
+- `TreeDx.Capabilities`: calculates effective scoped capabilities.
+- `TreeDx.Repos`: owns repository records and placement lookup.
+- `TreeDx.Workspaces`: supervises workspace sessions and leases.
+- `TreeDx.Git`: calls Rust Git operations and constrained external transport
   only when explicitly configured.
-- `TreeDb.Store`: calls Rust storage operations.
-- `TreeDb.Graph`: supervises graph/index jobs.
-- `TreeDb.Exec`: supervises sandboxed commands.
-- `TreeDb.Audit`: records append-only audit events.
-- `TreeDb.Registry`: owns node, placement, and mirror records.
+- `TreeDx.Store`: calls Rust storage operations.
+- `TreeDx.Graph`: supervises graph/index jobs.
+- `TreeDx.Exec`: supervises sandboxed commands.
+- `TreeDx.Audit`: records append-only audit events.
+- `TreeDx.Registry`: owns node, placement, and mirror records.
 
 Use GenServers and Supervisors for stateful lifecycles only: workspace leases, long-running jobs, mirror sync, graph refresh, and exec sessions. Keep pure policy calculations as plain modules.
 
@@ -317,15 +317,15 @@ Use GenServers and Supervisors for stateful lifecycles only: workspace leases, l
 
 Use Rust crates as reusable function libraries with explicit input/output structs:
 
-- `treedb_store`: encode/decode records, append logs, manifests, checksums, compaction, and recovery.
-- `treedb_git`: repository open/register, refs, trees, blobs, patch, diff, commit, fetch, and push where gix supports it.
-- `treedb_graph`: Markdown/MDX parsing, graph extraction, indexing, ranking, and context assembly.
+- `treedx_store`: encode/decode records, append logs, manifests, checksums, compaction, and recovery.
+- `treedx_git`: repository open/register, refs, trees, blobs, patch, diff, commit, fetch, and push where gix supports it.
+- `treedx_graph`: Markdown/MDX parsing, graph extraction, indexing, ranking, and context assembly.
 
 Keep Rust functions deterministic and side-effect explicit:
 
 - no hidden global state
 - every function accepts data-dir, repo, or workspace context
-- return typed `Result<T, TreeDbError>`
+- return typed `Result<T, TreeDxError>`
 - share algorithms across Elixir API, CLI tooling, tests, and generated SDK
   contract code
 
@@ -365,7 +365,7 @@ Sources:
 4. SDK public API mixes generic repository/file behavior with TreeSeed market/product concepts.
 5. Current content store assumes local POSIX filesystem and direct Markdown file walking.
 6. Current mutations assume local Git worktrees under `.agent-worktrees`.
-7. Git operations shell out broadly; TreeDB should replace common operations with gix and document shell fallback.
-8. Current auth scopes are string-based and not repo/ref/path/workspace scoped enough for TreeDB.
-9. Existing remote dispatch is market/project oriented; TreeDB needs a separate repository transport seam.
+7. Git operations shell out broadly; TreeDX should replace common operations with gix and document shell fallback.
+8. Current auth scopes are string-based and not repo/ref/path/workspace scoped enough for TreeDX.
+9. Existing remote dispatch is market/project oriented; TreeDX needs a separate repository transport seam.
 10. Graph indexing is reusable but currently tied to local file scanning and generated local snapshots.

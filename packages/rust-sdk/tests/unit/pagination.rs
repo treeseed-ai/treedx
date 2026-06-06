@@ -1,5 +1,5 @@
-use treedb_sdk::TreeDbPage;
-use treedb_sdk::pagination::{create_page, get_next_cursor};
+use treedx_sdk::TreeDxPage;
+use treedx_sdk::pagination::{create_page, get_next_cursor};
 
 #[test]
 fn page_helpers_preserve_cursor_metadata() {
@@ -10,7 +10,7 @@ fn page_helpers_preserve_cursor_metadata() {
     assert_eq!(get_next_cursor(&page), Some("cursor-2"));
     assert_eq!(page.has_more, Some(true));
 
-    let explicit = TreeDbPage {
+    let explicit = TreeDxPage {
         items: vec![3],
         next_cursor: None,
         has_more: Some(false),

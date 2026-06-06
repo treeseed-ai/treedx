@@ -18,7 +18,7 @@ scenarios:
   steps:
   - name: execute
     action: search_index.refresh_status_compact
-    description: Execute search_index.refresh_status_compact through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute search_index.refresh_status_compact through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.

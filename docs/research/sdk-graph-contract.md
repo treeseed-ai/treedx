@@ -49,25 +49,25 @@ Supported clauses are `for`, `in`, `via`, `depth`, `where`, `limit`, `budget`, a
 
 ## SDK Snapshot Storage
 
-The current SDK stores local snapshots under `.treeseed/state/graph`. TreeDB does not expose this local path concept. TreeDB graph state lives under `$TREEDB_DATA_DIR/graph` and public API responses use logical `treedb://graph/<repo_id>/<graph_version>` locators.
+The current SDK stores local snapshots under `.treeseed/state/graph`. TreeDX does not expose this local path concept. TreeDX graph state lives under `$TREEDX_DATA_DIR/graph` and public API responses use logical `treedx://graph/<repo_id>/<graph_version>` locators.
 
 ## Ranking Provider Notes
 
-The SDK supports pluggable ranking providers. TreeDB uses built-in lexical plus
+The SDK supports pluggable ranking providers. TreeDX uses built-in lexical plus
 graph-neighborhood scoring and exposes authorization-filtered diagnostics when
 requested.
 
 ## Access Filtering Contract
 
-The SDK scopes by model in the current local runtime. TreeDB scopes by actor, repo, ref, path, and capability. TreeDB must filter unauthorized graph segments before ranking, expansion, traversal, counting, diagnostics, and response serialization.
+The SDK scopes by model in the current local runtime. TreeDX scopes by actor, repo, ref, path, and capability. TreeDX must filter unauthorized graph segments before ranking, expansion, traversal, counting, diagnostics, and response serialization.
 
-## TreeDB Mapping
+## TreeDX Mapping
 
-- TreeDB file nodes map to SDK `File`.
-- TreeDB heading sections map to SDK `Section`.
+- TreeDX file nodes map to SDK `File`.
+- TreeDX heading sections map to SDK `Section`.
 - Frontmatter tags map to SDK `Tag`.
 - Unresolved links/imports map to SDK `Reference`.
 - Directory, ref, and commit provenance nodes use SDK-compatible `Reference` nodes with generic `entityType`.
 
-TreeDB does not encode TreeSeed product semantics. SDK integration maps generic
-TreeDB graph primitives into product-specific concepts outside TreeDB.
+TreeDX does not encode TreeSeed product semantics. SDK integration maps generic
+TreeDX graph primitives into product-specific concepts outside TreeDX.

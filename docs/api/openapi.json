@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "TreeDB API",
+    "title": "TreeDX API",
     "version": "0.10.0",
-    "description": "Human-maintained public API contract for implemented TreeDB surfaces. SDK API payload types are generated from this document."
+    "description": "Human-maintained public API contract for implemented TreeDX surfaces. SDK API payload types are generated from this document."
   },
   "servers": [
     {
@@ -21,14 +21,14 @@
         "operationId": "getHealth",
         "summary": "Return basic service health.",
         "security": [],
-        "x-treedb-required-capabilities": [],
+        "x-treedx-required-capabilities": [],
         "responses": {
           "200": {
             "description": "Return basic service health. response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetHealthResponse"
+                  "$ref": "#/components/schemas/TreeDxGetHealthResponse"
                 }
               }
             }
@@ -44,14 +44,14 @@
         "operationId": "getVersion",
         "summary": "Return service and API version.",
         "security": [],
-        "x-treedb-required-capabilities": [],
+        "x-treedx-required-capabilities": [],
         "responses": {
           "200": {
             "description": "Return service and API version. response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetVersionResponse"
+                  "$ref": "#/components/schemas/TreeDxGetVersionResponse"
                 }
               }
             }
@@ -67,14 +67,14 @@
         "operationId": "getWhoami",
         "summary": "Return the current principal when authenticated.",
         "security": [],
-        "x-treedb-required-capabilities": [],
+        "x-treedx-required-capabilities": [],
         "responses": {
           "200": {
             "description": "Return the current principal when authenticated. response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetWhoamiResponse"
+                  "$ref": "#/components/schemas/TreeDxGetWhoamiResponse"
                 }
               }
             }
@@ -90,14 +90,14 @@
         "operationId": "getAuthMode",
         "summary": "Return the configured authentication mode.",
         "security": [],
-        "x-treedb-required-capabilities": [],
+        "x-treedx-required-capabilities": [],
         "responses": {
           "200": {
             "description": "Return the configured authentication mode. response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetAuthModeResponse"
+                  "$ref": "#/components/schemas/TreeDxGetAuthModeResponse"
                 }
               }
             }
@@ -113,14 +113,14 @@
         "operationId": "createDevToken",
         "summary": "Create a dev bearer token when dev auth is enabled.",
         "security": [],
-        "x-treedb-required-capabilities": [],
+        "x-treedx-required-capabilities": [],
         "responses": {
           "200": {
             "description": "Create a dev bearer token when dev auth is enabled. response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCreateDevTokenResponse"
+                  "$ref": "#/components/schemas/TreeDxCreateDevTokenResponse"
                 }
               }
             }
@@ -138,7 +138,7 @@
       "get": {
         "operationId": "getEffectiveScope",
         "summary": "Resolve the current effective policy scope.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:read"
         ],
         "responses": {
@@ -147,7 +147,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetEffectiveScopeResponse"
+                  "$ref": "#/components/schemas/TreeDxGetEffectiveScopeResponse"
                 }
               }
             }
@@ -173,7 +173,7 @@
       "post": {
         "operationId": "refreshPolicy",
         "summary": "Refresh local policy records from a connected policy source.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:write"
         ],
         "responses": {
@@ -182,7 +182,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbRefreshPolicyResponse"
+                  "$ref": "#/components/schemas/TreeDxRefreshPolicyResponse"
                 }
               }
             }
@@ -209,7 +209,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbPolicyRefreshRequest"
+                "$ref": "#/components/schemas/TreeDxPolicyRefreshRequest"
               }
             }
           }
@@ -219,17 +219,17 @@
     "/api/v1/policy/capabilities": {
       "get": {
         "operationId": "listCapabilities",
-        "summary": "List canonical TreeDB capabilities.",
-        "x-treedb-required-capabilities": [
+        "summary": "List canonical TreeDX capabilities.",
+        "x-treedx-required-capabilities": [
           "policy:read"
         ],
         "responses": {
           "200": {
-            "description": "List canonical TreeDB capabilities. response.",
+            "description": "List canonical TreeDX capabilities. response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListCapabilitiesResponse"
+                  "$ref": "#/components/schemas/TreeDxListCapabilitiesResponse"
                 }
               }
             }
@@ -255,7 +255,7 @@
       "get": {
         "operationId": "listCapabilityGrants",
         "summary": "List capability grants.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:read"
         ],
         "responses": {
@@ -264,7 +264,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListCapabilityGrantsResponse"
+                  "$ref": "#/components/schemas/TreeDxListCapabilityGrantsResponse"
                 }
               }
             }
@@ -288,7 +288,7 @@
       "post": {
         "operationId": "putCapabilityGrant",
         "summary": "Create or replace a capability grant.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:write"
         ],
         "responses": {
@@ -297,7 +297,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbPutCapabilityGrantResponse"
+                  "$ref": "#/components/schemas/TreeDxPutCapabilityGrantResponse"
                 }
               }
             }
@@ -324,7 +324,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbCapabilityGrantRequest"
+                "$ref": "#/components/schemas/TreeDxCapabilityGrantRequest"
               }
             }
           }
@@ -335,7 +335,7 @@
       "get": {
         "operationId": "listAuditEvents",
         "summary": "List audit events visible to the caller.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "audit:read"
         ],
         "responses": {
@@ -344,7 +344,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListAuditEventsResponse"
+                  "$ref": "#/components/schemas/TreeDxListAuditEventsResponse"
                 }
               }
             }
@@ -370,7 +370,7 @@
       "post": {
         "operationId": "planFederationQuery",
         "summary": "Reduce a requested federated scope without executing a query.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "query:federated"
         ],
         "responses": {
@@ -379,7 +379,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbPlanFederationQueryResponse"
+                  "$ref": "#/components/schemas/TreeDxPlanFederationQueryResponse"
                 }
               }
             }
@@ -403,7 +403,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbFederationQueryPlanRequest"
+                "$ref": "#/components/schemas/TreeDxFederationQueryPlanRequest"
               }
             }
           }
@@ -414,7 +414,7 @@
       "post": {
         "operationId": "federatedSearch",
         "summary": "Execute authorized federated repository search.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "query:federated",
           "files:search"
         ],
@@ -422,7 +422,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbFederatedSearchRequest"
+                "$ref": "#/components/schemas/TreeDxFederatedSearchRequest"
               }
             }
           }
@@ -433,7 +433,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederatedSearchResponse"
+                  "$ref": "#/components/schemas/TreeDxFederatedSearchResponse"
                 }
               }
             }
@@ -465,14 +465,14 @@
       "post": {
         "operationId": "federatedQuery",
         "summary": "Execute authorized federated repository query.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "query:federated"
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbFederatedQueryRequest"
+                "$ref": "#/components/schemas/TreeDxFederatedQueryRequest"
               }
             }
           }
@@ -483,7 +483,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederatedQueryResponse"
+                  "$ref": "#/components/schemas/TreeDxFederatedQueryResponse"
                 }
               }
             }
@@ -515,7 +515,7 @@
       "post": {
         "operationId": "federatedContextBuild",
         "summary": "Build an authorized federated context pack.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "query:federated",
           "graph:query"
         ],
@@ -523,7 +523,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbFederatedContextRequest"
+                "$ref": "#/components/schemas/TreeDxFederatedContextRequest"
               }
             }
           }
@@ -534,7 +534,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederatedContextBuildResponse"
+                  "$ref": "#/components/schemas/TreeDxFederatedContextBuildResponse"
                 }
               }
             }
@@ -566,7 +566,7 @@
       "post": {
         "operationId": "federatedGraphQuery",
         "summary": "Execute an authorized federated graph query.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "query:federated",
           "graph:query"
         ],
@@ -574,7 +574,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbFederatedGraphRequest"
+                "$ref": "#/components/schemas/TreeDxFederatedGraphRequest"
               }
             }
           }
@@ -585,7 +585,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederatedGraphQueryResponse"
+                  "$ref": "#/components/schemas/TreeDxFederatedGraphQueryResponse"
                 }
               }
             }
@@ -617,7 +617,7 @@
       "get": {
         "operationId": "getLocalNode",
         "summary": "Return local node metadata.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "registry:read"
         ],
         "responses": {
@@ -626,7 +626,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetLocalNodeResponse"
+                  "$ref": "#/components/schemas/TreeDxGetLocalNodeResponse"
                 }
               }
             }
@@ -651,17 +651,17 @@
     "/api/v1/registry/nodes": {
       "get": {
         "operationId": "listRegistryNodes",
-        "summary": "List registered TreeDB nodes.",
-        "x-treedb-required-capabilities": [
+        "summary": "List registered TreeDX nodes.",
+        "x-treedx-required-capabilities": [
           "registry:read"
         ],
         "responses": {
           "200": {
-            "description": "List registered TreeDB nodes. response.",
+            "description": "List registered TreeDX nodes. response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListRegistryNodesResponse"
+                  "$ref": "#/components/schemas/TreeDxListRegistryNodesResponse"
                 }
               }
             }
@@ -687,7 +687,7 @@
       "get": {
         "operationId": "getRepositoryPlacement",
         "summary": "Return placement metadata for a repository.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "registry:read"
         ],
         "parameters": [
@@ -701,7 +701,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetRepositoryPlacementResponse"
+                  "$ref": "#/components/schemas/TreeDxGetRepositoryPlacementResponse"
                 }
               }
             }
@@ -728,7 +728,7 @@
       "post": {
         "operationId": "putRepositoryPlacement",
         "summary": "Create or update placement metadata for a repository.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "registry:write"
         ],
         "parameters": [
@@ -742,7 +742,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbPutRepositoryPlacementResponse"
+                  "$ref": "#/components/schemas/TreeDxPutRepositoryPlacementResponse"
                 }
               }
             }
@@ -769,7 +769,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbRepositoryPlacementRequest"
+                "$ref": "#/components/schemas/TreeDxRepositoryPlacementRequest"
               }
             }
           }
@@ -780,7 +780,7 @@
       "post": {
         "operationId": "registerRepository",
         "summary": "Register a repository.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "repos:write"
         ],
         "responses": {
@@ -789,7 +789,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbRegisterRepositoryResponse"
+                  "$ref": "#/components/schemas/TreeDxRegisterRepositoryResponse"
                 }
               }
             }
@@ -816,7 +816,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbRegisterRepositoryRequest"
+                "$ref": "#/components/schemas/TreeDxRegisterRepositoryRequest"
               }
             }
           }
@@ -827,7 +827,7 @@
       "get": {
         "operationId": "listRepositories",
         "summary": "List repositories visible to the caller.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "repos:read"
         ],
         "responses": {
@@ -836,7 +836,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListRepositoriesResponse"
+                  "$ref": "#/components/schemas/TreeDxListRepositoriesResponse"
                 }
               }
             }
@@ -860,7 +860,7 @@
       "post": {
         "operationId": "createRepository",
         "summary": "Create a server-managed repository.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "repos:write"
         ],
         "responses": {
@@ -869,7 +869,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCreateRepositoryResponse"
+                  "$ref": "#/components/schemas/TreeDxCreateRepositoryResponse"
                 }
               }
             }
@@ -896,7 +896,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbCreateRepositoryRequest"
+                "$ref": "#/components/schemas/TreeDxCreateRepositoryRequest"
               }
             }
           }
@@ -907,7 +907,7 @@
       "get": {
         "operationId": "getRepository",
         "summary": "Return repository metadata.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "repos:read"
         ],
         "parameters": [
@@ -921,7 +921,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetRepositoryResponse"
+                  "$ref": "#/components/schemas/TreeDxGetRepositoryResponse"
                 }
               }
             }
@@ -950,7 +950,7 @@
       "get": {
         "operationId": "getRepositoryStatus",
         "summary": "Return repository status.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "repos:read"
         ],
         "parameters": [
@@ -964,7 +964,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetRepositoryStatusResponse"
+                  "$ref": "#/components/schemas/TreeDxGetRepositoryStatusResponse"
                 }
               }
             }
@@ -993,7 +993,7 @@
       "get": {
         "operationId": "listRepositoryRefs",
         "summary": "List repository refs.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "git:read"
         ],
         "parameters": [
@@ -1007,7 +1007,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListRepositoryRefsResponse"
+                  "$ref": "#/components/schemas/TreeDxListRepositoryRefsResponse"
                 }
               }
             }
@@ -1033,7 +1033,7 @@
       "get": {
         "operationId": "listRepositoryRemotes",
         "summary": "List repository remotes.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "remotes:read"
         ],
         "parameters": [
@@ -1047,7 +1047,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListRepositoryRemotesResponse"
+                  "$ref": "#/components/schemas/TreeDxListRepositoryRemotesResponse"
                 }
               }
             }
@@ -1073,7 +1073,7 @@
       "post": {
         "operationId": "syncRepository",
         "summary": "Fetch repository updates.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "git:fetch"
         ],
         "parameters": [
@@ -1087,7 +1087,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbSyncRepositoryResponse"
+                  "$ref": "#/components/schemas/TreeDxSyncRepositoryResponse"
                 }
               }
             }
@@ -1114,7 +1114,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbFetchRemoteRequest"
+                "$ref": "#/components/schemas/TreeDxFetchRemoteRequest"
               }
             }
           }
@@ -1125,7 +1125,7 @@
       "post": {
         "operationId": "pushRepository",
         "summary": "Push explicit repository refs to a remote.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "git:push"
         ],
         "parameters": [
@@ -1139,7 +1139,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbPushRepositoryResponse"
+                  "$ref": "#/components/schemas/TreeDxPushRepositoryResponse"
                 }
               }
             }
@@ -1169,7 +1169,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbPushRequest"
+                "$ref": "#/components/schemas/TreeDxPushRequest"
               }
             }
           }
@@ -1180,7 +1180,7 @@
       "post": {
         "operationId": "createWorkspace",
         "summary": "Create a repository workspace.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "workspace:create"
         ],
         "parameters": [
@@ -1194,7 +1194,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCreateWorkspaceResponse"
+                  "$ref": "#/components/schemas/TreeDxCreateWorkspaceResponse"
                 }
               }
             }
@@ -1224,7 +1224,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbCreateWorkspaceRequest"
+                "$ref": "#/components/schemas/TreeDxCreateWorkspaceRequest"
               }
             }
           }
@@ -1235,7 +1235,7 @@
       "post": {
         "operationId": "readRepositoryFile",
         "summary": "Read a repository file",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:read"
         ],
         "parameters": [
@@ -1249,7 +1249,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbReadRepositoryFileResponse"
+                  "$ref": "#/components/schemas/TreeDxReadRepositoryFileResponse"
                 }
               }
             }
@@ -1276,7 +1276,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbRepositoryReadRequest"
+                "$ref": "#/components/schemas/TreeDxRepositoryReadRequest"
               }
             }
           }
@@ -1287,7 +1287,7 @@
       "post": {
         "operationId": "readRepositoryBlob",
         "summary": "Read a repository blob as base64",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:read"
         ],
         "parameters": [
@@ -1301,7 +1301,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbReadRepositoryBlobResponse"
+                  "$ref": "#/components/schemas/TreeDxReadRepositoryBlobResponse"
                 }
               }
             }
@@ -1337,7 +1337,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbBlobReadRequest"
+                "$ref": "#/components/schemas/TreeDxBlobReadRequest"
               }
             }
           }
@@ -1348,7 +1348,7 @@
       "post": {
         "operationId": "searchRepositoryFiles",
         "summary": "Search repository files",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:search"
         ],
         "parameters": [
@@ -1362,7 +1362,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbSearchRepositoryFilesResponse"
+                  "$ref": "#/components/schemas/TreeDxSearchRepositoryFilesResponse"
                 }
               }
             }
@@ -1386,7 +1386,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbRepositorySearchRequest"
+                "$ref": "#/components/schemas/TreeDxRepositorySearchRequest"
               }
             }
           }
@@ -1397,7 +1397,7 @@
       "post": {
         "operationId": "listRepositoryPaths",
         "summary": "List repository paths",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:read"
         ],
         "parameters": [
@@ -1411,7 +1411,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListRepositoryPathsResponse"
+                  "$ref": "#/components/schemas/TreeDxListRepositoryPathsResponse"
                 }
               }
             }
@@ -1435,7 +1435,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbRepositoryPathsRequest"
+                "$ref": "#/components/schemas/TreeDxRepositoryPathsRequest"
               }
             }
           }
@@ -1446,7 +1446,7 @@
       "post": {
         "operationId": "queryRepository",
         "summary": "Query repository content",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:search"
         ],
         "parameters": [
@@ -1460,7 +1460,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbQueryRepositoryResponse"
+                  "$ref": "#/components/schemas/TreeDxQueryRepositoryResponse"
                 }
               }
             }
@@ -1484,7 +1484,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbRepositoryQueryRequest"
+                "$ref": "#/components/schemas/TreeDxRepositoryQueryRequest"
               }
             }
           }
@@ -1495,7 +1495,7 @@
       "post": {
         "operationId": "refreshRepositoryGraph",
         "summary": "Refresh repository graph with optional incremental metadata",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "graph:refresh"
         ],
         "parameters": [
@@ -1509,7 +1509,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbRefreshRepositoryGraphResponse"
+                  "$ref": "#/components/schemas/TreeDxRefreshRepositoryGraphResponse"
                 }
               }
             }
@@ -1536,7 +1536,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbGraphRefreshRequest"
+                "$ref": "#/components/schemas/TreeDxGraphRefreshRequest"
               }
             }
           }
@@ -1547,7 +1547,7 @@
       "get": {
         "operationId": "getGraphRefreshJob",
         "summary": "Get repository graph refresh job status",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "graph:query"
         ],
         "parameters": [
@@ -1569,7 +1569,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetGraphRefreshJobResponse"
+                  "$ref": "#/components/schemas/TreeDxGetGraphRefreshJobResponse"
                 }
               }
             }
@@ -1598,7 +1598,7 @@
       "post": {
         "operationId": "queryRepositoryGraph",
         "summary": "Query repository graph",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "graph:query"
         ],
         "parameters": [
@@ -1612,7 +1612,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbQueryRepositoryGraphResponse"
+                  "$ref": "#/components/schemas/TreeDxQueryRepositoryGraphResponse"
                 }
               }
             }
@@ -1639,7 +1639,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbGraphQueryRequest"
+                "$ref": "#/components/schemas/TreeDxGraphQueryRequest"
               }
             }
           }
@@ -1650,7 +1650,7 @@
       "post": {
         "operationId": "searchGraphFiles",
         "summary": "Search graph files",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "graph:query"
         ],
         "parameters": [
@@ -1664,7 +1664,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbSearchGraphFilesResponse"
+                  "$ref": "#/components/schemas/TreeDxSearchGraphFilesResponse"
                 }
               }
             }
@@ -1688,7 +1688,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbGraphSearchRequest"
+                "$ref": "#/components/schemas/TreeDxGraphSearchRequest"
               }
             }
           }
@@ -1699,7 +1699,7 @@
       "post": {
         "operationId": "searchGraphSections",
         "summary": "Search graph sections",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "graph:query"
         ],
         "parameters": [
@@ -1713,7 +1713,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbSearchGraphSectionsResponse"
+                  "$ref": "#/components/schemas/TreeDxSearchGraphSectionsResponse"
                 }
               }
             }
@@ -1737,7 +1737,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbGraphSearchRequest"
+                "$ref": "#/components/schemas/TreeDxGraphSearchRequest"
               }
             }
           }
@@ -1748,7 +1748,7 @@
       "post": {
         "operationId": "searchGraphEntities",
         "summary": "Search graph entities",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "graph:query"
         ],
         "parameters": [
@@ -1762,7 +1762,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbSearchGraphEntitiesResponse"
+                  "$ref": "#/components/schemas/TreeDxSearchGraphEntitiesResponse"
                 }
               }
             }
@@ -1786,7 +1786,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbGraphSearchRequest"
+                "$ref": "#/components/schemas/TreeDxGraphSearchRequest"
               }
             }
           }
@@ -1797,7 +1797,7 @@
       "get": {
         "operationId": "getGraphNode",
         "summary": "Get one graph node",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "graph:query"
         ],
         "parameters": [
@@ -1819,7 +1819,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetGraphNodeResponse"
+                  "$ref": "#/components/schemas/TreeDxGetGraphNodeResponse"
                 }
               }
             }
@@ -1848,7 +1848,7 @@
       "post": {
         "operationId": "getRelatedGraphNodes",
         "summary": "Get related graph nodes",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "graph:query"
         ],
         "parameters": [
@@ -1862,7 +1862,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetRelatedGraphNodesResponse"
+                  "$ref": "#/components/schemas/TreeDxGetRelatedGraphNodesResponse"
                 }
               }
             }
@@ -1886,7 +1886,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbGraphRelatedRequest"
+                "$ref": "#/components/schemas/TreeDxGraphRelatedRequest"
               }
             }
           }
@@ -1897,7 +1897,7 @@
       "post": {
         "operationId": "getGraphSubgraph",
         "summary": "Get a graph subgraph",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "graph:query"
         ],
         "parameters": [
@@ -1911,7 +1911,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetGraphSubgraphResponse"
+                  "$ref": "#/components/schemas/TreeDxGetGraphSubgraphResponse"
                 }
               }
             }
@@ -1935,7 +1935,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbGraphSubgraphRequest"
+                "$ref": "#/components/schemas/TreeDxGraphSubgraphRequest"
               }
             }
           }
@@ -1946,7 +1946,7 @@
       "post": {
         "operationId": "buildContext",
         "summary": "Build a context pack with mode and budget diagnostics",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "graph:query"
         ],
         "parameters": [
@@ -1960,7 +1960,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbBuildContextResponse"
+                  "$ref": "#/components/schemas/TreeDxBuildContextResponse"
                 }
               }
             }
@@ -1984,7 +1984,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbContextRequest"
+                "$ref": "#/components/schemas/TreeDxContextRequest"
               }
             }
           }
@@ -1995,7 +1995,7 @@
       "post": {
         "operationId": "parseContextQuery",
         "summary": "Parse a context query DSL string",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "graph:query"
         ],
         "parameters": [
@@ -2009,7 +2009,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbParseContextQueryResponse"
+                  "$ref": "#/components/schemas/TreeDxParseContextQueryResponse"
                 }
               }
             }
@@ -2033,7 +2033,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbCtxParseRequest"
+                "$ref": "#/components/schemas/TreeDxCtxParseRequest"
               }
             }
           }
@@ -2044,7 +2044,7 @@
       "post": {
         "operationId": "refreshSearchIndex",
         "summary": "Refresh repository search index metadata",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:search"
         ],
         "parameters": [
@@ -2058,7 +2058,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbRefreshSearchIndexResponse"
+                  "$ref": "#/components/schemas/TreeDxRefreshSearchIndexResponse"
                 }
               }
             }
@@ -2085,7 +2085,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbSearchIndexRefreshRequest"
+                "$ref": "#/components/schemas/TreeDxSearchIndexRefreshRequest"
               }
             }
           }
@@ -2096,7 +2096,7 @@
       "get": {
         "operationId": "getSearchIndexStatus",
         "summary": "Get repository search index status",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:search"
         ],
         "parameters": [
@@ -2110,7 +2110,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetSearchIndexStatusResponse"
+                  "$ref": "#/components/schemas/TreeDxGetSearchIndexStatusResponse"
                 }
               }
             }
@@ -2139,7 +2139,7 @@
       "post": {
         "operationId": "compactSearchIndex",
         "summary": "Compact repository search index metadata",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:write"
         ],
         "parameters": [
@@ -2153,7 +2153,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCompactSearchIndexResponse"
+                  "$ref": "#/components/schemas/TreeDxCompactSearchIndexResponse"
                 }
               }
             }
@@ -2183,7 +2183,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbSearchIndexCompactRequest"
+                "$ref": "#/components/schemas/TreeDxSearchIndexCompactRequest"
               }
             }
           }
@@ -2194,7 +2194,7 @@
       "post": {
         "operationId": "buildSnapshot",
         "summary": "Build a repository snapshot",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "snapshot:build"
         ],
         "parameters": [
@@ -2208,7 +2208,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbBuildSnapshotResponse"
+                  "$ref": "#/components/schemas/TreeDxBuildSnapshotResponse"
                 }
               }
             }
@@ -2232,7 +2232,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbSnapshotBuildRequest"
+                "$ref": "#/components/schemas/TreeDxSnapshotBuildRequest"
               }
             }
           }
@@ -2243,7 +2243,7 @@
       "get": {
         "operationId": "getSnapshot",
         "summary": "Get snapshot metadata",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "snapshot:build"
         ],
         "parameters": [
@@ -2265,7 +2265,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetSnapshotResponse"
+                  "$ref": "#/components/schemas/TreeDxGetSnapshotResponse"
                 }
               }
             }
@@ -2294,7 +2294,7 @@
       "post": {
         "operationId": "exportArtifact",
         "summary": "Export snapshot artifact metadata or bytes",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "artifact:export"
         ],
         "parameters": [
@@ -2308,7 +2308,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbExportArtifactResponse"
+                  "$ref": "#/components/schemas/TreeDxExportArtifactResponse"
                 }
               }
             }
@@ -2335,7 +2335,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbArtifactExportRequest"
+                "$ref": "#/components/schemas/TreeDxArtifactExportRequest"
               }
             }
           }
@@ -2346,7 +2346,7 @@
       "get": {
         "operationId": "listArtifacts",
         "summary": "List repository artifact metadata",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:read"
         ],
         "parameters": [
@@ -2360,7 +2360,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListArtifactsResponse"
+                  "$ref": "#/components/schemas/TreeDxListArtifactsResponse"
                 }
               }
             }
@@ -2386,7 +2386,7 @@
       "get": {
         "operationId": "getArtifact",
         "summary": "Get repository artifact metadata",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:read"
         ],
         "parameters": [
@@ -2408,7 +2408,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetArtifactResponse"
+                  "$ref": "#/components/schemas/TreeDxGetArtifactResponse"
                 }
               }
             }
@@ -2435,7 +2435,7 @@
       "delete": {
         "operationId": "deleteArtifact",
         "summary": "Delete repository artifact metadata and bytes where safe",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:write"
         ],
         "parameters": [
@@ -2457,7 +2457,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbDeleteArtifactResponse"
+                  "$ref": "#/components/schemas/TreeDxDeleteArtifactResponse"
                 }
               }
             }
@@ -2486,7 +2486,7 @@
       "get": {
         "operationId": "listMirrors",
         "summary": "List repository mirrors",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "mirror:read"
         ],
         "parameters": [
@@ -2500,7 +2500,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListMirrorsResponse"
+                  "$ref": "#/components/schemas/TreeDxListMirrorsResponse"
                 }
               }
             }
@@ -2524,7 +2524,7 @@
       "post": {
         "operationId": "putMirror",
         "summary": "Create or update a repository mirror",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "mirror:write"
         ],
         "parameters": [
@@ -2538,7 +2538,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbPutMirrorResponse"
+                  "$ref": "#/components/schemas/TreeDxPutMirrorResponse"
                 }
               }
             }
@@ -2565,7 +2565,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbMirrorRequest"
+                "$ref": "#/components/schemas/TreeDxMirrorRequest"
               }
             }
           }
@@ -2576,7 +2576,7 @@
       "post": {
         "operationId": "syncMirror",
         "summary": "Record or execute mirror sync",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "mirror:write",
           "git:fetch"
         ],
@@ -2599,7 +2599,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbSyncMirrorResponse"
+                  "$ref": "#/components/schemas/TreeDxSyncMirrorResponse"
                 }
               }
             }
@@ -2626,7 +2626,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbMirrorSyncRequest"
+                "$ref": "#/components/schemas/TreeDxMirrorSyncRequest"
               }
             }
           }
@@ -2637,7 +2637,7 @@
       "post": {
         "operationId": "checkMirrorHealth",
         "summary": "Check mirror health metadata",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "mirror:read",
           "registry:read"
         ],
@@ -2660,7 +2660,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCheckMirrorHealthResponse"
+                  "$ref": "#/components/schemas/TreeDxCheckMirrorHealthResponse"
                 }
               }
             }
@@ -2687,7 +2687,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbMirrorHealthRequest"
+                "$ref": "#/components/schemas/TreeDxMirrorHealthRequest"
               }
             }
           }
@@ -2698,7 +2698,7 @@
       "post": {
         "operationId": "promoteMirror",
         "summary": "Plan or apply mirror promotion",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "migration:read",
           "migration:write"
         ],
@@ -2721,7 +2721,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbPromoteMirrorResponse"
+                  "$ref": "#/components/schemas/TreeDxPromoteMirrorResponse"
                 }
               }
             }
@@ -2751,7 +2751,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbMirrorPromotionRequest"
+                "$ref": "#/components/schemas/TreeDxMirrorPromotionRequest"
               }
             }
           }
@@ -2762,7 +2762,7 @@
       "post": {
         "operationId": "createMigration",
         "summary": "Create a repository placement migration",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "migration:write"
         ],
         "parameters": [
@@ -2776,7 +2776,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCreateMigrationResponse"
+                  "$ref": "#/components/schemas/TreeDxCreateMigrationResponse"
                 }
               }
             }
@@ -2803,7 +2803,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbMigrationRequest"
+                "$ref": "#/components/schemas/TreeDxMigrationRequest"
               }
             }
           }
@@ -2814,7 +2814,7 @@
       "get": {
         "operationId": "getMigration",
         "summary": "Get a repository placement migration",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "migration:read"
         ],
         "parameters": [
@@ -2836,7 +2836,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetMigrationResponse"
+                  "$ref": "#/components/schemas/TreeDxGetMigrationResponse"
                 }
               }
             }
@@ -2865,7 +2865,7 @@
       "get": {
         "operationId": "getWorkspace",
         "summary": "Get workspace metadata",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "workspace:same_actor"
         ],
         "parameters": [
@@ -2879,7 +2879,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetWorkspaceResponse"
+                  "$ref": "#/components/schemas/TreeDxGetWorkspaceResponse"
                 }
               }
             }
@@ -2911,7 +2911,7 @@
       "post": {
         "operationId": "closeWorkspace",
         "summary": "Close a workspace",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "workspace:same_actor"
         ],
         "parameters": [
@@ -2925,7 +2925,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCloseWorkspaceResponse"
+                  "$ref": "#/components/schemas/TreeDxCloseWorkspaceResponse"
                 }
               }
             }
@@ -2957,7 +2957,7 @@
       "get": {
         "operationId": "listWorkspaceTree",
         "summary": "List workspace tree entries",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:read"
         ],
         "parameters": [
@@ -2971,7 +2971,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListWorkspaceTreeResponse"
+                  "$ref": "#/components/schemas/TreeDxListWorkspaceTreeResponse"
                 }
               }
             }
@@ -3000,7 +3000,7 @@
       "get": {
         "operationId": "readWorkspaceFile",
         "summary": "Read a workspace file",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:read"
         ],
         "parameters": [
@@ -3022,7 +3022,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbReadWorkspaceFileResponse"
+                  "$ref": "#/components/schemas/TreeDxReadWorkspaceFileResponse"
                 }
               }
             }
@@ -3052,7 +3052,7 @@
       "put": {
         "operationId": "writeWorkspaceFile",
         "summary": "Write a workspace file",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:write"
         ],
         "parameters": [
@@ -3074,7 +3074,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbWriteWorkspaceFileResponse"
+                  "$ref": "#/components/schemas/TreeDxWriteWorkspaceFileResponse"
                 }
               }
             }
@@ -3101,7 +3101,7 @@
       "patch": {
         "operationId": "patchWorkspaceFile",
         "summary": "Patch a workspace file",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:write"
         ],
         "parameters": [
@@ -3123,7 +3123,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbPatchWorkspaceFileResponse"
+                  "$ref": "#/components/schemas/TreeDxPatchWorkspaceFileResponse"
                 }
               }
             }
@@ -3153,7 +3153,7 @@
       "delete": {
         "operationId": "deleteWorkspaceFile",
         "summary": "Delete a workspace file",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:delete"
         ],
         "parameters": [
@@ -3175,7 +3175,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbDeleteWorkspaceFileResponse"
+                  "$ref": "#/components/schemas/TreeDxDeleteWorkspaceFileResponse"
                 }
               }
             }
@@ -3207,7 +3207,7 @@
       "post": {
         "operationId": "writeWorkspaceBlob",
         "summary": "Write a base64 workspace blob",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:write"
         ],
         "parameters": [
@@ -3221,7 +3221,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbWriteWorkspaceBlobResponse"
+                  "$ref": "#/components/schemas/TreeDxWriteWorkspaceBlobResponse"
                 }
               }
             }
@@ -3257,7 +3257,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbBlobWriteRequest"
+                "$ref": "#/components/schemas/TreeDxBlobWriteRequest"
               }
             }
           }
@@ -3268,7 +3268,7 @@
       "post": {
         "operationId": "deleteWorkspaceBlob",
         "summary": "Delete a workspace blob",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:delete"
         ],
         "parameters": [
@@ -3282,7 +3282,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbDeleteWorkspaceBlobResponse"
+                  "$ref": "#/components/schemas/TreeDxDeleteWorkspaceBlobResponse"
                 }
               }
             }
@@ -3312,7 +3312,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbBlobDeleteRequest"
+                "$ref": "#/components/schemas/TreeDxBlobDeleteRequest"
               }
             }
           }
@@ -3323,7 +3323,7 @@
       "get": {
         "operationId": "downloadWorkspaceBlob",
         "summary": "Download raw workspace blob bytes",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:read"
         ],
         "parameters": [
@@ -3358,17 +3358,17 @@
                   "type": "string"
                 }
               },
-              "x-treedb-content-hash": {
+              "x-treedx-content-hash": {
                 "schema": {
                   "type": "string"
                 }
               },
-              "x-treedb-object-id": {
+              "x-treedx-object-id": {
                 "schema": {
                   "type": "string"
                 }
               },
-              "x-treedb-source": {
+              "x-treedx-source": {
                 "schema": {
                   "type": "string"
                 }
@@ -3410,7 +3410,7 @@
       "put": {
         "operationId": "uploadWorkspaceBlob",
         "summary": "Upload raw workspace blob bytes",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:write"
         ],
         "parameters": [
@@ -3432,7 +3432,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbUploadWorkspaceBlobResponse"
+                  "$ref": "#/components/schemas/TreeDxUploadWorkspaceBlobResponse"
                 }
               }
             }
@@ -3467,7 +3467,7 @@
       "post": {
         "operationId": "createWorkspaceBlobUpload",
         "summary": "Create a resumable workspace blob upload session",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:write"
         ],
         "parameters": [
@@ -3481,7 +3481,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCreateWorkspaceBlobUploadResponse"
+                  "$ref": "#/components/schemas/TreeDxCreateWorkspaceBlobUploadResponse"
                 }
               }
             }
@@ -3511,7 +3511,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbBlobUploadCreateRequest"
+                "$ref": "#/components/schemas/TreeDxBlobUploadCreateRequest"
               }
             }
           }
@@ -3522,7 +3522,7 @@
       "put": {
         "operationId": "uploadWorkspaceBlobPart",
         "summary": "Upload one resumable blob part",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:write"
         ],
         "parameters": [
@@ -3552,7 +3552,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbUploadWorkspaceBlobPartResponse"
+                  "$ref": "#/components/schemas/TreeDxUploadWorkspaceBlobPartResponse"
                 }
               }
             }
@@ -3587,7 +3587,7 @@
       "post": {
         "operationId": "completeWorkspaceBlobUpload",
         "summary": "Complete a resumable blob upload and commit the blob overlay",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:write"
         ],
         "parameters": [
@@ -3609,7 +3609,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCompleteWorkspaceBlobUploadResponse"
+                  "$ref": "#/components/schemas/TreeDxCompleteWorkspaceBlobUploadResponse"
                 }
               }
             }
@@ -3639,7 +3639,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbBlobUploadCompleteRequest"
+                "$ref": "#/components/schemas/TreeDxBlobUploadCompleteRequest"
               }
             }
           }
@@ -3650,7 +3650,7 @@
       "delete": {
         "operationId": "abortWorkspaceBlobUpload",
         "summary": "Abort a resumable blob upload session",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:write"
         ],
         "parameters": [
@@ -3672,7 +3672,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbAbortWorkspaceBlobUploadResponse"
+                  "$ref": "#/components/schemas/TreeDxAbortWorkspaceBlobUploadResponse"
                 }
               }
             }
@@ -3704,7 +3704,7 @@
       "post": {
         "operationId": "searchWorkspace",
         "summary": "Search workspace files",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:search"
         ],
         "parameters": [
@@ -3718,7 +3718,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbSearchWorkspaceResponse"
+                  "$ref": "#/components/schemas/TreeDxSearchWorkspaceResponse"
                 }
               }
             }
@@ -3745,7 +3745,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbSearchRequest"
+                "$ref": "#/components/schemas/TreeDxSearchRequest"
               }
             }
           }
@@ -3756,7 +3756,7 @@
       "get": {
         "operationId": "getWorkspaceStatus",
         "summary": "Get workspace status and changes",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "files:read"
         ],
         "parameters": [
@@ -3770,7 +3770,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetWorkspaceStatusResponse"
+                  "$ref": "#/components/schemas/TreeDxGetWorkspaceStatusResponse"
                 }
               }
             }
@@ -3799,7 +3799,7 @@
       "get": {
         "operationId": "getWorkspaceDiff",
         "summary": "Get workspace diff",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "git:diff"
         ],
         "parameters": [
@@ -3813,7 +3813,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetWorkspaceDiffResponse"
+                  "$ref": "#/components/schemas/TreeDxGetWorkspaceDiffResponse"
                 }
               }
             }
@@ -3842,7 +3842,7 @@
       "post": {
         "operationId": "commitWorkspace",
         "summary": "Commit workspace overlay changes",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "git:commit"
         ],
         "parameters": [
@@ -3856,7 +3856,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCommitWorkspaceResponse"
+                  "$ref": "#/components/schemas/TreeDxCommitWorkspaceResponse"
                 }
               }
             }
@@ -3883,7 +3883,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbCommitRequest"
+                "$ref": "#/components/schemas/TreeDxCommitRequest"
               }
             }
           }
@@ -3894,7 +3894,7 @@
       "post": {
         "operationId": "execWorkspace",
         "summary": "Execute a command in workspace context",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "workspace:exec:*"
         ],
         "parameters": [
@@ -3908,7 +3908,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbExecWorkspaceResponse"
+                  "$ref": "#/components/schemas/TreeDxExecWorkspaceResponse"
                 }
               }
             }
@@ -3938,7 +3938,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbExecRequest"
+                "$ref": "#/components/schemas/TreeDxExecRequest"
               }
             }
           }
@@ -3949,7 +3949,7 @@
       "get": {
         "operationId": "listQuarantinedWorkspaces",
         "summary": "List quarantined workspaces.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:read"
         ],
         "responses": {
@@ -3958,7 +3958,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListQuarantinedWorkspacesResponse"
+                  "$ref": "#/components/schemas/TreeDxListQuarantinedWorkspacesResponse"
                 }
               }
             }
@@ -3984,7 +3984,7 @@
       "get": {
         "operationId": "getAdminStorageHealth",
         "summary": "Return protected storage health diagnostics.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:read"
         ],
         "responses": {
@@ -3993,7 +3993,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbGetAdminStorageHealthResponse"
+                  "$ref": "#/components/schemas/TreeDxGetAdminStorageHealthResponse"
                 }
               }
             }
@@ -4019,7 +4019,7 @@
       "post": {
         "operationId": "checkAdminStorage",
         "summary": "Validate storage logs and checksums.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:read"
         ],
         "responses": {
@@ -4028,7 +4028,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCheckAdminStorageResponse"
+                  "$ref": "#/components/schemas/TreeDxCheckAdminStorageResponse"
                 }
               }
             }
@@ -4052,7 +4052,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbStorageCheckRequest"
+                "$ref": "#/components/schemas/TreeDxStorageCheckRequest"
               }
             }
           }
@@ -4063,7 +4063,7 @@
       "post": {
         "operationId": "recoverAdminStorage",
         "summary": "Run diagnostic storage recovery checks.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:write"
         ],
         "responses": {
@@ -4072,7 +4072,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbRecoverAdminStorageResponse"
+                  "$ref": "#/components/schemas/TreeDxRecoverAdminStorageResponse"
                 }
               }
             }
@@ -4099,7 +4099,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbStorageRecoverRequest"
+                "$ref": "#/components/schemas/TreeDxStorageRecoverRequest"
               }
             }
           }
@@ -4110,7 +4110,7 @@
       "post": {
         "operationId": "compactAdminStorage",
         "summary": "Compact latest-record storage logs.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:write"
         ],
         "responses": {
@@ -4119,7 +4119,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCompactAdminStorageResponse"
+                  "$ref": "#/components/schemas/TreeDxCompactAdminStorageResponse"
                 }
               }
             }
@@ -4146,7 +4146,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbStorageCompactRequest"
+                "$ref": "#/components/schemas/TreeDxStorageCompactRequest"
               }
             }
           }
@@ -4157,7 +4157,7 @@
       "post": {
         "operationId": "backupAdminStorage",
         "summary": "Create and verify a logical storage backup.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:read"
         ],
         "responses": {
@@ -4166,7 +4166,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbBackupAdminStorageResponse"
+                  "$ref": "#/components/schemas/TreeDxBackupAdminStorageResponse"
                 }
               }
             }
@@ -4190,7 +4190,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbStorageBackupRequest"
+                "$ref": "#/components/schemas/TreeDxStorageBackupRequest"
               }
             }
           }
@@ -4201,7 +4201,7 @@
       "get": {
         "operationId": "listStorageMigrations",
         "summary": "List storage format migration records.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:read"
         ],
         "responses": {
@@ -4210,7 +4210,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbListStorageMigrationsResponse"
+                  "$ref": "#/components/schemas/TreeDxListStorageMigrationsResponse"
                 }
               }
             }
@@ -4236,7 +4236,7 @@
       "post": {
         "operationId": "planStorageMigration",
         "summary": "Plan a storage format migration without mutating logs.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:read"
         ],
         "responses": {
@@ -4245,7 +4245,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbPlanStorageMigrationResponse"
+                  "$ref": "#/components/schemas/TreeDxPlanStorageMigrationResponse"
                 }
               }
             }
@@ -4272,7 +4272,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbStorageMigrationPlanRequest"
+                "$ref": "#/components/schemas/TreeDxStorageMigrationPlanRequest"
               }
             }
           }
@@ -4283,7 +4283,7 @@
       "post": {
         "operationId": "applyStorageMigration",
         "summary": "Apply a guarded storage format migration.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:write"
         ],
         "responses": {
@@ -4292,7 +4292,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbApplyStorageMigrationResponse"
+                  "$ref": "#/components/schemas/TreeDxApplyStorageMigrationResponse"
                 }
               }
             }
@@ -4319,7 +4319,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbStorageMigrationPlanRequest"
+                "$ref": "#/components/schemas/TreeDxStorageMigrationPlanRequest"
               }
             }
           }
@@ -4330,7 +4330,7 @@
       "post": {
         "operationId": "rollbackStorageMigration",
         "summary": "Roll back a reversible storage migration.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:write"
         ],
         "responses": {
@@ -4339,7 +4339,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbRollbackStorageMigrationResponse"
+                  "$ref": "#/components/schemas/TreeDxRollbackStorageMigrationResponse"
                 }
               }
             }
@@ -4366,7 +4366,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbStorageMigrationRollbackRequest"
+                "$ref": "#/components/schemas/TreeDxStorageMigrationRollbackRequest"
               }
             }
           }
@@ -4377,7 +4377,7 @@
       "post": {
         "operationId": "verifyStorageRestore",
         "summary": "Verify a storage backup can replay before restore.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:read"
         ],
         "responses": {
@@ -4386,7 +4386,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbVerifyStorageRestoreResponse"
+                  "$ref": "#/components/schemas/TreeDxVerifyStorageRestoreResponse"
                 }
               }
             }
@@ -4413,7 +4413,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbStorageRestoreVerifyRequest"
+                "$ref": "#/components/schemas/TreeDxStorageRestoreVerifyRequest"
               }
             }
           }
@@ -4424,7 +4424,7 @@
       "post": {
         "operationId": "restoreStorage",
         "summary": "Run a guarded storage restore from a verified backup.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:write"
         ],
         "responses": {
@@ -4433,7 +4433,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbRestoreStorageResponse"
+                  "$ref": "#/components/schemas/TreeDxRestoreStorageResponse"
                 }
               }
             }
@@ -4460,7 +4460,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbStorageRestoreRequest"
+                "$ref": "#/components/schemas/TreeDxStorageRestoreRequest"
               }
             }
           }
@@ -4471,7 +4471,7 @@
       "post": {
         "operationId": "cleanupArtifacts",
         "summary": "Apply artifact retention cleanup.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:write"
         ],
         "responses": {
@@ -4480,7 +4480,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbCleanupArtifactsResponse"
+                  "$ref": "#/components/schemas/TreeDxCleanupArtifactsResponse"
                 }
               }
             }
@@ -4504,7 +4504,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbArtifactCleanupRequest"
+                "$ref": "#/components/schemas/TreeDxArtifactCleanupRequest"
               }
             }
           }
@@ -4516,14 +4516,14 @@
         "operationId": "getReadiness",
         "summary": "Return sanitized service readiness.",
         "security": [],
-        "x-treedb-required-capabilities": [],
+        "x-treedx-required-capabilities": [],
         "responses": {
           "200": {
             "description": "Return sanitized service readiness. response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbReadinessResponse"
+                  "$ref": "#/components/schemas/TreeDxReadinessResponse"
                 }
               }
             }
@@ -4545,14 +4545,14 @@
         "operationId": "getDeepHealth",
         "summary": "Return sanitized deep health summary.",
         "security": [],
-        "x-treedb-required-capabilities": [],
+        "x-treedx-required-capabilities": [],
         "responses": {
           "200": {
             "description": "Return sanitized deep health summary. response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbDeepHealthResponse"
+                  "$ref": "#/components/schemas/TreeDxDeepHealthResponse"
                 }
               }
             }
@@ -4578,7 +4578,7 @@
             "bearerAuth": []
           }
         ],
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "policy:read"
         ],
         "responses": {
@@ -4587,7 +4587,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbDeepHealthResponse"
+                  "$ref": "#/components/schemas/TreeDxDeepHealthResponse"
                 }
               }
             }
@@ -4609,14 +4609,14 @@
         "operationId": "getMetrics",
         "summary": "Return sanitized JSON metrics.",
         "security": [],
-        "x-treedb-required-capabilities": [],
+        "x-treedx-required-capabilities": [],
         "responses": {
           "200": {
             "description": "Return sanitized JSON metrics. response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbMetricsResponse"
+                  "$ref": "#/components/schemas/TreeDxMetricsResponse"
                 }
               }
             }
@@ -4638,7 +4638,7 @@
         "operationId": "getPrometheusMetrics",
         "summary": "Return sanitized Prometheus metrics.",
         "security": [],
-        "x-treedb-required-capabilities": [],
+        "x-treedx-required-capabilities": [],
         "responses": {
           "200": {
             "description": "Prometheus text metrics.",
@@ -4667,7 +4667,7 @@
       "post": {
         "operationId": "registerFederationNode",
         "summary": "Register a federation peer node.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "federation:write"
         ],
         "responses": {
@@ -4676,7 +4676,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederationPeerResponse"
+                  "$ref": "#/components/schemas/TreeDxFederationPeerResponse"
                 }
               }
             }
@@ -4703,7 +4703,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbFederationPeerRegisterRequest"
+                "$ref": "#/components/schemas/TreeDxFederationPeerRegisterRequest"
               }
             }
           }
@@ -4714,7 +4714,7 @@
       "get": {
         "operationId": "listFederationPeers",
         "summary": "List federation peers in the trusted catalog.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "federation:read"
         ],
         "responses": {
@@ -4723,7 +4723,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederationPeersResponse"
+                  "$ref": "#/components/schemas/TreeDxFederationPeersResponse"
                 }
               }
             }
@@ -4752,7 +4752,7 @@
       "get": {
         "operationId": "getFederationPeer",
         "summary": "Return federation peer metadata.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "federation:read"
         ],
         "responses": {
@@ -4761,7 +4761,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederationPeerResponse"
+                  "$ref": "#/components/schemas/TreeDxFederationPeerResponse"
                 }
               }
             }
@@ -4800,7 +4800,7 @@
       "post": {
         "operationId": "trustFederationPeer",
         "summary": "Update federation trust states for a peer.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "federation:trust"
         ],
         "responses": {
@@ -4809,7 +4809,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederationPeerResponse"
+                  "$ref": "#/components/schemas/TreeDxFederationPeerResponse"
                 }
               }
             }
@@ -4836,7 +4836,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbFederationTrustRequest"
+                "$ref": "#/components/schemas/TreeDxFederationTrustRequest"
               }
             }
           }
@@ -4857,7 +4857,7 @@
       "post": {
         "operationId": "revokeFederationPeer",
         "summary": "Revoke federation trust for a peer.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "federation:trust"
         ],
         "responses": {
@@ -4866,7 +4866,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederationPeerResponse"
+                  "$ref": "#/components/schemas/TreeDxFederationPeerResponse"
                 }
               }
             }
@@ -4905,14 +4905,14 @@
       "get": {
         "operationId": "getFederationCatalog",
         "summary": "Return the local logical federation catalog.",
-        "x-treedb-required-capabilities": [],
+        "x-treedx-required-capabilities": [],
         "responses": {
           "200": {
             "description": "Return the local logical federation catalog. response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederationCatalogResponse"
+                  "$ref": "#/components/schemas/TreeDxFederationCatalogResponse"
                 }
               }
             }
@@ -4937,7 +4937,7 @@
       "post": {
         "operationId": "pushFederationCatalog",
         "summary": "Push a logical federation catalog delta.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "federation:sync"
         ],
         "responses": {
@@ -4946,7 +4946,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederationSyncResponse"
+                  "$ref": "#/components/schemas/TreeDxFederationSyncResponse"
                 }
               }
             }
@@ -4973,7 +4973,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbFederationCatalog"
+                "$ref": "#/components/schemas/TreeDxFederationCatalog"
               }
             }
           }
@@ -4984,7 +4984,7 @@
       "post": {
         "operationId": "syncFederationCatalog",
         "summary": "Trigger federation catalog synchronization.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "federation:sync"
         ],
         "responses": {
@@ -4993,7 +4993,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederationSyncResponse"
+                  "$ref": "#/components/schemas/TreeDxFederationSyncResponse"
                 }
               }
             }
@@ -5022,7 +5022,7 @@
       "get": {
         "operationId": "listFederationRoutes",
         "summary": "List active federation routing records.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "federation:read"
         ],
         "responses": {
@@ -5031,7 +5031,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederationRoutesResponse"
+                  "$ref": "#/components/schemas/TreeDxFederationRoutesResponse"
                 }
               }
             }
@@ -5060,7 +5060,7 @@
       "post": {
         "operationId": "proxyInternalFederationRequest",
         "summary": "Proxy an internal node-to-node federation request.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "federation:sync"
         ],
         "responses": {
@@ -5069,7 +5069,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbInternalFederationProxyResponse"
+                  "$ref": "#/components/schemas/TreeDxInternalFederationProxyResponse"
                 }
               }
             }
@@ -5096,7 +5096,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbInternalFederationProxyResponse"
+                "$ref": "#/components/schemas/TreeDxInternalFederationProxyResponse"
               }
             }
           }
@@ -5107,7 +5107,7 @@
       "post": {
         "operationId": "exportInternalFederationMirror",
         "summary": "Export repository mirror data for a trusted node.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "federation:sync"
         ],
         "responses": {
@@ -5116,7 +5116,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederationSyncResponse"
+                  "$ref": "#/components/schemas/TreeDxFederationSyncResponse"
                 }
               }
             }
@@ -5150,7 +5150,7 @@
       "post": {
         "operationId": "importInternalFederationMirror",
         "summary": "Import repository mirror data from a trusted node.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "federation:sync"
         ],
         "responses": {
@@ -5159,7 +5159,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbFederationSyncResponse"
+                  "$ref": "#/components/schemas/TreeDxFederationSyncResponse"
                 }
               }
             }
@@ -5186,7 +5186,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbFederationCatalog"
+                "$ref": "#/components/schemas/TreeDxFederationCatalog"
               }
             }
           }
@@ -5202,14 +5202,14 @@
       "get": {
         "operationId": "getInternalFederationHealth",
         "summary": "Return internal federation health for node-to-node checks.",
-        "x-treedb-required-capabilities": [],
+        "x-treedx-required-capabilities": [],
         "responses": {
           "200": {
             "description": "Return internal federation health for node-to-node checks. response.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbInternalFederationHealthResponse"
+                  "$ref": "#/components/schemas/TreeDxInternalFederationHealthResponse"
                 }
               }
             }
@@ -5234,7 +5234,7 @@
       "post": {
         "operationId": "importLocalRepository",
         "summary": "Import a data-dir-relative local Git repository into managed storage.",
-        "x-treedb-required-capabilities": [
+        "x-treedx-required-capabilities": [
           "repos:write"
         ],
         "responses": {
@@ -5243,7 +5243,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TreeDbImportLocalRepositoryResponse"
+                  "$ref": "#/components/schemas/TreeDxImportLocalRepositoryResponse"
                 }
               }
             }
@@ -5273,7 +5273,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TreeDbImportLocalRepositoryRequest"
+                "$ref": "#/components/schemas/TreeDxImportLocalRepositoryRequest"
               }
             }
           }
@@ -5308,21 +5308,21 @@
     },
     "responses": {
       "Ok": {
-        "description": "TreeDB ok envelope.",
+        "description": "TreeDX ok envelope.",
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/TreeDbOkEnvelope"
+              "$ref": "#/components/schemas/TreeDxOkEnvelope"
             }
           }
         }
       },
       "Error": {
-        "description": "TreeDB error envelope.",
+        "description": "TreeDX error envelope.",
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/TreeDbErrorEnvelope"
+              "$ref": "#/components/schemas/TreeDxErrorEnvelope"
             }
           }
         }
@@ -5330,28 +5330,28 @@
     },
     "schemas": {
       "OkEnvelope": {
-        "$ref": "#/components/schemas/TreeDbOkEnvelope"
+        "$ref": "#/components/schemas/TreeDxOkEnvelope"
       },
       "ErrorEnvelope": {
-        "$ref": "#/components/schemas/TreeDbErrorEnvelope"
+        "$ref": "#/components/schemas/TreeDxErrorEnvelope"
       },
       "Principal": {
-        "$ref": "#/components/schemas/TreeDbPrincipal"
+        "$ref": "#/components/schemas/TreeDxPrincipal"
       },
       "EffectiveScope": {
-        "$ref": "#/components/schemas/TreeDbEffectiveScope"
+        "$ref": "#/components/schemas/TreeDxEffectiveScope"
       },
       "Repository": {
-        "$ref": "#/components/schemas/TreeDbRepository"
+        "$ref": "#/components/schemas/TreeDxRepository"
       },
       "Workspace": {
-        "$ref": "#/components/schemas/TreeDbWorkspace"
+        "$ref": "#/components/schemas/TreeDxWorkspace"
       },
-      "TreeDbFederatedDiagnostics": {
+      "TreeDxFederatedDiagnostics": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbFederatedError": {
+      "TreeDxFederatedError": {
         "type": "object",
         "required": [
           "code",
@@ -5376,7 +5376,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbFederatedSearchRequest": {
+      "TreeDxFederatedSearchRequest": {
         "type": "object",
         "required": [
           "repoIds",
@@ -5436,7 +5436,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbFederatedSearchResponse": {
+      "TreeDxFederatedSearchResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -5446,12 +5446,12 @@
             "const": true
           },
           "search": {
-            "$ref": "#/components/schemas/TreeDbFederatedSearchResult"
+            "$ref": "#/components/schemas/TreeDxFederatedSearchResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbFederatedQueryRequest": {
+      "TreeDxFederatedQueryRequest": {
         "type": "object",
         "required": [
           "repoIds",
@@ -5514,7 +5514,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbFederatedQueryResponse": {
+      "TreeDxFederatedQueryResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -5524,12 +5524,12 @@
             "const": true
           },
           "query": {
-            "$ref": "#/components/schemas/TreeDbFederatedQueryResult"
+            "$ref": "#/components/schemas/TreeDxFederatedQueryResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbFederatedContextRequest": {
+      "TreeDxFederatedContextRequest": {
         "type": "object",
         "required": [
           "repoIds"
@@ -5565,11 +5565,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbFederatedContextResponse": {
+      "TreeDxFederatedContextResponse": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbFederatedGraphRequest": {
+      "TreeDxFederatedGraphRequest": {
         "type": "object",
         "required": [
           "repoIds"
@@ -5624,11 +5624,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbFederatedGraphResponse": {
+      "TreeDxFederatedGraphResponse": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbErrorCode": {
+      "TreeDxErrorCode": {
         "type": "string",
         "enum": [
           "authentication_required",
@@ -5665,7 +5665,7 @@
           "service_unavailable"
         ]
       },
-      "TreeDbError": {
+      "TreeDxError": {
         "type": "object",
         "required": [
           "code",
@@ -5673,7 +5673,7 @@
         ],
         "properties": {
           "code": {
-            "$ref": "#/components/schemas/TreeDbErrorCode"
+            "$ref": "#/components/schemas/TreeDxErrorCode"
           },
           "message": {
             "type": "string"
@@ -5685,7 +5685,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbOkEnvelope": {
+      "TreeDxOkEnvelope": {
         "type": "object",
         "required": [
           "ok"
@@ -5697,7 +5697,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbErrorEnvelope": {
+      "TreeDxErrorEnvelope": {
         "type": "object",
         "required": [
           "ok",
@@ -5708,28 +5708,28 @@
             "const": false
           },
           "error": {
-            "$ref": "#/components/schemas/TreeDbError"
+            "$ref": "#/components/schemas/TreeDxError"
           }
         },
         "additionalProperties": false
       },
-      "TreeDbId": {
+      "TreeDxId": {
         "type": "string"
       },
-      "TreeDbRefName": {
+      "TreeDxRefName": {
         "type": "string"
       },
-      "TreeDbPath": {
+      "TreeDxPath": {
         "type": "string"
       },
-      "TreeDbTimestamp": {
+      "TreeDxTimestamp": {
         "type": "string",
         "format": "date-time"
       },
-      "TreeDbContentHash": {
+      "TreeDxContentHash": {
         "type": "string"
       },
-      "TreeDbPrincipal": {
+      "TreeDxPrincipal": {
         "type": "object",
         "required": [
           "actorId",
@@ -5748,7 +5748,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbActor": {
+      "TreeDxActor": {
         "type": "object",
         "required": [
           "actorId",
@@ -5764,7 +5764,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbWhoami": {
+      "TreeDxWhoami": {
         "type": "object",
         "required": [
           "authenticated",
@@ -5777,7 +5777,7 @@
           "principal": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/TreeDbPrincipal"
+                "$ref": "#/components/schemas/TreeDxPrincipal"
               },
               {
                 "type": "null"
@@ -5787,7 +5787,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbAuthMode": {
+      "TreeDxAuthMode": {
         "type": "object",
         "required": [
           "mode",
@@ -5811,7 +5811,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbEffectiveScopeRequest": {
+      "TreeDxEffectiveScopeRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -5821,7 +5821,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbEffectiveScope": {
+      "TreeDxEffectiveScope": {
         "type": "object",
         "required": [
           "actorId",
@@ -5876,7 +5876,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbPolicyRefreshRequest": {
+      "TreeDxPolicyRefreshRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -5914,11 +5914,11 @@
         },
         "additionalProperties": false
       },
-      "TreeDbPolicyRefreshResult": {
+      "TreeDxPolicyRefreshResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbCapabilityGrant": {
+      "TreeDxCapabilityGrant": {
         "type": "object",
         "required": [
           "actorId",
@@ -6005,10 +6005,10 @@
         },
         "additionalProperties": false
       },
-      "TreeDbCapabilityGrantRequest": {
-        "$ref": "#/components/schemas/TreeDbCapabilityGrant"
+      "TreeDxCapabilityGrantRequest": {
+        "$ref": "#/components/schemas/TreeDxCapabilityGrant"
       },
-      "TreeDbAuditEvent": {
+      "TreeDxAuditEvent": {
         "type": "object",
         "required": [
           "id",
@@ -6153,7 +6153,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbNode": {
+      "TreeDxNode": {
         "type": "object",
         "required": [
           "id"
@@ -6174,7 +6174,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbRepositoryPlacement": {
+      "TreeDxRepositoryPlacement": {
         "type": "object",
         "required": [
           "primaryNodeId",
@@ -6211,10 +6211,10 @@
         },
         "additionalProperties": false
       },
-      "TreeDbRepositoryPlacementRequest": {
-        "$ref": "#/components/schemas/TreeDbRepositoryPlacement"
+      "TreeDxRepositoryPlacementRequest": {
+        "$ref": "#/components/schemas/TreeDxRepositoryPlacement"
       },
-      "TreeDbRepository": {
+      "TreeDxRepository": {
         "type": "object",
         "required": [
           "repoId",
@@ -6246,7 +6246,7 @@
             ]
           },
           "repositoryName": {
-            "$ref": "#/components/schemas/TreeDbRepositoryName"
+            "$ref": "#/components/schemas/TreeDxRepositoryName"
           },
           "storageKind": {
             "type": "string",
@@ -6258,7 +6258,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbRepositoryStatus": {
+      "TreeDxRepositoryStatus": {
         "type": "object",
         "required": [
           "repo",
@@ -6266,7 +6266,7 @@
         ],
         "properties": {
           "repo": {
-            "$ref": "#/components/schemas/TreeDbRepository"
+            "$ref": "#/components/schemas/TreeDxRepository"
           },
           "git": {
             "type": "object",
@@ -6275,7 +6275,7 @@
           "placement": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/TreeDbRepositoryPlacement"
+                "$ref": "#/components/schemas/TreeDxRepositoryPlacement"
               },
               {
                 "type": "null"
@@ -6285,7 +6285,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbRepositoryRef": {
+      "TreeDxRepositoryRef": {
         "type": "object",
         "required": [
           "name",
@@ -6321,7 +6321,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbRepositoryRemote": {
+      "TreeDxRepositoryRemote": {
         "type": "object",
         "required": [
           "name"
@@ -6343,17 +6343,17 @@
         },
         "additionalProperties": false
       },
-      "TreeDbRegisterRepositoryRequest": {
+      "TreeDxRegisterRepositoryRequest": {
         "type": "object",
         "required": [
           "repositoryName"
         ],
         "properties": {
           "repositoryName": {
-            "$ref": "#/components/schemas/TreeDbRepositoryName"
+            "$ref": "#/components/schemas/TreeDxRepositoryName"
           },
           "name": {
-            "$ref": "#/components/schemas/TreeDbRepositoryName"
+            "$ref": "#/components/schemas/TreeDxRepositoryName"
           },
           "defaultRef": {
             "type": "string"
@@ -6365,7 +6365,7 @@
         "additionalProperties": true,
         "description": "Compatibility registration for server-managed repository storage. Absolute localPath is compatibility-only and not part of the normal public contract."
       },
-      "TreeDbFetchRemoteRequest": {
+      "TreeDxFetchRemoteRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -6390,11 +6390,11 @@
         },
         "additionalProperties": false
       },
-      "TreeDbFetchRemoteResult": {
+      "TreeDxFetchRemoteResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbPushRequest": {
+      "TreeDxPushRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -6429,11 +6429,11 @@
         },
         "additionalProperties": false
       },
-      "TreeDbPushResult": {
+      "TreeDxPushResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbCreateWorkspaceRequest": {
+      "TreeDxCreateWorkspaceRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -6465,7 +6465,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbWorkspace": {
+      "TreeDxWorkspace": {
         "type": "object",
         "required": [
           "workspaceId",
@@ -6539,7 +6539,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbTreeEntry": {
+      "TreeDxTreeEntry": {
         "type": "object",
         "required": [
           "path"
@@ -6566,7 +6566,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbFile": {
+      "TreeDxFile": {
         "type": "object",
         "required": [
           "path"
@@ -6590,7 +6590,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbFileMutationResult": {
+      "TreeDxFileMutationResult": {
         "type": "object",
         "required": [
           "path"
@@ -6611,7 +6611,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbReadFileRequest": {
+      "TreeDxReadFileRequest": {
         "type": "object",
         "required": [
           "path"
@@ -6626,7 +6626,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbWriteFileRequest": {
+      "TreeDxWriteFileRequest": {
         "type": "object",
         "required": [
           "path",
@@ -6651,7 +6651,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbPatchFileRequest": {
+      "TreeDxPatchFileRequest": {
         "type": "object",
         "required": [
           "path"
@@ -6675,7 +6675,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbDeleteFileRequest": {
+      "TreeDxDeleteFileRequest": {
         "type": "object",
         "required": [
           "path"
@@ -6696,7 +6696,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbSearchRequest": {
+      "TreeDxSearchRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -6718,11 +6718,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbSearchResult": {
+      "TreeDxSearchResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbStatus": {
+      "TreeDxStatus": {
         "type": "object",
         "properties": {
           "workspaceId": {
@@ -6741,7 +6741,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbDiff": {
+      "TreeDxDiff": {
         "type": "object",
         "properties": {
           "workspaceId": {
@@ -6759,7 +6759,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbCommitRequest": {
+      "TreeDxCommitRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -6779,11 +6779,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbCommitResult": {
+      "TreeDxCommitResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbExecRequest": {
+      "TreeDxExecRequest": {
         "type": "object",
         "required": [
           "cmd"
@@ -6814,15 +6814,15 @@
         },
         "additionalProperties": true
       },
-      "TreeDbExecSandbox": {
+      "TreeDxExecSandbox": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbExecResult": {
+      "TreeDxExecResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbBlobReadRequest": {
+      "TreeDxBlobReadRequest": {
         "type": "object",
         "required": [
           "path"
@@ -6852,7 +6852,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbBlob": {
+      "TreeDxBlob": {
         "type": "object",
         "required": [
           "path",
@@ -6900,7 +6900,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbBlobWriteRequest": {
+      "TreeDxBlobWriteRequest": {
         "type": "object",
         "required": [
           "path",
@@ -6938,7 +6938,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbBlobDeleteRequest": {
+      "TreeDxBlobDeleteRequest": {
         "type": "object",
         "required": [
           "path"
@@ -6959,11 +6959,11 @@
         },
         "additionalProperties": false
       },
-      "TreeDbBlobUploadRequestHeaders": {
+      "TreeDxBlobUploadRequestHeaders": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbBlobMutationResult": {
+      "TreeDxBlobMutationResult": {
         "type": "object",
         "required": [
           "workspaceId",
@@ -6999,7 +6999,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbBlobUploadCreateRequest": {
+      "TreeDxBlobUploadCreateRequest": {
         "type": "object",
         "required": [
           "path"
@@ -7023,15 +7023,15 @@
         },
         "additionalProperties": false
       },
-      "TreeDbBlobUploadSession": {
+      "TreeDxBlobUploadSession": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbBlobUploadPart": {
+      "TreeDxBlobUploadPart": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbBlobUploadCompleteRequest": {
+      "TreeDxBlobUploadCompleteRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7048,7 +7048,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbRepositoryReadRequest": {
+      "TreeDxRepositoryReadRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7070,7 +7070,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbRepositorySearchRequest": {
+      "TreeDxRepositorySearchRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7109,7 +7109,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbRepositoryPathsRequest": {
+      "TreeDxRepositoryPathsRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7131,7 +7131,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbRepositoryQueryRequest": {
+      "TreeDxRepositoryQueryRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7173,11 +7173,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbRepositoryQueryResult": {
+      "TreeDxRepositoryQueryResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbGraphRefreshRequest": {
+      "TreeDxGraphRefreshRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7211,11 +7211,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbGraphRefreshResult": {
+      "TreeDxGraphRefreshResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbGraphRefreshJobRequest": {
+      "TreeDxGraphRefreshJobRequest": {
         "type": "object",
         "required": [
           "jobId"
@@ -7230,11 +7230,11 @@
         },
         "additionalProperties": false
       },
-      "TreeDbGraphRefreshJob": {
+      "TreeDxGraphRefreshJob": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbGraphQueryRequest": {
+      "TreeDxGraphQueryRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7273,11 +7273,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbGraphQueryResult": {
+      "TreeDxGraphQueryResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbGraphSearchRequest": {
+      "TreeDxGraphSearchRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7300,15 +7300,15 @@
         },
         "additionalProperties": true
       },
-      "TreeDbGraphSearchResult": {
+      "TreeDxGraphSearchResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbGraphNode": {
+      "TreeDxGraphNode": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbGraphNodeRequest": {
+      "TreeDxGraphNodeRequest": {
         "type": "object",
         "required": [
           "nodeId"
@@ -7326,7 +7326,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbGraphRelatedRequest": {
+      "TreeDxGraphRelatedRequest": {
         "type": "object",
         "required": [
           "nodeId"
@@ -7354,7 +7354,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbGraphSubgraphRequest": {
+      "TreeDxGraphSubgraphRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7377,11 +7377,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbGraphTraversalResult": {
+      "TreeDxGraphTraversalResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbContextRequest": {
+      "TreeDxContextRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7408,11 +7408,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbContextResult": {
+      "TreeDxContextResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbCtxParseRequest": {
+      "TreeDxCtxParseRequest": {
         "type": "object",
         "required": [
           "source"
@@ -7424,11 +7424,11 @@
         },
         "additionalProperties": false
       },
-      "TreeDbCtxParseResult": {
+      "TreeDxCtxParseResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbSearchIndexRefreshRequest": {
+      "TreeDxSearchIndexRefreshRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7450,11 +7450,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbSearchIndexRefreshResult": {
+      "TreeDxSearchIndexRefreshResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbSearchIndexStatusRequest": {
+      "TreeDxSearchIndexStatusRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7467,11 +7467,11 @@
         },
         "additionalProperties": false
       },
-      "TreeDbSearchIndexStatus": {
+      "TreeDxSearchIndexStatus": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbSearchIndexCompactRequest": {
+      "TreeDxSearchIndexCompactRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7487,11 +7487,11 @@
         },
         "additionalProperties": false
       },
-      "TreeDbSearchIndexCompactResult": {
+      "TreeDxSearchIndexCompactResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbSnapshotBuildRequest": {
+      "TreeDxSnapshotBuildRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7513,11 +7513,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbSnapshot": {
+      "TreeDxSnapshot": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbArtifactExportRequest": {
+      "TreeDxArtifactExportRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7539,11 +7539,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbArtifact": {
+      "TreeDxArtifact": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbArtifactCleanupRequest": {
+      "TreeDxArtifactCleanupRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7553,11 +7553,11 @@
         },
         "additionalProperties": false
       },
-      "TreeDbArtifactCleanupResult": {
+      "TreeDxArtifactCleanupResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbArtifactListRequest": {
+      "TreeDxArtifactListRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7567,7 +7567,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbArtifactGetRequest": {
+      "TreeDxArtifactGetRequest": {
         "type": "object",
         "required": [
           "artifactId"
@@ -7582,7 +7582,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbArtifactDeleteRequest": {
+      "TreeDxArtifactDeleteRequest": {
         "type": "object",
         "required": [
           "artifactId"
@@ -7597,7 +7597,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbMirror": {
+      "TreeDxMirror": {
         "type": "object",
         "properties": {
           "id": {
@@ -7641,7 +7641,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbMirrorRequest": {
+      "TreeDxMirrorRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7657,7 +7657,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbMirrorSyncRequest": {
+      "TreeDxMirrorSyncRequest": {
         "type": "object",
         "required": [
           "mirrorId"
@@ -7684,11 +7684,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbMirrorSyncResult": {
+      "TreeDxMirrorSyncResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbMirrorHealthRequest": {
+      "TreeDxMirrorHealthRequest": {
         "type": "object",
         "required": [
           "mirrorId"
@@ -7703,11 +7703,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbMirrorHealthResult": {
+      "TreeDxMirrorHealthResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbMirrorPromotionRequest": {
+      "TreeDxMirrorPromotionRequest": {
         "type": "object",
         "required": [
           "mirrorId"
@@ -7728,11 +7728,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbMirrorPromotionResult": {
+      "TreeDxMirrorPromotionResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbMigrationRequest": {
+      "TreeDxMigrationRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7751,11 +7751,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbMigration": {
+      "TreeDxMigration": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbFederationQueryPlanRequest": {
+      "TreeDxFederationQueryPlanRequest": {
         "type": "object",
         "required": [
           "repoIds"
@@ -7787,11 +7787,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbFederationQueryPlan": {
+      "TreeDxFederationQueryPlan": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbFederatedScopeInput": {
+      "TreeDxFederatedScopeInput": {
         "type": "object",
         "required": [
           "repoIds"
@@ -7833,23 +7833,23 @@
         },
         "additionalProperties": true
       },
-      "TreeDbFederatedSearchResult": {
+      "TreeDxFederatedSearchResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbFederatedQueryResult": {
+      "TreeDxFederatedQueryResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbFederatedContextResult": {
+      "TreeDxFederatedContextResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbFederatedGraphResult": {
+      "TreeDxFederatedGraphResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbQuarantinedWorkspacesResponse": {
+      "TreeDxQuarantinedWorkspacesResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -7861,27 +7861,27 @@
           "workspaces": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbWorkspace"
+              "$ref": "#/components/schemas/TreeDxWorkspace"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbStorageHealth": {
+      "TreeDxStorageHealth": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbStorageCheckRequest": {
+      "TreeDxStorageCheckRequest": {
         "type": "object",
         "required": [],
         "properties": {},
         "additionalProperties": true
       },
-      "TreeDbStorageCheckResult": {
+      "TreeDxStorageCheckResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbStorageRecoverRequest": {
+      "TreeDxStorageRecoverRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7891,11 +7891,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbStorageRecoverResult": {
+      "TreeDxStorageRecoverResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbStorageCompactRequest": {
+      "TreeDxStorageCompactRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7914,11 +7914,11 @@
         },
         "additionalProperties": false
       },
-      "TreeDbStorageCompactResult": {
+      "TreeDxStorageCompactResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbStorageBackupRequest": {
+      "TreeDxStorageBackupRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7934,15 +7934,15 @@
         },
         "additionalProperties": false
       },
-      "TreeDbStorageBackupResult": {
+      "TreeDxStorageBackupResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbStorageMigration": {
+      "TreeDxStorageMigration": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbStorageMigrationPlanRequest": {
+      "TreeDxStorageMigrationPlanRequest": {
         "type": "object",
         "required": [],
         "properties": {
@@ -7955,7 +7955,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbStorageMigrationRollbackRequest": {
+      "TreeDxStorageMigrationRollbackRequest": {
         "type": "object",
         "required": [
           "migrationId"
@@ -7970,7 +7970,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbStorageRestoreVerifyRequest": {
+      "TreeDxStorageRestoreVerifyRequest": {
         "type": "object",
         "required": [
           "backupId"
@@ -7982,7 +7982,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbStorageRestoreRequest": {
+      "TreeDxStorageRestoreRequest": {
         "type": "object",
         "required": [
           "backupId"
@@ -8003,11 +8003,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbStorageRestoreResult": {
+      "TreeDxStorageRestoreResult": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbGetHealthResponse": {
+      "TreeDxGetHealthResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8017,12 +8017,12 @@
             "const": true
           },
           "health": {
-            "$ref": "#/components/schemas/TreeDbStorageHealth"
+            "$ref": "#/components/schemas/TreeDxStorageHealth"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetVersionResponse": {
+      "TreeDxGetVersionResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8043,7 +8043,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbGetWhoamiResponse": {
+      "TreeDxGetWhoamiResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8053,12 +8053,12 @@
             "const": true
           },
           "whoami": {
-            "$ref": "#/components/schemas/TreeDbWhoami"
+            "$ref": "#/components/schemas/TreeDxWhoami"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetAuthModeResponse": {
+      "TreeDxGetAuthModeResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8068,12 +8068,12 @@
             "const": true
           },
           "auth": {
-            "$ref": "#/components/schemas/TreeDbAuthMode"
+            "$ref": "#/components/schemas/TreeDxAuthMode"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbCreateDevTokenResponse": {
+      "TreeDxCreateDevTokenResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8088,7 +8088,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbGetEffectiveScopeResponse": {
+      "TreeDxGetEffectiveScopeResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8098,12 +8098,12 @@
             "const": true
           },
           "effectiveScope": {
-            "$ref": "#/components/schemas/TreeDbEffectiveScope"
+            "$ref": "#/components/schemas/TreeDxEffectiveScope"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbRefreshPolicyResponse": {
+      "TreeDxRefreshPolicyResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8113,12 +8113,12 @@
             "const": true
           },
           "policy": {
-            "$ref": "#/components/schemas/TreeDbPolicyRefreshResult"
+            "$ref": "#/components/schemas/TreeDxPolicyRefreshResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbListCapabilitiesResponse": {
+      "TreeDxListCapabilitiesResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8136,7 +8136,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbListCapabilityGrantsResponse": {
+      "TreeDxListCapabilityGrantsResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8148,13 +8148,13 @@
           "grants": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbCapabilityGrant"
+              "$ref": "#/components/schemas/TreeDxCapabilityGrant"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbPutCapabilityGrantResponse": {
+      "TreeDxPutCapabilityGrantResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8164,12 +8164,12 @@
             "const": true
           },
           "grant": {
-            "$ref": "#/components/schemas/TreeDbCapabilityGrant"
+            "$ref": "#/components/schemas/TreeDxCapabilityGrant"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbListAuditEventsResponse": {
+      "TreeDxListAuditEventsResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8181,7 +8181,7 @@
           "events": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbAuditEvent"
+              "$ref": "#/components/schemas/TreeDxAuditEvent"
             }
           },
           "page": {
@@ -8191,7 +8191,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbPlanFederationQueryResponse": {
+      "TreeDxPlanFederationQueryResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8201,12 +8201,12 @@
             "const": true
           },
           "plan": {
-            "$ref": "#/components/schemas/TreeDbFederationQueryPlan"
+            "$ref": "#/components/schemas/TreeDxFederationQueryPlan"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbFederatedContextBuildResponse": {
+      "TreeDxFederatedContextBuildResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8216,12 +8216,12 @@
             "const": true
           },
           "context": {
-            "$ref": "#/components/schemas/TreeDbFederatedContextResult"
+            "$ref": "#/components/schemas/TreeDxFederatedContextResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbFederatedGraphQueryResponse": {
+      "TreeDxFederatedGraphQueryResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8231,12 +8231,12 @@
             "const": true
           },
           "graph": {
-            "$ref": "#/components/schemas/TreeDbFederatedGraphResult"
+            "$ref": "#/components/schemas/TreeDxFederatedGraphResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetLocalNodeResponse": {
+      "TreeDxGetLocalNodeResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8246,12 +8246,12 @@
             "const": true
           },
           "node": {
-            "$ref": "#/components/schemas/TreeDbNode"
+            "$ref": "#/components/schemas/TreeDxNode"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbListRegistryNodesResponse": {
+      "TreeDxListRegistryNodesResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8263,13 +8263,13 @@
           "nodes": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbNode"
+              "$ref": "#/components/schemas/TreeDxNode"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetRepositoryPlacementResponse": {
+      "TreeDxGetRepositoryPlacementResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8279,12 +8279,12 @@
             "const": true
           },
           "placement": {
-            "$ref": "#/components/schemas/TreeDbRepositoryPlacement"
+            "$ref": "#/components/schemas/TreeDxRepositoryPlacement"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbPutRepositoryPlacementResponse": {
+      "TreeDxPutRepositoryPlacementResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8294,12 +8294,12 @@
             "const": true
           },
           "placement": {
-            "$ref": "#/components/schemas/TreeDbRepositoryPlacement"
+            "$ref": "#/components/schemas/TreeDxRepositoryPlacement"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbRegisterRepositoryResponse": {
+      "TreeDxRegisterRepositoryResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8309,12 +8309,12 @@
             "const": true
           },
           "repo": {
-            "$ref": "#/components/schemas/TreeDbRepository"
+            "$ref": "#/components/schemas/TreeDxRepository"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbListRepositoriesResponse": {
+      "TreeDxListRepositoriesResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8326,13 +8326,13 @@
           "repos": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbRepository"
+              "$ref": "#/components/schemas/TreeDxRepository"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetRepositoryResponse": {
+      "TreeDxGetRepositoryResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8342,12 +8342,12 @@
             "const": true
           },
           "repo": {
-            "$ref": "#/components/schemas/TreeDbRepository"
+            "$ref": "#/components/schemas/TreeDxRepository"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetRepositoryStatusResponse": {
+      "TreeDxGetRepositoryStatusResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8357,12 +8357,12 @@
             "const": true
           },
           "status": {
-            "$ref": "#/components/schemas/TreeDbRepositoryStatus"
+            "$ref": "#/components/schemas/TreeDxRepositoryStatus"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbListRepositoryRefsResponse": {
+      "TreeDxListRepositoryRefsResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8374,13 +8374,13 @@
           "refs": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbRepositoryRef"
+              "$ref": "#/components/schemas/TreeDxRepositoryRef"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbListRepositoryRemotesResponse": {
+      "TreeDxListRepositoryRemotesResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8392,13 +8392,13 @@
           "remotes": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbRepositoryRemote"
+              "$ref": "#/components/schemas/TreeDxRepositoryRemote"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbSyncRepositoryResponse": {
+      "TreeDxSyncRepositoryResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8408,12 +8408,12 @@
             "const": true
           },
           "sync": {
-            "$ref": "#/components/schemas/TreeDbFetchRemoteResult"
+            "$ref": "#/components/schemas/TreeDxFetchRemoteResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbPushRepositoryResponse": {
+      "TreeDxPushRepositoryResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8423,12 +8423,12 @@
             "const": true
           },
           "push": {
-            "$ref": "#/components/schemas/TreeDbPushResult"
+            "$ref": "#/components/schemas/TreeDxPushResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbCreateWorkspaceResponse": {
+      "TreeDxCreateWorkspaceResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8438,12 +8438,12 @@
             "const": true
           },
           "workspace": {
-            "$ref": "#/components/schemas/TreeDbWorkspace"
+            "$ref": "#/components/schemas/TreeDxWorkspace"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbReadRepositoryFileResponse": {
+      "TreeDxReadRepositoryFileResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8453,12 +8453,12 @@
             "const": true
           },
           "file": {
-            "$ref": "#/components/schemas/TreeDbFile"
+            "$ref": "#/components/schemas/TreeDxFile"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbReadRepositoryBlobResponse": {
+      "TreeDxReadRepositoryBlobResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8468,12 +8468,12 @@
             "const": true
           },
           "blob": {
-            "$ref": "#/components/schemas/TreeDbBlob"
+            "$ref": "#/components/schemas/TreeDxBlob"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbSearchRepositoryFilesResponse": {
+      "TreeDxSearchRepositoryFilesResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8505,7 +8505,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbListRepositoryPathsResponse": {
+      "TreeDxListRepositoryPathsResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8515,12 +8515,12 @@
             "const": true
           },
           "query": {
-            "$ref": "#/components/schemas/TreeDbRepositoryQueryResult"
+            "$ref": "#/components/schemas/TreeDxRepositoryQueryResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbQueryRepositoryResponse": {
+      "TreeDxQueryRepositoryResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8530,12 +8530,12 @@
             "const": true
           },
           "query": {
-            "$ref": "#/components/schemas/TreeDbRepositoryQueryResult"
+            "$ref": "#/components/schemas/TreeDxRepositoryQueryResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbRefreshRepositoryGraphResponse": {
+      "TreeDxRefreshRepositoryGraphResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8545,12 +8545,12 @@
             "const": true
           },
           "graph": {
-            "$ref": "#/components/schemas/TreeDbGraphRefreshResult"
+            "$ref": "#/components/schemas/TreeDxGraphRefreshResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetGraphRefreshJobResponse": {
+      "TreeDxGetGraphRefreshJobResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8560,12 +8560,12 @@
             "const": true
           },
           "job": {
-            "$ref": "#/components/schemas/TreeDbGraphRefreshJob"
+            "$ref": "#/components/schemas/TreeDxGraphRefreshJob"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbQueryRepositoryGraphResponse": {
+      "TreeDxQueryRepositoryGraphResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8575,12 +8575,12 @@
             "const": true
           },
           "graph": {
-            "$ref": "#/components/schemas/TreeDbGraphQueryResult"
+            "$ref": "#/components/schemas/TreeDxGraphQueryResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbSearchGraphFilesResponse": {
+      "TreeDxSearchGraphFilesResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8592,13 +8592,13 @@
           "results": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbGraphSearchResult"
+              "$ref": "#/components/schemas/TreeDxGraphSearchResult"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbSearchGraphSectionsResponse": {
+      "TreeDxSearchGraphSectionsResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8610,13 +8610,13 @@
           "results": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbGraphSearchResult"
+              "$ref": "#/components/schemas/TreeDxGraphSearchResult"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbSearchGraphEntitiesResponse": {
+      "TreeDxSearchGraphEntitiesResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8628,13 +8628,13 @@
           "results": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbGraphSearchResult"
+              "$ref": "#/components/schemas/TreeDxGraphSearchResult"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetGraphNodeResponse": {
+      "TreeDxGetGraphNodeResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8644,12 +8644,12 @@
             "const": true
           },
           "node": {
-            "$ref": "#/components/schemas/TreeDbGraphNode"
+            "$ref": "#/components/schemas/TreeDxGraphNode"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetRelatedGraphNodesResponse": {
+      "TreeDxGetRelatedGraphNodesResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8659,12 +8659,12 @@
             "const": true
           },
           "graph": {
-            "$ref": "#/components/schemas/TreeDbGraphTraversalResult"
+            "$ref": "#/components/schemas/TreeDxGraphTraversalResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetGraphSubgraphResponse": {
+      "TreeDxGetGraphSubgraphResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8674,12 +8674,12 @@
             "const": true
           },
           "graph": {
-            "$ref": "#/components/schemas/TreeDbGraphTraversalResult"
+            "$ref": "#/components/schemas/TreeDxGraphTraversalResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbBuildContextResponse": {
+      "TreeDxBuildContextResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8689,12 +8689,12 @@
             "const": true
           },
           "context": {
-            "$ref": "#/components/schemas/TreeDbContextResult"
+            "$ref": "#/components/schemas/TreeDxContextResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbParseContextQueryResponse": {
+      "TreeDxParseContextQueryResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8704,12 +8704,12 @@
             "const": true
           },
           "parse": {
-            "$ref": "#/components/schemas/TreeDbCtxParseResult"
+            "$ref": "#/components/schemas/TreeDxCtxParseResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbRefreshSearchIndexResponse": {
+      "TreeDxRefreshSearchIndexResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8719,12 +8719,12 @@
             "const": true
           },
           "index": {
-            "$ref": "#/components/schemas/TreeDbSearchIndexRefreshResult"
+            "$ref": "#/components/schemas/TreeDxSearchIndexRefreshResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetSearchIndexStatusResponse": {
+      "TreeDxGetSearchIndexStatusResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8734,12 +8734,12 @@
             "const": true
           },
           "index": {
-            "$ref": "#/components/schemas/TreeDbSearchIndexStatus"
+            "$ref": "#/components/schemas/TreeDxSearchIndexStatus"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbCompactSearchIndexResponse": {
+      "TreeDxCompactSearchIndexResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8749,12 +8749,12 @@
             "const": true
           },
           "index": {
-            "$ref": "#/components/schemas/TreeDbSearchIndexCompactResult"
+            "$ref": "#/components/schemas/TreeDxSearchIndexCompactResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbBuildSnapshotResponse": {
+      "TreeDxBuildSnapshotResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8764,12 +8764,12 @@
             "const": true
           },
           "snapshot": {
-            "$ref": "#/components/schemas/TreeDbSnapshot"
+            "$ref": "#/components/schemas/TreeDxSnapshot"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetSnapshotResponse": {
+      "TreeDxGetSnapshotResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8779,12 +8779,12 @@
             "const": true
           },
           "snapshot": {
-            "$ref": "#/components/schemas/TreeDbSnapshot"
+            "$ref": "#/components/schemas/TreeDxSnapshot"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbExportArtifactResponse": {
+      "TreeDxExportArtifactResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8794,12 +8794,12 @@
             "const": true
           },
           "artifact": {
-            "$ref": "#/components/schemas/TreeDbArtifact"
+            "$ref": "#/components/schemas/TreeDxArtifact"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbListArtifactsResponse": {
+      "TreeDxListArtifactsResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8811,13 +8811,13 @@
           "artifacts": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbArtifact"
+              "$ref": "#/components/schemas/TreeDxArtifact"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetArtifactResponse": {
+      "TreeDxGetArtifactResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8827,12 +8827,12 @@
             "const": true
           },
           "artifact": {
-            "$ref": "#/components/schemas/TreeDbArtifact"
+            "$ref": "#/components/schemas/TreeDxArtifact"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbDeleteArtifactResponse": {
+      "TreeDxDeleteArtifactResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8842,12 +8842,12 @@
             "const": true
           },
           "artifact": {
-            "$ref": "#/components/schemas/TreeDbArtifact"
+            "$ref": "#/components/schemas/TreeDxArtifact"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbListMirrorsResponse": {
+      "TreeDxListMirrorsResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8859,13 +8859,13 @@
           "mirrors": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbMirror"
+              "$ref": "#/components/schemas/TreeDxMirror"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbPutMirrorResponse": {
+      "TreeDxPutMirrorResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8875,12 +8875,12 @@
             "const": true
           },
           "mirror": {
-            "$ref": "#/components/schemas/TreeDbMirror"
+            "$ref": "#/components/schemas/TreeDxMirror"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbSyncMirrorResponse": {
+      "TreeDxSyncMirrorResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8890,12 +8890,12 @@
             "const": true
           },
           "sync": {
-            "$ref": "#/components/schemas/TreeDbMirrorSyncResult"
+            "$ref": "#/components/schemas/TreeDxMirrorSyncResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbCheckMirrorHealthResponse": {
+      "TreeDxCheckMirrorHealthResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8905,12 +8905,12 @@
             "const": true
           },
           "health": {
-            "$ref": "#/components/schemas/TreeDbMirrorHealthResult"
+            "$ref": "#/components/schemas/TreeDxMirrorHealthResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbPromoteMirrorResponse": {
+      "TreeDxPromoteMirrorResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8920,12 +8920,12 @@
             "const": true
           },
           "promotion": {
-            "$ref": "#/components/schemas/TreeDbMirrorPromotionResult"
+            "$ref": "#/components/schemas/TreeDxMirrorPromotionResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbCreateMigrationResponse": {
+      "TreeDxCreateMigrationResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8935,12 +8935,12 @@
             "const": true
           },
           "migration": {
-            "$ref": "#/components/schemas/TreeDbMigration"
+            "$ref": "#/components/schemas/TreeDxMigration"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetMigrationResponse": {
+      "TreeDxGetMigrationResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8950,12 +8950,12 @@
             "const": true
           },
           "migration": {
-            "$ref": "#/components/schemas/TreeDbMigration"
+            "$ref": "#/components/schemas/TreeDxMigration"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetWorkspaceResponse": {
+      "TreeDxGetWorkspaceResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8965,12 +8965,12 @@
             "const": true
           },
           "workspace": {
-            "$ref": "#/components/schemas/TreeDbWorkspace"
+            "$ref": "#/components/schemas/TreeDxWorkspace"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbCloseWorkspaceResponse": {
+      "TreeDxCloseWorkspaceResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8980,12 +8980,12 @@
             "const": true
           },
           "workspace": {
-            "$ref": "#/components/schemas/TreeDbWorkspace"
+            "$ref": "#/components/schemas/TreeDxWorkspace"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbListWorkspaceTreeResponse": {
+      "TreeDxListWorkspaceTreeResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -8997,13 +8997,13 @@
           "entries": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbTreeEntry"
+              "$ref": "#/components/schemas/TreeDxTreeEntry"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbReadWorkspaceFileResponse": {
+      "TreeDxReadWorkspaceFileResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9013,12 +9013,12 @@
             "const": true
           },
           "file": {
-            "$ref": "#/components/schemas/TreeDbFile"
+            "$ref": "#/components/schemas/TreeDxFile"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbWriteWorkspaceFileResponse": {
+      "TreeDxWriteWorkspaceFileResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9028,12 +9028,12 @@
             "const": true
           },
           "file": {
-            "$ref": "#/components/schemas/TreeDbFileMutationResult"
+            "$ref": "#/components/schemas/TreeDxFileMutationResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbPatchWorkspaceFileResponse": {
+      "TreeDxPatchWorkspaceFileResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9043,12 +9043,12 @@
             "const": true
           },
           "file": {
-            "$ref": "#/components/schemas/TreeDbFileMutationResult"
+            "$ref": "#/components/schemas/TreeDxFileMutationResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbDeleteWorkspaceFileResponse": {
+      "TreeDxDeleteWorkspaceFileResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9058,12 +9058,12 @@
             "const": true
           },
           "file": {
-            "$ref": "#/components/schemas/TreeDbFileMutationResult"
+            "$ref": "#/components/schemas/TreeDxFileMutationResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbWriteWorkspaceBlobResponse": {
+      "TreeDxWriteWorkspaceBlobResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9073,12 +9073,12 @@
             "const": true
           },
           "result": {
-            "$ref": "#/components/schemas/TreeDbBlobMutationResult"
+            "$ref": "#/components/schemas/TreeDxBlobMutationResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbDeleteWorkspaceBlobResponse": {
+      "TreeDxDeleteWorkspaceBlobResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9088,12 +9088,12 @@
             "const": true
           },
           "result": {
-            "$ref": "#/components/schemas/TreeDbBlobMutationResult"
+            "$ref": "#/components/schemas/TreeDxBlobMutationResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbUploadWorkspaceBlobResponse": {
+      "TreeDxUploadWorkspaceBlobResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9103,12 +9103,12 @@
             "const": true
           },
           "result": {
-            "$ref": "#/components/schemas/TreeDbBlobMutationResult"
+            "$ref": "#/components/schemas/TreeDxBlobMutationResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbCreateWorkspaceBlobUploadResponse": {
+      "TreeDxCreateWorkspaceBlobUploadResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9118,12 +9118,12 @@
             "const": true
           },
           "upload": {
-            "$ref": "#/components/schemas/TreeDbBlobUploadSession"
+            "$ref": "#/components/schemas/TreeDxBlobUploadSession"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbUploadWorkspaceBlobPartResponse": {
+      "TreeDxUploadWorkspaceBlobPartResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9133,12 +9133,12 @@
             "const": true
           },
           "part": {
-            "$ref": "#/components/schemas/TreeDbBlobUploadPart"
+            "$ref": "#/components/schemas/TreeDxBlobUploadPart"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbCompleteWorkspaceBlobUploadResponse": {
+      "TreeDxCompleteWorkspaceBlobUploadResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9148,12 +9148,12 @@
             "const": true
           },
           "result": {
-            "$ref": "#/components/schemas/TreeDbBlobMutationResult"
+            "$ref": "#/components/schemas/TreeDxBlobMutationResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbAbortWorkspaceBlobUploadResponse": {
+      "TreeDxAbortWorkspaceBlobUploadResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9163,12 +9163,12 @@
             "const": true
           },
           "upload": {
-            "$ref": "#/components/schemas/TreeDbBlobUploadSession"
+            "$ref": "#/components/schemas/TreeDxBlobUploadSession"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbSearchWorkspaceResponse": {
+      "TreeDxSearchWorkspaceResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9178,12 +9178,12 @@
             "const": true
           },
           "search": {
-            "$ref": "#/components/schemas/TreeDbSearchResult"
+            "$ref": "#/components/schemas/TreeDxSearchResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetWorkspaceStatusResponse": {
+      "TreeDxGetWorkspaceStatusResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9208,7 +9208,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbGetWorkspaceDiffResponse": {
+      "TreeDxGetWorkspaceDiffResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9232,7 +9232,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbCommitWorkspaceResponse": {
+      "TreeDxCommitWorkspaceResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9242,12 +9242,12 @@
             "const": true
           },
           "commit": {
-            "$ref": "#/components/schemas/TreeDbCommitResult"
+            "$ref": "#/components/schemas/TreeDxCommitResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbExecWorkspaceResponse": {
+      "TreeDxExecWorkspaceResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9257,12 +9257,12 @@
             "const": true
           },
           "exec": {
-            "$ref": "#/components/schemas/TreeDbExecResult"
+            "$ref": "#/components/schemas/TreeDxExecResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbListQuarantinedWorkspacesResponse": {
+      "TreeDxListQuarantinedWorkspacesResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9274,13 +9274,13 @@
           "workspaces": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbWorkspace"
+              "$ref": "#/components/schemas/TreeDxWorkspace"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbGetAdminStorageHealthResponse": {
+      "TreeDxGetAdminStorageHealthResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9290,12 +9290,12 @@
             "const": true
           },
           "storage": {
-            "$ref": "#/components/schemas/TreeDbStorageHealth"
+            "$ref": "#/components/schemas/TreeDxStorageHealth"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbCheckAdminStorageResponse": {
+      "TreeDxCheckAdminStorageResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9305,12 +9305,12 @@
             "const": true
           },
           "check": {
-            "$ref": "#/components/schemas/TreeDbStorageCheckResult"
+            "$ref": "#/components/schemas/TreeDxStorageCheckResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbRecoverAdminStorageResponse": {
+      "TreeDxRecoverAdminStorageResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9320,12 +9320,12 @@
             "const": true
           },
           "recovery": {
-            "$ref": "#/components/schemas/TreeDbStorageRecoverResult"
+            "$ref": "#/components/schemas/TreeDxStorageRecoverResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbCompactAdminStorageResponse": {
+      "TreeDxCompactAdminStorageResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9335,12 +9335,12 @@
             "const": true
           },
           "compact": {
-            "$ref": "#/components/schemas/TreeDbStorageCompactResult"
+            "$ref": "#/components/schemas/TreeDxStorageCompactResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbBackupAdminStorageResponse": {
+      "TreeDxBackupAdminStorageResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9350,12 +9350,12 @@
             "const": true
           },
           "backup": {
-            "$ref": "#/components/schemas/TreeDbStorageBackupResult"
+            "$ref": "#/components/schemas/TreeDxStorageBackupResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbListStorageMigrationsResponse": {
+      "TreeDxListStorageMigrationsResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9367,13 +9367,13 @@
           "migrations": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbStorageMigration"
+              "$ref": "#/components/schemas/TreeDxStorageMigration"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbPlanStorageMigrationResponse": {
+      "TreeDxPlanStorageMigrationResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9383,12 +9383,12 @@
             "const": true
           },
           "migration": {
-            "$ref": "#/components/schemas/TreeDbStorageMigration"
+            "$ref": "#/components/schemas/TreeDxStorageMigration"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbApplyStorageMigrationResponse": {
+      "TreeDxApplyStorageMigrationResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9398,12 +9398,12 @@
             "const": true
           },
           "migration": {
-            "$ref": "#/components/schemas/TreeDbStorageMigration"
+            "$ref": "#/components/schemas/TreeDxStorageMigration"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbRollbackStorageMigrationResponse": {
+      "TreeDxRollbackStorageMigrationResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9413,12 +9413,12 @@
             "const": true
           },
           "migration": {
-            "$ref": "#/components/schemas/TreeDbStorageMigration"
+            "$ref": "#/components/schemas/TreeDxStorageMigration"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbVerifyStorageRestoreResponse": {
+      "TreeDxVerifyStorageRestoreResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9428,12 +9428,12 @@
             "const": true
           },
           "restore": {
-            "$ref": "#/components/schemas/TreeDbStorageRestoreResult"
+            "$ref": "#/components/schemas/TreeDxStorageRestoreResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbRestoreStorageResponse": {
+      "TreeDxRestoreStorageResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9443,12 +9443,12 @@
             "const": true
           },
           "restore": {
-            "$ref": "#/components/schemas/TreeDbStorageRestoreResult"
+            "$ref": "#/components/schemas/TreeDxStorageRestoreResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbCleanupArtifactsResponse": {
+      "TreeDxCleanupArtifactsResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9458,12 +9458,12 @@
             "const": true
           },
           "cleanup": {
-            "$ref": "#/components/schemas/TreeDbArtifactCleanupResult"
+            "$ref": "#/components/schemas/TreeDxArtifactCleanupResult"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbHealthCheckStatus": {
+      "TreeDxHealthCheckStatus": {
         "type": "string",
         "enum": [
           "ok",
@@ -9472,7 +9472,7 @@
           "skipped"
         ]
       },
-      "TreeDbHealthCheck": {
+      "TreeDxHealthCheck": {
         "type": "object",
         "required": [
           "name",
@@ -9483,7 +9483,7 @@
             "type": "string"
           },
           "status": {
-            "$ref": "#/components/schemas/TreeDbHealthCheckStatus"
+            "$ref": "#/components/schemas/TreeDxHealthCheckStatus"
           },
           "durationMs": {
             "type": "integer"
@@ -9495,7 +9495,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbHealthSummary": {
+      "TreeDxHealthSummary": {
         "type": "object",
         "required": [
           "status",
@@ -9514,7 +9514,7 @@
           "checks": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbHealthCheck"
+              "$ref": "#/components/schemas/TreeDxHealthCheck"
             }
           },
           "checkedAt": {
@@ -9524,7 +9524,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbReadiness": {
+      "TreeDxReadiness": {
         "type": "object",
         "required": [
           "status",
@@ -9542,7 +9542,7 @@
           "checks": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbHealthCheck"
+              "$ref": "#/components/schemas/TreeDxHealthCheck"
             }
           },
           "checkedAt": {
@@ -9552,13 +9552,13 @@
         },
         "additionalProperties": false
       },
-      "TreeDbMetricLabelMap": {
+      "TreeDxMetricLabelMap": {
         "type": "object",
         "additionalProperties": {
           "type": "string"
         }
       },
-      "TreeDbMetricCounter": {
+      "TreeDxMetricCounter": {
         "type": "object",
         "required": [
           "name",
@@ -9570,7 +9570,7 @@
             "type": "string"
           },
           "labels": {
-            "$ref": "#/components/schemas/TreeDbMetricLabelMap"
+            "$ref": "#/components/schemas/TreeDxMetricLabelMap"
           },
           "value": {
             "type": "number"
@@ -9578,7 +9578,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbMetricHistogramBucket": {
+      "TreeDxMetricHistogramBucket": {
         "type": "object",
         "required": [
           "le",
@@ -9601,7 +9601,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbMetricHistogram": {
+      "TreeDxMetricHistogram": {
         "type": "object",
         "required": [
           "name",
@@ -9615,12 +9615,12 @@
             "type": "string"
           },
           "labels": {
-            "$ref": "#/components/schemas/TreeDbMetricLabelMap"
+            "$ref": "#/components/schemas/TreeDxMetricLabelMap"
           },
           "buckets": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbMetricHistogramBucket"
+              "$ref": "#/components/schemas/TreeDxMetricHistogramBucket"
             }
           },
           "sum": {
@@ -9632,7 +9632,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbMetricGauge": {
+      "TreeDxMetricGauge": {
         "type": "object",
         "required": [
           "name",
@@ -9644,7 +9644,7 @@
             "type": "string"
           },
           "labels": {
-            "$ref": "#/components/schemas/TreeDbMetricLabelMap"
+            "$ref": "#/components/schemas/TreeDxMetricLabelMap"
           },
           "value": {
             "type": "number"
@@ -9652,7 +9652,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbMetrics": {
+      "TreeDxMetrics": {
         "type": "object",
         "required": [
           "counters",
@@ -9663,25 +9663,25 @@
           "counters": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbMetricCounter"
+              "$ref": "#/components/schemas/TreeDxMetricCounter"
             }
           },
           "histograms": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbMetricHistogram"
+              "$ref": "#/components/schemas/TreeDxMetricHistogram"
             }
           },
           "gauges": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbMetricGauge"
+              "$ref": "#/components/schemas/TreeDxMetricGauge"
             }
           }
         },
         "additionalProperties": false
       },
-      "TreeDbReadinessResponse": {
+      "TreeDxReadinessResponse": {
         "type": "object",
         "required": [
           "ok",
@@ -9692,12 +9692,12 @@
             "const": true
           },
           "readiness": {
-            "$ref": "#/components/schemas/TreeDbReadiness"
+            "$ref": "#/components/schemas/TreeDxReadiness"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbDeepHealthResponse": {
+      "TreeDxDeepHealthResponse": {
         "type": "object",
         "required": [
           "ok",
@@ -9708,12 +9708,12 @@
             "const": true
           },
           "health": {
-            "$ref": "#/components/schemas/TreeDbHealthSummary"
+            "$ref": "#/components/schemas/TreeDxHealthSummary"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbMetricsResponse": {
+      "TreeDxMetricsResponse": {
         "type": "object",
         "required": [
           "ok",
@@ -9724,12 +9724,12 @@
             "const": true
           },
           "metrics": {
-            "$ref": "#/components/schemas/TreeDbMetrics"
+            "$ref": "#/components/schemas/TreeDxMetrics"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbHealthResponse": {
+      "TreeDxHealthResponse": {
         "type": "object",
         "required": [
           "ok",
@@ -9740,17 +9740,17 @@
             "const": true
           },
           "health": {
-            "$ref": "#/components/schemas/TreeDbHealthSummary"
+            "$ref": "#/components/schemas/TreeDxHealthSummary"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbRepositoryName": {
+      "TreeDxRepositoryName": {
         "type": "string",
         "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$",
         "description": "Canonical server-managed repository name."
       },
-      "TreeDbRepositorySource": {
+      "TreeDxRepositorySource": {
         "type": "object",
         "required": [
           "type"
@@ -9776,7 +9776,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbRepositoryPlacementPreference": {
+      "TreeDxRepositoryPlacementPreference": {
         "type": "object",
         "properties": {
           "mode": {
@@ -9803,20 +9803,20 @@
         },
         "additionalProperties": false
       },
-      "TreeDbCreateRepositoryRequest": {
+      "TreeDxCreateRepositoryRequest": {
         "type": "object",
         "required": [
           "repositoryName"
         ],
         "properties": {
           "repositoryName": {
-            "$ref": "#/components/schemas/TreeDbRepositoryName"
+            "$ref": "#/components/schemas/TreeDxRepositoryName"
           },
           "source": {
-            "$ref": "#/components/schemas/TreeDbRepositorySource"
+            "$ref": "#/components/schemas/TreeDxRepositorySource"
           },
           "placement": {
-            "$ref": "#/components/schemas/TreeDbRepositoryPlacementPreference"
+            "$ref": "#/components/schemas/TreeDxRepositoryPlacementPreference"
           },
           "defaultRef": {
             "type": "string"
@@ -9824,7 +9824,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbCreateRepositoryResponse": {
+      "TreeDxCreateRepositoryResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -9834,12 +9834,12 @@
             "const": true
           },
           "repo": {
-            "$ref": "#/components/schemas/TreeDbRepository"
+            "$ref": "#/components/schemas/TreeDxRepository"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbFederationPeer": {
+      "TreeDxFederationPeer": {
         "type": "object",
         "required": [
           "nodeId",
@@ -9871,7 +9871,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbFederationPeerRegisterRequest": {
+      "TreeDxFederationPeerRegisterRequest": {
         "type": "object",
         "required": [
           "nodeId",
@@ -9911,7 +9911,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbFederationTrustRequest": {
+      "TreeDxFederationTrustRequest": {
         "type": "object",
         "properties": {
           "trustStates": {
@@ -9923,15 +9923,15 @@
         },
         "additionalProperties": false
       },
-      "TreeDbFederationCatalog": {
+      "TreeDxFederationCatalog": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbFederationRoute": {
+      "TreeDxFederationRoute": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbFederationCatalogResponse": {
+      "TreeDxFederationCatalogResponse": {
         "type": "object",
         "required": [
           "ok",
@@ -9942,12 +9942,12 @@
             "const": true
           },
           "catalog": {
-            "$ref": "#/components/schemas/TreeDbFederationCatalog"
+            "$ref": "#/components/schemas/TreeDxFederationCatalog"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbFederationPeersResponse": {
+      "TreeDxFederationPeersResponse": {
         "type": "object",
         "required": [
           "ok",
@@ -9960,13 +9960,13 @@
           "peers": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbFederationPeer"
+              "$ref": "#/components/schemas/TreeDxFederationPeer"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbFederationPeerResponse": {
+      "TreeDxFederationPeerResponse": {
         "type": "object",
         "required": [
           "ok",
@@ -9977,12 +9977,12 @@
             "const": true
           },
           "peer": {
-            "$ref": "#/components/schemas/TreeDbFederationPeer"
+            "$ref": "#/components/schemas/TreeDxFederationPeer"
           }
         },
         "additionalProperties": true
       },
-      "TreeDbFederationRoutesResponse": {
+      "TreeDxFederationRoutesResponse": {
         "type": "object",
         "required": [
           "ok",
@@ -9995,13 +9995,13 @@
           "routes": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TreeDbFederationRoute"
+              "$ref": "#/components/schemas/TreeDxFederationRoute"
             }
           }
         },
         "additionalProperties": true
       },
-      "TreeDbFederationSyncResponse": {
+      "TreeDxFederationSyncResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -10019,7 +10019,7 @@
         },
         "additionalProperties": true
       },
-      "TreeDbInternalFederationHealthResponse": {
+      "TreeDxInternalFederationHealthResponse": {
         "type": "object",
         "required": [
           "ok",
@@ -10038,11 +10038,11 @@
         },
         "additionalProperties": true
       },
-      "TreeDbInternalFederationProxyResponse": {
+      "TreeDxInternalFederationProxyResponse": {
         "type": "object",
         "additionalProperties": true
       },
-      "TreeDbImportLocalRepositoryRequest": {
+      "TreeDxImportLocalRepositoryRequest": {
         "type": "object",
         "required": [
           "repositoryName",
@@ -10050,11 +10050,11 @@
         ],
         "properties": {
           "repositoryName": {
-            "$ref": "#/components/schemas/TreeDbRepositoryName"
+            "$ref": "#/components/schemas/TreeDxRepositoryName"
           },
           "sourceRelativePath": {
             "type": "string",
-            "description": "Path under TREEDB_DATA_DIR, never absolute."
+            "description": "Path under TREEDX_DATA_DIR, never absolute."
           },
           "moveIntoManagedStorage": {
             "type": "boolean"
@@ -10065,7 +10065,7 @@
         },
         "additionalProperties": false
       },
-      "TreeDbImportLocalRepositoryResponse": {
+      "TreeDxImportLocalRepositoryResponse": {
         "type": "object",
         "required": [
           "ok"
@@ -10075,7 +10075,7 @@
             "const": true
           },
           "repo": {
-            "$ref": "#/components/schemas/TreeDbRepository"
+            "$ref": "#/components/schemas/TreeDxRepository"
           }
         },
         "additionalProperties": true

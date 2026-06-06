@@ -1,10 +1,10 @@
 use serde::Deserialize;
 
-use crate::client::{OperationOptions, TreeDbClient};
-use crate::transport::TreeDbHttpMethod;
+use crate::client::{OperationOptions, TreeDxClient};
+use crate::transport::TreeDxHttpMethod;
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct TreeDbConformanceScenario {
+pub struct TreeDxConformanceScenario {
     pub id: String,
     #[serde(rename = "capabilityId")]
     pub capability_id: String,
@@ -17,33 +17,33 @@ pub struct TreeDbConformanceScenario {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum TreeDbConformanceStatus {
+pub enum TreeDxConformanceStatus {
     Passed,
     Failed,
     NotConfigured,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TreeDbConformanceResult {
+pub struct TreeDxConformanceResult {
     pub scenario_id: String,
-    pub status: TreeDbConformanceStatus,
+    pub status: TreeDxConformanceStatus,
     pub message: Option<String>,
 }
 
-pub struct TreeDbConformanceAdapter {
-    client: TreeDbClient,
+pub struct TreeDxConformanceAdapter {
+    client: TreeDxClient,
     server_configured: bool,
 }
 
-impl TreeDbConformanceAdapter {
-    pub fn new(client: TreeDbClient) -> Self {
+impl TreeDxConformanceAdapter {
+    pub fn new(client: TreeDxClient) -> Self {
         Self {
             client,
             server_configured: false,
         }
     }
 
-    pub fn with_server_configured(client: TreeDbClient, server_configured: bool) -> Self {
+    pub fn with_server_configured(client: TreeDxClient, server_configured: bool) -> Self {
         Self {
             client,
             server_configured,
@@ -52,28 +52,28 @@ impl TreeDbConformanceAdapter {
 
     pub async fn run_scenario(
         &self,
-        scenario: &TreeDbConformanceScenario,
-    ) -> TreeDbConformanceResult {
+        scenario: &TreeDxConformanceScenario,
+    ) -> TreeDxConformanceResult {
         if !self.server_configured {
-            return TreeDbConformanceResult {
+            return TreeDxConformanceResult {
                 scenario_id: scenario.id.clone(),
-                status: TreeDbConformanceStatus::NotConfigured,
-                message: Some("TreeDB server is not configured".to_string()),
+                status: TreeDxConformanceStatus::NotConfigured,
+                message: Some("TreeDX server is not configured".to_string()),
             };
         }
 
         for endpoint_ref in &scenario.endpoint_refs {
             let Some((method, path)) = endpoint_ref.split_once(' ') else {
-                return TreeDbConformanceResult {
+                return TreeDxConformanceResult {
                     scenario_id: scenario.id.clone(),
-                    status: TreeDbConformanceStatus::Failed,
+                    status: TreeDxConformanceStatus::Failed,
                     message: Some(format!("invalid endpoint ref: {endpoint_ref}")),
                 };
             };
             let Some(method) = method_from_str(method) else {
-                return TreeDbConformanceResult {
+                return TreeDxConformanceResult {
                     scenario_id: scenario.id.clone(),
-                    status: TreeDbConformanceStatus::Failed,
+                    status: TreeDxConformanceStatus::Failed,
                     message: Some(format!("unsupported endpoint method: {method}")),
                 };
             };
@@ -81,72 +81,72 @@ impl TreeDbConformanceAdapter {
             options.path_params.extend([
                 (
                     "repo_id".to_string(),
-                    env_or("TREEDB_CONFORMANCE_REPO_ID", "repo_conformance"),
+                    env_or("TREEDX_CONFORMANCE_REPO_ID", "repo_conformance"),
                 ),
                 (
                     "workspace_id".to_string(),
-                    env_or("TREEDB_CONFORMANCE_WORKSPACE_ID", "workspace_conformance"),
+                    env_or("TREEDX_CONFORMANCE_WORKSPACE_ID", "workspace_conformance"),
                 ),
                 (
                     "node_id".to_string(),
-                    env_or("TREEDB_CONFORMANCE_NODE_ID", "node_conformance"),
+                    env_or("TREEDX_CONFORMANCE_NODE_ID", "node_conformance"),
                 ),
                 (
                     "job_id".to_string(),
-                    env_or("TREEDB_CONFORMANCE_JOB_ID", "job_conformance"),
+                    env_or("TREEDX_CONFORMANCE_JOB_ID", "job_conformance"),
                 ),
                 (
                     "snapshot_id".to_string(),
-                    env_or("TREEDB_CONFORMANCE_SNAPSHOT_ID", "snapshot_conformance"),
+                    env_or("TREEDX_CONFORMANCE_SNAPSHOT_ID", "snapshot_conformance"),
                 ),
                 (
                     "artifact_id".to_string(),
-                    env_or("TREEDB_CONFORMANCE_ARTIFACT_ID", "artifact_conformance"),
+                    env_or("TREEDX_CONFORMANCE_ARTIFACT_ID", "artifact_conformance"),
                 ),
                 (
                     "mirror_id".to_string(),
-                    env_or("TREEDB_CONFORMANCE_MIRROR_ID", "mirror_conformance"),
+                    env_or("TREEDX_CONFORMANCE_MIRROR_ID", "mirror_conformance"),
                 ),
                 (
                     "migration_id".to_string(),
-                    env_or("TREEDB_CONFORMANCE_MIGRATION_ID", "migration_conformance"),
+                    env_or("TREEDX_CONFORMANCE_MIGRATION_ID", "migration_conformance"),
                 ),
                 (
                     "upload_id".to_string(),
-                    env_or("TREEDB_CONFORMANCE_UPLOAD_ID", "upload_conformance"),
+                    env_or("TREEDX_CONFORMANCE_UPLOAD_ID", "upload_conformance"),
                 ),
                 (
                     "part_number".to_string(),
-                    env_or("TREEDB_CONFORMANCE_PART_NUMBER", "1"),
+                    env_or("TREEDX_CONFORMANCE_PART_NUMBER", "1"),
                 ),
             ]);
-            if !matches!(method, TreeDbHttpMethod::Get | TreeDbHttpMethod::Delete) {
+            if !matches!(method, TreeDxHttpMethod::Get | TreeDxHttpMethod::Delete) {
                 options.body = Some(serde_json::json!({ "dryRun": true }));
             }
             if let Err(error) = self.client.operation(method, path, options).await {
-                return TreeDbConformanceResult {
+                return TreeDxConformanceResult {
                     scenario_id: scenario.id.clone(),
-                    status: TreeDbConformanceStatus::Failed,
+                    status: TreeDxConformanceStatus::Failed,
                     message: Some(error.message),
                 };
             }
         }
 
-        TreeDbConformanceResult {
+        TreeDxConformanceResult {
             scenario_id: scenario.id.clone(),
-            status: TreeDbConformanceStatus::Passed,
+            status: TreeDxConformanceStatus::Passed,
             message: None,
         }
     }
 }
 
-fn method_from_str(method: &str) -> Option<TreeDbHttpMethod> {
+fn method_from_str(method: &str) -> Option<TreeDxHttpMethod> {
     match method {
-        "GET" => Some(TreeDbHttpMethod::Get),
-        "POST" => Some(TreeDbHttpMethod::Post),
-        "PUT" => Some(TreeDbHttpMethod::Put),
-        "PATCH" => Some(TreeDbHttpMethod::Patch),
-        "DELETE" => Some(TreeDbHttpMethod::Delete),
+        "GET" => Some(TreeDxHttpMethod::Get),
+        "POST" => Some(TreeDxHttpMethod::Post),
+        "PUT" => Some(TreeDxHttpMethod::Put),
+        "PATCH" => Some(TreeDxHttpMethod::Patch),
+        "DELETE" => Some(TreeDxHttpMethod::Delete),
         _ => None,
     }
 }

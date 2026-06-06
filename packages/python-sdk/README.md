@@ -1,6 +1,6 @@
-# TreeDB Python SDK
+# TreeDX Python SDK
 
-`treedb-sdk` is the generic Python SDK for TreeDB. It implements the shared
+`treedx-sdk` is the generic Python SDK for TreeDX. It implements the shared
 `packages/sdk-spec` architecture, follows `docs/api/openapi.yaml`, and does not
 encode TreeSeed product semantics. `packages/trsd-sdk` is a downstream
 TreeSeed consumer/reference only.
@@ -19,9 +19,9 @@ python -m pip install -e ".[dev]"
 ## Configure Client
 
 ```python
-from treedb_sdk import TreeDbClient, TreeDbApiError
+from treedx_sdk import TreeDxClient, TreeDxApiError
 
-client = TreeDbClient(
+client = TreeDxClient(
     base_url="http://localhost:4000",
     token="...",
 )
@@ -104,7 +104,7 @@ parsed = client.context.parse("repo_demo", {"source": "ctx docs"})
 
 ## Federated Query
 
-Federation helpers use portfolio/global TreeDB routes rather than a single
+Federation helpers use portfolio/global TreeDX routes rather than a single
 configured repository:
 
 ```python
@@ -115,29 +115,29 @@ results = client.federation.search({"query": "release provenance"})
 ## Scoped Admin And Internal Modules
 
 Full OpenAPI coverage includes sensitive scoped modules: Admin, Audit, Policy,
-SearchIndex, and FederationInternal. These APIs require appropriate TreeDB
+SearchIndex, and FederationInternal. These APIs require appropriate TreeDX
 credentials and should be used carefully against production systems. They remain
-generic TreeDB APIs and do not encode TreeSeed product semantics.
+generic TreeDX APIs and do not encode TreeSeed product semantics.
 
 The raw operation fallback validates method/path pairs against generated OpenAPI
 metadata before dispatch.
 
 ## Error Handling
 
-Non-2xx responses and network failures raise `TreeDbApiError`. The error keeps
+Non-2xx responses and network failures raise `TreeDxApiError`. The error keeps
 `status`, `code`, `message`, `details`, and `payload` available. Network
 failures use `status=0` and `code="network_error"`.
 
 ```python
 try:
     client.whoami()
-except TreeDbApiError as error:
+except TreeDxApiError as error:
     print(error.status, error.code, error.message)
 ```
 
 ## Pagination
 
-`TreeDbPage` and `TreeDbCursor` model opaque server-owned cursor pagination.
+`TreeDxPage` and `TreeDxCursor` model opaque server-owned cursor pagination.
 Helpers preserve cursor metadata and do not decode cursor internals.
 
 ## Binary And Multipart
@@ -157,7 +157,7 @@ python -m pytest tests/conformance
 
 ## Integration
 
-Integration tests call a live TreeDB server only when `TREEDB_BASE_URL` is set.
+Integration tests call a live TreeDX server only when `TREEDX_BASE_URL` is set.
 Without that environment variable, they skip cleanly.
 
 ```bash
@@ -168,7 +168,7 @@ python -m pytest tests/integration
 
 ```bash
 python -m pip install -e ".[dev]"
-python scripts/check_treedb_generated_types.py
+python scripts/check_treedx_generated_types.py
 python -m build
 python -m pytest tests/conformance
 python -m pytest tests/integration

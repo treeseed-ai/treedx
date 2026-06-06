@@ -1,4 +1,4 @@
-from treedb_sdk.adapters import MirrorsAdapter
+from treedx_sdk.adapters import MirrorsAdapter
 
 
 def test_mirrors_endpoints(MockTransport) -> None:  # type: ignore[no-untyped-def]

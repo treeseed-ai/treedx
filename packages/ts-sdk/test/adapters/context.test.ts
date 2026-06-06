@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ContextAdapter } from '../../src/treedb/index.js';
+import { ContextAdapter } from '../../src/treedx/index.js';
 import { MockTransport } from './mock.js';
 
 describe('ContextAdapter', () => {

@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
-  title: TreeDB API
+  title: TreeDX API
   version: 0.10.0
-  description: Human-maintained public API contract for implemented TreeDB surfaces.
+  description: Human-maintained public API contract for implemented TreeDX surfaces.
     SDK API payload types are generated from this document.
 servers:
 - url: http://localhost:4000
@@ -14,14 +14,14 @@ paths:
       operationId: getHealth
       summary: Return basic service health.
       security: []
-      x-treedb-required-capabilities: []
+      x-treedx-required-capabilities: []
       responses:
         '200':
           description: Return basic service health. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetHealthResponse'
+                $ref: '#/components/schemas/TreeDxGetHealthResponse'
         '503':
           $ref: '#/components/responses/Error'
   /api/v1/version:
@@ -29,14 +29,14 @@ paths:
       operationId: getVersion
       summary: Return service and API version.
       security: []
-      x-treedb-required-capabilities: []
+      x-treedx-required-capabilities: []
       responses:
         '200':
           description: Return service and API version. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetVersionResponse'
+                $ref: '#/components/schemas/TreeDxGetVersionResponse'
         '503':
           $ref: '#/components/responses/Error'
   /api/v1/auth/whoami:
@@ -44,14 +44,14 @@ paths:
       operationId: getWhoami
       summary: Return the current principal when authenticated.
       security: []
-      x-treedb-required-capabilities: []
+      x-treedx-required-capabilities: []
       responses:
         '200':
           description: Return the current principal when authenticated. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetWhoamiResponse'
+                $ref: '#/components/schemas/TreeDxGetWhoamiResponse'
         '503':
           $ref: '#/components/responses/Error'
   /api/v1/auth/mode:
@@ -59,14 +59,14 @@ paths:
       operationId: getAuthMode
       summary: Return the configured authentication mode.
       security: []
-      x-treedb-required-capabilities: []
+      x-treedx-required-capabilities: []
       responses:
         '200':
           description: Return the configured authentication mode. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetAuthModeResponse'
+                $ref: '#/components/schemas/TreeDxGetAuthModeResponse'
         '503':
           $ref: '#/components/responses/Error'
   /api/v1/auth/dev-token:
@@ -74,14 +74,14 @@ paths:
       operationId: createDevToken
       summary: Create a dev bearer token when dev auth is enabled.
       security: []
-      x-treedb-required-capabilities: []
+      x-treedx-required-capabilities: []
       responses:
         '200':
           description: Create a dev bearer token when dev auth is enabled. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCreateDevTokenResponse'
+                $ref: '#/components/schemas/TreeDxCreateDevTokenResponse'
         '501':
           $ref: '#/components/responses/Error'
         '503':
@@ -90,7 +90,7 @@ paths:
     get:
       operationId: getEffectiveScope
       summary: Resolve the current effective policy scope.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:read
       responses:
         '200':
@@ -98,7 +98,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetEffectiveScopeResponse'
+                $ref: '#/components/schemas/TreeDxGetEffectiveScopeResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -111,7 +111,7 @@ paths:
     post:
       operationId: refreshPolicy
       summary: Refresh local policy records from a connected policy source.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:write
       responses:
         '200':
@@ -120,7 +120,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbRefreshPolicyResponse'
+                $ref: '#/components/schemas/TreeDxRefreshPolicyResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -135,20 +135,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbPolicyRefreshRequest'
+              $ref: '#/components/schemas/TreeDxPolicyRefreshRequest'
   /api/v1/policy/capabilities:
     get:
       operationId: listCapabilities
-      summary: List canonical TreeDB capabilities.
-      x-treedb-required-capabilities:
+      summary: List canonical TreeDX capabilities.
+      x-treedx-required-capabilities:
       - policy:read
       responses:
         '200':
-          description: List canonical TreeDB capabilities. response.
+          description: List canonical TreeDX capabilities. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListCapabilitiesResponse'
+                $ref: '#/components/schemas/TreeDxListCapabilitiesResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -161,7 +161,7 @@ paths:
     get:
       operationId: listCapabilityGrants
       summary: List capability grants.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:read
       responses:
         '200':
@@ -169,7 +169,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListCapabilityGrantsResponse'
+                $ref: '#/components/schemas/TreeDxListCapabilityGrantsResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -181,7 +181,7 @@ paths:
     post:
       operationId: putCapabilityGrant
       summary: Create or replace a capability grant.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:write
       responses:
         '200':
@@ -189,7 +189,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbPutCapabilityGrantResponse'
+                $ref: '#/components/schemas/TreeDxPutCapabilityGrantResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -204,12 +204,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbCapabilityGrantRequest'
+              $ref: '#/components/schemas/TreeDxCapabilityGrantRequest'
   /api/v1/audit/events:
     get:
       operationId: listAuditEvents
       summary: List audit events visible to the caller.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - audit:read
       responses:
         '200':
@@ -217,7 +217,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListAuditEventsResponse'
+                $ref: '#/components/schemas/TreeDxListAuditEventsResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -230,7 +230,7 @@ paths:
     post:
       operationId: planFederationQuery
       summary: Reduce a requested federated scope without executing a query.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - query:federated
       responses:
         '200':
@@ -239,7 +239,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbPlanFederationQueryResponse'
+                $ref: '#/components/schemas/TreeDxPlanFederationQueryResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -252,26 +252,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbFederationQueryPlanRequest'
+              $ref: '#/components/schemas/TreeDxFederationQueryPlanRequest'
   /api/v1/search:
     post:
       operationId: federatedSearch
       summary: Execute authorized federated repository search.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - query:federated
       - files:search
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbFederatedSearchRequest'
+              $ref: '#/components/schemas/TreeDxFederatedSearchRequest'
       responses:
         '200':
           description: Execute authorized federated repository search. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederatedSearchResponse'
+                $ref: '#/components/schemas/TreeDxFederatedSearchResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -288,20 +288,20 @@ paths:
     post:
       operationId: federatedQuery
       summary: Execute authorized federated repository query.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - query:federated
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbFederatedQueryRequest'
+              $ref: '#/components/schemas/TreeDxFederatedQueryRequest'
       responses:
         '200':
           description: Execute authorized federated repository query. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederatedQueryResponse'
+                $ref: '#/components/schemas/TreeDxFederatedQueryResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -318,21 +318,21 @@ paths:
     post:
       operationId: federatedContextBuild
       summary: Build an authorized federated context pack.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - query:federated
       - graph:query
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbFederatedContextRequest'
+              $ref: '#/components/schemas/TreeDxFederatedContextRequest'
       responses:
         '200':
           description: Build an authorized federated context pack. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederatedContextBuildResponse'
+                $ref: '#/components/schemas/TreeDxFederatedContextBuildResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -349,21 +349,21 @@ paths:
     post:
       operationId: federatedGraphQuery
       summary: Execute an authorized federated graph query.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - query:federated
       - graph:query
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbFederatedGraphRequest'
+              $ref: '#/components/schemas/TreeDxFederatedGraphRequest'
       responses:
         '200':
           description: Execute an authorized federated graph query. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederatedGraphQueryResponse'
+                $ref: '#/components/schemas/TreeDxFederatedGraphQueryResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -380,7 +380,7 @@ paths:
     get:
       operationId: getLocalNode
       summary: Return local node metadata.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - registry:read
       responses:
         '200':
@@ -388,7 +388,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetLocalNodeResponse'
+                $ref: '#/components/schemas/TreeDxGetLocalNodeResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -400,16 +400,16 @@ paths:
   /api/v1/registry/nodes:
     get:
       operationId: listRegistryNodes
-      summary: List registered TreeDB nodes.
-      x-treedb-required-capabilities:
+      summary: List registered TreeDX nodes.
+      x-treedx-required-capabilities:
       - registry:read
       responses:
         '200':
-          description: List registered TreeDB nodes. response.
+          description: List registered TreeDX nodes. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListRegistryNodesResponse'
+                $ref: '#/components/schemas/TreeDxListRegistryNodesResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -422,7 +422,7 @@ paths:
     get:
       operationId: getRepositoryPlacement
       summary: Return placement metadata for a repository.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - registry:read
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -432,7 +432,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetRepositoryPlacementResponse'
+                $ref: '#/components/schemas/TreeDxGetRepositoryPlacementResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -446,7 +446,7 @@ paths:
     post:
       operationId: putRepositoryPlacement
       summary: Create or update placement metadata for a repository.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - registry:write
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -456,7 +456,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbPutRepositoryPlacementResponse'
+                $ref: '#/components/schemas/TreeDxPutRepositoryPlacementResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -471,12 +471,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbRepositoryPlacementRequest'
+              $ref: '#/components/schemas/TreeDxRepositoryPlacementRequest'
   /api/v1/repos/register:
     post:
       operationId: registerRepository
       summary: Register a repository.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - repos:write
       responses:
         '200':
@@ -484,7 +484,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbRegisterRepositoryResponse'
+                $ref: '#/components/schemas/TreeDxRegisterRepositoryResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -499,12 +499,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbRegisterRepositoryRequest'
+              $ref: '#/components/schemas/TreeDxRegisterRepositoryRequest'
   /api/v1/repos:
     get:
       operationId: listRepositories
       summary: List repositories visible to the caller.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - repos:read
       responses:
         '200':
@@ -512,7 +512,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListRepositoriesResponse'
+                $ref: '#/components/schemas/TreeDxListRepositoriesResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -524,7 +524,7 @@ paths:
     post:
       operationId: createRepository
       summary: Create a server-managed repository.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - repos:write
       responses:
         '200':
@@ -532,7 +532,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCreateRepositoryResponse'
+                $ref: '#/components/schemas/TreeDxCreateRepositoryResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -547,12 +547,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbCreateRepositoryRequest'
+              $ref: '#/components/schemas/TreeDxCreateRepositoryRequest'
   /api/v1/repos/{repo_id}:
     get:
       operationId: getRepository
       summary: Return repository metadata.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - repos:read
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -562,7 +562,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetRepositoryResponse'
+                $ref: '#/components/schemas/TreeDxGetRepositoryResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -577,7 +577,7 @@ paths:
     get:
       operationId: getRepositoryStatus
       summary: Return repository status.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - repos:read
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -587,7 +587,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetRepositoryStatusResponse'
+                $ref: '#/components/schemas/TreeDxGetRepositoryStatusResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -602,7 +602,7 @@ paths:
     get:
       operationId: listRepositoryRefs
       summary: List repository refs.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - git:read
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -612,7 +612,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListRepositoryRefsResponse'
+                $ref: '#/components/schemas/TreeDxListRepositoryRefsResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -625,7 +625,7 @@ paths:
     get:
       operationId: listRepositoryRemotes
       summary: List repository remotes.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - remotes:read
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -635,7 +635,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListRepositoryRemotesResponse'
+                $ref: '#/components/schemas/TreeDxListRepositoryRemotesResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -648,7 +648,7 @@ paths:
     post:
       operationId: syncRepository
       summary: Fetch repository updates.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - git:fetch
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -658,7 +658,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbSyncRepositoryResponse'
+                $ref: '#/components/schemas/TreeDxSyncRepositoryResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -673,12 +673,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbFetchRemoteRequest'
+              $ref: '#/components/schemas/TreeDxFetchRemoteRequest'
   /api/v1/repos/{repo_id}/push:
     post:
       operationId: pushRepository
       summary: Push explicit repository refs to a remote.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - git:push
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -688,7 +688,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbPushRepositoryResponse'
+                $ref: '#/components/schemas/TreeDxPushRepositoryResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -705,12 +705,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbPushRequest'
+              $ref: '#/components/schemas/TreeDxPushRequest'
   /api/v1/repos/{repo_id}/workspaces:
     post:
       operationId: createWorkspace
       summary: Create a repository workspace.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - workspace:create
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -720,7 +720,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCreateWorkspaceResponse'
+                $ref: '#/components/schemas/TreeDxCreateWorkspaceResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -737,12 +737,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbCreateWorkspaceRequest'
+              $ref: '#/components/schemas/TreeDxCreateWorkspaceRequest'
   /api/v1/repos/{repo_id}/files/read:
     post:
       operationId: readRepositoryFile
       summary: Read a repository file
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:read
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -752,7 +752,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbReadRepositoryFileResponse'
+                $ref: '#/components/schemas/TreeDxReadRepositoryFileResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -767,12 +767,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbRepositoryReadRequest'
+              $ref: '#/components/schemas/TreeDxRepositoryReadRequest'
   /api/v1/repos/{repo_id}/blobs/read:
     post:
       operationId: readRepositoryBlob
       summary: Read a repository blob as base64
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:read
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -782,7 +782,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbReadRepositoryBlobResponse'
+                $ref: '#/components/schemas/TreeDxReadRepositoryBlobResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -803,12 +803,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbBlobReadRequest'
+              $ref: '#/components/schemas/TreeDxBlobReadRequest'
   /api/v1/repos/{repo_id}/files/search:
     post:
       operationId: searchRepositoryFiles
       summary: Search repository files
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:search
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -818,7 +818,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbSearchRepositoryFilesResponse'
+                $ref: '#/components/schemas/TreeDxSearchRepositoryFilesResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -831,12 +831,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbRepositorySearchRequest'
+              $ref: '#/components/schemas/TreeDxRepositorySearchRequest'
   /api/v1/repos/{repo_id}/paths/list:
     post:
       operationId: listRepositoryPaths
       summary: List repository paths
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:read
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -846,7 +846,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListRepositoryPathsResponse'
+                $ref: '#/components/schemas/TreeDxListRepositoryPathsResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -859,12 +859,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbRepositoryPathsRequest'
+              $ref: '#/components/schemas/TreeDxRepositoryPathsRequest'
   /api/v1/repos/{repo_id}/query:
     post:
       operationId: queryRepository
       summary: Query repository content
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:search
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -874,7 +874,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbQueryRepositoryResponse'
+                $ref: '#/components/schemas/TreeDxQueryRepositoryResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -887,12 +887,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbRepositoryQueryRequest'
+              $ref: '#/components/schemas/TreeDxRepositoryQueryRequest'
   /api/v1/repos/{repo_id}/graph/refresh:
     post:
       operationId: refreshRepositoryGraph
       summary: Refresh repository graph with optional incremental metadata
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - graph:refresh
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -903,7 +903,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbRefreshRepositoryGraphResponse'
+                $ref: '#/components/schemas/TreeDxRefreshRepositoryGraphResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -918,12 +918,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbGraphRefreshRequest'
+              $ref: '#/components/schemas/TreeDxGraphRefreshRequest'
   /api/v1/repos/{repo_id}/graph/refresh-jobs/{job_id}:
     get:
       operationId: getGraphRefreshJob
       summary: Get repository graph refresh job status
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - graph:query
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -938,7 +938,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetGraphRefreshJobResponse'
+                $ref: '#/components/schemas/TreeDxGetGraphRefreshJobResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -953,7 +953,7 @@ paths:
     post:
       operationId: queryRepositoryGraph
       summary: Query repository graph
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - graph:query
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -963,7 +963,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbQueryRepositoryGraphResponse'
+                $ref: '#/components/schemas/TreeDxQueryRepositoryGraphResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -978,12 +978,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbGraphQueryRequest'
+              $ref: '#/components/schemas/TreeDxGraphQueryRequest'
   /api/v1/repos/{repo_id}/graph/search-files:
     post:
       operationId: searchGraphFiles
       summary: Search graph files
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - graph:query
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -993,7 +993,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbSearchGraphFilesResponse'
+                $ref: '#/components/schemas/TreeDxSearchGraphFilesResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1006,12 +1006,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbGraphSearchRequest'
+              $ref: '#/components/schemas/TreeDxGraphSearchRequest'
   /api/v1/repos/{repo_id}/graph/search-sections:
     post:
       operationId: searchGraphSections
       summary: Search graph sections
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - graph:query
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1021,7 +1021,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbSearchGraphSectionsResponse'
+                $ref: '#/components/schemas/TreeDxSearchGraphSectionsResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1034,12 +1034,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbGraphSearchRequest'
+              $ref: '#/components/schemas/TreeDxGraphSearchRequest'
   /api/v1/repos/{repo_id}/graph/search-entities:
     post:
       operationId: searchGraphEntities
       summary: Search graph entities
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - graph:query
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1049,7 +1049,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbSearchGraphEntitiesResponse'
+                $ref: '#/components/schemas/TreeDxSearchGraphEntitiesResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1062,12 +1062,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbGraphSearchRequest'
+              $ref: '#/components/schemas/TreeDxGraphSearchRequest'
   /api/v1/repos/{repo_id}/graph/nodes/{node_id}:
     get:
       operationId: getGraphNode
       summary: Get one graph node
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - graph:query
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1082,7 +1082,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetGraphNodeResponse'
+                $ref: '#/components/schemas/TreeDxGetGraphNodeResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1097,7 +1097,7 @@ paths:
     post:
       operationId: getRelatedGraphNodes
       summary: Get related graph nodes
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - graph:query
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1107,7 +1107,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetRelatedGraphNodesResponse'
+                $ref: '#/components/schemas/TreeDxGetRelatedGraphNodesResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1120,12 +1120,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbGraphRelatedRequest'
+              $ref: '#/components/schemas/TreeDxGraphRelatedRequest'
   /api/v1/repos/{repo_id}/graph/subgraph:
     post:
       operationId: getGraphSubgraph
       summary: Get a graph subgraph
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - graph:query
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1135,7 +1135,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetGraphSubgraphResponse'
+                $ref: '#/components/schemas/TreeDxGetGraphSubgraphResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1148,12 +1148,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbGraphSubgraphRequest'
+              $ref: '#/components/schemas/TreeDxGraphSubgraphRequest'
   /api/v1/repos/{repo_id}/context/build:
     post:
       operationId: buildContext
       summary: Build a context pack with mode and budget diagnostics
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - graph:query
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1163,7 +1163,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbBuildContextResponse'
+                $ref: '#/components/schemas/TreeDxBuildContextResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1176,12 +1176,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbContextRequest'
+              $ref: '#/components/schemas/TreeDxContextRequest'
   /api/v1/repos/{repo_id}/context/parse-ctx:
     post:
       operationId: parseContextQuery
       summary: Parse a context query DSL string
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - graph:query
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1191,7 +1191,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbParseContextQueryResponse'
+                $ref: '#/components/schemas/TreeDxParseContextQueryResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1204,12 +1204,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbCtxParseRequest'
+              $ref: '#/components/schemas/TreeDxCtxParseRequest'
   /api/v1/repos/{repo_id}/search/index/refresh:
     post:
       operationId: refreshSearchIndex
       summary: Refresh repository search index metadata
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:search
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1219,7 +1219,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbRefreshSearchIndexResponse'
+                $ref: '#/components/schemas/TreeDxRefreshSearchIndexResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1234,12 +1234,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbSearchIndexRefreshRequest'
+              $ref: '#/components/schemas/TreeDxSearchIndexRefreshRequest'
   /api/v1/repos/{repo_id}/search/index/status:
     get:
       operationId: getSearchIndexStatus
       summary: Get repository search index status
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:search
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1249,7 +1249,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetSearchIndexStatusResponse'
+                $ref: '#/components/schemas/TreeDxGetSearchIndexStatusResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1264,7 +1264,7 @@ paths:
     post:
       operationId: compactSearchIndex
       summary: Compact repository search index metadata
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:write
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1274,7 +1274,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCompactSearchIndexResponse'
+                $ref: '#/components/schemas/TreeDxCompactSearchIndexResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1291,12 +1291,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbSearchIndexCompactRequest'
+              $ref: '#/components/schemas/TreeDxSearchIndexCompactRequest'
   /api/v1/repos/{repo_id}/snapshots/build:
     post:
       operationId: buildSnapshot
       summary: Build a repository snapshot
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - snapshot:build
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1306,7 +1306,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbBuildSnapshotResponse'
+                $ref: '#/components/schemas/TreeDxBuildSnapshotResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1319,12 +1319,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbSnapshotBuildRequest'
+              $ref: '#/components/schemas/TreeDxSnapshotBuildRequest'
   /api/v1/repos/{repo_id}/snapshots/{snapshot_id}:
     get:
       operationId: getSnapshot
       summary: Get snapshot metadata
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - snapshot:build
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1339,7 +1339,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetSnapshotResponse'
+                $ref: '#/components/schemas/TreeDxGetSnapshotResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1354,7 +1354,7 @@ paths:
     post:
       operationId: exportArtifact
       summary: Export snapshot artifact metadata or bytes
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - artifact:export
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1364,7 +1364,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbExportArtifactResponse'
+                $ref: '#/components/schemas/TreeDxExportArtifactResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1379,12 +1379,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbArtifactExportRequest'
+              $ref: '#/components/schemas/TreeDxArtifactExportRequest'
   /api/v1/repos/{repo_id}/artifacts:
     get:
       operationId: listArtifacts
       summary: List repository artifact metadata
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:read
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1394,7 +1394,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListArtifactsResponse'
+                $ref: '#/components/schemas/TreeDxListArtifactsResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1407,7 +1407,7 @@ paths:
     get:
       operationId: getArtifact
       summary: Get repository artifact metadata
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:read
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1422,7 +1422,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetArtifactResponse'
+                $ref: '#/components/schemas/TreeDxGetArtifactResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1436,7 +1436,7 @@ paths:
     delete:
       operationId: deleteArtifact
       summary: Delete repository artifact metadata and bytes where safe
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:write
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1451,7 +1451,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbDeleteArtifactResponse'
+                $ref: '#/components/schemas/TreeDxDeleteArtifactResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1466,7 +1466,7 @@ paths:
     get:
       operationId: listMirrors
       summary: List repository mirrors
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - mirror:read
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1476,7 +1476,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListMirrorsResponse'
+                $ref: '#/components/schemas/TreeDxListMirrorsResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1488,7 +1488,7 @@ paths:
     post:
       operationId: putMirror
       summary: Create or update a repository mirror
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - mirror:write
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1498,7 +1498,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbPutMirrorResponse'
+                $ref: '#/components/schemas/TreeDxPutMirrorResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1513,12 +1513,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbMirrorRequest'
+              $ref: '#/components/schemas/TreeDxMirrorRequest'
   /api/v1/repos/{repo_id}/mirrors/{mirror_id}/sync:
     post:
       operationId: syncMirror
       summary: Record or execute mirror sync
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - mirror:write
       - git:fetch
       parameters:
@@ -1534,7 +1534,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbSyncMirrorResponse'
+                $ref: '#/components/schemas/TreeDxSyncMirrorResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1549,12 +1549,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbMirrorSyncRequest'
+              $ref: '#/components/schemas/TreeDxMirrorSyncRequest'
   /api/v1/repos/{repo_id}/mirrors/{mirror_id}/health:
     post:
       operationId: checkMirrorHealth
       summary: Check mirror health metadata
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - mirror:read
       - registry:read
       parameters:
@@ -1570,7 +1570,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCheckMirrorHealthResponse'
+                $ref: '#/components/schemas/TreeDxCheckMirrorHealthResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1585,12 +1585,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbMirrorHealthRequest'
+              $ref: '#/components/schemas/TreeDxMirrorHealthRequest'
   /api/v1/repos/{repo_id}/mirrors/{mirror_id}/promote:
     post:
       operationId: promoteMirror
       summary: Plan or apply mirror promotion
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - migration:read
       - migration:write
       parameters:
@@ -1606,7 +1606,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbPromoteMirrorResponse'
+                $ref: '#/components/schemas/TreeDxPromoteMirrorResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1623,12 +1623,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbMirrorPromotionRequest'
+              $ref: '#/components/schemas/TreeDxMirrorPromotionRequest'
   /api/v1/repos/{repo_id}/migrations:
     post:
       operationId: createMigration
       summary: Create a repository placement migration
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - migration:write
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1638,7 +1638,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCreateMigrationResponse'
+                $ref: '#/components/schemas/TreeDxCreateMigrationResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1653,12 +1653,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbMigrationRequest'
+              $ref: '#/components/schemas/TreeDxMigrationRequest'
   /api/v1/repos/{repo_id}/migrations/{migration_id}:
     get:
       operationId: getMigration
       summary: Get a repository placement migration
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - migration:read
       parameters:
       - $ref: '#/components/parameters/RepoId'
@@ -1673,7 +1673,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetMigrationResponse'
+                $ref: '#/components/schemas/TreeDxGetMigrationResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1688,7 +1688,7 @@ paths:
     get:
       operationId: getWorkspace
       summary: Get workspace metadata
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - workspace:same_actor
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1698,7 +1698,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetWorkspaceResponse'
+                $ref: '#/components/schemas/TreeDxGetWorkspaceResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1715,7 +1715,7 @@ paths:
     post:
       operationId: closeWorkspace
       summary: Close a workspace
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - workspace:same_actor
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1725,7 +1725,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCloseWorkspaceResponse'
+                $ref: '#/components/schemas/TreeDxCloseWorkspaceResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1742,7 +1742,7 @@ paths:
     get:
       operationId: listWorkspaceTree
       summary: List workspace tree entries
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:read
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1752,7 +1752,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListWorkspaceTreeResponse'
+                $ref: '#/components/schemas/TreeDxListWorkspaceTreeResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1767,7 +1767,7 @@ paths:
     get:
       operationId: readWorkspaceFile
       summary: Read a workspace file
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:read
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1782,7 +1782,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbReadWorkspaceFileResponse'
+                $ref: '#/components/schemas/TreeDxReadWorkspaceFileResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1798,7 +1798,7 @@ paths:
     put:
       operationId: writeWorkspaceFile
       summary: Write a workspace file
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:write
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1813,7 +1813,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbWriteWorkspaceFileResponse'
+                $ref: '#/components/schemas/TreeDxWriteWorkspaceFileResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1827,7 +1827,7 @@ paths:
     patch:
       operationId: patchWorkspaceFile
       summary: Patch a workspace file
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:write
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1842,7 +1842,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbPatchWorkspaceFileResponse'
+                $ref: '#/components/schemas/TreeDxPatchWorkspaceFileResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1858,7 +1858,7 @@ paths:
     delete:
       operationId: deleteWorkspaceFile
       summary: Delete a workspace file
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:delete
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1873,7 +1873,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbDeleteWorkspaceFileResponse'
+                $ref: '#/components/schemas/TreeDxDeleteWorkspaceFileResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1890,7 +1890,7 @@ paths:
     post:
       operationId: writeWorkspaceBlob
       summary: Write a base64 workspace blob
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:write
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1900,7 +1900,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbWriteWorkspaceBlobResponse'
+                $ref: '#/components/schemas/TreeDxWriteWorkspaceBlobResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1921,12 +1921,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbBlobWriteRequest'
+              $ref: '#/components/schemas/TreeDxBlobWriteRequest'
   /api/v1/workspaces/{workspace_id}/blobs/delete:
     post:
       operationId: deleteWorkspaceBlob
       summary: Delete a workspace blob
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:delete
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1936,7 +1936,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbDeleteWorkspaceBlobResponse'
+                $ref: '#/components/schemas/TreeDxDeleteWorkspaceBlobResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -1953,12 +1953,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbBlobDeleteRequest'
+              $ref: '#/components/schemas/TreeDxBlobDeleteRequest'
   /api/v1/workspaces/{workspace_id}/blobs/download:
     get:
       operationId: downloadWorkspaceBlob
       summary: Download raw workspace blob bytes
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:read
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1980,13 +1980,13 @@ paths:
             content-disposition:
               schema:
                 type: string
-            x-treedb-content-hash:
+            x-treedx-content-hash:
               schema:
                 type: string
-            x-treedb-object-id:
+            x-treedx-object-id:
               schema:
                 type: string
-            x-treedb-source:
+            x-treedx-source:
               schema:
                 type: string
           content:
@@ -2010,7 +2010,7 @@ paths:
     put:
       operationId: uploadWorkspaceBlob
       summary: Upload raw workspace blob bytes
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:write
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2025,7 +2025,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbUploadWorkspaceBlobResponse'
+                $ref: '#/components/schemas/TreeDxUploadWorkspaceBlobResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2044,7 +2044,7 @@ paths:
     post:
       operationId: createWorkspaceBlobUpload
       summary: Create a resumable workspace blob upload session
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:write
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2054,7 +2054,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCreateWorkspaceBlobUploadResponse'
+                $ref: '#/components/schemas/TreeDxCreateWorkspaceBlobUploadResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2071,12 +2071,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbBlobUploadCreateRequest'
+              $ref: '#/components/schemas/TreeDxBlobUploadCreateRequest'
   /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/parts/{part_number}:
     put:
       operationId: uploadWorkspaceBlobPart
       summary: Upload one resumable blob part
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:write
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2096,7 +2096,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbUploadWorkspaceBlobPartResponse'
+                $ref: '#/components/schemas/TreeDxUploadWorkspaceBlobPartResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2115,7 +2115,7 @@ paths:
     post:
       operationId: completeWorkspaceBlobUpload
       summary: Complete a resumable blob upload and commit the blob overlay
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:write
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2131,7 +2131,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCompleteWorkspaceBlobUploadResponse'
+                $ref: '#/components/schemas/TreeDxCompleteWorkspaceBlobUploadResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2148,12 +2148,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbBlobUploadCompleteRequest'
+              $ref: '#/components/schemas/TreeDxBlobUploadCompleteRequest'
   /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}:
     delete:
       operationId: abortWorkspaceBlobUpload
       summary: Abort a resumable blob upload session
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:write
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2168,7 +2168,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbAbortWorkspaceBlobUploadResponse'
+                $ref: '#/components/schemas/TreeDxAbortWorkspaceBlobUploadResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2185,7 +2185,7 @@ paths:
     post:
       operationId: searchWorkspace
       summary: Search workspace files
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:search
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2195,7 +2195,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbSearchWorkspaceResponse'
+                $ref: '#/components/schemas/TreeDxSearchWorkspaceResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2210,12 +2210,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbSearchRequest'
+              $ref: '#/components/schemas/TreeDxSearchRequest'
   /api/v1/workspaces/{workspace_id}/status:
     get:
       operationId: getWorkspaceStatus
       summary: Get workspace status and changes
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - files:read
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2225,7 +2225,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetWorkspaceStatusResponse'
+                $ref: '#/components/schemas/TreeDxGetWorkspaceStatusResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2240,7 +2240,7 @@ paths:
     get:
       operationId: getWorkspaceDiff
       summary: Get workspace diff
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - git:diff
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2250,7 +2250,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetWorkspaceDiffResponse'
+                $ref: '#/components/schemas/TreeDxGetWorkspaceDiffResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2265,7 +2265,7 @@ paths:
     post:
       operationId: commitWorkspace
       summary: Commit workspace overlay changes
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - git:commit
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2275,7 +2275,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCommitWorkspaceResponse'
+                $ref: '#/components/schemas/TreeDxCommitWorkspaceResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2290,12 +2290,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbCommitRequest'
+              $ref: '#/components/schemas/TreeDxCommitRequest'
   /api/v1/workspaces/{workspace_id}/exec:
     post:
       operationId: execWorkspace
       summary: Execute a command in workspace context
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - workspace:exec:*
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -2305,7 +2305,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbExecWorkspaceResponse'
+                $ref: '#/components/schemas/TreeDxExecWorkspaceResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2322,12 +2322,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbExecRequest'
+              $ref: '#/components/schemas/TreeDxExecRequest'
   /api/v1/admin/workspaces/quarantined:
     get:
       operationId: listQuarantinedWorkspaces
       summary: List quarantined workspaces.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:read
       responses:
         '200':
@@ -2335,7 +2335,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListQuarantinedWorkspacesResponse'
+                $ref: '#/components/schemas/TreeDxListQuarantinedWorkspacesResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2348,7 +2348,7 @@ paths:
     get:
       operationId: getAdminStorageHealth
       summary: Return protected storage health diagnostics.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:read
       responses:
         '200':
@@ -2356,7 +2356,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbGetAdminStorageHealthResponse'
+                $ref: '#/components/schemas/TreeDxGetAdminStorageHealthResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2369,7 +2369,7 @@ paths:
     post:
       operationId: checkAdminStorage
       summary: Validate storage logs and checksums.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:read
       responses:
         '200':
@@ -2377,7 +2377,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCheckAdminStorageResponse'
+                $ref: '#/components/schemas/TreeDxCheckAdminStorageResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2390,12 +2390,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbStorageCheckRequest'
+              $ref: '#/components/schemas/TreeDxStorageCheckRequest'
   /api/v1/admin/storage/recover:
     post:
       operationId: recoverAdminStorage
       summary: Run diagnostic storage recovery checks.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:write
       responses:
         '200':
@@ -2403,7 +2403,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbRecoverAdminStorageResponse'
+                $ref: '#/components/schemas/TreeDxRecoverAdminStorageResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2418,12 +2418,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbStorageRecoverRequest'
+              $ref: '#/components/schemas/TreeDxStorageRecoverRequest'
   /api/v1/admin/storage/compact:
     post:
       operationId: compactAdminStorage
       summary: Compact latest-record storage logs.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:write
       responses:
         '200':
@@ -2431,7 +2431,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCompactAdminStorageResponse'
+                $ref: '#/components/schemas/TreeDxCompactAdminStorageResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2446,12 +2446,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbStorageCompactRequest'
+              $ref: '#/components/schemas/TreeDxStorageCompactRequest'
   /api/v1/admin/storage/backup:
     post:
       operationId: backupAdminStorage
       summary: Create and verify a logical storage backup.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:read
       responses:
         '200':
@@ -2459,7 +2459,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbBackupAdminStorageResponse'
+                $ref: '#/components/schemas/TreeDxBackupAdminStorageResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2472,12 +2472,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbStorageBackupRequest'
+              $ref: '#/components/schemas/TreeDxStorageBackupRequest'
   /api/v1/admin/storage/migrations:
     get:
       operationId: listStorageMigrations
       summary: List storage format migration records.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:read
       responses:
         '200':
@@ -2485,7 +2485,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbListStorageMigrationsResponse'
+                $ref: '#/components/schemas/TreeDxListStorageMigrationsResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2498,7 +2498,7 @@ paths:
     post:
       operationId: planStorageMigration
       summary: Plan a storage format migration without mutating logs.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:read
       responses:
         '200':
@@ -2506,7 +2506,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbPlanStorageMigrationResponse'
+                $ref: '#/components/schemas/TreeDxPlanStorageMigrationResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2521,12 +2521,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbStorageMigrationPlanRequest'
+              $ref: '#/components/schemas/TreeDxStorageMigrationPlanRequest'
   /api/v1/admin/storage/migrations/apply:
     post:
       operationId: applyStorageMigration
       summary: Apply a guarded storage format migration.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:write
       responses:
         '200':
@@ -2534,7 +2534,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbApplyStorageMigrationResponse'
+                $ref: '#/components/schemas/TreeDxApplyStorageMigrationResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2549,12 +2549,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbStorageMigrationPlanRequest'
+              $ref: '#/components/schemas/TreeDxStorageMigrationPlanRequest'
   /api/v1/admin/storage/migrations/rollback:
     post:
       operationId: rollbackStorageMigration
       summary: Roll back a reversible storage migration.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:write
       responses:
         '200':
@@ -2562,7 +2562,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbRollbackStorageMigrationResponse'
+                $ref: '#/components/schemas/TreeDxRollbackStorageMigrationResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2577,12 +2577,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbStorageMigrationRollbackRequest'
+              $ref: '#/components/schemas/TreeDxStorageMigrationRollbackRequest'
   /api/v1/admin/storage/restore/verify:
     post:
       operationId: verifyStorageRestore
       summary: Verify a storage backup can replay before restore.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:read
       responses:
         '200':
@@ -2590,7 +2590,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbVerifyStorageRestoreResponse'
+                $ref: '#/components/schemas/TreeDxVerifyStorageRestoreResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2605,12 +2605,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbStorageRestoreVerifyRequest'
+              $ref: '#/components/schemas/TreeDxStorageRestoreVerifyRequest'
   /api/v1/admin/storage/restore:
     post:
       operationId: restoreStorage
       summary: Run a guarded storage restore from a verified backup.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:write
       responses:
         '200':
@@ -2618,7 +2618,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbRestoreStorageResponse'
+                $ref: '#/components/schemas/TreeDxRestoreStorageResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2633,12 +2633,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbStorageRestoreRequest'
+              $ref: '#/components/schemas/TreeDxStorageRestoreRequest'
   /api/v1/admin/artifacts/cleanup:
     post:
       operationId: cleanupArtifacts
       summary: Apply artifact retention cleanup.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:write
       responses:
         '200':
@@ -2646,7 +2646,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbCleanupArtifactsResponse'
+                $ref: '#/components/schemas/TreeDxCleanupArtifactsResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2659,20 +2659,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbArtifactCleanupRequest'
+              $ref: '#/components/schemas/TreeDxArtifactCleanupRequest'
   /api/v1/ready:
     get:
       operationId: getReadiness
       summary: Return sanitized service readiness.
       security: []
-      x-treedb-required-capabilities: []
+      x-treedx-required-capabilities: []
       responses:
         '200':
           description: Return sanitized service readiness. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbReadinessResponse'
+                $ref: '#/components/schemas/TreeDxReadinessResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2684,14 +2684,14 @@ paths:
       operationId: getDeepHealth
       summary: Return sanitized deep health summary.
       security: []
-      x-treedb-required-capabilities: []
+      x-treedx-required-capabilities: []
       responses:
         '200':
           description: Return sanitized deep health summary. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbDeepHealthResponse'
+                $ref: '#/components/schemas/TreeDxDeepHealthResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2704,7 +2704,7 @@ paths:
       summary: Return protected deep health diagnostics.
       security:
       - bearerAuth: []
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - policy:read
       responses:
         '200':
@@ -2712,7 +2712,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbDeepHealthResponse'
+                $ref: '#/components/schemas/TreeDxDeepHealthResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2724,14 +2724,14 @@ paths:
       operationId: getMetrics
       summary: Return sanitized JSON metrics.
       security: []
-      x-treedb-required-capabilities: []
+      x-treedx-required-capabilities: []
       responses:
         '200':
           description: Return sanitized JSON metrics. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbMetricsResponse'
+                $ref: '#/components/schemas/TreeDxMetricsResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2743,7 +2743,7 @@ paths:
       operationId: getPrometheusMetrics
       summary: Return sanitized Prometheus metrics.
       security: []
-      x-treedb-required-capabilities: []
+      x-treedx-required-capabilities: []
       responses:
         '200':
           description: Prometheus text metrics.
@@ -2761,7 +2761,7 @@ paths:
     post:
       operationId: registerFederationNode
       summary: Register a federation peer node.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - federation:write
       responses:
         '200':
@@ -2769,7 +2769,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederationPeerResponse'
+                $ref: '#/components/schemas/TreeDxFederationPeerResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2784,12 +2784,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbFederationPeerRegisterRequest'
+              $ref: '#/components/schemas/TreeDxFederationPeerRegisterRequest'
   /api/v1/federation/peers:
     get:
       operationId: listFederationPeers
       summary: List federation peers in the trusted catalog.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - federation:read
       responses:
         '200':
@@ -2797,7 +2797,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederationPeersResponse'
+                $ref: '#/components/schemas/TreeDxFederationPeersResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2812,7 +2812,7 @@ paths:
     get:
       operationId: getFederationPeer
       summary: Return federation peer metadata.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - federation:read
       responses:
         '200':
@@ -2820,7 +2820,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederationPeerResponse'
+                $ref: '#/components/schemas/TreeDxFederationPeerResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2841,7 +2841,7 @@ paths:
     post:
       operationId: trustFederationPeer
       summary: Update federation trust states for a peer.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - federation:trust
       responses:
         '200':
@@ -2849,7 +2849,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederationPeerResponse'
+                $ref: '#/components/schemas/TreeDxFederationPeerResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2864,7 +2864,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbFederationTrustRequest'
+              $ref: '#/components/schemas/TreeDxFederationTrustRequest'
       parameters:
       - name: node_id
         in: path
@@ -2875,7 +2875,7 @@ paths:
     post:
       operationId: revokeFederationPeer
       summary: Revoke federation trust for a peer.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - federation:trust
       responses:
         '200':
@@ -2883,7 +2883,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederationPeerResponse'
+                $ref: '#/components/schemas/TreeDxFederationPeerResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2904,14 +2904,14 @@ paths:
     get:
       operationId: getFederationCatalog
       summary: Return the local logical federation catalog.
-      x-treedb-required-capabilities: []
+      x-treedx-required-capabilities: []
       responses:
         '200':
           description: Return the local logical federation catalog. response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederationCatalogResponse'
+                $ref: '#/components/schemas/TreeDxFederationCatalogResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2925,7 +2925,7 @@ paths:
     post:
       operationId: pushFederationCatalog
       summary: Push a logical federation catalog delta.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - federation:sync
       responses:
         '200':
@@ -2933,7 +2933,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederationSyncResponse'
+                $ref: '#/components/schemas/TreeDxFederationSyncResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2948,12 +2948,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbFederationCatalog'
+              $ref: '#/components/schemas/TreeDxFederationCatalog'
   /api/v1/federation/catalog/sync:
     post:
       operationId: syncFederationCatalog
       summary: Trigger federation catalog synchronization.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - federation:sync
       responses:
         '200':
@@ -2961,7 +2961,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederationSyncResponse'
+                $ref: '#/components/schemas/TreeDxFederationSyncResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2976,7 +2976,7 @@ paths:
     get:
       operationId: listFederationRoutes
       summary: List active federation routing records.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - federation:read
       responses:
         '200':
@@ -2984,7 +2984,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederationRoutesResponse'
+                $ref: '#/components/schemas/TreeDxFederationRoutesResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -2999,7 +2999,7 @@ paths:
     post:
       operationId: proxyInternalFederationRequest
       summary: Proxy an internal node-to-node federation request.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - federation:sync
       responses:
         '200':
@@ -3007,7 +3007,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbInternalFederationProxyResponse'
+                $ref: '#/components/schemas/TreeDxInternalFederationProxyResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -3022,12 +3022,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbInternalFederationProxyResponse'
+              $ref: '#/components/schemas/TreeDxInternalFederationProxyResponse'
   /api/v1/internal/federation/repos/{repo_id}/mirror/export:
     post:
       operationId: exportInternalFederationMirror
       summary: Export repository mirror data for a trusted node.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - federation:sync
       responses:
         '200':
@@ -3035,7 +3035,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederationSyncResponse'
+                $ref: '#/components/schemas/TreeDxFederationSyncResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -3052,7 +3052,7 @@ paths:
     post:
       operationId: importInternalFederationMirror
       summary: Import repository mirror data from a trusted node.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - federation:sync
       responses:
         '200':
@@ -3060,7 +3060,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbFederationSyncResponse'
+                $ref: '#/components/schemas/TreeDxFederationSyncResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -3075,14 +3075,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbFederationCatalog'
+              $ref: '#/components/schemas/TreeDxFederationCatalog'
       parameters:
       - $ref: '#/components/parameters/RepoId'
   /api/v1/internal/federation/health:
     get:
       operationId: getInternalFederationHealth
       summary: Return internal federation health for node-to-node checks.
-      x-treedb-required-capabilities: []
+      x-treedx-required-capabilities: []
       responses:
         '200':
           description: Return internal federation health for node-to-node checks.
@@ -3090,7 +3090,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbInternalFederationHealthResponse'
+                $ref: '#/components/schemas/TreeDxInternalFederationHealthResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -3104,7 +3104,7 @@ paths:
     post:
       operationId: importLocalRepository
       summary: Import a data-dir-relative local Git repository into managed storage.
-      x-treedb-required-capabilities:
+      x-treedx-required-capabilities:
       - repos:write
       responses:
         '200':
@@ -3113,7 +3113,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreeDbImportLocalRepositoryResponse'
+                $ref: '#/components/schemas/TreeDxImportLocalRepositoryResponse'
         '401':
           $ref: '#/components/responses/Error'
         '403':
@@ -3130,7 +3130,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TreeDbImportLocalRepositoryRequest'
+              $ref: '#/components/schemas/TreeDxImportLocalRepositoryRequest'
 components:
   securitySchemes:
     bearerAuth:
@@ -3151,34 +3151,34 @@ components:
         type: string
   responses:
     Ok:
-      description: TreeDB ok envelope.
+      description: TreeDX ok envelope.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/TreeDbOkEnvelope'
+            $ref: '#/components/schemas/TreeDxOkEnvelope'
     Error:
-      description: TreeDB error envelope.
+      description: TreeDX error envelope.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/TreeDbErrorEnvelope'
+            $ref: '#/components/schemas/TreeDxErrorEnvelope'
   schemas:
     OkEnvelope:
-      $ref: '#/components/schemas/TreeDbOkEnvelope'
+      $ref: '#/components/schemas/TreeDxOkEnvelope'
     ErrorEnvelope:
-      $ref: '#/components/schemas/TreeDbErrorEnvelope'
+      $ref: '#/components/schemas/TreeDxErrorEnvelope'
     Principal:
-      $ref: '#/components/schemas/TreeDbPrincipal'
+      $ref: '#/components/schemas/TreeDxPrincipal'
     EffectiveScope:
-      $ref: '#/components/schemas/TreeDbEffectiveScope'
+      $ref: '#/components/schemas/TreeDxEffectiveScope'
     Repository:
-      $ref: '#/components/schemas/TreeDbRepository'
+      $ref: '#/components/schemas/TreeDxRepository'
     Workspace:
-      $ref: '#/components/schemas/TreeDbWorkspace'
-    TreeDbFederatedDiagnostics:
+      $ref: '#/components/schemas/TreeDxWorkspace'
+    TreeDxFederatedDiagnostics:
       type: object
       additionalProperties: true
-    TreeDbFederatedError:
+    TreeDxFederatedError:
       type: object
       required:
       - code
@@ -3195,7 +3195,7 @@ components:
         status:
           type: integer
       additionalProperties: false
-    TreeDbFederatedSearchRequest:
+    TreeDxFederatedSearchRequest:
       type: object
       required:
       - repoIds
@@ -3234,7 +3234,7 @@ components:
         timeoutMs:
           type: integer
       additionalProperties: true
-    TreeDbFederatedSearchResponse:
+    TreeDxFederatedSearchResponse:
       type: object
       required:
       - ok
@@ -3242,9 +3242,9 @@ components:
         ok:
           const: true
         search:
-          $ref: '#/components/schemas/TreeDbFederatedSearchResult'
+          $ref: '#/components/schemas/TreeDxFederatedSearchResult'
       additionalProperties: true
-    TreeDbFederatedQueryRequest:
+    TreeDxFederatedQueryRequest:
       type: object
       required:
       - repoIds
@@ -3285,7 +3285,7 @@ components:
         timeoutMs:
           type: integer
       additionalProperties: true
-    TreeDbFederatedQueryResponse:
+    TreeDxFederatedQueryResponse:
       type: object
       required:
       - ok
@@ -3293,9 +3293,9 @@ components:
         ok:
           const: true
         query:
-          $ref: '#/components/schemas/TreeDbFederatedQueryResult'
+          $ref: '#/components/schemas/TreeDxFederatedQueryResult'
       additionalProperties: true
-    TreeDbFederatedContextRequest:
+    TreeDxFederatedContextRequest:
       type: object
       required:
       - repoIds
@@ -3320,10 +3320,10 @@ components:
         timeoutMs:
           type: integer
       additionalProperties: true
-    TreeDbFederatedContextResponse:
+    TreeDxFederatedContextResponse:
       type: object
       additionalProperties: true
-    TreeDbFederatedGraphRequest:
+    TreeDxFederatedGraphRequest:
       type: object
       required:
       - repoIds
@@ -3361,10 +3361,10 @@ components:
         timeoutMs:
           type: integer
       additionalProperties: true
-    TreeDbFederatedGraphResponse:
+    TreeDxFederatedGraphResponse:
       type: object
       additionalProperties: true
-    TreeDbErrorCode:
+    TreeDxErrorCode:
       type: string
       enum:
       - authentication_required
@@ -3399,21 +3399,21 @@ components:
       - storage_compaction_failed
       - backup_failed
       - service_unavailable
-    TreeDbError:
+    TreeDxError:
       type: object
       required:
       - code
       - message
       properties:
         code:
-          $ref: '#/components/schemas/TreeDbErrorCode'
+          $ref: '#/components/schemas/TreeDxErrorCode'
         message:
           type: string
         details:
           type: object
           additionalProperties: true
       additionalProperties: false
-    TreeDbOkEnvelope:
+    TreeDxOkEnvelope:
       type: object
       required:
       - ok
@@ -3421,7 +3421,7 @@ components:
         ok:
           const: true
       additionalProperties: false
-    TreeDbErrorEnvelope:
+    TreeDxErrorEnvelope:
       type: object
       required:
       - ok
@@ -3430,20 +3430,20 @@ components:
         ok:
           const: false
         error:
-          $ref: '#/components/schemas/TreeDbError'
+          $ref: '#/components/schemas/TreeDxError'
       additionalProperties: false
-    TreeDbId:
+    TreeDxId:
       type: string
-    TreeDbRefName:
+    TreeDxRefName:
       type: string
-    TreeDbPath:
+    TreeDxPath:
       type: string
-    TreeDbTimestamp:
+    TreeDxTimestamp:
       type: string
       format: date-time
-    TreeDbContentHash:
+    TreeDxContentHash:
       type: string
-    TreeDbPrincipal:
+    TreeDxPrincipal:
       type: object
       required:
       - actorId
@@ -3456,7 +3456,7 @@ components:
         authMode:
           type: string
       additionalProperties: false
-    TreeDbActor:
+    TreeDxActor:
       type: object
       required:
       - actorId
@@ -3467,7 +3467,7 @@ components:
         tenantId:
           type: string
       additionalProperties: false
-    TreeDbWhoami:
+    TreeDxWhoami:
       type: object
       required:
       - authenticated
@@ -3477,10 +3477,10 @@ components:
           type: boolean
         principal:
           oneOf:
-          - $ref: '#/components/schemas/TreeDbPrincipal'
+          - $ref: '#/components/schemas/TreeDxPrincipal'
           - type: 'null'
       additionalProperties: false
-    TreeDbAuthMode:
+    TreeDxAuthMode:
       type: object
       required:
       - mode
@@ -3497,14 +3497,14 @@ components:
           type: object
           additionalProperties: true
       additionalProperties: false
-    TreeDbEffectiveScopeRequest:
+    TreeDxEffectiveScopeRequest:
       type: object
       required: []
       properties:
         repoId:
           type: string
       additionalProperties: false
-    TreeDbEffectiveScope:
+    TreeDxEffectiveScope:
       type: object
       required:
       - actorId
@@ -3539,7 +3539,7 @@ components:
         policyHash:
           type: string
       additionalProperties: false
-    TreeDbPolicyRefreshRequest:
+    TreeDxPolicyRefreshRequest:
       type: object
       required: []
       properties:
@@ -3566,10 +3566,10 @@ components:
             type: object
             additionalProperties: true
       additionalProperties: false
-    TreeDbPolicyRefreshResult:
+    TreeDxPolicyRefreshResult:
       type: object
       additionalProperties: true
-    TreeDbCapabilityGrant:
+    TreeDxCapabilityGrant:
       type: object
       required:
       - actorId
@@ -3618,9 +3618,9 @@ components:
           - type: string
           - type: 'null'
       additionalProperties: false
-    TreeDbCapabilityGrantRequest:
-      $ref: '#/components/schemas/TreeDbCapabilityGrant'
-    TreeDbAuditEvent:
+    TreeDxCapabilityGrantRequest:
+      $ref: '#/components/schemas/TreeDxCapabilityGrant'
+    TreeDxAuditEvent:
       type: object
       required:
       - id
@@ -3688,7 +3688,7 @@ components:
         recordedAt:
           type: string
       additionalProperties: false
-    TreeDbNode:
+    TreeDxNode:
       type: object
       required:
       - id
@@ -3702,7 +3702,7 @@ components:
         health:
           type: string
       additionalProperties: false
-    TreeDbRepositoryPlacement:
+    TreeDxRepositoryPlacement:
       type: object
       required:
       - primaryNodeId
@@ -3728,9 +3728,9 @@ components:
         migrationState:
           type: string
       additionalProperties: false
-    TreeDbRepositoryPlacementRequest:
-      $ref: '#/components/schemas/TreeDbRepositoryPlacement'
-    TreeDbRepository:
+    TreeDxRepositoryPlacementRequest:
+      $ref: '#/components/schemas/TreeDxRepositoryPlacement'
+    TreeDxRepository:
       type: object
       required:
       - repoId
@@ -3751,30 +3751,30 @@ components:
           - type: string
           - type: 'null'
         repositoryName:
-          $ref: '#/components/schemas/TreeDbRepositoryName'
+          $ref: '#/components/schemas/TreeDxRepositoryName'
         storageKind:
           type: string
           enum:
           - managed
           - legacy_local_path
       additionalProperties: false
-    TreeDbRepositoryStatus:
+    TreeDxRepositoryStatus:
       type: object
       required:
       - repo
       - git
       properties:
         repo:
-          $ref: '#/components/schemas/TreeDbRepository'
+          $ref: '#/components/schemas/TreeDxRepository'
         git:
           type: object
           additionalProperties: true
         placement:
           oneOf:
-          - $ref: '#/components/schemas/TreeDbRepositoryPlacement'
+          - $ref: '#/components/schemas/TreeDxRepositoryPlacement'
           - type: 'null'
       additionalProperties: false
-    TreeDbRepositoryRef:
+    TreeDxRepositoryRef:
       type: object
       required:
       - name
@@ -3793,7 +3793,7 @@ components:
         kind:
           type: string
       additionalProperties: false
-    TreeDbRepositoryRemote:
+    TreeDxRepositoryRemote:
       type: object
       required:
       - name
@@ -3805,15 +3805,15 @@ components:
           - type: string
           - type: 'null'
       additionalProperties: false
-    TreeDbRegisterRepositoryRequest:
+    TreeDxRegisterRepositoryRequest:
       type: object
       required:
       - repositoryName
       properties:
         repositoryName:
-          $ref: '#/components/schemas/TreeDbRepositoryName'
+          $ref: '#/components/schemas/TreeDxRepositoryName'
         name:
-          $ref: '#/components/schemas/TreeDbRepositoryName'
+          $ref: '#/components/schemas/TreeDxRepositoryName'
         defaultRef:
           type: string
         createIfMissing:
@@ -3822,7 +3822,7 @@ components:
       description: Compatibility registration for server-managed repository storage.
         Absolute localPath is compatibility-only and not part of the normal public
         contract.
-    TreeDbFetchRemoteRequest:
+    TreeDxFetchRemoteRequest:
       type: object
       required: []
       properties:
@@ -3839,10 +3839,10 @@ components:
         dryRun:
           type: boolean
       additionalProperties: false
-    TreeDbFetchRemoteResult:
+    TreeDxFetchRemoteResult:
       type: object
       additionalProperties: true
-    TreeDbPushRequest:
+    TreeDxPushRequest:
       type: object
       required: []
       properties:
@@ -3863,10 +3863,10 @@ components:
           - type: string
           - type: 'null'
       additionalProperties: false
-    TreeDbPushResult:
+    TreeDxPushResult:
       type: object
       additionalProperties: true
-    TreeDbCreateWorkspaceRequest:
+    TreeDxCreateWorkspaceRequest:
       type: object
       required: []
       properties:
@@ -3888,7 +3888,7 @@ components:
         ttlSeconds:
           type: integer
       additionalProperties: false
-    TreeDbWorkspace:
+    TreeDxWorkspace:
       type: object
       required:
       - workspaceId
@@ -3931,7 +3931,7 @@ components:
           - type: string
           - type: 'null'
       additionalProperties: false
-    TreeDbTreeEntry:
+    TreeDxTreeEntry:
       type: object
       required:
       - path
@@ -3949,7 +3949,7 @@ components:
         binary:
           type: boolean
       additionalProperties: false
-    TreeDbFile:
+    TreeDxFile:
       type: object
       required:
       - path
@@ -3965,7 +3965,7 @@ components:
         encoding:
           type: string
       additionalProperties: false
-    TreeDbFileMutationResult:
+    TreeDxFileMutationResult:
       type: object
       required:
       - path
@@ -3979,7 +3979,7 @@ components:
         sha:
           type: string
       additionalProperties: false
-    TreeDbReadFileRequest:
+    TreeDxReadFileRequest:
       type: object
       required:
       - path
@@ -3989,7 +3989,7 @@ components:
         path:
           type: string
       additionalProperties: false
-    TreeDbWriteFileRequest:
+    TreeDxWriteFileRequest:
       type: object
       required:
       - path
@@ -4006,7 +4006,7 @@ components:
         allowProtected:
           type: boolean
       additionalProperties: false
-    TreeDbPatchFileRequest:
+    TreeDxPatchFileRequest:
       type: object
       required:
       - path
@@ -4022,7 +4022,7 @@ components:
         allowProtected:
           type: boolean
       additionalProperties: false
-    TreeDbDeleteFileRequest:
+    TreeDxDeleteFileRequest:
       type: object
       required:
       - path
@@ -4036,7 +4036,7 @@ components:
         allowProtected:
           type: boolean
       additionalProperties: false
-    TreeDbSearchRequest:
+    TreeDxSearchRequest:
       type: object
       required: []
       properties:
@@ -4051,10 +4051,10 @@ components:
         limit:
           type: integer
       additionalProperties: true
-    TreeDbSearchResult:
+    TreeDxSearchResult:
       type: object
       additionalProperties: true
-    TreeDbStatus:
+    TreeDxStatus:
       type: object
       properties:
         workspaceId:
@@ -4067,7 +4067,7 @@ components:
             type: object
             additionalProperties: true
       additionalProperties: true
-    TreeDbDiff:
+    TreeDxDiff:
       type: object
       properties:
         workspaceId:
@@ -4079,7 +4079,7 @@ components:
           items:
             type: string
       additionalProperties: true
-    TreeDbCommitRequest:
+    TreeDxCommitRequest:
       type: object
       required: []
       properties:
@@ -4093,10 +4093,10 @@ components:
         branchName:
           type: string
       additionalProperties: true
-    TreeDbCommitResult:
+    TreeDxCommitResult:
       type: object
       additionalProperties: true
-    TreeDbExecRequest:
+    TreeDxExecRequest:
       type: object
       required:
       - cmd
@@ -4117,13 +4117,13 @@ components:
           type: object
           additionalProperties: true
       additionalProperties: true
-    TreeDbExecSandbox:
+    TreeDxExecSandbox:
       type: object
       additionalProperties: true
-    TreeDbExecResult:
+    TreeDxExecResult:
       type: object
       additionalProperties: true
-    TreeDbBlobReadRequest:
+    TreeDxBlobReadRequest:
       type: object
       required:
       - path
@@ -4143,7 +4143,7 @@ components:
         allowProtected:
           type: boolean
       additionalProperties: false
-    TreeDbBlob:
+    TreeDxBlob:
       type: object
       required:
       - path
@@ -4177,7 +4177,7 @@ components:
           - base
           - workspace
       additionalProperties: false
-    TreeDbBlobWriteRequest:
+    TreeDxBlobWriteRequest:
       type: object
       required:
       - path
@@ -4203,7 +4203,7 @@ components:
         allowProtected:
           type: boolean
       additionalProperties: false
-    TreeDbBlobDeleteRequest:
+    TreeDxBlobDeleteRequest:
       type: object
       required:
       - path
@@ -4217,10 +4217,10 @@ components:
         allowProtected:
           type: boolean
       additionalProperties: false
-    TreeDbBlobUploadRequestHeaders:
+    TreeDxBlobUploadRequestHeaders:
       type: object
       additionalProperties: true
-    TreeDbBlobMutationResult:
+    TreeDxBlobMutationResult:
       type: object
       required:
       - workspaceId
@@ -4245,7 +4245,7 @@ components:
         contentType:
           type: string
       additionalProperties: false
-    TreeDbBlobUploadCreateRequest:
+    TreeDxBlobUploadCreateRequest:
       type: object
       required:
       - path
@@ -4261,13 +4261,13 @@ components:
         allowProtected:
           type: boolean
       additionalProperties: false
-    TreeDbBlobUploadSession:
+    TreeDxBlobUploadSession:
       type: object
       additionalProperties: true
-    TreeDbBlobUploadPart:
+    TreeDxBlobUploadPart:
       type: object
       additionalProperties: true
-    TreeDbBlobUploadCompleteRequest:
+    TreeDxBlobUploadCompleteRequest:
       type: object
       required: []
       properties:
@@ -4279,7 +4279,7 @@ components:
             type: object
             additionalProperties: true
       additionalProperties: true
-    TreeDbRepositoryReadRequest:
+    TreeDxRepositoryReadRequest:
       type: object
       required: []
       properties:
@@ -4294,7 +4294,7 @@ components:
           items:
             type: string
       additionalProperties: true
-    TreeDbRepositorySearchRequest:
+    TreeDxRepositorySearchRequest:
       type: object
       required: []
       properties:
@@ -4321,7 +4321,7 @@ components:
         limit:
           type: integer
       additionalProperties: true
-    TreeDbRepositoryPathsRequest:
+    TreeDxRepositoryPathsRequest:
       type: object
       required: []
       properties:
@@ -4336,7 +4336,7 @@ components:
         limit:
           type: integer
       additionalProperties: true
-    TreeDbRepositoryQueryRequest:
+    TreeDxRepositoryQueryRequest:
       type: object
       required: []
       properties:
@@ -4365,10 +4365,10 @@ components:
         limit:
           type: integer
       additionalProperties: true
-    TreeDbRepositoryQueryResult:
+    TreeDxRepositoryQueryResult:
       type: object
       additionalProperties: true
-    TreeDbGraphRefreshRequest:
+    TreeDxGraphRefreshRequest:
       type: object
       required: []
       properties:
@@ -4391,10 +4391,10 @@ components:
         forceFull:
           type: boolean
       additionalProperties: true
-    TreeDbGraphRefreshResult:
+    TreeDxGraphRefreshResult:
       type: object
       additionalProperties: true
-    TreeDbGraphRefreshJobRequest:
+    TreeDxGraphRefreshJobRequest:
       type: object
       required:
       - jobId
@@ -4404,10 +4404,10 @@ components:
         jobId:
           type: string
       additionalProperties: false
-    TreeDbGraphRefreshJob:
+    TreeDxGraphRefreshJob:
       type: object
       additionalProperties: true
-    TreeDbGraphQueryRequest:
+    TreeDxGraphQueryRequest:
       type: object
       required: []
       properties:
@@ -4434,10 +4434,10 @@ components:
           type: object
           additionalProperties: true
       additionalProperties: true
-    TreeDbGraphQueryResult:
+    TreeDxGraphQueryResult:
       type: object
       additionalProperties: true
-    TreeDbGraphSearchRequest:
+    TreeDxGraphSearchRequest:
       type: object
       required: []
       properties:
@@ -4453,13 +4453,13 @@ components:
           type: object
           additionalProperties: true
       additionalProperties: true
-    TreeDbGraphSearchResult:
+    TreeDxGraphSearchResult:
       type: object
       additionalProperties: true
-    TreeDbGraphNode:
+    TreeDxGraphNode:
       type: object
       additionalProperties: true
-    TreeDbGraphNodeRequest:
+    TreeDxGraphNodeRequest:
       type: object
       required:
       - nodeId
@@ -4471,7 +4471,7 @@ components:
         nodeId:
           type: string
       additionalProperties: false
-    TreeDbGraphRelatedRequest:
+    TreeDxGraphRelatedRequest:
       type: object
       required:
       - nodeId
@@ -4490,7 +4490,7 @@ components:
           type: object
           additionalProperties: true
       additionalProperties: true
-    TreeDbGraphSubgraphRequest:
+    TreeDxGraphSubgraphRequest:
       type: object
       required: []
       properties:
@@ -4506,10 +4506,10 @@ components:
           type: object
           additionalProperties: true
       additionalProperties: true
-    TreeDbGraphTraversalResult:
+    TreeDxGraphTraversalResult:
       type: object
       additionalProperties: true
-    TreeDbContextRequest:
+    TreeDxContextRequest:
       type: object
       required: []
       properties:
@@ -4528,10 +4528,10 @@ components:
           type: object
           additionalProperties: true
       additionalProperties: true
-    TreeDbContextResult:
+    TreeDxContextResult:
       type: object
       additionalProperties: true
-    TreeDbCtxParseRequest:
+    TreeDxCtxParseRequest:
       type: object
       required:
       - source
@@ -4539,10 +4539,10 @@ components:
         source:
           type: string
       additionalProperties: false
-    TreeDbCtxParseResult:
+    TreeDxCtxParseResult:
       type: object
       additionalProperties: true
-    TreeDbSearchIndexRefreshRequest:
+    TreeDxSearchIndexRefreshRequest:
       type: object
       required: []
       properties:
@@ -4557,10 +4557,10 @@ components:
         incremental:
           type: boolean
       additionalProperties: true
-    TreeDbSearchIndexRefreshResult:
+    TreeDxSearchIndexRefreshResult:
       type: object
       additionalProperties: true
-    TreeDbSearchIndexStatusRequest:
+    TreeDxSearchIndexStatusRequest:
       type: object
       required: []
       properties:
@@ -4569,10 +4569,10 @@ components:
         ref:
           type: string
       additionalProperties: false
-    TreeDbSearchIndexStatus:
+    TreeDxSearchIndexStatus:
       type: object
       additionalProperties: true
-    TreeDbSearchIndexCompactRequest:
+    TreeDxSearchIndexCompactRequest:
       type: object
       required: []
       properties:
@@ -4583,10 +4583,10 @@ components:
         dryRun:
           type: boolean
       additionalProperties: false
-    TreeDbSearchIndexCompactResult:
+    TreeDxSearchIndexCompactResult:
       type: object
       additionalProperties: true
-    TreeDbSnapshotBuildRequest:
+    TreeDxSnapshotBuildRequest:
       type: object
       required: []
       properties:
@@ -4601,10 +4601,10 @@ components:
         includeArtifacts:
           type: boolean
       additionalProperties: true
-    TreeDbSnapshot:
+    TreeDxSnapshot:
       type: object
       additionalProperties: true
-    TreeDbArtifactExportRequest:
+    TreeDxArtifactExportRequest:
       type: object
       required: []
       properties:
@@ -4619,27 +4619,27 @@ components:
         download:
           type: boolean
       additionalProperties: true
-    TreeDbArtifact:
+    TreeDxArtifact:
       type: object
       additionalProperties: true
-    TreeDbArtifactCleanupRequest:
+    TreeDxArtifactCleanupRequest:
       type: object
       required: []
       properties:
         dryRun:
           type: boolean
       additionalProperties: false
-    TreeDbArtifactCleanupResult:
+    TreeDxArtifactCleanupResult:
       type: object
       additionalProperties: true
-    TreeDbArtifactListRequest:
+    TreeDxArtifactListRequest:
       type: object
       required: []
       properties:
         repoId:
           type: string
       additionalProperties: false
-    TreeDbArtifactGetRequest:
+    TreeDxArtifactGetRequest:
       type: object
       required:
       - artifactId
@@ -4649,7 +4649,7 @@ components:
         artifactId:
           type: string
       additionalProperties: false
-    TreeDbArtifactDeleteRequest:
+    TreeDxArtifactDeleteRequest:
       type: object
       required:
       - artifactId
@@ -4659,7 +4659,7 @@ components:
         artifactId:
           type: string
       additionalProperties: false
-    TreeDbMirror:
+    TreeDxMirror:
       type: object
       properties:
         id:
@@ -4683,7 +4683,7 @@ components:
           - type: integer
           - type: 'null'
       additionalProperties: true
-    TreeDbMirrorRequest:
+    TreeDxMirrorRequest:
       type: object
       required: []
       properties:
@@ -4694,7 +4694,7 @@ components:
         mode:
           type: string
       additionalProperties: true
-    TreeDbMirrorSyncRequest:
+    TreeDxMirrorSyncRequest:
       type: object
       required:
       - mirrorId
@@ -4712,10 +4712,10 @@ components:
         dryRun:
           type: boolean
       additionalProperties: true
-    TreeDbMirrorSyncResult:
+    TreeDxMirrorSyncResult:
       type: object
       additionalProperties: true
-    TreeDbMirrorHealthRequest:
+    TreeDxMirrorHealthRequest:
       type: object
       required:
       - mirrorId
@@ -4725,10 +4725,10 @@ components:
         mirrorId:
           type: string
       additionalProperties: true
-    TreeDbMirrorHealthResult:
+    TreeDxMirrorHealthResult:
       type: object
       additionalProperties: true
-    TreeDbMirrorPromotionRequest:
+    TreeDxMirrorPromotionRequest:
       type: object
       required:
       - mirrorId
@@ -4742,10 +4742,10 @@ components:
         requireSynced:
           type: boolean
       additionalProperties: true
-    TreeDbMirrorPromotionResult:
+    TreeDxMirrorPromotionResult:
       type: object
       additionalProperties: true
-    TreeDbMigrationRequest:
+    TreeDxMigrationRequest:
       type: object
       required: []
       properties:
@@ -4758,10 +4758,10 @@ components:
         requireMirrorSynced:
           type: boolean
       additionalProperties: true
-    TreeDbMigration:
+    TreeDxMigration:
       type: object
       additionalProperties: true
-    TreeDbFederationQueryPlanRequest:
+    TreeDxFederationQueryPlanRequest:
       type: object
       required:
       - repoIds
@@ -4783,10 +4783,10 @@ components:
           items:
             type: string
       additionalProperties: true
-    TreeDbFederationQueryPlan:
+    TreeDxFederationQueryPlan:
       type: object
       additionalProperties: true
-    TreeDbFederatedScopeInput:
+    TreeDxFederatedScopeInput:
       type: object
       required:
       - repoIds
@@ -4812,19 +4812,19 @@ components:
           - type: string
           - type: 'null'
       additionalProperties: true
-    TreeDbFederatedSearchResult:
+    TreeDxFederatedSearchResult:
       type: object
       additionalProperties: true
-    TreeDbFederatedQueryResult:
+    TreeDxFederatedQueryResult:
       type: object
       additionalProperties: true
-    TreeDbFederatedContextResult:
+    TreeDxFederatedContextResult:
       type: object
       additionalProperties: true
-    TreeDbFederatedGraphResult:
+    TreeDxFederatedGraphResult:
       type: object
       additionalProperties: true
-    TreeDbQuarantinedWorkspacesResponse:
+    TreeDxQuarantinedWorkspacesResponse:
       type: object
       required:
       - ok
@@ -4834,30 +4834,30 @@ components:
         workspaces:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbWorkspace'
+            $ref: '#/components/schemas/TreeDxWorkspace'
       additionalProperties: true
-    TreeDbStorageHealth:
+    TreeDxStorageHealth:
       type: object
       additionalProperties: true
-    TreeDbStorageCheckRequest:
+    TreeDxStorageCheckRequest:
       type: object
       required: []
       properties: {}
       additionalProperties: true
-    TreeDbStorageCheckResult:
+    TreeDxStorageCheckResult:
       type: object
       additionalProperties: true
-    TreeDbStorageRecoverRequest:
+    TreeDxStorageRecoverRequest:
       type: object
       required: []
       properties:
         force:
           type: boolean
       additionalProperties: true
-    TreeDbStorageRecoverResult:
+    TreeDxStorageRecoverResult:
       type: object
       additionalProperties: true
-    TreeDbStorageCompactRequest:
+    TreeDxStorageCompactRequest:
       type: object
       required: []
       properties:
@@ -4870,10 +4870,10 @@ components:
         backupBefore:
           type: boolean
       additionalProperties: false
-    TreeDbStorageCompactResult:
+    TreeDxStorageCompactResult:
       type: object
       additionalProperties: true
-    TreeDbStorageBackupRequest:
+    TreeDxStorageBackupRequest:
       type: object
       required: []
       properties:
@@ -4884,13 +4884,13 @@ components:
         verify:
           type: boolean
       additionalProperties: false
-    TreeDbStorageBackupResult:
+    TreeDxStorageBackupResult:
       type: object
       additionalProperties: true
-    TreeDbStorageMigration:
+    TreeDxStorageMigration:
       type: object
       additionalProperties: true
-    TreeDbStorageMigrationPlanRequest:
+    TreeDxStorageMigrationPlanRequest:
       type: object
       required: []
       properties:
@@ -4899,7 +4899,7 @@ components:
         targetVersion:
           type: string
       additionalProperties: true
-    TreeDbStorageMigrationRollbackRequest:
+    TreeDxStorageMigrationRollbackRequest:
       type: object
       required:
       - migrationId
@@ -4909,7 +4909,7 @@ components:
         dryRun:
           type: boolean
       additionalProperties: true
-    TreeDbStorageRestoreVerifyRequest:
+    TreeDxStorageRestoreVerifyRequest:
       type: object
       required:
       - backupId
@@ -4917,7 +4917,7 @@ components:
         backupId:
           type: string
       additionalProperties: true
-    TreeDbStorageRestoreRequest:
+    TreeDxStorageRestoreRequest:
       type: object
       required:
       - backupId
@@ -4931,10 +4931,10 @@ components:
         force:
           type: boolean
       additionalProperties: true
-    TreeDbStorageRestoreResult:
+    TreeDxStorageRestoreResult:
       type: object
       additionalProperties: true
-    TreeDbGetHealthResponse:
+    TreeDxGetHealthResponse:
       type: object
       required:
       - ok
@@ -4942,9 +4942,9 @@ components:
         ok:
           const: true
         health:
-          $ref: '#/components/schemas/TreeDbStorageHealth'
+          $ref: '#/components/schemas/TreeDxStorageHealth'
       additionalProperties: true
-    TreeDbGetVersionResponse:
+    TreeDxGetVersionResponse:
       type: object
       required:
       - ok
@@ -4958,7 +4958,7 @@ components:
         apiVersion:
           type: string
       additionalProperties: true
-    TreeDbGetWhoamiResponse:
+    TreeDxGetWhoamiResponse:
       type: object
       required:
       - ok
@@ -4966,9 +4966,9 @@ components:
         ok:
           const: true
         whoami:
-          $ref: '#/components/schemas/TreeDbWhoami'
+          $ref: '#/components/schemas/TreeDxWhoami'
       additionalProperties: true
-    TreeDbGetAuthModeResponse:
+    TreeDxGetAuthModeResponse:
       type: object
       required:
       - ok
@@ -4976,9 +4976,9 @@ components:
         ok:
           const: true
         auth:
-          $ref: '#/components/schemas/TreeDbAuthMode'
+          $ref: '#/components/schemas/TreeDxAuthMode'
       additionalProperties: true
-    TreeDbCreateDevTokenResponse:
+    TreeDxCreateDevTokenResponse:
       type: object
       required:
       - ok
@@ -4988,7 +4988,7 @@ components:
         accessToken:
           type: string
       additionalProperties: true
-    TreeDbGetEffectiveScopeResponse:
+    TreeDxGetEffectiveScopeResponse:
       type: object
       required:
       - ok
@@ -4996,9 +4996,9 @@ components:
         ok:
           const: true
         effectiveScope:
-          $ref: '#/components/schemas/TreeDbEffectiveScope'
+          $ref: '#/components/schemas/TreeDxEffectiveScope'
       additionalProperties: true
-    TreeDbRefreshPolicyResponse:
+    TreeDxRefreshPolicyResponse:
       type: object
       required:
       - ok
@@ -5006,9 +5006,9 @@ components:
         ok:
           const: true
         policy:
-          $ref: '#/components/schemas/TreeDbPolicyRefreshResult'
+          $ref: '#/components/schemas/TreeDxPolicyRefreshResult'
       additionalProperties: true
-    TreeDbListCapabilitiesResponse:
+    TreeDxListCapabilitiesResponse:
       type: object
       required:
       - ok
@@ -5020,7 +5020,7 @@ components:
           items:
             type: string
       additionalProperties: true
-    TreeDbListCapabilityGrantsResponse:
+    TreeDxListCapabilityGrantsResponse:
       type: object
       required:
       - ok
@@ -5030,9 +5030,9 @@ components:
         grants:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbCapabilityGrant'
+            $ref: '#/components/schemas/TreeDxCapabilityGrant'
       additionalProperties: true
-    TreeDbPutCapabilityGrantResponse:
+    TreeDxPutCapabilityGrantResponse:
       type: object
       required:
       - ok
@@ -5040,9 +5040,9 @@ components:
         ok:
           const: true
         grant:
-          $ref: '#/components/schemas/TreeDbCapabilityGrant'
+          $ref: '#/components/schemas/TreeDxCapabilityGrant'
       additionalProperties: true
-    TreeDbListAuditEventsResponse:
+    TreeDxListAuditEventsResponse:
       type: object
       required:
       - ok
@@ -5052,12 +5052,12 @@ components:
         events:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbAuditEvent'
+            $ref: '#/components/schemas/TreeDxAuditEvent'
         page:
           type: object
           additionalProperties: true
       additionalProperties: true
-    TreeDbPlanFederationQueryResponse:
+    TreeDxPlanFederationQueryResponse:
       type: object
       required:
       - ok
@@ -5065,9 +5065,9 @@ components:
         ok:
           const: true
         plan:
-          $ref: '#/components/schemas/TreeDbFederationQueryPlan'
+          $ref: '#/components/schemas/TreeDxFederationQueryPlan'
       additionalProperties: true
-    TreeDbFederatedContextBuildResponse:
+    TreeDxFederatedContextBuildResponse:
       type: object
       required:
       - ok
@@ -5075,9 +5075,9 @@ components:
         ok:
           const: true
         context:
-          $ref: '#/components/schemas/TreeDbFederatedContextResult'
+          $ref: '#/components/schemas/TreeDxFederatedContextResult'
       additionalProperties: true
-    TreeDbFederatedGraphQueryResponse:
+    TreeDxFederatedGraphQueryResponse:
       type: object
       required:
       - ok
@@ -5085,9 +5085,9 @@ components:
         ok:
           const: true
         graph:
-          $ref: '#/components/schemas/TreeDbFederatedGraphResult'
+          $ref: '#/components/schemas/TreeDxFederatedGraphResult'
       additionalProperties: true
-    TreeDbGetLocalNodeResponse:
+    TreeDxGetLocalNodeResponse:
       type: object
       required:
       - ok
@@ -5095,9 +5095,9 @@ components:
         ok:
           const: true
         node:
-          $ref: '#/components/schemas/TreeDbNode'
+          $ref: '#/components/schemas/TreeDxNode'
       additionalProperties: true
-    TreeDbListRegistryNodesResponse:
+    TreeDxListRegistryNodesResponse:
       type: object
       required:
       - ok
@@ -5107,9 +5107,9 @@ components:
         nodes:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbNode'
+            $ref: '#/components/schemas/TreeDxNode'
       additionalProperties: true
-    TreeDbGetRepositoryPlacementResponse:
+    TreeDxGetRepositoryPlacementResponse:
       type: object
       required:
       - ok
@@ -5117,9 +5117,9 @@ components:
         ok:
           const: true
         placement:
-          $ref: '#/components/schemas/TreeDbRepositoryPlacement'
+          $ref: '#/components/schemas/TreeDxRepositoryPlacement'
       additionalProperties: true
-    TreeDbPutRepositoryPlacementResponse:
+    TreeDxPutRepositoryPlacementResponse:
       type: object
       required:
       - ok
@@ -5127,9 +5127,9 @@ components:
         ok:
           const: true
         placement:
-          $ref: '#/components/schemas/TreeDbRepositoryPlacement'
+          $ref: '#/components/schemas/TreeDxRepositoryPlacement'
       additionalProperties: true
-    TreeDbRegisterRepositoryResponse:
+    TreeDxRegisterRepositoryResponse:
       type: object
       required:
       - ok
@@ -5137,9 +5137,9 @@ components:
         ok:
           const: true
         repo:
-          $ref: '#/components/schemas/TreeDbRepository'
+          $ref: '#/components/schemas/TreeDxRepository'
       additionalProperties: true
-    TreeDbListRepositoriesResponse:
+    TreeDxListRepositoriesResponse:
       type: object
       required:
       - ok
@@ -5149,9 +5149,9 @@ components:
         repos:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbRepository'
+            $ref: '#/components/schemas/TreeDxRepository'
       additionalProperties: true
-    TreeDbGetRepositoryResponse:
+    TreeDxGetRepositoryResponse:
       type: object
       required:
       - ok
@@ -5159,9 +5159,9 @@ components:
         ok:
           const: true
         repo:
-          $ref: '#/components/schemas/TreeDbRepository'
+          $ref: '#/components/schemas/TreeDxRepository'
       additionalProperties: true
-    TreeDbGetRepositoryStatusResponse:
+    TreeDxGetRepositoryStatusResponse:
       type: object
       required:
       - ok
@@ -5169,9 +5169,9 @@ components:
         ok:
           const: true
         status:
-          $ref: '#/components/schemas/TreeDbRepositoryStatus'
+          $ref: '#/components/schemas/TreeDxRepositoryStatus'
       additionalProperties: true
-    TreeDbListRepositoryRefsResponse:
+    TreeDxListRepositoryRefsResponse:
       type: object
       required:
       - ok
@@ -5181,9 +5181,9 @@ components:
         refs:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbRepositoryRef'
+            $ref: '#/components/schemas/TreeDxRepositoryRef'
       additionalProperties: true
-    TreeDbListRepositoryRemotesResponse:
+    TreeDxListRepositoryRemotesResponse:
       type: object
       required:
       - ok
@@ -5193,9 +5193,9 @@ components:
         remotes:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbRepositoryRemote'
+            $ref: '#/components/schemas/TreeDxRepositoryRemote'
       additionalProperties: true
-    TreeDbSyncRepositoryResponse:
+    TreeDxSyncRepositoryResponse:
       type: object
       required:
       - ok
@@ -5203,9 +5203,9 @@ components:
         ok:
           const: true
         sync:
-          $ref: '#/components/schemas/TreeDbFetchRemoteResult'
+          $ref: '#/components/schemas/TreeDxFetchRemoteResult'
       additionalProperties: true
-    TreeDbPushRepositoryResponse:
+    TreeDxPushRepositoryResponse:
       type: object
       required:
       - ok
@@ -5213,9 +5213,9 @@ components:
         ok:
           const: true
         push:
-          $ref: '#/components/schemas/TreeDbPushResult'
+          $ref: '#/components/schemas/TreeDxPushResult'
       additionalProperties: true
-    TreeDbCreateWorkspaceResponse:
+    TreeDxCreateWorkspaceResponse:
       type: object
       required:
       - ok
@@ -5223,9 +5223,9 @@ components:
         ok:
           const: true
         workspace:
-          $ref: '#/components/schemas/TreeDbWorkspace'
+          $ref: '#/components/schemas/TreeDxWorkspace'
       additionalProperties: true
-    TreeDbReadRepositoryFileResponse:
+    TreeDxReadRepositoryFileResponse:
       type: object
       required:
       - ok
@@ -5233,9 +5233,9 @@ components:
         ok:
           const: true
         file:
-          $ref: '#/components/schemas/TreeDbFile'
+          $ref: '#/components/schemas/TreeDxFile'
       additionalProperties: true
-    TreeDbReadRepositoryBlobResponse:
+    TreeDxReadRepositoryBlobResponse:
       type: object
       required:
       - ok
@@ -5243,9 +5243,9 @@ components:
         ok:
           const: true
         blob:
-          $ref: '#/components/schemas/TreeDbBlob'
+          $ref: '#/components/schemas/TreeDxBlob'
       additionalProperties: true
-    TreeDbSearchRepositoryFilesResponse:
+    TreeDxSearchRepositoryFilesResponse:
       type: object
       required:
       - ok
@@ -5267,7 +5267,7 @@ components:
           type: object
           additionalProperties: true
       additionalProperties: true
-    TreeDbListRepositoryPathsResponse:
+    TreeDxListRepositoryPathsResponse:
       type: object
       required:
       - ok
@@ -5275,9 +5275,9 @@ components:
         ok:
           const: true
         query:
-          $ref: '#/components/schemas/TreeDbRepositoryQueryResult'
+          $ref: '#/components/schemas/TreeDxRepositoryQueryResult'
       additionalProperties: true
-    TreeDbQueryRepositoryResponse:
+    TreeDxQueryRepositoryResponse:
       type: object
       required:
       - ok
@@ -5285,9 +5285,9 @@ components:
         ok:
           const: true
         query:
-          $ref: '#/components/schemas/TreeDbRepositoryQueryResult'
+          $ref: '#/components/schemas/TreeDxRepositoryQueryResult'
       additionalProperties: true
-    TreeDbRefreshRepositoryGraphResponse:
+    TreeDxRefreshRepositoryGraphResponse:
       type: object
       required:
       - ok
@@ -5295,9 +5295,9 @@ components:
         ok:
           const: true
         graph:
-          $ref: '#/components/schemas/TreeDbGraphRefreshResult'
+          $ref: '#/components/schemas/TreeDxGraphRefreshResult'
       additionalProperties: true
-    TreeDbGetGraphRefreshJobResponse:
+    TreeDxGetGraphRefreshJobResponse:
       type: object
       required:
       - ok
@@ -5305,9 +5305,9 @@ components:
         ok:
           const: true
         job:
-          $ref: '#/components/schemas/TreeDbGraphRefreshJob'
+          $ref: '#/components/schemas/TreeDxGraphRefreshJob'
       additionalProperties: true
-    TreeDbQueryRepositoryGraphResponse:
+    TreeDxQueryRepositoryGraphResponse:
       type: object
       required:
       - ok
@@ -5315,9 +5315,9 @@ components:
         ok:
           const: true
         graph:
-          $ref: '#/components/schemas/TreeDbGraphQueryResult'
+          $ref: '#/components/schemas/TreeDxGraphQueryResult'
       additionalProperties: true
-    TreeDbSearchGraphFilesResponse:
+    TreeDxSearchGraphFilesResponse:
       type: object
       required:
       - ok
@@ -5327,9 +5327,9 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbGraphSearchResult'
+            $ref: '#/components/schemas/TreeDxGraphSearchResult'
       additionalProperties: true
-    TreeDbSearchGraphSectionsResponse:
+    TreeDxSearchGraphSectionsResponse:
       type: object
       required:
       - ok
@@ -5339,9 +5339,9 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbGraphSearchResult'
+            $ref: '#/components/schemas/TreeDxGraphSearchResult'
       additionalProperties: true
-    TreeDbSearchGraphEntitiesResponse:
+    TreeDxSearchGraphEntitiesResponse:
       type: object
       required:
       - ok
@@ -5351,9 +5351,9 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbGraphSearchResult'
+            $ref: '#/components/schemas/TreeDxGraphSearchResult'
       additionalProperties: true
-    TreeDbGetGraphNodeResponse:
+    TreeDxGetGraphNodeResponse:
       type: object
       required:
       - ok
@@ -5361,9 +5361,9 @@ components:
         ok:
           const: true
         node:
-          $ref: '#/components/schemas/TreeDbGraphNode'
+          $ref: '#/components/schemas/TreeDxGraphNode'
       additionalProperties: true
-    TreeDbGetRelatedGraphNodesResponse:
+    TreeDxGetRelatedGraphNodesResponse:
       type: object
       required:
       - ok
@@ -5371,9 +5371,9 @@ components:
         ok:
           const: true
         graph:
-          $ref: '#/components/schemas/TreeDbGraphTraversalResult'
+          $ref: '#/components/schemas/TreeDxGraphTraversalResult'
       additionalProperties: true
-    TreeDbGetGraphSubgraphResponse:
+    TreeDxGetGraphSubgraphResponse:
       type: object
       required:
       - ok
@@ -5381,9 +5381,9 @@ components:
         ok:
           const: true
         graph:
-          $ref: '#/components/schemas/TreeDbGraphTraversalResult'
+          $ref: '#/components/schemas/TreeDxGraphTraversalResult'
       additionalProperties: true
-    TreeDbBuildContextResponse:
+    TreeDxBuildContextResponse:
       type: object
       required:
       - ok
@@ -5391,9 +5391,9 @@ components:
         ok:
           const: true
         context:
-          $ref: '#/components/schemas/TreeDbContextResult'
+          $ref: '#/components/schemas/TreeDxContextResult'
       additionalProperties: true
-    TreeDbParseContextQueryResponse:
+    TreeDxParseContextQueryResponse:
       type: object
       required:
       - ok
@@ -5401,9 +5401,9 @@ components:
         ok:
           const: true
         parse:
-          $ref: '#/components/schemas/TreeDbCtxParseResult'
+          $ref: '#/components/schemas/TreeDxCtxParseResult'
       additionalProperties: true
-    TreeDbRefreshSearchIndexResponse:
+    TreeDxRefreshSearchIndexResponse:
       type: object
       required:
       - ok
@@ -5411,9 +5411,9 @@ components:
         ok:
           const: true
         index:
-          $ref: '#/components/schemas/TreeDbSearchIndexRefreshResult'
+          $ref: '#/components/schemas/TreeDxSearchIndexRefreshResult'
       additionalProperties: true
-    TreeDbGetSearchIndexStatusResponse:
+    TreeDxGetSearchIndexStatusResponse:
       type: object
       required:
       - ok
@@ -5421,9 +5421,9 @@ components:
         ok:
           const: true
         index:
-          $ref: '#/components/schemas/TreeDbSearchIndexStatus'
+          $ref: '#/components/schemas/TreeDxSearchIndexStatus'
       additionalProperties: true
-    TreeDbCompactSearchIndexResponse:
+    TreeDxCompactSearchIndexResponse:
       type: object
       required:
       - ok
@@ -5431,9 +5431,9 @@ components:
         ok:
           const: true
         index:
-          $ref: '#/components/schemas/TreeDbSearchIndexCompactResult'
+          $ref: '#/components/schemas/TreeDxSearchIndexCompactResult'
       additionalProperties: true
-    TreeDbBuildSnapshotResponse:
+    TreeDxBuildSnapshotResponse:
       type: object
       required:
       - ok
@@ -5441,9 +5441,9 @@ components:
         ok:
           const: true
         snapshot:
-          $ref: '#/components/schemas/TreeDbSnapshot'
+          $ref: '#/components/schemas/TreeDxSnapshot'
       additionalProperties: true
-    TreeDbGetSnapshotResponse:
+    TreeDxGetSnapshotResponse:
       type: object
       required:
       - ok
@@ -5451,9 +5451,9 @@ components:
         ok:
           const: true
         snapshot:
-          $ref: '#/components/schemas/TreeDbSnapshot'
+          $ref: '#/components/schemas/TreeDxSnapshot'
       additionalProperties: true
-    TreeDbExportArtifactResponse:
+    TreeDxExportArtifactResponse:
       type: object
       required:
       - ok
@@ -5461,9 +5461,9 @@ components:
         ok:
           const: true
         artifact:
-          $ref: '#/components/schemas/TreeDbArtifact'
+          $ref: '#/components/schemas/TreeDxArtifact'
       additionalProperties: true
-    TreeDbListArtifactsResponse:
+    TreeDxListArtifactsResponse:
       type: object
       required:
       - ok
@@ -5473,9 +5473,9 @@ components:
         artifacts:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbArtifact'
+            $ref: '#/components/schemas/TreeDxArtifact'
       additionalProperties: true
-    TreeDbGetArtifactResponse:
+    TreeDxGetArtifactResponse:
       type: object
       required:
       - ok
@@ -5483,9 +5483,9 @@ components:
         ok:
           const: true
         artifact:
-          $ref: '#/components/schemas/TreeDbArtifact'
+          $ref: '#/components/schemas/TreeDxArtifact'
       additionalProperties: true
-    TreeDbDeleteArtifactResponse:
+    TreeDxDeleteArtifactResponse:
       type: object
       required:
       - ok
@@ -5493,9 +5493,9 @@ components:
         ok:
           const: true
         artifact:
-          $ref: '#/components/schemas/TreeDbArtifact'
+          $ref: '#/components/schemas/TreeDxArtifact'
       additionalProperties: true
-    TreeDbListMirrorsResponse:
+    TreeDxListMirrorsResponse:
       type: object
       required:
       - ok
@@ -5505,9 +5505,9 @@ components:
         mirrors:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbMirror'
+            $ref: '#/components/schemas/TreeDxMirror'
       additionalProperties: true
-    TreeDbPutMirrorResponse:
+    TreeDxPutMirrorResponse:
       type: object
       required:
       - ok
@@ -5515,9 +5515,9 @@ components:
         ok:
           const: true
         mirror:
-          $ref: '#/components/schemas/TreeDbMirror'
+          $ref: '#/components/schemas/TreeDxMirror'
       additionalProperties: true
-    TreeDbSyncMirrorResponse:
+    TreeDxSyncMirrorResponse:
       type: object
       required:
       - ok
@@ -5525,9 +5525,9 @@ components:
         ok:
           const: true
         sync:
-          $ref: '#/components/schemas/TreeDbMirrorSyncResult'
+          $ref: '#/components/schemas/TreeDxMirrorSyncResult'
       additionalProperties: true
-    TreeDbCheckMirrorHealthResponse:
+    TreeDxCheckMirrorHealthResponse:
       type: object
       required:
       - ok
@@ -5535,9 +5535,9 @@ components:
         ok:
           const: true
         health:
-          $ref: '#/components/schemas/TreeDbMirrorHealthResult'
+          $ref: '#/components/schemas/TreeDxMirrorHealthResult'
       additionalProperties: true
-    TreeDbPromoteMirrorResponse:
+    TreeDxPromoteMirrorResponse:
       type: object
       required:
       - ok
@@ -5545,9 +5545,9 @@ components:
         ok:
           const: true
         promotion:
-          $ref: '#/components/schemas/TreeDbMirrorPromotionResult'
+          $ref: '#/components/schemas/TreeDxMirrorPromotionResult'
       additionalProperties: true
-    TreeDbCreateMigrationResponse:
+    TreeDxCreateMigrationResponse:
       type: object
       required:
       - ok
@@ -5555,9 +5555,9 @@ components:
         ok:
           const: true
         migration:
-          $ref: '#/components/schemas/TreeDbMigration'
+          $ref: '#/components/schemas/TreeDxMigration'
       additionalProperties: true
-    TreeDbGetMigrationResponse:
+    TreeDxGetMigrationResponse:
       type: object
       required:
       - ok
@@ -5565,9 +5565,9 @@ components:
         ok:
           const: true
         migration:
-          $ref: '#/components/schemas/TreeDbMigration'
+          $ref: '#/components/schemas/TreeDxMigration'
       additionalProperties: true
-    TreeDbGetWorkspaceResponse:
+    TreeDxGetWorkspaceResponse:
       type: object
       required:
       - ok
@@ -5575,9 +5575,9 @@ components:
         ok:
           const: true
         workspace:
-          $ref: '#/components/schemas/TreeDbWorkspace'
+          $ref: '#/components/schemas/TreeDxWorkspace'
       additionalProperties: true
-    TreeDbCloseWorkspaceResponse:
+    TreeDxCloseWorkspaceResponse:
       type: object
       required:
       - ok
@@ -5585,9 +5585,9 @@ components:
         ok:
           const: true
         workspace:
-          $ref: '#/components/schemas/TreeDbWorkspace'
+          $ref: '#/components/schemas/TreeDxWorkspace'
       additionalProperties: true
-    TreeDbListWorkspaceTreeResponse:
+    TreeDxListWorkspaceTreeResponse:
       type: object
       required:
       - ok
@@ -5597,9 +5597,9 @@ components:
         entries:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbTreeEntry'
+            $ref: '#/components/schemas/TreeDxTreeEntry'
       additionalProperties: true
-    TreeDbReadWorkspaceFileResponse:
+    TreeDxReadWorkspaceFileResponse:
       type: object
       required:
       - ok
@@ -5607,9 +5607,9 @@ components:
         ok:
           const: true
         file:
-          $ref: '#/components/schemas/TreeDbFile'
+          $ref: '#/components/schemas/TreeDxFile'
       additionalProperties: true
-    TreeDbWriteWorkspaceFileResponse:
+    TreeDxWriteWorkspaceFileResponse:
       type: object
       required:
       - ok
@@ -5617,9 +5617,9 @@ components:
         ok:
           const: true
         file:
-          $ref: '#/components/schemas/TreeDbFileMutationResult'
+          $ref: '#/components/schemas/TreeDxFileMutationResult'
       additionalProperties: true
-    TreeDbPatchWorkspaceFileResponse:
+    TreeDxPatchWorkspaceFileResponse:
       type: object
       required:
       - ok
@@ -5627,9 +5627,9 @@ components:
         ok:
           const: true
         file:
-          $ref: '#/components/schemas/TreeDbFileMutationResult'
+          $ref: '#/components/schemas/TreeDxFileMutationResult'
       additionalProperties: true
-    TreeDbDeleteWorkspaceFileResponse:
+    TreeDxDeleteWorkspaceFileResponse:
       type: object
       required:
       - ok
@@ -5637,9 +5637,9 @@ components:
         ok:
           const: true
         file:
-          $ref: '#/components/schemas/TreeDbFileMutationResult'
+          $ref: '#/components/schemas/TreeDxFileMutationResult'
       additionalProperties: true
-    TreeDbWriteWorkspaceBlobResponse:
+    TreeDxWriteWorkspaceBlobResponse:
       type: object
       required:
       - ok
@@ -5647,9 +5647,9 @@ components:
         ok:
           const: true
         result:
-          $ref: '#/components/schemas/TreeDbBlobMutationResult'
+          $ref: '#/components/schemas/TreeDxBlobMutationResult'
       additionalProperties: true
-    TreeDbDeleteWorkspaceBlobResponse:
+    TreeDxDeleteWorkspaceBlobResponse:
       type: object
       required:
       - ok
@@ -5657,9 +5657,9 @@ components:
         ok:
           const: true
         result:
-          $ref: '#/components/schemas/TreeDbBlobMutationResult'
+          $ref: '#/components/schemas/TreeDxBlobMutationResult'
       additionalProperties: true
-    TreeDbUploadWorkspaceBlobResponse:
+    TreeDxUploadWorkspaceBlobResponse:
       type: object
       required:
       - ok
@@ -5667,9 +5667,9 @@ components:
         ok:
           const: true
         result:
-          $ref: '#/components/schemas/TreeDbBlobMutationResult'
+          $ref: '#/components/schemas/TreeDxBlobMutationResult'
       additionalProperties: true
-    TreeDbCreateWorkspaceBlobUploadResponse:
+    TreeDxCreateWorkspaceBlobUploadResponse:
       type: object
       required:
       - ok
@@ -5677,9 +5677,9 @@ components:
         ok:
           const: true
         upload:
-          $ref: '#/components/schemas/TreeDbBlobUploadSession'
+          $ref: '#/components/schemas/TreeDxBlobUploadSession'
       additionalProperties: true
-    TreeDbUploadWorkspaceBlobPartResponse:
+    TreeDxUploadWorkspaceBlobPartResponse:
       type: object
       required:
       - ok
@@ -5687,9 +5687,9 @@ components:
         ok:
           const: true
         part:
-          $ref: '#/components/schemas/TreeDbBlobUploadPart'
+          $ref: '#/components/schemas/TreeDxBlobUploadPart'
       additionalProperties: true
-    TreeDbCompleteWorkspaceBlobUploadResponse:
+    TreeDxCompleteWorkspaceBlobUploadResponse:
       type: object
       required:
       - ok
@@ -5697,9 +5697,9 @@ components:
         ok:
           const: true
         result:
-          $ref: '#/components/schemas/TreeDbBlobMutationResult'
+          $ref: '#/components/schemas/TreeDxBlobMutationResult'
       additionalProperties: true
-    TreeDbAbortWorkspaceBlobUploadResponse:
+    TreeDxAbortWorkspaceBlobUploadResponse:
       type: object
       required:
       - ok
@@ -5707,9 +5707,9 @@ components:
         ok:
           const: true
         upload:
-          $ref: '#/components/schemas/TreeDbBlobUploadSession'
+          $ref: '#/components/schemas/TreeDxBlobUploadSession'
       additionalProperties: true
-    TreeDbSearchWorkspaceResponse:
+    TreeDxSearchWorkspaceResponse:
       type: object
       required:
       - ok
@@ -5717,9 +5717,9 @@ components:
         ok:
           const: true
         search:
-          $ref: '#/components/schemas/TreeDbSearchResult'
+          $ref: '#/components/schemas/TreeDxSearchResult'
       additionalProperties: true
-    TreeDbGetWorkspaceStatusResponse:
+    TreeDxGetWorkspaceStatusResponse:
       type: object
       required:
       - ok
@@ -5736,7 +5736,7 @@ components:
             type: object
             additionalProperties: true
       additionalProperties: true
-    TreeDbGetWorkspaceDiffResponse:
+    TreeDxGetWorkspaceDiffResponse:
       type: object
       required:
       - ok
@@ -5752,7 +5752,7 @@ components:
           items:
             type: string
       additionalProperties: true
-    TreeDbCommitWorkspaceResponse:
+    TreeDxCommitWorkspaceResponse:
       type: object
       required:
       - ok
@@ -5760,9 +5760,9 @@ components:
         ok:
           const: true
         commit:
-          $ref: '#/components/schemas/TreeDbCommitResult'
+          $ref: '#/components/schemas/TreeDxCommitResult'
       additionalProperties: true
-    TreeDbExecWorkspaceResponse:
+    TreeDxExecWorkspaceResponse:
       type: object
       required:
       - ok
@@ -5770,9 +5770,9 @@ components:
         ok:
           const: true
         exec:
-          $ref: '#/components/schemas/TreeDbExecResult'
+          $ref: '#/components/schemas/TreeDxExecResult'
       additionalProperties: true
-    TreeDbListQuarantinedWorkspacesResponse:
+    TreeDxListQuarantinedWorkspacesResponse:
       type: object
       required:
       - ok
@@ -5782,9 +5782,9 @@ components:
         workspaces:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbWorkspace'
+            $ref: '#/components/schemas/TreeDxWorkspace'
       additionalProperties: true
-    TreeDbGetAdminStorageHealthResponse:
+    TreeDxGetAdminStorageHealthResponse:
       type: object
       required:
       - ok
@@ -5792,9 +5792,9 @@ components:
         ok:
           const: true
         storage:
-          $ref: '#/components/schemas/TreeDbStorageHealth'
+          $ref: '#/components/schemas/TreeDxStorageHealth'
       additionalProperties: true
-    TreeDbCheckAdminStorageResponse:
+    TreeDxCheckAdminStorageResponse:
       type: object
       required:
       - ok
@@ -5802,9 +5802,9 @@ components:
         ok:
           const: true
         check:
-          $ref: '#/components/schemas/TreeDbStorageCheckResult'
+          $ref: '#/components/schemas/TreeDxStorageCheckResult'
       additionalProperties: true
-    TreeDbRecoverAdminStorageResponse:
+    TreeDxRecoverAdminStorageResponse:
       type: object
       required:
       - ok
@@ -5812,9 +5812,9 @@ components:
         ok:
           const: true
         recovery:
-          $ref: '#/components/schemas/TreeDbStorageRecoverResult'
+          $ref: '#/components/schemas/TreeDxStorageRecoverResult'
       additionalProperties: true
-    TreeDbCompactAdminStorageResponse:
+    TreeDxCompactAdminStorageResponse:
       type: object
       required:
       - ok
@@ -5822,9 +5822,9 @@ components:
         ok:
           const: true
         compact:
-          $ref: '#/components/schemas/TreeDbStorageCompactResult'
+          $ref: '#/components/schemas/TreeDxStorageCompactResult'
       additionalProperties: true
-    TreeDbBackupAdminStorageResponse:
+    TreeDxBackupAdminStorageResponse:
       type: object
       required:
       - ok
@@ -5832,9 +5832,9 @@ components:
         ok:
           const: true
         backup:
-          $ref: '#/components/schemas/TreeDbStorageBackupResult'
+          $ref: '#/components/schemas/TreeDxStorageBackupResult'
       additionalProperties: true
-    TreeDbListStorageMigrationsResponse:
+    TreeDxListStorageMigrationsResponse:
       type: object
       required:
       - ok
@@ -5844,9 +5844,9 @@ components:
         migrations:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbStorageMigration'
+            $ref: '#/components/schemas/TreeDxStorageMigration'
       additionalProperties: true
-    TreeDbPlanStorageMigrationResponse:
+    TreeDxPlanStorageMigrationResponse:
       type: object
       required:
       - ok
@@ -5854,9 +5854,9 @@ components:
         ok:
           const: true
         migration:
-          $ref: '#/components/schemas/TreeDbStorageMigration'
+          $ref: '#/components/schemas/TreeDxStorageMigration'
       additionalProperties: true
-    TreeDbApplyStorageMigrationResponse:
+    TreeDxApplyStorageMigrationResponse:
       type: object
       required:
       - ok
@@ -5864,9 +5864,9 @@ components:
         ok:
           const: true
         migration:
-          $ref: '#/components/schemas/TreeDbStorageMigration'
+          $ref: '#/components/schemas/TreeDxStorageMigration'
       additionalProperties: true
-    TreeDbRollbackStorageMigrationResponse:
+    TreeDxRollbackStorageMigrationResponse:
       type: object
       required:
       - ok
@@ -5874,9 +5874,9 @@ components:
         ok:
           const: true
         migration:
-          $ref: '#/components/schemas/TreeDbStorageMigration'
+          $ref: '#/components/schemas/TreeDxStorageMigration'
       additionalProperties: true
-    TreeDbVerifyStorageRestoreResponse:
+    TreeDxVerifyStorageRestoreResponse:
       type: object
       required:
       - ok
@@ -5884,9 +5884,9 @@ components:
         ok:
           const: true
         restore:
-          $ref: '#/components/schemas/TreeDbStorageRestoreResult'
+          $ref: '#/components/schemas/TreeDxStorageRestoreResult'
       additionalProperties: true
-    TreeDbRestoreStorageResponse:
+    TreeDxRestoreStorageResponse:
       type: object
       required:
       - ok
@@ -5894,9 +5894,9 @@ components:
         ok:
           const: true
         restore:
-          $ref: '#/components/schemas/TreeDbStorageRestoreResult'
+          $ref: '#/components/schemas/TreeDxStorageRestoreResult'
       additionalProperties: true
-    TreeDbCleanupArtifactsResponse:
+    TreeDxCleanupArtifactsResponse:
       type: object
       required:
       - ok
@@ -5904,16 +5904,16 @@ components:
         ok:
           const: true
         cleanup:
-          $ref: '#/components/schemas/TreeDbArtifactCleanupResult'
+          $ref: '#/components/schemas/TreeDxArtifactCleanupResult'
       additionalProperties: true
-    TreeDbHealthCheckStatus:
+    TreeDxHealthCheckStatus:
       type: string
       enum:
       - ok
       - degraded
       - failed
       - skipped
-    TreeDbHealthCheck:
+    TreeDxHealthCheck:
       type: object
       required:
       - name
@@ -5922,14 +5922,14 @@ components:
         name:
           type: string
         status:
-          $ref: '#/components/schemas/TreeDbHealthCheckStatus'
+          $ref: '#/components/schemas/TreeDxHealthCheckStatus'
         durationMs:
           type: integer
         details:
           type: object
           additionalProperties: true
       additionalProperties: false
-    TreeDbHealthSummary:
+    TreeDxHealthSummary:
       type: object
       required:
       - status
@@ -5945,12 +5945,12 @@ components:
         checks:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbHealthCheck'
+            $ref: '#/components/schemas/TreeDxHealthCheck'
         checkedAt:
           type: string
           format: date-time
       additionalProperties: false
-    TreeDbReadiness:
+    TreeDxReadiness:
       type: object
       required:
       - status
@@ -5965,16 +5965,16 @@ components:
         checks:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbHealthCheck'
+            $ref: '#/components/schemas/TreeDxHealthCheck'
         checkedAt:
           type: string
           format: date-time
       additionalProperties: false
-    TreeDbMetricLabelMap:
+    TreeDxMetricLabelMap:
       type: object
       additionalProperties:
         type: string
-    TreeDbMetricCounter:
+    TreeDxMetricCounter:
       type: object
       required:
       - name
@@ -5984,11 +5984,11 @@ components:
         name:
           type: string
         labels:
-          $ref: '#/components/schemas/TreeDbMetricLabelMap'
+          $ref: '#/components/schemas/TreeDxMetricLabelMap'
         value:
           type: number
       additionalProperties: false
-    TreeDbMetricHistogramBucket:
+    TreeDxMetricHistogramBucket:
       type: object
       required:
       - le
@@ -6001,7 +6001,7 @@ components:
         value:
           type: number
       additionalProperties: false
-    TreeDbMetricHistogram:
+    TreeDxMetricHistogram:
       type: object
       required:
       - name
@@ -6013,17 +6013,17 @@ components:
         name:
           type: string
         labels:
-          $ref: '#/components/schemas/TreeDbMetricLabelMap'
+          $ref: '#/components/schemas/TreeDxMetricLabelMap'
         buckets:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbMetricHistogramBucket'
+            $ref: '#/components/schemas/TreeDxMetricHistogramBucket'
         sum:
           type: number
         count:
           type: number
       additionalProperties: false
-    TreeDbMetricGauge:
+    TreeDxMetricGauge:
       type: object
       required:
       - name
@@ -6033,11 +6033,11 @@ components:
         name:
           type: string
         labels:
-          $ref: '#/components/schemas/TreeDbMetricLabelMap'
+          $ref: '#/components/schemas/TreeDxMetricLabelMap'
         value:
           type: number
       additionalProperties: false
-    TreeDbMetrics:
+    TreeDxMetrics:
       type: object
       required:
       - counters
@@ -6047,17 +6047,17 @@ components:
         counters:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbMetricCounter'
+            $ref: '#/components/schemas/TreeDxMetricCounter'
         histograms:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbMetricHistogram'
+            $ref: '#/components/schemas/TreeDxMetricHistogram'
         gauges:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbMetricGauge'
+            $ref: '#/components/schemas/TreeDxMetricGauge'
       additionalProperties: false
-    TreeDbReadinessResponse:
+    TreeDxReadinessResponse:
       type: object
       required:
       - ok
@@ -6066,9 +6066,9 @@ components:
         ok:
           const: true
         readiness:
-          $ref: '#/components/schemas/TreeDbReadiness'
+          $ref: '#/components/schemas/TreeDxReadiness'
       additionalProperties: true
-    TreeDbDeepHealthResponse:
+    TreeDxDeepHealthResponse:
       type: object
       required:
       - ok
@@ -6077,9 +6077,9 @@ components:
         ok:
           const: true
         health:
-          $ref: '#/components/schemas/TreeDbHealthSummary'
+          $ref: '#/components/schemas/TreeDxHealthSummary'
       additionalProperties: true
-    TreeDbMetricsResponse:
+    TreeDxMetricsResponse:
       type: object
       required:
       - ok
@@ -6088,9 +6088,9 @@ components:
         ok:
           const: true
         metrics:
-          $ref: '#/components/schemas/TreeDbMetrics'
+          $ref: '#/components/schemas/TreeDxMetrics'
       additionalProperties: true
-    TreeDbHealthResponse:
+    TreeDxHealthResponse:
       type: object
       required:
       - ok
@@ -6099,13 +6099,13 @@ components:
         ok:
           const: true
         health:
-          $ref: '#/components/schemas/TreeDbHealthSummary'
+          $ref: '#/components/schemas/TreeDxHealthSummary'
       additionalProperties: true
-    TreeDbRepositoryName:
+    TreeDxRepositoryName:
       type: string
       pattern: ^[a-z0-9][a-z0-9._-]{0,127}$
       description: Canonical server-managed repository name.
-    TreeDbRepositorySource:
+    TreeDxRepositorySource:
       type: object
       required:
       - type
@@ -6123,7 +6123,7 @@ components:
         bundleId:
           type: string
       additionalProperties: false
-    TreeDbRepositoryPlacementPreference:
+    TreeDxRepositoryPlacementPreference:
       type: object
       properties:
         mode:
@@ -6142,21 +6142,21 @@ components:
         writePolicy:
           type: string
       additionalProperties: false
-    TreeDbCreateRepositoryRequest:
+    TreeDxCreateRepositoryRequest:
       type: object
       required:
       - repositoryName
       properties:
         repositoryName:
-          $ref: '#/components/schemas/TreeDbRepositoryName'
+          $ref: '#/components/schemas/TreeDxRepositoryName'
         source:
-          $ref: '#/components/schemas/TreeDbRepositorySource'
+          $ref: '#/components/schemas/TreeDxRepositorySource'
         placement:
-          $ref: '#/components/schemas/TreeDbRepositoryPlacementPreference'
+          $ref: '#/components/schemas/TreeDxRepositoryPlacementPreference'
         defaultRef:
           type: string
       additionalProperties: false
-    TreeDbCreateRepositoryResponse: &id001
+    TreeDxCreateRepositoryResponse: &id001
       type: object
       required:
       - ok
@@ -6164,9 +6164,9 @@ components:
         ok:
           const: true
         repo:
-          $ref: '#/components/schemas/TreeDbRepository'
+          $ref: '#/components/schemas/TreeDxRepository'
       additionalProperties: true
-    TreeDbFederationPeer:
+    TreeDxFederationPeer:
       type: object
       required:
       - nodeId
@@ -6188,7 +6188,7 @@ components:
         lastSeenAt:
           type: string
       additionalProperties: true
-    TreeDbFederationPeerRegisterRequest:
+    TreeDxFederationPeerRegisterRequest:
       type: object
       required:
       - nodeId
@@ -6215,7 +6215,7 @@ components:
         canMirrorRepos:
           type: boolean
       additionalProperties: true
-    TreeDbFederationTrustRequest:
+    TreeDxFederationTrustRequest:
       type: object
       properties:
         trustStates:
@@ -6223,13 +6223,13 @@ components:
           items:
             type: string
       additionalProperties: false
-    TreeDbFederationCatalog:
+    TreeDxFederationCatalog:
       type: object
       additionalProperties: true
-    TreeDbFederationRoute:
+    TreeDxFederationRoute:
       type: object
       additionalProperties: true
-    TreeDbFederationCatalogResponse:
+    TreeDxFederationCatalogResponse:
       type: object
       required:
       - ok
@@ -6238,9 +6238,9 @@ components:
         ok:
           const: true
         catalog:
-          $ref: '#/components/schemas/TreeDbFederationCatalog'
+          $ref: '#/components/schemas/TreeDxFederationCatalog'
       additionalProperties: true
-    TreeDbFederationPeersResponse:
+    TreeDxFederationPeersResponse:
       type: object
       required:
       - ok
@@ -6251,9 +6251,9 @@ components:
         peers:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbFederationPeer'
+            $ref: '#/components/schemas/TreeDxFederationPeer'
       additionalProperties: true
-    TreeDbFederationPeerResponse:
+    TreeDxFederationPeerResponse:
       type: object
       required:
       - ok
@@ -6262,9 +6262,9 @@ components:
         ok:
           const: true
         peer:
-          $ref: '#/components/schemas/TreeDbFederationPeer'
+          $ref: '#/components/schemas/TreeDxFederationPeer'
       additionalProperties: true
-    TreeDbFederationRoutesResponse:
+    TreeDxFederationRoutesResponse:
       type: object
       required:
       - ok
@@ -6275,9 +6275,9 @@ components:
         routes:
           type: array
           items:
-            $ref: '#/components/schemas/TreeDbFederationRoute'
+            $ref: '#/components/schemas/TreeDxFederationRoute'
       additionalProperties: true
-    TreeDbFederationSyncResponse:
+    TreeDxFederationSyncResponse:
       type: object
       required:
       - ok
@@ -6289,7 +6289,7 @@ components:
         imported:
           type: boolean
       additionalProperties: true
-    TreeDbInternalFederationHealthResponse:
+    TreeDxInternalFederationHealthResponse:
       type: object
       required:
       - ok
@@ -6302,23 +6302,23 @@ components:
         status:
           type: string
       additionalProperties: true
-    TreeDbInternalFederationProxyResponse:
+    TreeDxInternalFederationProxyResponse:
       type: object
       additionalProperties: true
-    TreeDbImportLocalRepositoryRequest:
+    TreeDxImportLocalRepositoryRequest:
       type: object
       required:
       - repositoryName
       - sourceRelativePath
       properties:
         repositoryName:
-          $ref: '#/components/schemas/TreeDbRepositoryName'
+          $ref: '#/components/schemas/TreeDxRepositoryName'
         sourceRelativePath:
           type: string
-          description: Path under TREEDB_DATA_DIR, never absolute.
+          description: Path under TREEDX_DATA_DIR, never absolute.
         moveIntoManagedStorage:
           type: boolean
         defaultRef:
           type: string
       additionalProperties: false
-    TreeDbImportLocalRepositoryResponse: *id001
+    TreeDxImportLocalRepositoryResponse: *id001

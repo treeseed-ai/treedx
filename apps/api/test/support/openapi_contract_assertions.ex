@@ -1,4 +1,4 @@
-defmodule TreeDbWeb.OpenApiContractAssertions do
+defmodule TreeDxWeb.OpenApiContractAssertions do
   import ExUnit.Assertions
 
   @openapi_json Path.expand("../../../../docs/api/openapi.json", __DIR__)

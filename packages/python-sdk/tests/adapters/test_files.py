@@ -1,4 +1,4 @@
-from treedb_sdk.adapters import FilesAdapter
+from treedx_sdk.adapters import FilesAdapter
 
 
 def test_files_endpoints(MockTransport) -> None:  # type: ignore[no-untyped-def]

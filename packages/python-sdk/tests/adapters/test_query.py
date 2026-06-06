@@ -1,4 +1,4 @@
-from treedb_sdk.adapters import QueryAdapter
+from treedx_sdk.adapters import QueryAdapter
 
 
 def test_query_endpoints(MockTransport) -> None:  # type: ignore[no-untyped-def]

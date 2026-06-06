@@ -1,6 +1,6 @@
-# TreeDB Security Model
+# TreeDX Security Model
 
-TreeDB protects repository, workspace, graph, search, blob, artifact, federation, and storage operations with explicit identity, capability, path, ref, and operational boundaries. Public surfaces must not expose raw credentials, raw tokens, authorization headers, credential-bearing URLs, local filesystem paths, hidden refs, hidden paths, unauthorized snippets, stdout/stderr, binary payloads, or request bodies.
+TreeDX protects repository, workspace, graph, search, blob, artifact, federation, and storage operations with explicit identity, capability, path, ref, and operational boundaries. Public surfaces must not expose raw credentials, raw tokens, authorization headers, credential-bearing URLs, local filesystem paths, hidden refs, hidden paths, unauthorized snippets, stdout/stderr, binary payloads, or request bodies.
 
 ## Threats And Controls
 
@@ -25,7 +25,7 @@ TreeDB protects repository, workspace, graph, search, blob, artifact, federation
 | Remote credential leakage | Credentials in URL, logs, audit, or metrics | Credential IDs only, URL sanitizer, scrubber, strict logs | Git remote and observability tests | Operator command leak | Disable external transport and rotate credentials |
 | Cross-tenant access | Token or grant crosses tenant boundary | Principal tenant and policy scope resolution | Policy and federation tests | Bad grant | Revoke grant and quarantine affected workspaces |
 | Dependency vulnerability | Vulnerable crate or container dependency | `cargo audit`, Syft, Trivy | `scripts/security-check.sh` | Accepted temporary advisory | Document in accepted vulnerabilities with expiration |
-| Container vulnerability | Runtime image has high/critical issue | Strict Trivy scan for `treeseed/treedb`; advisory scan for `treeseed/treedb-profiler` | `scripts/security-check.sh` | Base image emergency | Patch service image and rerun release gate |
+| Container vulnerability | Runtime image has high/critical issue | Strict Trivy scan for `treeseed/treedx`; advisory scan for `treeseed/treedx-profiler` | `scripts/security-check.sh` | Base image emergency | Patch service image and rerun release gate |
 | SBOM and license risk | Unknown package inventory | Syft SBOM generation for source, service image, and profiler image | `scripts/security-check.sh` | Transitive changes | Review generated SBOMs before release |
 
 ## Release Boundary
@@ -34,8 +34,8 @@ Release readiness is gated by `scripts/release-gate.sh`. The gate runs the unifi
 
 Security scanner availability is mandatory for release readiness. Missing scanner tools fail the gate.
 
-The production `treeseed/treedb` image is distroless, runs as UID/GID
+The production `treeseed/treedx` image is distroless, runs as UID/GID
 `65532:65532`, and intentionally omits package-manager, shell, Git, curl, and
-profiler tooling. The `treeseed/treedb-profiler` image is Debian-based and
+profiler tooling. The `treeseed/treedx-profiler` image is Debian-based and
 contains profiling utilities; it is scanned and SBOMed, but it is not the
 production API service runtime.

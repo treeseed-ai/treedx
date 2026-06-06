@@ -18,4 +18,4 @@ Artifact lifecycle:
 - cleanup: `POST /api/v1/admin/artifacts/cleanup`
 
 Artifact responses expose logical artifact IDs, byte length, checksum, and
-`treedb://artifact/...` URI metadata only.
+`treedx://artifact/...` URI metadata only.

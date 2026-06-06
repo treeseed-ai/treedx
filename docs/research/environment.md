@@ -31,7 +31,7 @@ to run the service for contributors who do not already have the full toolchain.
 
 ## Package Manager And Scripts
 
-The root TreeDB repository uses Cargo, Mix, Docker, and shell verification
+The root TreeDX repository uses Cargo, Mix, Docker, and shell verification
 scripts. The SDK package uses npm and remains independently verifiable.
 
 `packages/ts-sdk` uses npm, evidenced by `packages/ts-sdk/package-lock.json`. Its package metadata is:
@@ -63,7 +63,7 @@ SDK scripts recorded for compatibility:
 
 ## Runtime Assumptions
 
-The canonical runtime path is `docker compose up treedb-api`, with the
+The canonical runtime path is `docker compose up treedx-api`, with the
 container owning language runtime and native dependency complexity. Host-local
 commands are supported for maintainers with Rust, Elixir/OTP, Node, Git, Docker,
 and scanner tools installed.
@@ -74,5 +74,5 @@ and scanner tools installed.
    generation must continue to support package-local OpenAPI files.
 2. Strict release scanning requires external tools (`cargo-audit`, `syft`,
    `trivy`, and Docker) that may not be installed on every developer machine.
-3. Live TreeDB and federation checks are optional environment-backed checks and
+3. Live TreeDX and federation checks are optional environment-backed checks and
    must report `not configured` rather than appearing as skipped tests.

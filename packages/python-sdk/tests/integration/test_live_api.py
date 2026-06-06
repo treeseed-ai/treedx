@@ -2,12 +2,12 @@ import os
 
 import pytest
 
-from treedb_sdk import TreeDbClient
+from treedx_sdk import TreeDxClient
 
 
 def test_live_health_or_clean_skip() -> None:
-    base_url = os.environ.get("TREEDB_BASE_URL")
+    base_url = os.environ.get("TREEDX_BASE_URL")
     if not base_url:
-        pytest.skip("TREEDB_BASE_URL is not configured")
-    client = TreeDbClient(base_url=base_url, token=os.environ.get("TREEDB_TOKEN"))
+        pytest.skip("TREEDX_BASE_URL is not configured")
+    client = TreeDxClient(base_url=base_url, token=os.environ.get("TREEDX_TOKEN"))
     assert client.health() is not None

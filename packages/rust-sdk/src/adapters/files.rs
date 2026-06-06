@@ -4,8 +4,8 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::adapters::common::{json_request, segment};
-use crate::error::TreeDbResult;
-use crate::transport::{Transport, TreeDbHttpMethod};
+use crate::error::TreeDxResult;
+use crate::transport::{Transport, TreeDxHttpMethod};
 
 #[derive(Clone)]
 pub struct FilesAdapter {
@@ -21,10 +21,10 @@ impl FilesAdapter {
         &self,
         workspace_id: &str,
         query: BTreeMap<String, String>,
-    ) -> TreeDbResult<Value> {
+    ) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             format!("/api/v1/workspaces/{}/tree", segment(workspace_id)),
             None,
             Some(query),
@@ -36,10 +36,10 @@ impl FilesAdapter {
         &self,
         workspace_id: &str,
         query: BTreeMap<String, String>,
-    ) -> TreeDbResult<Value> {
+    ) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             format!("/api/v1/workspaces/{}/files", segment(workspace_id)),
             None,
             Some(query),
@@ -47,10 +47,10 @@ impl FilesAdapter {
         .await
     }
 
-    pub async fn write(&self, workspace_id: &str, body: Value) -> TreeDbResult<Value> {
+    pub async fn write(&self, workspace_id: &str, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Put,
+            TreeDxHttpMethod::Put,
             format!("/api/v1/workspaces/{}/files", segment(workspace_id)),
             Some(body),
             None,
@@ -58,10 +58,10 @@ impl FilesAdapter {
         .await
     }
 
-    pub async fn patch(&self, workspace_id: &str, body: Value) -> TreeDbResult<Value> {
+    pub async fn patch(&self, workspace_id: &str, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Patch,
+            TreeDxHttpMethod::Patch,
             format!("/api/v1/workspaces/{}/files", segment(workspace_id)),
             Some(body),
             None,
@@ -73,10 +73,10 @@ impl FilesAdapter {
         &self,
         workspace_id: &str,
         query: BTreeMap<String, String>,
-    ) -> TreeDbResult<Value> {
+    ) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Delete,
+            TreeDxHttpMethod::Delete,
             format!("/api/v1/workspaces/{}/files", segment(workspace_id)),
             None,
             Some(query),
@@ -84,10 +84,10 @@ impl FilesAdapter {
         .await
     }
 
-    pub async fn search(&self, workspace_id: &str, body: Value) -> TreeDbResult<Value> {
+    pub async fn search(&self, workspace_id: &str, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             format!("/api/v1/workspaces/{}/search", segment(workspace_id)),
             Some(body),
             None,
@@ -95,10 +95,10 @@ impl FilesAdapter {
         .await
     }
 
-    pub async fn status(&self, workspace_id: &str) -> TreeDbResult<Value> {
+    pub async fn status(&self, workspace_id: &str) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             format!("/api/v1/workspaces/{}/status", segment(workspace_id)),
             None,
             None,
@@ -110,10 +110,10 @@ impl FilesAdapter {
         &self,
         workspace_id: &str,
         query: BTreeMap<String, String>,
-    ) -> TreeDbResult<Value> {
+    ) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             format!("/api/v1/workspaces/{}/diff", segment(workspace_id)),
             None,
             Some(query),
@@ -121,10 +121,10 @@ impl FilesAdapter {
         .await
     }
 
-    pub async fn commit(&self, workspace_id: &str, body: Value) -> TreeDbResult<Value> {
+    pub async fn commit(&self, workspace_id: &str, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             format!("/api/v1/workspaces/{}/commit", segment(workspace_id)),
             Some(body),
             None,

@@ -12,8 +12,8 @@ pub mod transport;
 
 pub use crate::auth::{AuthProvider, StaticBearerTokenAuthProvider};
 pub use crate::binary::{BinaryBody, MultipartUpload};
-pub use crate::client::{TreeDbClient, TreeDbFederatedClient, TreeDbRegistryClient};
-pub use crate::config::TreeDbConfig;
-pub use crate::error::{TreeDbApiError, TreeDbResult};
-pub use crate::pagination::{TreeDbCursor, TreeDbPage};
-pub use crate::transport::{Transport, TreeDbRequest, TreeDbResponse};
+pub use crate::client::{TreeDxClient, TreeDxFederatedClient, TreeDxRegistryClient};
+pub use crate::config::TreeDxConfig;
+pub use crate::error::{TreeDxApiError, TreeDxResult};
+pub use crate::pagination::{TreeDxCursor, TreeDxPage};
+pub use crate::transport::{Transport, TreeDxRequest, TreeDxResponse};

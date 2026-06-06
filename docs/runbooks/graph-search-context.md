@@ -10,7 +10,7 @@ Use full refresh when there is no trusted base graph:
 curl -sS -H "authorization: Bearer $TOKEN" \
   -H "content-type: application/json" \
   -d '{"paths":["docs/**"],"forceFull":true}' \
-  "$TREEDB_URL/api/v1/repos/$REPO_ID/graph/refresh"
+  "$TREEDX_URL/api/v1/repos/$REPO_ID/graph/refresh"
 ```
 
 Use best-effort incremental refresh when changed paths are known:
@@ -19,16 +19,16 @@ Use best-effort incremental refresh when changed paths are known:
 curl -sS -H "authorization: Bearer $TOKEN" \
   -H "content-type: application/json" \
   -d '{"incremental":true,"baseGraphVersion":"graph_...","changedPaths":["docs/readme.md"]}' \
-  "$TREEDB_URL/api/v1/repos/$REPO_ID/graph/refresh"
+  "$TREEDX_URL/api/v1/repos/$REPO_ID/graph/refresh"
 ```
 
-If the response contains `fallbackReason`, TreeDB performed a full refresh. This is safe and expected when the base graph is stale, missing, or too many changed paths were supplied.
+If the response contains `fallbackReason`, TreeDX performed a full refresh. This is safe and expected when the base graph is stale, missing, or too many changed paths were supplied.
 
 ## Check Refresh Job Status
 
 ```bash
 curl -sS -H "authorization: Bearer $TOKEN" \
-  "$TREEDB_URL/api/v1/repos/$REPO_ID/graph/refresh-jobs/$JOB_ID"
+  "$TREEDX_URL/api/v1/repos/$REPO_ID/graph/refresh-jobs/$JOB_ID"
 ```
 
 The response contains logical repo/ref/path metadata only. It must not expose local graph segment paths.
@@ -39,7 +39,7 @@ The response contains logical repo/ref/path metadata only. It must not expose lo
 curl -sS -H "authorization: Bearer $TOKEN" \
   -H "content-type: application/json" \
   -d '{"paths":["docs/**"]}' \
-  "$TREEDB_URL/api/v1/repos/$REPO_ID/search/index/refresh"
+  "$TREEDX_URL/api/v1/repos/$REPO_ID/search/index/refresh"
 ```
 
 Search index refresh requires `files:search` and applies path scope before writing metadata.
@@ -48,7 +48,7 @@ Search index refresh requires `files:search` and applies path scope before writi
 
 ```bash
 curl -sS -H "authorization: Bearer $TOKEN" \
-  "$TREEDB_URL/api/v1/repos/$REPO_ID/search/index/status"
+  "$TREEDX_URL/api/v1/repos/$REPO_ID/search/index/status"
 ```
 
 If `ready` is false, repository search falls back to direct scanning.
@@ -59,7 +59,7 @@ If `ready` is false, repository search falls back to direct scanning.
 curl -sS -H "authorization: Bearer $TOKEN" \
   -H "content-type: application/json" \
   -d '{"dryRun":true}' \
-  "$TREEDB_URL/api/v1/repos/$REPO_ID/search/index/compact"
+  "$TREEDX_URL/api/v1/repos/$REPO_ID/search/index/compact"
 ```
 
 Compaction status is logical metadata. It does not expose data directory paths.
@@ -70,7 +70,7 @@ Compaction status is logical metadata. It does not expose data directory paths.
 curl -sS -H "authorization: Bearer $TOKEN" \
   -H "content-type: application/json" \
   -d '{"query":"release","mode":"citations","budget":{"maxNodes":8,"maxTokens":2000}}' \
-  "$TREEDB_URL/api/v1/repos/$REPO_ID/context/build"
+  "$TREEDX_URL/api/v1/repos/$REPO_ID/context/build"
 ```
 
 Available modes are `brief`, `detailed`, `citations`, and `mixed`. Modes affect selection and diagnostics only; authorization is unchanged.

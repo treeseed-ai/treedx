@@ -1,6 +1,6 @@
 # Federated Query Execution
 
-TreeDB federation combines connected-library discovery with mirrored
+TreeDX federation combines connected-library discovery with mirrored
 high-availability routing. Every node can act as ingress, coordinator, primary,
 mirror, connected-library node, and capacity provider depending on the request
 and the routes in its trusted catalog.
@@ -135,11 +135,11 @@ Repository names are canonical lowercase identifiers and unique in the trusted
 catalog. Repository IDs are deterministic from the canonical name and independent
 of the data directory.
 
-TreeDB stores managed repositories in node-local paths derived internally:
+TreeDX stores managed repositories in node-local paths derived internally:
 
 ```text
-$TREEDB_DATA_DIR/repositories/<repositoryName>
-$TREEDB_DATA_DIR/mirrors/<repositoryName>
+$TREEDX_DATA_DIR/repositories/<repositoryName>
+$TREEDX_DATA_DIR/mirrors/<repositoryName>
 ```
 
 Public APIs use repository IDs/names and repository-relative file paths. Absolute

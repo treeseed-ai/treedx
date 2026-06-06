@@ -2,13 +2,13 @@
 
 Status: Productionized graph, search, and context
 
-TreeDB hardens TreeDB graph, search, and context behavior without adding product-domain concepts. The API remains scoped to repositories, refs, paths, graph nodes, search records, context packs, and capabilities.
+TreeDX hardens TreeDX graph, search, and context behavior without adding product-domain concepts. The API remains scoped to repositories, refs, paths, graph nodes, search records, context packs, and capabilities.
 
 ## Incremental Graph Refresh
 
 `POST /api/v1/repos/:repo_id/graph/refresh` accepts optional `incremental`, `changedPaths`, `baseGraphVersion`, and `forceFull` fields.
 
-Incremental refresh is best effort. TreeDB records the requested changed paths, checks the current graph manifest, and reports whether the refresh ran as `incremental` or fell back to `full`.
+Incremental refresh is best effort. TreeDX records the requested changed paths, checks the current graph manifest, and reports whether the refresh ran as `incremental` or fell back to `full`.
 
 Fallback reasons:
 
@@ -56,4 +56,4 @@ Modes influence context selection and budget defaults. They do not influence aut
 
 ## SDK Compatibility
 
-The TypeScript SDK keeps local graph runtime behavior as the default. TreeDB graph adapter methods map server responses into SDK-compatible graph and context shapes. The SDK includes low-level client methods for graph refresh job status and search index operations.
+The TypeScript SDK keeps local graph runtime behavior as the default. TreeDX graph adapter methods map server responses into SDK-compatible graph and context shapes. The SDK includes low-level client methods for graph refresh job status and search index operations.

@@ -7,7 +7,7 @@ checks. The current contract is in `docs/api/openapi.yaml`.
 
 ## Current Auth State
 
-TreeDB currently supports local development bearer tokens through `POST /api/v1/auth/dev-token`. Tokens are stored only as BLAKE3 hashes in `config/dev_tokens.tdb`, and authenticated callers resolve to a generic principal shape with `actorId`, `tenantId`, and `authMode`.
+TreeDX currently supports local development bearer tokens through `POST /api/v1/auth/dev-token`. Tokens are stored only as BLAKE3 hashes in `config/dev_tokens.tdb`, and authenticated callers resolve to a generic principal shape with `actorId`, `tenantId`, and `authMode`.
 
 Connected mode verifies bearer JWTs through configured verifier modules.
 
@@ -20,15 +20,15 @@ explicitly overridden.
 
 Common connected-mode environment:
 
-- `TREEDB_AUTH_MODE=connected`
-- `TREEDB_JWT_ISSUER`
-- `TREEDB_JWT_AUDIENCE`
-- `TREEDB_JWT_HS256_SECRET`
-- `TREEDB_JWKS_URL` when using JWKS verification
+- `TREEDX_AUTH_MODE=connected`
+- `TREEDX_JWT_ISSUER`
+- `TREEDX_JWT_AUDIENCE`
+- `TREEDX_JWT_HS256_SECRET`
+- `TREEDX_JWKS_URL` when using JWKS verification
 
 Optional:
 
-- `TREEDB_JWT_CLOCK_SKEW_SECONDS`, default `60`
+- `TREEDX_JWT_CLOCK_SKEW_SECONDS`, default `60`
 
 Static opaque tokens were rejected because they do not model user/agent/service
 claims well enough. JWKS key discovery, cache refresh, rotation, issuer,
@@ -50,20 +50,20 @@ Supported standard claims:
 - `iat`
 - `jti`
 
-TreeDB-scoped claims:
+TreeDX-scoped claims:
 
-- `treedb_actor_id`
-- `treedb_tenant_id`
-- optional `treedb_repo_ids`
-- optional `treedb_capabilities`
-- optional `treedb_refs`
-- optional `treedb_paths`
+- `treedx_actor_id`
+- `treedx_tenant_id`
+- optional `treedx_repo_ids`
+- optional `treedx_capabilities`
+- optional `treedx_refs`
+- optional `treedx_paths`
 
-`treedb_actor_id` defaults to `sub` when absent. `treedb_tenant_id` is required. JWT claim scopes may further narrow catalog grants; catalog grants remain authoritative server-side policy.
+`treedx_actor_id` defaults to `sub` when absent. `treedx_tenant_id` is required. JWT claim scopes may further narrow catalog grants; catalog grants remain authoritative server-side policy.
 
 ## Capability Contract
 
-TreeDB uses string capabilities scoped by tenant, repository, ref, and path. The
+TreeDX uses string capabilities scoped by tenant, repository, ref, and path. The
 canonical capabilities include:
 
 ```text
@@ -139,6 +139,6 @@ Mutation and security-relevant operations should audit status and scope. Auth su
 
 ## SDK Boundary
 
-The TypeScript SDK forwards bearer tokens and receives TreeDB API errors as `TreeDbApiError`. SDK callers can inspect auth mode, capabilities, grants, audit events, and federation plans generically.
+The TypeScript SDK forwards bearer tokens and receives TreeDX API errors as `TreeDxApiError`. SDK callers can inspect auth mode, capabilities, grants, audit events, and federation plans generically.
 
-TreeSeed model names, aliases, market concepts, and product semantics remain outside TreeDB.
+TreeSeed model names, aliases, market concepts, and product semantics remain outside TreeDX.

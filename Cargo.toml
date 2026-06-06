@@ -1,10 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-  "crates/treedb_store",
-  "crates/treedb_git",
-  "crates/treedb_graph",
-  "apps/api/native/treedb_native"
+  "crates/treedx_store",
+  "crates/treedx_git",
+  "crates/treedx_graph",
+  "apps/api/native/treedx_native"
 ]
 
 [workspace.package]

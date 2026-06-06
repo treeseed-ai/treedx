@@ -4,20 +4,20 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use serde_json::json;
-use treedb_sdk::{
-    Transport, TreeDbClient, TreeDbConfig, TreeDbRequest, TreeDbResponse, TreeDbResult,
+use treedx_sdk::{
+    Transport, TreeDxClient, TreeDxConfig, TreeDxRequest, TreeDxResponse, TreeDxResult,
 };
 
 #[derive(Default)]
 pub struct MockTransport {
-    pub requests: Mutex<Vec<TreeDbRequest>>,
+    pub requests: Mutex<Vec<TreeDxRequest>>,
 }
 
 #[async_trait]
 impl Transport for MockTransport {
-    async fn request(&self, request: TreeDbRequest) -> TreeDbResult<TreeDbResponse> {
+    async fn request(&self, request: TreeDxRequest) -> TreeDxResult<TreeDxResponse> {
         self.requests.lock().unwrap().push(request);
-        Ok(TreeDbResponse {
+        Ok(TreeDxResponse {
             status: 200,
             headers: BTreeMap::new(),
             data: json!({ "ok": true }),
@@ -25,9 +25,9 @@ impl Transport for MockTransport {
     }
 }
 
-pub fn client_with_mock(mock: Arc<MockTransport>) -> TreeDbClient {
-    TreeDbClient::with_transport(
-        TreeDbConfig {
+pub fn client_with_mock(mock: Arc<MockTransport>) -> TreeDxClient {
+    TreeDxClient::with_transport(
+        TreeDxConfig {
             base_url: "http://localhost:4000".to_string(),
             ..Default::default()
         },

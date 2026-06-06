@@ -1,15 +1,15 @@
 # Performance Profiling Runbook
 
-TreeDB includes a standalone API profiler under `tools/treedb_profiler`.
+TreeDX includes a standalone API profiler under `tools/treedx_profiler`.
 
 The profiler builds deterministic fixture repositories, registers them through
-TreeDB HTTP APIs, performs reads, writes, graph refreshes, context builds,
+TreeDX HTTP APIs, performs reads, writes, graph refreshes, context builds,
 snapshot/artifact operations, and emits YAML plus optional Markdown reports that
 can be compared over time.
 
 ## One-Command Local Profile
 
-Use `profiles/compose.profile.yaml` to start TreeDB and run the profiler in one Compose
+Use `profiles/compose.profile.yaml` to start TreeDX and run the profiler in one Compose
 run:
 
 ```bash
@@ -18,14 +18,14 @@ scripts/profile-compose.sh portfolio
 
 The manifest starts:
 
-- `treedb-api`: local TreeDB API from the production release image, using dev
+- `treedx-api`: local TreeDX API from the production release image, using dev
   auth for turnkey local profiling.
-- `treedb-profiler`: separate Debian-based profiler image with
-  `/usr/local/bin/treedb_profiler` and the profiler fixtures/scenarios baked in.
-  It connects to `http://treedb-api:4000`.
+- `treedx-profiler`: separate Debian-based profiler image with
+  `/usr/local/bin/treedx_profiler` and the profiler fixtures/scenarios baked in.
+  It connects to `http://treedx-api:4000`.
 
-Both services share `treedb-data:/var/lib/treedb`. This lets the profiler image
-create fixture Git repositories under `/var/lib/treedb/profiler`, then register
+Both services share `treedx-data:/var/lib/treedx`. This lets the profiler image
+create fixture Git repositories under `/var/lib/treedx/profiler`, then register
 them through the public API. Reports are written through a narrow
 `target/profiles` bind mount; Compose no longer mounts the full source tree into
 the profiler container for normal profile runs.
@@ -65,11 +65,11 @@ grep -E "totalErrors: 0|failed: 0|unaccounted: 0" target/profiles/portfolio-*.ya
 Override settings with environment variables:
 
 ```bash
-TREEDB_PROFILE_SIZE=medium \
-TREEDB_PROFILE_CONCURRENCY=100 \
-TREEDB_PROFILE_DURATION=30m \
-TREEDB_PROFILE_OUTPUT=target/profiles/medium-c100.yaml \
-TREEDB_PROFILE_MARKDOWN_OUTPUT=target/profiles/medium-c100.md \
+TREEDX_PROFILE_SIZE=medium \
+TREEDX_PROFILE_CONCURRENCY=100 \
+TREEDX_PROFILE_DURATION=30m \
+TREEDX_PROFILE_OUTPUT=target/profiles/medium-c100.yaml \
+TREEDX_PROFILE_MARKDOWN_OUTPUT=target/profiles/medium-c100.md \
 scripts/profile-compose.sh portfolio
 ```
 
@@ -135,7 +135,7 @@ Markdown reports under `target/profiles/`.
 
 Federation modes use `profiles/compose.profile.federation.yaml` plus the
 selected federation overlay. They start three production-image API nodes:
-`treedb-node-a`, `treedb-node-b`, and `treedb-node-c`, each with its own data
+`treedx-node-a`, `treedx-node-b`, and `treedx-node-c`, each with its own data
 volume and node identity. Node A is the profiler ingress. Node B and node C use
 parent lineage rooted at node A so live catalog sync can discover routes without
 restarting services.
@@ -159,14 +159,14 @@ phx.server` with the repository bind-mounted for development debugging. Normal
 profile modes use the production release image.
 
 Duration-based modes do not set a default iteration cap. If
-`TREEDB_PROFILE_DURATION=10m` and `TREEDB_PROFILE_ITERATIONS` is unset, the
+`TREEDX_PROFILE_DURATION=10m` and `TREEDX_PROFILE_ITERATIONS` is unset, the
 profiler starts its measured timer after setup and continues load until the
 measured window reaches ten minutes. If an explicit iteration cap is supplied
 along with a duration, the profiler stops at whichever limit comes first and
 records `timing.measured.durationSatisfied` in the report.
 
 Release-path CI uses the same duration semantics for federation profiles:
-`TREEDB_CI_FEDERATION_PROFILE_DURATION` defaults to `10m`, and Docker
+`TREEDX_CI_FEDERATION_PROFILE_DURATION` defaults to `10m`, and Docker
 publishing is blocked unless the mirror and connected-library profiles satisfy
 their measured windows and pass the reliability budget.
 
@@ -194,10 +194,10 @@ below 99% of the requested duration.
 Performance profiles enable these server-side optimization defaults unless
 overridden:
 
-- `TREEDB_REPO_DOC_CACHE_ENABLED=true`
-- `TREEDB_GRAPH_INDEX_CACHE_ENABLED=true`
-- `TREEDB_ARTIFACT_INDEX_ENABLED=true`
-- `TREEDB_AUDIT_ASYNC=true`
+- `TREEDX_REPO_DOC_CACHE_ENABLED=true`
+- `TREEDX_GRAPH_INDEX_CACHE_ENABLED=true`
+- `TREEDX_ARTIFACT_INDEX_ENABLED=true`
+- `TREEDX_AUDIT_ASYNC=true`
 
 ## Performance Benchmark Mode
 
@@ -234,18 +234,18 @@ but counting them as primary workload would overstate business throughput.
 Performance mode also passes resource tuning knobs to the API container:
 
 ```bash
-TREEDB_RUNTIME_CPU_BUDGET=8 \
-TREEDB_RUNTIME_MEMORY_BUDGET_MB=8192 \
-TREEDB_CACHE_MEMORY_FRACTION=0.35 \
-TREEDB_REPOSITORY_QUERY_POOL_SIZE=16 \
-TREEDB_WORKSPACE_WORKER_POOL_SIZE=16 \
-TREEDB_GRAPH_WORKER_POOL_SIZE=8 \
-TREEDB_REPOSITORY_QUERY_MAX_QUEUE=2000 \
-TREEDB_GRAPH_MAX_QUEUE=500 \
+TREEDX_RUNTIME_CPU_BUDGET=8 \
+TREEDX_RUNTIME_MEMORY_BUDGET_MB=8192 \
+TREEDX_CACHE_MEMORY_FRACTION=0.35 \
+TREEDX_REPOSITORY_QUERY_POOL_SIZE=16 \
+TREEDX_WORKSPACE_WORKER_POOL_SIZE=16 \
+TREEDX_GRAPH_WORKER_POOL_SIZE=8 \
+TREEDX_REPOSITORY_QUERY_MAX_QUEUE=2000 \
+TREEDX_GRAPH_MAX_QUEUE=500 \
 scripts/profile-compose.sh performance
 ```
 
-`TREEDB_RUNTIME_MEMORY_BUDGET_MB` and `TREEDB_CACHE_MEMORY_FRACTION` define the
+`TREEDX_RUNTIME_MEMORY_BUDGET_MB` and `TREEDX_CACHE_MEMORY_FRACTION` define the
 cache byte budget. Repository document and graph index caches evict by TTL,
 entry count, and approximate byte pressure. Worker pool sizes cap concurrent
 expensive repository, workspace, graph, snapshot, and import work; bounded
@@ -262,10 +262,10 @@ state has an explicit replication path.
 
 ## Run A Small Profile
 
-Start TreeDB, then run:
+Start TreeDX, then run:
 
 ```bash
-./scripts/profile-treedb.sh \
+./scripts/profile-treedx.sh \
   --base-url http://localhost:4000 \
   --auth-mode dev \
   --fixture small-docs \
@@ -273,12 +273,12 @@ Start TreeDB, then run:
   --scenario full_api \
   --iterations 1 \
   --concurrency 1 \
-  --fixture-root /var/lib/treedb/profiler \
+  --fixture-root /var/lib/treedx/profiler \
   --output target/profiles/small.yaml
 ```
 
-`--fixture-root` must be visible to the TreeDB server and must be under
-`TREEDB_DATA_DIR`. The profiler generates Git fixtures there, then imports them
+`--fixture-root` must be visible to the TreeDX server and must be under
+`TREEDX_DATA_DIR`. The profiler generates Git fixtures there, then imports them
 through the admin local-import API using `sourceRelativePath`; subsequent
 profiling work uses public repository, workspace, graph, search, snapshot, and
 artifact APIs.
@@ -328,8 +328,8 @@ Scenarios:
 - `graph_context`: graph refresh/query, search index, and context build.
 - `blob_artifact`: blob and artifact lifecycle operations.
 
-Scenarios are workload definitions under `tools/treedb_profiler/scenarios/`.
-The endpoint matrix at `tools/treedb_profiler/endpoint_matrix.yaml` determines
+Scenarios are workload definitions under `tools/treedx_profiler/scenarios/`.
+The endpoint matrix at `tools/treedx_profiler/endpoint_matrix.yaml` determines
 which public API operations are eligible for each workload, their setup
 requirements, expected statuses, and validation rules.
 
@@ -338,13 +338,13 @@ Performance data should be interpreted only when `assertions.failed` is `0`.
 ## Fixed Fixtures And Portfolio Growth
 
 Fixed fixture mode is for comparable baselines. Use the same fixture family,
-size, seed, scenario, image, and concurrency when comparing hardware or TreeDB
+size, seed, scenario, image, and concurrency when comparing hardware or TreeDX
 versions.
 
 Portfolio mode is for long-running reliability and production-shape behavior:
 
 ```bash
-./scripts/profile-treedb.sh \
+./scripts/profile-treedx.sh \
   --base-url http://localhost:4000 \
   --auth-mode dev \
   --load-mode portfolio \
@@ -365,7 +365,7 @@ resources where public APIs support it. Repository deletion is rare and
 age-gated by default so a 24-hour run leaves a developed project portfolio.
 
 Validation remains API-first. Shared data volumes are used only so repository
-fixtures can be registered; correctness checks validate TreeDB through public
+fixtures can be registered; correctness checks validate TreeDX through public
 HTTP responses. Optional disk diagnostics can be enabled with:
 
 ```bash
@@ -374,11 +374,11 @@ HTTP responses. Optional disk diagnostics can be enabled with:
 
 ## Comparing Hardware
 
-Use the same TreeDB image, fixture, scenario, iteration count, and concurrency
+Use the same TreeDX image, fixture, scenario, iteration count, and concurrency
 on each machine:
 
 ```bash
-./scripts/profile-treedb.sh \
+./scripts/profile-treedx.sh \
   --fixture medium-mixed \
   --size medium \
   --scenario full_api \
@@ -438,30 +438,30 @@ does not execute it by default.
 Fast smoke:
 
 ```bash
-./scripts/profile-treedb.sh --fixture small-docs --size small --scenario full_api --iterations 1
+./scripts/profile-treedx.sh --fixture small-docs --size small --scenario full_api --iterations 1
 ```
 
 Read-heavy comparison:
 
 ```bash
-./scripts/profile-treedb.sh --fixture medium-mixed --size medium --scenario read_heavy --iterations 100 --concurrency 8
+./scripts/profile-treedx.sh --fixture medium-mixed --size medium --scenario read_heavy --iterations 100 --concurrency 8
 ```
 
 Graph/context benchmark:
 
 ```bash
-./scripts/profile-treedb.sh --fixture graph-rich --size medium --scenario graph_context --iterations 50 --concurrency 4
+./scripts/profile-treedx.sh --fixture graph-rich --size medium --scenario graph_context --iterations 50 --concurrency 4
 ```
 
 Binary/artifact benchmark:
 
 ```bash
-./scripts/profile-treedb.sh --fixture binary-assets --size large --scenario blob_artifact --iterations 25 --concurrency 4
+./scripts/profile-treedx.sh --fixture binary-assets --size large --scenario blob_artifact --iterations 25 --concurrency 4
 ```
 
 10-minute local portfolio profile:
 
 ```bash
 docker compose -f profiles/compose.profile.yaml down -v --remove-orphans
-docker compose -f profiles/compose.profile.yaml -f profiles/compose.profile.portfolio.yaml up --build --abort-on-container-exit --exit-code-from treedb-profiler
+docker compose -f profiles/compose.profile.yaml -f profiles/compose.profile.portfolio.yaml up --build --abort-on-container-exit --exit-code-from treedx-profiler
 ```

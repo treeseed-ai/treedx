@@ -148,7 +148,7 @@ for (const manifestPath of existingManifests) {
     }
 
     if (rootName === "compatibility" && status === "implemented") {
-      console.warn(`${path.relative(root, manifestPath)} declares implemented compatibility tests; compatibility is downstream-specific and must not define TreeDB SDK architecture`);
+      console.warn(`${path.relative(root, manifestPath)} declares implemented compatibility tests; compatibility is downstream-specific and must not define TreeDX SDK architecture`);
     }
   }
 }

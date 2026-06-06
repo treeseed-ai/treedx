@@ -39,7 +39,7 @@ scenarios:
         description: List registry nodes through the SDK facade.
     assertions:
       - Node inventory preserves server-owned metadata.
-      - SDK does not infer placement policy beyond TreeDB response data.
+      - SDK does not infer placement policy beyond TreeDX response data.
   - id: registry.repo_placement
     capabilityId: registry.routing
     title: Read and update repository placement.
@@ -61,5 +61,5 @@ scenarios:
         action: registry.setPlacement
         description: Update repository placement through the SDK facade.
     assertions:
-      - Placement records remain generic TreeDB routing data.
-      - Permission failures preserve TreeDbApiError-compatible fields.
+      - Placement records remain generic TreeDX routing data.
+      - Permission failures preserve TreeDxApiError-compatible fields.

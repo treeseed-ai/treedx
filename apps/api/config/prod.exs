@@ -1,9 +1,9 @@
 import Config
 
-config :treedb, TreeDbWeb.Endpoint,
+config :treedx, TreeDxWeb.Endpoint,
   server: true,
   secret_key_base: System.get_env("SECRET_KEY_BASE") || String.duplicate("c", 64)
 
 config :logger, :console,
-  format: {TreeDb.Observability.JsonLogFormatter, :format},
+  format: {TreeDx.Observability.JsonLogFormatter, :format},
   metadata: :all

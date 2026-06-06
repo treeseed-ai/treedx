@@ -18,7 +18,7 @@ testRootPolicy:
     - planned
     - not_applicable
   compatibility:
-    requiredForTreeDbLanguageSdks: false
+    requiredForTreeDxLanguageSdks: false
     allowedForDownstreamConsumers: true
     description: Downstream product SDK migration safety only.
 
@@ -29,7 +29,7 @@ requiredTestCategories:
     serverRequired: false
     allowedToUseNetwork: false
     fixtureSource: package-local
-    minimumExpectation: Validates client config, transport setup, auth helpers, errors, pagination, and binary helpers without a TreeDB server.
+    minimumExpectation: Validates client config, transport setup, auth helpers, errors, pagination, and binary helpers without a TreeDX server.
   adapters:
     description: Mocked transport request and response behavior.
     required: true
@@ -52,19 +52,19 @@ requiredTestCategories:
     fixtureSource: packages/sdk-spec/conformance
     minimumExpectation: Runs shared sdk-spec scenarios through the SDK public facade or reports not configured when no server is configured.
   integration:
-    description: Real TreeDB server tests.
+    description: Real TreeDX server tests.
     required: true
     serverRequired: true
     allowedToUseNetwork: true
-    fixtureSource: TreeDB test server
-    minimumExpectation: Exercises live or local TreeDB API behavior and skips or reports not configured cleanly when credentials or server URL are absent.
+    fixtureSource: TreeDX test server
+    minimumExpectation: Exercises live or local TreeDX API behavior and skips or reports not configured cleanly when credentials or server URL are absent.
   compatibility:
     description: Downstream product SDK migration safety, such as packages/trsd-sdk TreeSeed integration tests.
     required: false
     serverRequired: conditional
     allowedToUseNetwork: true
     fixtureSource: downstream package
-    minimumExpectation: Must not define TreeDB SDK architecture and must remain downstream-consumer specific.
+    minimumExpectation: Must not define TreeDX SDK architecture and must remain downstream-consumer specific.
 
 languageRoots:
   typescript: test
@@ -126,16 +126,16 @@ manifestRequirements:
       - planned
       - not_applicable
   rules:
-    - TreeDB language SDK manifests must declare every shared test root.
-    - TreeDB language SDK manifests must not require compatibility.
-    - Downstream consumers may declare compatibility when they consume TreeDB SDKs.
+    - TreeDX language SDK manifests must declare every shared test root.
+    - TreeDX language SDK manifests must not require compatibility.
+    - Downstream consumers may declare compatibility when they consume TreeDX SDKs.
     - A test root marked implemented must exist in the SDK package.
     - A test root marked implemented must contain at least one source file or placeholder test marker.
 
 rules:
-  - TreeDB language SDKs must implement unit, adapters, generated, conformance, and integration categories.
-  - TreeDB language SDKs share the same required test categories.
+  - TreeDX language SDKs must implement unit, adapters, generated, conformance, and integration categories.
+  - TreeDX language SDKs share the same required test categories.
   - Downstream consumers such as packages/trsd-sdk may add compatibility tests.
-  - Compatibility tests must not define the cross-language TreeDB SDK architecture.
+  - Compatibility tests must not define the cross-language TreeDX SDK architecture.
   - Conformance scenarios must be sourced from packages/sdk-spec/conformance/scenarios.
   - Integration tests must skip or report not configured cleanly when live server credentials are absent.

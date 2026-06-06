@@ -24,4 +24,4 @@ scenarios:
         description: Retrieve migration status through the SDK facade.
     assertions:
       - Migration IDs are preserved between create and get operations.
-      - Migration status remains generic TreeDB data.
+      - Migration status remains generic TreeDX data.

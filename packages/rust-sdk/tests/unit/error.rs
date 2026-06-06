@@ -1,10 +1,10 @@
 use serde_json::json;
-use treedb_sdk::TreeDbApiError;
+use treedx_sdk::TreeDxApiError;
 
 #[test]
 fn response_error_preserves_payload_fields() {
     let payload = json!({ "error": { "code": "invalid_token", "message": "bad token", "details": { "why": "expired" } } });
-    let error = TreeDbApiError::from_response(401, payload.clone());
+    let error = TreeDxApiError::from_response(401, payload.clone());
     assert_eq!(error.status, 401);
     assert_eq!(error.code, "invalid_token");
     assert_eq!(error.message, "bad token");
@@ -14,7 +14,7 @@ fn response_error_preserves_payload_fields() {
 
 #[test]
 fn network_error_uses_stable_contract() {
-    let error = TreeDbApiError::network("offline");
+    let error = TreeDxApiError::network("offline");
     assert_eq!(error.status, 0);
     assert_eq!(error.code, "network_error");
 }

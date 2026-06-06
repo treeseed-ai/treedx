@@ -1,5 +1,5 @@
-from treedb_sdk.auth import StaticBearerTokenAuthProvider, resolve_authorization_header
-from treedb_sdk.config import TreeDbClientConfig
+from treedx_sdk.auth import StaticBearerTokenAuthProvider, resolve_authorization_header
+from treedx_sdk.config import TreeDxClientConfig
 
 
 def test_static_bearer_token_provider_returns_token() -> None:
@@ -7,5 +7,5 @@ def test_static_bearer_token_provider_returns_token() -> None:
 
 
 def test_authorization_header_format() -> None:
-    config = TreeDbClientConfig(base_url="http://treedb.test", token="abc")
+    config = TreeDxClientConfig(base_url="http://treedx.test", token="abc")
     assert resolve_authorization_header(config) == {"Authorization": "Bearer abc"}

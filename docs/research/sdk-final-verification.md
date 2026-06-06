@@ -2,7 +2,7 @@
 
 ## Summary
 
-Phase 16 final verification records the generic TreeDB SDK baseline across
+Phase 16 final verification records the generic TreeDX SDK baseline across
 `packages/sdk-spec`, TypeScript, Python, Rust, and Elixir SDK packages.
 
 The baseline is complete as a cross-language partial SDK foundation. It is not a
@@ -11,10 +11,10 @@ live-conformance-complete release. All SDK manifests intentionally report
 
 ## Local Environment
 
-- Repository root: `/home/adrian/Projects/treedb`
+- Repository root: `/home/adrian/Projects/treedx`
 - OpenAPI source: `docs/api/openapi.yaml`
 - Canonical SDK plan:
-  `docs/architecture/treedb-sdk-spec-implementation-plan.md`
+  `docs/architecture/treedx-sdk-spec-implementation-plan.md`
 - Python packaging tooling: local `python3 -m pip` is unavailable in this
   environment, so Python install/build/pytest checks are environment-blocked
   locally.
@@ -37,7 +37,7 @@ Python dependency-free fallback:
 
 ```bash
 cd packages/python-sdk
-python3 scripts/check_treedb_generated_types.py
+python3 scripts/check_treedx_generated_types.py
 python3 -m compileall -q src tests
 ```
 
@@ -55,19 +55,19 @@ npm test
 
 cd packages/ts-sdk
 npm ci
-npm run treedb:check-generated
+npm run treedx:check-generated
 npm run build
 npm test
 
 cd packages/rust-sdk
-node scripts/check_treedb_generated_types.mjs
+node scripts/check_treedx_generated_types.mjs
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo test
 
 cd packages/elixir-sdk
 mix deps.get
-mix run scripts/check_treedb_generated_types.exs
+mix run scripts/check_treedx_generated_types.exs
 mix format --check-formatted
 mix test
 ```
@@ -84,7 +84,7 @@ npm ci
 npx vitest run --config ./vitest.config.ts \
   test/utils/sdk.test.ts \
   test/utils/graph.test.ts \
-  test/utils/treedb-backends.test.ts
+  test/utils/treedx-backends.test.ts
 npm run build
 ```
 
@@ -97,7 +97,7 @@ Root OpenAPI gate:
 Repository-id guard:
 
 ```bash
-forbidden="TREESEED_TREEDB_""REPO_ID"
+forbidden="TREESEED_TREEDX_""REPO_ID"
 rg "$forbidden" . -S || true
 ```
 
@@ -113,7 +113,7 @@ rg "$forbidden" . -S || true
 - Elixir generated metadata check, format check, and tests passed.
 - Focused TreeSeed downstream regression passed.
 - Root OpenAPI gate passed with `4 tests, 0 failures`.
-- The forbidden TreeSeed TreeDB repository-id environment variable was absent.
+- The forbidden TreeSeed TreeDX repository-id environment variable was absent.
 
 OpenAPI coverage remained:
 
@@ -148,7 +148,7 @@ Generic SDK packages exist:
 `packages/sdk-spec` is the shared architecture, capability, endpoint, test
 framework, and conformance source.
 
-`packages/trsd-sdk` is downstream only, remains standalone, and does not define generic TreeDB SDK architecture.
+`packages/trsd-sdk` is downstream only, remains standalone, and does not define generic TreeDX SDK architecture.
 
 All SDK manifests now report `implemented` for required modules, required test roots, and required capabilities. OpenAPI ownership covers all 113 `/api/v1` operations.
 

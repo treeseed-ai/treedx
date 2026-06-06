@@ -1,22 +1,22 @@
 import Config
 
-config :treedb,
-  namespace: TreeDb
+config :treedx,
+  namespace: TreeDx
 
-config :treedb, TreeDb.Native,
-  crate: :treedb_native,
-  path: "native/treedb_native",
+config :treedx, TreeDx.Native,
+  crate: :treedx_native,
+  path: "native/treedx_native",
   mode: if(config_env() == :prod, do: :release, else: :debug)
 
-config :treedb, TreeDbWeb.Endpoint,
+config :treedx, TreeDxWeb.Endpoint,
   adapter: Bandit.PhoenixAdapter,
   url: [host: "localhost"],
   render_errors: [
-    formats: [json: TreeDbWeb.ErrorJSON],
+    formats: [json: TreeDxWeb.ErrorJSON],
     layout: false
   ],
   pubsub_server: nil,
-  live_view: [signing_salt: "treedb"]
+  live_view: [signing_salt: "treedx"]
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",

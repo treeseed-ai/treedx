@@ -23,7 +23,7 @@ scenarios:
   - Principal data is exposed without transport-specific wrappers.
 - id: auth.effective_scope
   capabilityId: auth.whoami
-  title: Resolve effective TreeDB scope for the authenticated caller.
+  title: Resolve effective TreeDX scope for the authenticated caller.
   kind: black_box
   required: true
   serverRequired: true
@@ -39,11 +39,11 @@ scenarios:
     description: Resolve effective scope through the SDK facade.
   assertions:
   - Request uses Authorization bearer header.
-  - Scope data is returned as generic TreeDB policy data.
+  - Scope data is returned as generic TreeDX policy data.
   - TreeSeed product concepts are not encoded by the SDK.
 - id: errors.invalid_token
   capabilityId: auth.whoami
-  title: Invalid bearer tokens become TreeDbApiError-compatible failures.
+  title: Invalid bearer tokens become TreeDxApiError-compatible failures.
   kind: black_box
   required: true
   serverRequired: conditional
@@ -58,12 +58,12 @@ scenarios:
     action: auth.whoami
     description: Invoke the SDK facade with an invalid bearer token.
   assertions:
-  - Failure exposes TreeDbApiError-compatible status, code, message, details, and payload fields.
-  - Error code is invalid_token when returned by TreeDB.
+  - Failure exposes TreeDxApiError-compatible status, code, message, details, and payload fields.
+  - Error code is invalid_token when returned by TreeDX.
   - Bearer token value is not logged or surfaced in the error.
 - id: errors.permission_denied
   capabilityId: auth.whoami
-  title: Permission denials preserve TreeDB error envelope fields.
+  title: Permission denials preserve TreeDX error envelope fields.
   kind: black_box
   required: true
   serverRequired: conditional
@@ -78,9 +78,9 @@ scenarios:
     action: auth.effectiveScope
     description: Invoke the SDK facade with credentials lacking required scope.
   assertions:
-  - Failure exposes TreeDbApiError-compatible fields.
-  - Error code is permission_denied when returned by TreeDB.
-  - Structured details are preserved when returned by TreeDB.
+  - Failure exposes TreeDxApiError-compatible fields.
+  - Error code is permission_denied when returned by TreeDX.
+  - Structured details are preserved when returned by TreeDX.
 - id: auth.mode
   capabilityId: auth.mode_dev_token
   title: Auth / Mode
@@ -97,10 +97,10 @@ scenarios:
   steps:
   - name: execute
     action: auth.mode
-    description: Execute auth.mode through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute auth.mode through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: auth.dev_token
   capabilityId: auth.mode_dev_token
   title: Auth / Dev Token
@@ -115,7 +115,7 @@ scenarios:
   steps:
   - name: execute
     action: auth.dev_token
-    description: Execute auth.dev_token through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute auth.dev_token through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.

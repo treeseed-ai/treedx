@@ -1,16 +1,16 @@
-defmodule TreeDbSdk.RegistryAdapterTest do
+defmodule TreeDxSdk.RegistryAdapterTest do
   use ExUnit.Case, async: true
 
   test "all constructs expected request" do
-    {:ok, pid} = TreeDbSdk.Test.MockTransport.start_link()
-    client = TreeDbSdk.Test.MockTransport.client(pid)
-    TreeDbSdk.Registry.local_node(client)
-    TreeDbSdk.Registry.nodes(client)
-    TreeDbSdk.Registry.get_placement(client, "repo/a")
-    TreeDbSdk.Registry.set_placement(client, "repo/a", %{})
+    {:ok, pid} = TreeDxSdk.Test.MockTransport.start_link()
+    client = TreeDxSdk.Test.MockTransport.client(pid)
+    TreeDxSdk.Registry.local_node(client)
+    TreeDxSdk.Registry.nodes(client)
+    TreeDxSdk.Registry.get_placement(client, "repo/a")
+    TreeDxSdk.Registry.set_placement(client, "repo/a", %{})
 
     assert Enum.any?(
-             TreeDbSdk.Test.MockTransport.requests(pid),
+             TreeDxSdk.Test.MockTransport.requests(pid),
              &(&1.method == :post and &1.path == "/api/v1/registry/repos/repo%2Fa/placement")
            )
   end

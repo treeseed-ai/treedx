@@ -1,6 +1,6 @@
 # Git Remote Workflows
 
-TreeDB keeps Git remote operations generic and repository-scoped.
+TreeDX keeps Git remote operations generic and repository-scoped.
 
 Push is implemented for local path and `file://` remotes without a shell
 fallback. The Rust path validates repositories with `gix`, validates explicit

@@ -1,11 +1,11 @@
 # Performance Profiler
 
-The TreeDB profiler is a standalone Elixir escript located at
-`tools/treedb_profiler`.
+The TreeDX profiler is a standalone Elixir escript located at
+`tools/treedx_profiler`.
 
 Release profiles run the escript from the separate Debian-based
-`treeseed/treedb-profiler` image. API nodes run from the stripped distroless
-`treeseed/treedb` service image. The profiler image includes fixtures,
+`treeseed/treedx-profiler` image. API nodes run from the stripped distroless
+`treeseed/treedx` service image. The profiler image includes fixtures,
 scenarios, the endpoint matrix, the reliability budget, and OpenAPI metadata so
 normal profile Compose runs do not bind-mount the repository source into the
 profiler container.
@@ -14,13 +14,13 @@ profiler container.
 
 The profiler is intentionally black-box:
 
-- It talks to TreeDB only through HTTP.
+- It talks to TreeDX only through HTTP.
 - It does not import `apps/api` modules.
 - It does not use the SDK package.
 - It creates Git repositories only as source fixtures for
   managed repository creation or data-dir-relative admin import.
 
-After fixture import/creation, all TreeDB state is created, updated, queried,
+After fixture import/creation, all TreeDX state is created, updated, queried,
 and cleaned up through public API calls. Normal profiler setup uses canonical
 repository names and repository-relative paths; reports must not retain
 absolute fixture roots or managed storage paths.
@@ -88,7 +88,7 @@ age-gated by default so long runs leave a useful final corpus for inspection.
 Portfolio state is held by a profiler-owned GenServer. It tracks generated and
 registered repositories, active and closed workspaces, known readable paths,
 binary paths and hashes, snapshots, artifacts, counters, and deletion
-eligibility. This state is only profiler metadata; TreeDB state is still
+eligibility. This state is only profiler metadata; TreeDX state is still
 created and verified through public HTTP APIs.
 
 ## Measurement
@@ -164,12 +164,12 @@ unverified races fail the reliability budget.
 ## OpenAPI Coverage
 
 The profiler reads `docs/api/openapi.json` and verifies
-`tools/treedb_profiler/endpoint_matrix.yaml` accounts for every public
+`tools/treedx_profiler/endpoint_matrix.yaml` accounts for every public
 operation. The endpoint matrix adds setup state, request templates, tags,
 expected statuses, scenario weights, and validation rules that OpenAPI cannot
 derive by itself.
 
-Packaged profiler runs can set `TREEDB_PROFILER_ROOT` and `TREEDB_OPENAPI_PATH`
+Packaged profiler runs can set `TREEDX_PROFILER_ROOT` and `TREEDX_OPENAPI_PATH`
 to point at the baked-in profiler data directory and OpenAPI file. Local source
 runs continue to use source-relative defaults.
 
@@ -181,7 +181,7 @@ The report must keep `coverage.unaccounted` at `0`.
 
 ## Federation Coverage
 
-Federation profiles run against three TreeDB API nodes and verify live
+Federation profiles run against three TreeDX API nodes and verify live
 catalog-sync behavior without restarting services. Node A is the default ingress
 for profiler traffic, while node B and node C join through configured parent
 lineage. The profiler then checks that catalogs converge, routes resolve across
@@ -200,7 +200,7 @@ rollups, OpenAPI validation results, and reliability-budget status.
 
 ## Workloads
 
-Scenario definitions under `tools/treedb_profiler/scenarios/` select matrix
+Scenario definitions under `tools/treedx_profiler/scenarios/` select matrix
 operations by tags and weights. This keeps profiles workload-driven:
 
 - `full_api`
@@ -227,7 +227,7 @@ slowest operations, errors, assertions, metrics deltas, verifier sections,
 timing windows, replay-log paths, and retained request sample counts.
 
 The reliability budget lives at
-`tools/treedb_profiler/reliability_budget.yaml`. The default budget allows no
+`tools/treedx_profiler/reliability_budget.yaml`. The default budget allows no
 request errors, semantic failures, OpenAPI failures, reconciliation drift,
 unverified races, validation-probe failures, negative-test failures,
 metamorphic failures, endpoint-consistency failures, or delayed-consistency

@@ -1,13 +1,13 @@
 # SDK Portfolio-Backed Content Runbook
 
-TreeDB-backed TreeSeed content treats TreeDB as a portfolio of repositories.
+TreeDX-backed TreeSeed content treats TreeDX as a portfolio of repositories.
 TreeSeed configures the service, auth, optional ref/workspace context, content
 path maps, and repository hints. It does not configure one global repository id.
 
 ## Required Inputs
 
-- TreeDB base URL
-- Bearer token when the TreeDB service requires auth
+- TreeDX base URL
+- Bearer token when the TreeDX service requires auth
 - Optional ref, such as `refs/heads/main`
 - Optional workspace ID for write operations
 - Content path map for TreeSeed content models
@@ -16,25 +16,25 @@ path maps, and repository hints. It does not configure one global repository id.
 Supported environment variables:
 
 ```text
-TREESEED_TREEDB_BASE_URL
-TREESEED_TREEDB_TOKEN
-TREESEED_TREEDB_REF
-TREESEED_TREEDB_WORKSPACE_ID
+TREESEED_TREEDX_BASE_URL
+TREESEED_TREEDX_TOKEN
+TREESEED_TREEDX_REF
+TREESEED_TREEDX_WORKSPACE_ID
 ```
 
 There is intentionally no repository-id environment variable. Repository ids are
-discovered internally by portfolio APIs only when repo-scoped TreeDB endpoints
+discovered internally by portfolio APIs only when repo-scoped TreeDX endpoints
 require them.
 
 ## Configuration Example
 
 ```ts
 const sdk = new AgentSdk({
-  treeDb: {
-    baseUrl: process.env.TREESEED_TREEDB_BASE_URL,
-    token: process.env.TREESEED_TREEDB_TOKEN,
-    ref: process.env.TREESEED_TREEDB_REF,
-    workspaceId: process.env.TREESEED_TREEDB_WORKSPACE_ID,
+  treeDx: {
+    baseUrl: process.env.TREESEED_TREEDX_BASE_URL,
+    token: process.env.TREESEED_TREEDX_TOKEN,
+    ref: process.env.TREESEED_TREEDX_REF,
+    workspaceId: process.env.TREESEED_TREEDX_WORKSPACE_ID,
     contentPathMap: {
       page: 'src/content/pages/**',
       knowledge: {
@@ -52,7 +52,7 @@ const sdk = new AgentSdk({
 ## Smoke Check
 
 SDK live checks are run by the independent SDK package workflow. The top-level
-TreeDB release gate does not invoke SDK scripts or require an SDK checkout.
+TreeDX release gate does not invoke SDK scripts or require an SDK checkout.
 
 For TreeSeed focused regression, keep `packages/trsd-sdk` standalone. Do not add local file links from TreeSeed SDK code to sibling SDK packages.
 
@@ -67,12 +67,12 @@ Use a test repository or an isolated branch policy for mutating checks.
 
 ## Troubleshooting
 
-- `missing_treedb_base_url`: configure `TREESEED_TREEDB_BASE_URL` or pass
-  `treeDb.baseUrl`.
+- `missing_treedx_base_url`: configure `TREESEED_TREEDX_BASE_URL` or pass
+  `treeDx.baseUrl`.
 - `missing_content_path_mapping`: add `contentPathMap` for model paths that
   cannot be derived locally.
 - `ambiguous_repository_selection`: add stronger `repositoryHints` or supply a
   `workspaceId` for writes.
-- `permission_denied`: verify TreeDB token capabilities and path/ref scopes.
-- `timeout`: increase timeout settings or inspect TreeDB/server network health.
+- `permission_denied`: verify TreeDX token capabilities and path/ref scopes.
+- `timeout`: increase timeout settings or inspect TreeDX/server network health.
 - `network_error`: verify base URL and connectivity.

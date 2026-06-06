@@ -1,4 +1,4 @@
-from treedb_sdk.adapters import GraphAdapter
+from treedx_sdk.adapters import GraphAdapter
 
 
 def test_graph_endpoints(MockTransport) -> None:  # type: ignore[no-untyped-def]

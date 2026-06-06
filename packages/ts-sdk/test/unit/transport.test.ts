@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FetchTransport, TreeDbApiError } from '../../src/treedb/index.js';
+import { FetchTransport, TreeDxApiError } from '../../src/treedx/index.js';
 
 describe('FetchTransport', () => {
   it('builds URL, headers, and JSON body', async () => {
@@ -11,16 +11,16 @@ describe('FetchTransport', () => {
       return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } });
     }) as typeof fetch;
 
-    const transport = new FetchTransport({ baseUrl: 'http://treedb.test', token: 't', fetchImpl });
+    const transport = new FetchTransport({ baseUrl: 'http://treedx.test', token: 't', fetchImpl });
     const response = await transport.request({ method: 'POST', path: '/api/v1/query', query: { limit: 1 }, body: { q: 'x' } });
-    expect(String(calls[0])).toBe('http://treedb.test/api/v1/query?limit=1');
+    expect(String(calls[0])).toBe('http://treedx.test/api/v1/query?limit=1');
     expect(initCalls[0]?.headers).toMatchObject({ Authorization: 'Bearer t', 'Content-Type': 'application/json' });
     expect(response.data).toEqual({ ok: true });
   });
 
-  it('throws TreeDbApiError for non-2xx responses', async () => {
+  it('throws TreeDxApiError for non-2xx responses', async () => {
     const fetchImpl = (async () => new Response(JSON.stringify({ error: { code: 'invalid_token', message: 'Bad token' } }), { status: 401, headers: { 'content-type': 'application/json' } })) as typeof fetch;
-    const transport = new FetchTransport({ baseUrl: 'http://treedb.test', fetchImpl });
-    await expect(transport.request({ method: 'GET', path: '/api/v1/auth/whoami' })).rejects.toBeInstanceOf(TreeDbApiError);
+    const transport = new FetchTransport({ baseUrl: 'http://treedx.test', fetchImpl });
+    await expect(transport.request({ method: 'GET', path: '/api/v1/auth/whoami' })).rejects.toBeInstanceOf(TreeDxApiError);
   });
 });

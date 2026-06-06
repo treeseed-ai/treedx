@@ -1,6 +1,6 @@
-# TypeScript TreeDB SDK
+# TypeScript TreeDX SDK
 
-`@treedb/ts-sdk` is the generic TypeScript SDK for TreeDB. It implements the
+`@treedx/ts-sdk` is the generic TypeScript SDK for TreeDX. It implements the
 shared `packages/sdk-spec` architecture, follows `docs/api/openapi.yaml`, and
 does not encode TreeSeed product semantics. `packages/trsd-sdk` is a downstream
 TreeSeed consumer/reference only.
@@ -21,17 +21,17 @@ npm ci
 Consumers will import the package as:
 
 ```ts
-import { TreeDbClient, TreeDbApiError } from '@treedb/ts-sdk';
+import { TreeDxClient, TreeDxApiError } from '@treedx/ts-sdk';
 ```
 
 ## Configure Client
 
 ```ts
-import { TreeDbClient } from '@treedb/ts-sdk';
+import { TreeDxClient } from '@treedx/ts-sdk';
 
-const client = new TreeDbClient({
+const client = new TreeDxClient({
   baseUrl: 'http://localhost:4000',
-  token: process.env.TREEDB_TOKEN
+  token: process.env.TREEDX_TOKEN
 });
 ```
 
@@ -128,7 +128,7 @@ const parsed = await client.context.parse('repo_demo', { source: 'ctx docs' });
 
 ## Federated Query
 
-Federation helpers use portfolio/global TreeDB routes rather than a single
+Federation helpers use portfolio/global TreeDX routes rather than a single
 configured repository:
 
 ```ts
@@ -139,16 +139,16 @@ const results = await client.federation.search({ query: 'release provenance' });
 ## Scoped Admin And Internal Modules
 
 Full OpenAPI coverage includes sensitive scoped modules: Admin, Audit, Policy,
-SearchIndex, and FederationInternal. These APIs require appropriate TreeDB
+SearchIndex, and FederationInternal. These APIs require appropriate TreeDX
 credentials and should be used carefully against production systems. They remain
-generic TreeDB APIs and do not encode TreeSeed product semantics.
+generic TreeDX APIs and do not encode TreeSeed product semantics.
 
 The raw operation fallback validates method/path pairs against generated OpenAPI
 metadata before dispatch.
 
 ## Error Handling
 
-Non-2xx responses and network failures surface as `TreeDbApiError` with
+Non-2xx responses and network failures surface as `TreeDxApiError` with
 `status`, `code`, `message`, `details`, and `payload`. Network failures use
 `status = 0` and `code = "network_error"`.
 
@@ -156,7 +156,7 @@ Non-2xx responses and network failures surface as `TreeDbApiError` with
 try {
   await client.whoami();
 } catch (error) {
-  if (error instanceof TreeDbApiError) {
+  if (error instanceof TreeDxApiError) {
     console.error(error.status, error.code, error.message);
   }
 }
@@ -165,47 +165,47 @@ try {
 ## Pagination
 
 Pagination helpers preserve opaque cursor values and page metadata. SDK code
-must not decode TreeDB cursor internals.
+must not decode TreeDX cursor internals.
 
 ```ts
-import { getNextCursor } from '@treedb/ts-sdk/treedb/client';
+import { getNextCursor } from '@treedx/ts-sdk/treedx/client';
 ```
 
 ## Binary And Multipart
 
 Binary bodies may be `Uint8Array`, `ArrayBuffer`, `Buffer`, or
 `ReadableStream<Uint8Array>`. Multipart part numbers are passed through to
-TreeDB without SDK renumbering.
+TreeDX without SDK renumbering.
 
 ## Conformance
 
-The shared scenario catalog loads through `TreeDbConformanceAdapter`. Live
-conformance runs against the local TreeDB harness for implemented SDK
+The shared scenario catalog loads through `TreeDxConformanceAdapter`. Live
+conformance runs against the local TreeDX harness for implemented SDK
 verification. Optional integration checks may still report a clean
 not-configured path when no server is configured.
 
 ```bash
-npm run test:treedb-conformance
+npm run test:treedx-conformance
 ```
 
 ## Integration
 
-Integration tests call a live TreeDB server only when `TREEDB_BASE_URL` is set.
+Integration tests call a live TreeDX server only when `TREEDX_BASE_URL` is set.
 Without that environment variable, they pass cleanly by reporting
 not-configured behavior.
 
 ```bash
-npm run test:treedb-integration
+npm run test:treedx-integration
 ```
 
 ## Development Commands
 
 ```bash
 npm ci
-npm run treedb:check-generated
+npm run treedx:check-generated
 npm run build
-npm run test:treedb-unit
-npm run test:treedb-conformance
-npm run test:treedb-integration
+npm run test:treedx-unit
+npm run test:treedx-conformance
+npm run test:treedx-integration
 npm test
 ```

@@ -1,7 +1,7 @@
-# TreeDB Capability Matrix
+# TreeDX Capability Matrix
 
 Status: Unified route and capability inventory  
-Source of truth: `apps/api/lib/treedb_web/router.ex`  
+Source of truth: `apps/api/lib/treedx_web/router.ex`  
 Scope: Public `/api/v1` HTTP routes
 
 This matrix documents the current route inventory and intended capability
@@ -117,7 +117,7 @@ Production hardening storage and artifact operations add:
 | POST | `/api/v1/admin/artifacts/cleanup` | `ArtifactController.cleanup` | `policy:write` | no | no | no | no | no | `artifact.cleanup` | retention cleanup by logical artifact ID |
 
 Exec hardening uses `POST /api/v1/workspaces/:workspace_id/exec` with
-`TREEDB_EXEC_BACKEND`, sandbox metadata, network denial by default, and
+`TREEDX_EXEC_BACKEND`, sandbox metadata, network denial by default, and
 binary-safe `write_limited` overlay persistence.
 
 Global federation routes:
@@ -127,4 +127,4 @@ Global federation routes:
 | POST | `/api/v1/search` | `GlobalQueryController.search` | `query:federated`, `files:search` | yes | yes | yes | no | no | `federated.search.started`, `federated.search.completed`, `federated.search.partial` | executes only reduced authorized repository scopes |
 | POST | `/api/v1/query` | `GlobalQueryController.query` | `query:federated` plus query-specific file/git capability | yes | yes | yes | no | no | `federated.query.started`, `federated.query.completed`, `federated.query.partial` | `text`/`combined` use `files:search`; `changed_path` uses `git:diff`; others use `files:read` |
 | POST | `/api/v1/context/build` | `GlobalQueryController.context` | `query:federated`, `graph:query` | yes | yes | yes | no | no | `federated.context.started`, `federated.context.completed`, `federated.context.partial` | merges authorized context packs and applies a global budget |
-| POST | `/api/v1/graph/query` | `GlobalQueryController.graph` | `query:federated`, `graph:query` | yes | yes | yes | no | no | `federated.graph.started`, `federated.graph.completed`, `federated.graph.partial` | qualifies cross-repo graph IDs with `treedb://repo/...` |
+| POST | `/api/v1/graph/query` | `GlobalQueryController.graph` | `query:federated`, `graph:query` | yes | yes | yes | no | no | `federated.graph.started`, `federated.graph.completed`, `federated.graph.partial` | qualifies cross-repo graph IDs with `treedx://repo/...` |

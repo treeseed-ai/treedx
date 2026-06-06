@@ -1,4 +1,4 @@
-sdk: treedb-python
+sdk: treedx-python
 language: python
 version: 0.1.0
 sdkSpecVersion: 0.1.0

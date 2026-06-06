@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ExecAdapter } from '../../src/treedb/index.js';
+import { ExecAdapter } from '../../src/treedx/index.js';
 import { MockTransport } from './mock.js';
 
 describe('ExecAdapter', () => {

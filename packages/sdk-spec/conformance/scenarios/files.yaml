@@ -52,6 +52,6 @@ scenarios:
         action: files.statusDiffCommit
         description: Read status, diff changes, and commit through the SDK facade.
     assertions:
-      - Search results preserve paths and snippets returned by TreeDB.
-      - Status and diff responses remain generic TreeDB data.
+      - Search results preserve paths and snippets returned by TreeDX.
+      - Status and diff responses remain generic TreeDX data.
       - Commit results expose the server response without TreeSeed semantics.

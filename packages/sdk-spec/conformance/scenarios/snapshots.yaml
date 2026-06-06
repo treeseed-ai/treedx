@@ -24,4 +24,4 @@ scenarios:
         description: Retrieve snapshot metadata through the SDK facade.
     assertions:
       - Snapshot IDs are preserved between build and get operations.
-      - Snapshot metadata remains generic TreeDB data.
+      - Snapshot metadata remains generic TreeDX data.

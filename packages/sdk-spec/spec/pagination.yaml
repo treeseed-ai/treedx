@@ -2,7 +2,7 @@ version: 0.1.0
 status: draft
 
 concepts:
-  TreeDbPage:
+  TreeDxPage:
     fields:
       items:
         required: true
@@ -19,7 +19,7 @@ concepts:
       limit:
         required: false
         description: Requested or applied page size when the API exposes it.
-  TreeDbCursor:
+  TreeDxCursor:
     encoding: opaque
     sdkBehavior:
       - expose raw cursor values
@@ -37,6 +37,6 @@ pageFields:
 rules:
   - Cursor values are server-owned opaque strings.
   - Missing nextCursor means no known next page.
-  - SDKs must preserve page metadata returned by TreeDB.
+  - SDKs must preserve page metadata returned by TreeDX.
   - SDK iterators must stop cleanly when hasMore is false or nextCursor is absent.
-  - SDK iterators must expose request failures as TreeDbApiError-compatible failures.
+  - SDK iterators must expose request failures as TreeDxApiError-compatible failures.

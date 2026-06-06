@@ -28,9 +28,9 @@ scenarios:
     action: repositories.get
     description: Fetch repository metadata and status.
   assertions:
-  - Repository identifiers are passed through as generic TreeDB identifiers.
+  - Repository identifiers are passed through as generic TreeDX identifiers.
   - Repository status is exposed without TreeSeed product concepts.
-  - SDK errors preserve TreeDbApiError-compatible fields.
+  - SDK errors preserve TreeDxApiError-compatible fields.
 - id: repositories.refs_remotes
   capabilityId: repositories.lifecycle
   title: Read repository refs and remotes.
@@ -52,7 +52,7 @@ scenarios:
     action: repositories.remotes
     description: List repository remotes through the SDK facade.
   assertions:
-  - Ref names are preserved as returned by TreeDB.
+  - Ref names are preserved as returned by TreeDX.
   - Remote metadata is exposed as generic repository data.
 - id: repositories.push_sync
   capabilityId: repositories.push_sync
@@ -70,7 +70,7 @@ scenarios:
   steps:
   - name: execute
     action: repositories.push_sync
-    description: Execute repositories.push_sync through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute repositories.push_sync through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.

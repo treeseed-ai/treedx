@@ -1,4 +1,4 @@
-defmodule TreeDbPublicHygieneAssertions do
+defmodule TreeDxPublicHygieneAssertions do
   @moduledoc false
 
   import ExUnit.Assertions
@@ -9,15 +9,15 @@ defmodule TreeDbPublicHygieneAssertions do
   ]
 
   @internal_value_patterns [
-    ~r/\/var\/lib\/treedb/,
-    ~r/\/tmp\/treedb/,
-    ~r/\/tmp\/[^"]*treedb/i
+    ~r/\/var\/lib\/treedx/,
+    ~r/\/tmp\/treedx/,
+    ~r/\/tmp\/[^"]*treedx/i
   ]
 
   @secret_patterns [
     ~r/Bearer\s+[A-Za-z0-9._~+\/=-]+/,
     ~r/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/,
-    ~r/TREEDB_[A-Z0-9_]+/,
+    ~r/TREEDX_[A-Z0-9_]+/,
     ~r/https?:\/\/[^"\s]*((token|secret|password|access_token)=)[^"\s]*/i
   ]
 

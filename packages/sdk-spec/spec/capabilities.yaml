@@ -26,7 +26,7 @@ capabilities:
   type: sdk
   required: true
   module: Auth
-  summary: Resolve the authenticated principal and effective TreeDB scope.
+  summary: Resolve the authenticated principal and effective TreeDX scope.
   endpoints:
   - GET /api/v1/auth/whoami
   - GET /api/v1/policy/effective-scope
@@ -69,7 +69,7 @@ capabilities:
   type: sdk
   required: true
   module: Repositories
-  summary: Push and sync repository content through TreeDB repository operations.
+  summary: Push and sync repository content through TreeDX repository operations.
   endpoints:
   - POST /api/v1/repos/{repo_id}/push
   - POST /api/v1/repos/{repo_id}/sync
@@ -315,7 +315,7 @@ capabilities:
   type: sdk
   required: true
   module: Exec
-  summary: Execute workspace-scoped commands through TreeDB policy boundaries.
+  summary: Execute workspace-scoped commands through TreeDX policy boundaries.
   endpoints:
   - POST /api/v1/workspaces/{workspace_id}/exec
   conformanceScenarios:
@@ -386,7 +386,7 @@ capabilities:
   type: sdk
   required: true
   module: Audit
-  summary: Read TreeDB audit event records.
+  summary: Read TreeDX audit event records.
   endpoints:
   - GET /api/v1/audit/events
   conformanceScenarios:

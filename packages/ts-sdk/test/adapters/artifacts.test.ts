@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ArtifactsAdapter } from '../../src/treedb/index.js';
+import { ArtifactsAdapter } from '../../src/treedx/index.js';
 import { MockTransport } from './mock.js';
 
 describe('ArtifactsAdapter', () => {

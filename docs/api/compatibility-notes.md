@@ -1,8 +1,8 @@
-# TreeDB API Compatibility Notes
+# TreeDX API Compatibility Notes
 
 ## Current Contract
 
-- TreeDB API path prefix: `/api/v1`
+- TreeDX API path prefix: `/api/v1`
 - OpenAPI source of truth: `docs/api/openapi.yaml`
 - SDK architecture source of truth: `packages/sdk-spec`
 - Declared SDK endpoint format: `METHOD /api/v1/path`
@@ -13,24 +13,24 @@
 
 ## Generic SDK Packages
 
-Generic TreeDB SDK packages are:
+Generic TreeDX SDK packages are:
 
-- TypeScript: `@treedb/ts-sdk`
-- Python: `treedb-sdk` with import package `treedb_sdk`
-- Rust: crate `treedb-sdk` with library `treedb_sdk`
-- Elixir: app `:tree_db_sdk` with namespace `TreeDbSdk`
+- TypeScript: `@treedx/ts-sdk`
+- Python: `treedx-sdk` with import package `treedx_sdk`
+- Rust: crate `treedx-sdk` with library `treedx_sdk`
+- Elixir: app `:treedx_sdk` with namespace `TreeDxSdk`
 
-These packages expose generic TreeDB concepts only: repositories, refs, paths,
+These packages expose generic TreeDX concepts only: repositories, refs, paths,
 workspaces, blobs, query, graph, context, federation, registry, snapshots,
 artifacts, mirrors, migrations, exec, and observability.
 
 ## Downstream TreeSeed Package
 
 `@treeseed/sdk` in `packages/trsd-sdk` is downstream. It may consume
-`@treedb/ts-sdk` and may keep TreeSeed compatibility tests, but it does not
-define generic TreeDB SDK architecture.
+`@treedx/ts-sdk` and may keep TreeSeed compatibility tests, but it does not
+define generic TreeDX SDK architecture.
 
-TreeSeed portfolio-backed content is downstream compatibility behavior. TreeDB
+TreeSeed portfolio-backed content is downstream compatibility behavior. TreeDX
 is treated as a portfolio of repositories; TreeSeed service configuration does
 not require a single global repository id.
 
@@ -44,7 +44,7 @@ not require a single global repository id.
   remain available across SDKs.
 - Federation catalogs and route responses expose logical node, repository,
   route, capacity, and mirror metadata only.
-- SDKs and TreeDB responses must not expose storage paths, credentials, user
+- SDKs and TreeDX responses must not expose storage paths, credentials, user
   tokens, node tokens, delegated tokens, hidden paths, snippets, stdout/stderr,
   request bodies, or binary payload snippets.
 

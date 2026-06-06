@@ -1,6 +1,6 @@
 # Native Storage Hardening
 
-TreeDB extends the append-only `.tdb` store with:
+TreeDX extends the append-only `.tdb` store with:
 
 - recursive log discovery for storage checks
 - latest-record compaction for non-audit logs

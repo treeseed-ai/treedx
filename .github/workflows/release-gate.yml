@@ -1,4 +1,4 @@
-name: TreeDB Release Gate
+name: TreeDX Release Gate
 
 on:
   workflow_dispatch:
@@ -20,18 +20,18 @@ on:
       - "test/**"
       - "native/**"
       - "profiles/**"
-      - "tools/treedb_profiler/**"
+      - "tools/treedx_profiler/**"
       - "scripts/release-gate.sh"
       - "scripts/test-all.sh"
-      - "scripts/test-treedb-fast.sh"
+      - "scripts/test-treedx-fast.sh"
       - "scripts/openapi-check.sh"
       - "scripts/storage-recovery-check.sh"
       - "scripts/security-check.sh"
       - "scripts/mvp-smoke.sh"
       - "scripts/federation-live-check.sh"
       - "scripts/profile-compose.sh"
-      - "scripts/profile-treedb.sh"
-      - "scripts/profile-treedb-smoke.sh"
+      - "scripts/profile-treedx.sh"
+      - "scripts/profile-treedx-smoke.sh"
       - "Dockerfile"
       - "Dockerfile.profiler"
       - "docker-healthcheck.c"
@@ -46,7 +46,7 @@ on:
       - "apps/api/mix.lock"
       - "docs/api/openapi.yaml"
       - "docs/api/openapi.json"
-      - "docs/architecture/treedb-sdk-spec-implementation-plan.md"
+      - "docs/architecture/treedx-sdk-spec-implementation-plan.md"
       - "docs/runbooks/sdk-release.md"
       - "docs/runbooks/sdk-conformance.md"
       - "packages/sdk-spec/**"
@@ -71,18 +71,18 @@ on:
       - "test/**"
       - "native/**"
       - "profiles/**"
-      - "tools/treedb_profiler/**"
+      - "tools/treedx_profiler/**"
       - "scripts/release-gate.sh"
       - "scripts/test-all.sh"
-      - "scripts/test-treedb-fast.sh"
+      - "scripts/test-treedx-fast.sh"
       - "scripts/openapi-check.sh"
       - "scripts/storage-recovery-check.sh"
       - "scripts/security-check.sh"
       - "scripts/mvp-smoke.sh"
       - "scripts/federation-live-check.sh"
       - "scripts/profile-compose.sh"
-      - "scripts/profile-treedb.sh"
-      - "scripts/profile-treedb-smoke.sh"
+      - "scripts/profile-treedx.sh"
+      - "scripts/profile-treedx-smoke.sh"
       - "Dockerfile"
       - "Dockerfile.profiler"
       - "docker-healthcheck.c"
@@ -97,7 +97,7 @@ on:
       - "apps/api/mix.lock"
       - "docs/api/openapi.yaml"
       - "docs/api/openapi.json"
-      - "docs/architecture/treedb-sdk-spec-implementation-plan.md"
+      - "docs/architecture/treedx-sdk-spec-implementation-plan.md"
       - "docs/runbooks/sdk-release.md"
       - "docs/runbooks/sdk-conformance.md"
       - "packages/sdk-spec/**"
@@ -111,18 +111,18 @@ on:
       - ".github/workflows/release-gate.yml"
 
 env:
-  CARGO_TARGET_DIR: /tmp/treedb-target
-  RUSTLER_TARGET_DIR: /tmp/treedb-target
+  CARGO_TARGET_DIR: /tmp/treedx-target
+  RUSTLER_TARGET_DIR: /tmp/treedx-target
   MIX_ENV: test
   CARGO_TERM_COLOR: always
   CARGO_HTTP_MULTIPLEXING: false
   CARGO_NET_RETRY: 10
-  TREEDB_LIVE_NODE_A_URL: ${{ secrets.TREEDB_LIVE_NODE_A_URL }}
-  TREEDB_LIVE_NODE_A_TOKEN: ${{ secrets.TREEDB_LIVE_NODE_A_TOKEN }}
-  TREEDB_LIVE_NODE_A_REPO_ID: ${{ secrets.TREEDB_LIVE_NODE_A_REPO_ID }}
-  TREEDB_LIVE_NODE_B_URL: ${{ secrets.TREEDB_LIVE_NODE_B_URL }}
-  TREEDB_LIVE_NODE_B_TOKEN: ${{ secrets.TREEDB_LIVE_NODE_B_TOKEN }}
-  TREEDB_LIVE_NODE_B_REPO_ID: ${{ secrets.TREEDB_LIVE_NODE_B_REPO_ID }}
+  TREEDX_LIVE_NODE_A_URL: ${{ secrets.TREEDX_LIVE_NODE_A_URL }}
+  TREEDX_LIVE_NODE_A_TOKEN: ${{ secrets.TREEDX_LIVE_NODE_A_TOKEN }}
+  TREEDX_LIVE_NODE_A_REPO_ID: ${{ secrets.TREEDX_LIVE_NODE_A_REPO_ID }}
+  TREEDX_LIVE_NODE_B_URL: ${{ secrets.TREEDX_LIVE_NODE_B_URL }}
+  TREEDX_LIVE_NODE_B_TOKEN: ${{ secrets.TREEDX_LIVE_NODE_B_TOKEN }}
+  TREEDX_LIVE_NODE_B_REPO_ID: ${{ secrets.TREEDX_LIVE_NODE_B_REPO_ID }}
 
 jobs:
   verify:
@@ -161,10 +161,10 @@ jobs:
       - name: Cache Rust target
         uses: actions/cache@v4
         with:
-          path: /tmp/treedb-target
-          key: ${{ runner.os }}-${{ matrix.arch }}-treedb-rust-${{ hashFiles('Cargo.lock', 'apps/api/native/**/Cargo.lock') }}
+          path: /tmp/treedx-target
+          key: ${{ runner.os }}-${{ matrix.arch }}-treedx-rust-${{ hashFiles('Cargo.lock', 'apps/api/native/**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.arch }}-treedb-rust-
+            ${{ runner.os }}-${{ matrix.arch }}-treedx-rust-
 
       - name: Cache Cargo registry and tools
         uses: actions/cache@v4
@@ -173,9 +173,9 @@ jobs:
             ~/.cargo/bin/cargo-audit
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-${{ matrix.arch }}-treedb-cargo-tools-${{ hashFiles('Cargo.lock') }}
+          key: ${{ runner.os }}-${{ matrix.arch }}-treedx-cargo-tools-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-${{ matrix.arch }}-treedb-cargo-tools-
+            ${{ runner.os }}-${{ matrix.arch }}-treedx-cargo-tools-
 
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
@@ -284,7 +284,7 @@ jobs:
         working-directory: packages/ts-sdk
 
       - name: Check generated OpenAPI metadata
-        run: npm run treedb:check-generated
+        run: npm run treedx:check-generated
         working-directory: packages/ts-sdk
 
       - name: Build
@@ -292,15 +292,15 @@ jobs:
         working-directory: packages/ts-sdk
 
       - name: Run unit, adapter, and generated tests
-        run: npm run test:treedb-unit
+        run: npm run test:treedx-unit
         working-directory: packages/ts-sdk
 
       - name: Run conformance tests
-        run: npm run test:treedb-conformance
+        run: npm run test:treedx-conformance
         working-directory: packages/ts-sdk
 
       - name: Run integration tests
-        run: npm run test:treedb-integration
+        run: npm run test:treedx-integration
         working-directory: packages/ts-sdk
 
       - name: Run full test suite
@@ -354,7 +354,7 @@ jobs:
         working-directory: packages/python-sdk
 
       - name: Check generated OpenAPI metadata
-        run: python scripts/check_treedb_generated_types.py
+        run: python scripts/check_treedx_generated_types.py
         working-directory: packages/python-sdk
 
       - name: Build package distributions
@@ -413,13 +413,13 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            /tmp/treedb-target
+            /tmp/treedx-target
           key: ${{ runner.os }}-${{ matrix.arch }}-rust-sdk-${{ hashFiles('packages/rust-sdk/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.arch }}-rust-sdk-
 
       - name: Check generated OpenAPI metadata
-        run: node scripts/check_treedb_generated_types.mjs
+        run: node scripts/check_treedx_generated_types.mjs
         working-directory: packages/rust-sdk
 
       - name: Check formatting
@@ -478,7 +478,7 @@ jobs:
         working-directory: packages/elixir-sdk
 
       - name: Check generated OpenAPI metadata
-        run: mix run scripts/check_treedb_generated_types.exs
+        run: mix run scripts/check_treedx_generated_types.exs
         working-directory: packages/elixir-sdk
 
       - name: Check formatting
@@ -519,35 +519,35 @@ jobs:
       - name: Run architecture profile
         shell: bash
         env:
-          TREEDB_CI_PROFILE_MODE: ${{ vars.TREEDB_CI_PROFILE_MODE }}
-          TREEDB_PROFILE_DURATION: ${{ vars.TREEDB_CI_PROFILE_DURATION }}
-          TREEDB_PROFILE_CONCURRENCY: ${{ vars.TREEDB_CI_PROFILE_CONCURRENCY }}
-          TREEDB_PROFILE_SIZE: ${{ vars.TREEDB_CI_PROFILE_SIZE }}
-          TREEDB_PROFILE_FIXTURE: ${{ vars.TREEDB_CI_PROFILE_FIXTURE }}
-          TREEDB_PROFILE_SCENARIO: ${{ vars.TREEDB_CI_PROFILE_SCENARIO }}
-          TREEDB_PROFILE_LOAD_MODE: ${{ vars.TREEDB_CI_PROFILE_LOAD_MODE }}
-          TREEDB_PROFILE_ITERATIONS: ${{ vars.TREEDB_CI_PROFILE_ITERATIONS }}
-          TREEDB_PROFILE_RELIABILITY_VERIFIER: ${{ vars.TREEDB_CI_PROFILE_RELIABILITY_VERIFIER }}
-          TREEDB_PROFILE_DURATION_IS_CONTROLLING: ${{ vars.TREEDB_CI_PROFILE_DURATION_IS_CONTROLLING }}
-          TREEDB_PROFILE_MINIMUM_MEASURED_DURATION: ${{ vars.TREEDB_CI_PROFILE_MINIMUM_MEASURED_DURATION }}
+          TREEDX_CI_PROFILE_MODE: ${{ vars.TREEDX_CI_PROFILE_MODE }}
+          TREEDX_PROFILE_DURATION: ${{ vars.TREEDX_CI_PROFILE_DURATION }}
+          TREEDX_PROFILE_CONCURRENCY: ${{ vars.TREEDX_CI_PROFILE_CONCURRENCY }}
+          TREEDX_PROFILE_SIZE: ${{ vars.TREEDX_CI_PROFILE_SIZE }}
+          TREEDX_PROFILE_FIXTURE: ${{ vars.TREEDX_CI_PROFILE_FIXTURE }}
+          TREEDX_PROFILE_SCENARIO: ${{ vars.TREEDX_CI_PROFILE_SCENARIO }}
+          TREEDX_PROFILE_LOAD_MODE: ${{ vars.TREEDX_CI_PROFILE_LOAD_MODE }}
+          TREEDX_PROFILE_ITERATIONS: ${{ vars.TREEDX_CI_PROFILE_ITERATIONS }}
+          TREEDX_PROFILE_RELIABILITY_VERIFIER: ${{ vars.TREEDX_CI_PROFILE_RELIABILITY_VERIFIER }}
+          TREEDX_PROFILE_DURATION_IS_CONTROLLING: ${{ vars.TREEDX_CI_PROFILE_DURATION_IS_CONTROLLING }}
+          TREEDX_PROFILE_MINIMUM_MEASURED_DURATION: ${{ vars.TREEDX_CI_PROFILE_MINIMUM_MEASURED_DURATION }}
         run: |
           set -euo pipefail
 
           mkdir -p target/profiles
 
-          mode="${TREEDB_CI_PROFILE_MODE:-portfolio}"
-          export TREEDB_PROFILE_DURATION="${TREEDB_PROFILE_DURATION:-10m}"
-          export TREEDB_PROFILE_ITERATIONS="${TREEDB_PROFILE_ITERATIONS:-}"
-          export TREEDB_PROFILE_RELIABILITY_VERIFIER="${TREEDB_PROFILE_RELIABILITY_VERIFIER:-true}"
-          export TREEDB_PROFILE_DURATION_IS_CONTROLLING="${TREEDB_PROFILE_DURATION_IS_CONTROLLING:-true}"
-          export TREEDB_PROFILE_MINIMUM_MEASURED_DURATION="${TREEDB_PROFILE_MINIMUM_MEASURED_DURATION:-10m}"
-          export TREEDB_PROFILE_CONCURRENCY="${TREEDB_PROFILE_CONCURRENCY:-25}"
-          export TREEDB_PROFILE_INCLUDE_EXEC="false"
-          export TREEDB_PROFILE_OUTPUT="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
-          export TREEDB_PROFILE_MARKDOWN_OUTPUT="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"
-          export TREEDB_PROFILE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
-          export TREEDB_PROFILE_FAILURE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
-          export TREEDB_PROFILE_REPORT_FORMAT="both"
+          mode="${TREEDX_CI_PROFILE_MODE:-portfolio}"
+          export TREEDX_PROFILE_DURATION="${TREEDX_PROFILE_DURATION:-10m}"
+          export TREEDX_PROFILE_ITERATIONS="${TREEDX_PROFILE_ITERATIONS:-}"
+          export TREEDX_PROFILE_RELIABILITY_VERIFIER="${TREEDX_PROFILE_RELIABILITY_VERIFIER:-true}"
+          export TREEDX_PROFILE_DURATION_IS_CONTROLLING="${TREEDX_PROFILE_DURATION_IS_CONTROLLING:-true}"
+          export TREEDX_PROFILE_MINIMUM_MEASURED_DURATION="${TREEDX_PROFILE_MINIMUM_MEASURED_DURATION:-10m}"
+          export TREEDX_PROFILE_CONCURRENCY="${TREEDX_PROFILE_CONCURRENCY:-25}"
+          export TREEDX_PROFILE_INCLUDE_EXEC="false"
+          export TREEDX_PROFILE_OUTPUT="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
+          export TREEDX_PROFILE_MARKDOWN_OUTPUT="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"
+          export TREEDX_PROFILE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
+          export TREEDX_PROFILE_FAILURE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
+          export TREEDX_PROFILE_REPORT_FORMAT="both"
 
           ./scripts/profile-compose.sh "${mode}"
 
@@ -562,7 +562,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: treedb-profile-${{ matrix.arch }}
+          name: treedx-profile-${{ matrix.arch }}
           path: |
             target/profiles/ci-*.yaml
             target/profiles/ci-*.md
@@ -609,34 +609,34 @@ jobs:
       - name: Run federation profile
         shell: bash
         env:
-          TREEDB_CI_FEDERATION_PROFILE_DURATION: ${{ vars.TREEDB_CI_FEDERATION_PROFILE_DURATION }}
-          TREEDB_CI_FEDERATION_PROFILE_CONCURRENCY: ${{ vars.TREEDB_CI_FEDERATION_PROFILE_CONCURRENCY }}
-          TREEDB_CI_FEDERATION_PROFILE_SIZE: ${{ vars.TREEDB_CI_FEDERATION_PROFILE_SIZE }}
-          TREEDB_CI_FEDERATION_PROFILE_ENABLED: ${{ vars.TREEDB_CI_FEDERATION_PROFILE_ENABLED }}
+          TREEDX_CI_FEDERATION_PROFILE_DURATION: ${{ vars.TREEDX_CI_FEDERATION_PROFILE_DURATION }}
+          TREEDX_CI_FEDERATION_PROFILE_CONCURRENCY: ${{ vars.TREEDX_CI_FEDERATION_PROFILE_CONCURRENCY }}
+          TREEDX_CI_FEDERATION_PROFILE_SIZE: ${{ vars.TREEDX_CI_FEDERATION_PROFILE_SIZE }}
+          TREEDX_CI_FEDERATION_PROFILE_ENABLED: ${{ vars.TREEDX_CI_FEDERATION_PROFILE_ENABLED }}
         run: |
           set -euo pipefail
 
           mkdir -p target/profiles
 
-          if [[ "${TREEDB_CI_FEDERATION_PROFILE_ENABLED:-true}" == "false" ]]; then
-            echo "Federation profile disabled by TREEDB_CI_FEDERATION_PROFILE_ENABLED=false"
+          if [[ "${TREEDX_CI_FEDERATION_PROFILE_ENABLED:-true}" == "false" ]]; then
+            echo "Federation profile disabled by TREEDX_CI_FEDERATION_PROFILE_ENABLED=false"
             exit 0
           fi
 
           mode="${{ matrix.mode }}"
-          export TREEDB_PROFILE_DURATION="${TREEDB_CI_FEDERATION_PROFILE_DURATION:-10m}"
-          export TREEDB_PROFILE_MINIMUM_MEASURED_DURATION="${TREEDB_CI_FEDERATION_PROFILE_DURATION:-10m}"
-          export TREEDB_PROFILE_DURATION_IS_CONTROLLING="true"
-          export TREEDB_PROFILE_ITERATIONS=""
-          export TREEDB_PROFILE_CONCURRENCY="${TREEDB_CI_FEDERATION_PROFILE_CONCURRENCY:-25}"
-          export TREEDB_PROFILE_SIZE="${TREEDB_CI_FEDERATION_PROFILE_SIZE:-small}"
-          export TREEDB_PROFILE_REPORT_FORMAT="both"
-          export TREEDB_PROFILE_INCLUDE_EXEC="false"
-          export TREEDB_PROFILE_INCLUDE_FEDERATION="true"
-          export TREEDB_PROFILE_OUTPUT="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
-          export TREEDB_PROFILE_MARKDOWN_OUTPUT="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"
-          export TREEDB_PROFILE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
-          export TREEDB_PROFILE_FAILURE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
+          export TREEDX_PROFILE_DURATION="${TREEDX_CI_FEDERATION_PROFILE_DURATION:-10m}"
+          export TREEDX_PROFILE_MINIMUM_MEASURED_DURATION="${TREEDX_CI_FEDERATION_PROFILE_DURATION:-10m}"
+          export TREEDX_PROFILE_DURATION_IS_CONTROLLING="true"
+          export TREEDX_PROFILE_ITERATIONS=""
+          export TREEDX_PROFILE_CONCURRENCY="${TREEDX_CI_FEDERATION_PROFILE_CONCURRENCY:-25}"
+          export TREEDX_PROFILE_SIZE="${TREEDX_CI_FEDERATION_PROFILE_SIZE:-small}"
+          export TREEDX_PROFILE_REPORT_FORMAT="both"
+          export TREEDX_PROFILE_INCLUDE_EXEC="false"
+          export TREEDX_PROFILE_INCLUDE_FEDERATION="true"
+          export TREEDX_PROFILE_OUTPUT="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
+          export TREEDX_PROFILE_MARKDOWN_OUTPUT="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"
+          export TREEDX_PROFILE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
+          export TREEDX_PROFILE_FAILURE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
 
           ./scripts/profile-compose.sh "${mode}"
 
@@ -651,7 +651,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: treedb-federation-profile-${{ matrix.mode }}-${{ matrix.arch }}
+          name: treedx-federation-profile-${{ matrix.mode }}-${{ matrix.arch }}
           path: |
             target/profiles/ci-*.yaml
             target/profiles/ci-*.md
@@ -696,12 +696,12 @@ jobs:
       - name: Run performance profile
         shell: bash
         env:
-          TREEDB_PROFILE_DURATION: ${{ vars.TREEDB_CI_PERFORMANCE_PROFILE_DURATION }}
-          TREEDB_PROFILE_CONCURRENCY: ${{ vars.TREEDB_CI_PERFORMANCE_PROFILE_CONCURRENCY }}
-          TREEDB_PROFILE_TARGET_PRIMARY_RPS: ${{ vars.TREEDB_CI_PERFORMANCE_TARGET_PRIMARY_RPS }}
-          TREEDB_PROFILE_PROBE_SAMPLING_RATE: ${{ vars.TREEDB_CI_PERFORMANCE_PROBE_SAMPLING_RATE }}
-          TREEDB_RUNTIME_CPU_BUDGET: ${{ vars.TREEDB_CI_PERFORMANCE_CPU_BUDGET }}
-          TREEDB_RUNTIME_MEMORY_BUDGET_MB: ${{ vars.TREEDB_CI_PERFORMANCE_MEMORY_BUDGET_MB }}
+          TREEDX_PROFILE_DURATION: ${{ vars.TREEDX_CI_PERFORMANCE_PROFILE_DURATION }}
+          TREEDX_PROFILE_CONCURRENCY: ${{ vars.TREEDX_CI_PERFORMANCE_PROFILE_CONCURRENCY }}
+          TREEDX_PROFILE_TARGET_PRIMARY_RPS: ${{ vars.TREEDX_CI_PERFORMANCE_TARGET_PRIMARY_RPS }}
+          TREEDX_PROFILE_PROBE_SAMPLING_RATE: ${{ vars.TREEDX_CI_PERFORMANCE_PROBE_SAMPLING_RATE }}
+          TREEDX_RUNTIME_CPU_BUDGET: ${{ vars.TREEDX_CI_PERFORMANCE_CPU_BUDGET }}
+          TREEDX_RUNTIME_MEMORY_BUDGET_MB: ${{ vars.TREEDX_CI_PERFORMANCE_MEMORY_BUDGET_MB }}
         run: |
           set -euo pipefail
 
@@ -726,25 +726,25 @@ jobs:
           JSON
 
           mode="performance"
-          export TREEDB_PROFILE_PROFILE_PURPOSE="performance"
-          export TREEDB_PROFILE_DURATION="${TREEDB_PROFILE_DURATION:-10m}"
-          export TREEDB_PROFILE_MINIMUM_MEASURED_DURATION="${TREEDB_PROFILE_DURATION}"
-          export TREEDB_PROFILE_DURATION_IS_CONTROLLING="true"
-          export TREEDB_PROFILE_ITERATIONS=""
-          export TREEDB_PROFILE_CONCURRENCY="${TREEDB_PROFILE_CONCURRENCY:-150}"
-          export TREEDB_PROFILE_TARGET_PRIMARY_RPS="${TREEDB_PROFILE_TARGET_PRIMARY_RPS:-100}"
-          export TREEDB_PROFILE_VALIDATION_PROBE_MODE="sampled"
-          export TREEDB_PROFILE_PROBE_SAMPLING_RATE="${TREEDB_PROFILE_PROBE_SAMPLING_RATE:-0.10}"
-          export TREEDB_RUNTIME_CPU_BUDGET="${TREEDB_RUNTIME_CPU_BUDGET:-4}"
-          export TREEDB_RUNTIME_MEMORY_BUDGET_MB="${TREEDB_RUNTIME_MEMORY_BUDGET_MB:-4096}"
-          export TREEDB_PROFILE_FAIL_BELOW_PRIMARY_RPS=""
-          export TREEDB_PROFILE_INCLUDE_EXEC="false"
-          export TREEDB_PROFILE_RELIABILITY_BUDGET="target/profiles/performance-errors-only-budget.json"
-          export TREEDB_PROFILE_REPORT_FORMAT="both"
-          export TREEDB_PROFILE_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
-          export TREEDB_PROFILE_MARKDOWN_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"
-          export TREEDB_PROFILE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
-          export TREEDB_PROFILE_FAILURE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
+          export TREEDX_PROFILE_PROFILE_PURPOSE="performance"
+          export TREEDX_PROFILE_DURATION="${TREEDX_PROFILE_DURATION:-10m}"
+          export TREEDX_PROFILE_MINIMUM_MEASURED_DURATION="${TREEDX_PROFILE_DURATION}"
+          export TREEDX_PROFILE_DURATION_IS_CONTROLLING="true"
+          export TREEDX_PROFILE_ITERATIONS=""
+          export TREEDX_PROFILE_CONCURRENCY="${TREEDX_PROFILE_CONCURRENCY:-150}"
+          export TREEDX_PROFILE_TARGET_PRIMARY_RPS="${TREEDX_PROFILE_TARGET_PRIMARY_RPS:-100}"
+          export TREEDX_PROFILE_VALIDATION_PROBE_MODE="sampled"
+          export TREEDX_PROFILE_PROBE_SAMPLING_RATE="${TREEDX_PROFILE_PROBE_SAMPLING_RATE:-0.10}"
+          export TREEDX_RUNTIME_CPU_BUDGET="${TREEDX_RUNTIME_CPU_BUDGET:-4}"
+          export TREEDX_RUNTIME_MEMORY_BUDGET_MB="${TREEDX_RUNTIME_MEMORY_BUDGET_MB:-4096}"
+          export TREEDX_PROFILE_FAIL_BELOW_PRIMARY_RPS=""
+          export TREEDX_PROFILE_INCLUDE_EXEC="false"
+          export TREEDX_PROFILE_RELIABILITY_BUDGET="target/profiles/performance-errors-only-budget.json"
+          export TREEDX_PROFILE_REPORT_FORMAT="both"
+          export TREEDX_PROFILE_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
+          export TREEDX_PROFILE_MARKDOWN_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"
+          export TREEDX_PROFILE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
+          export TREEDX_PROFILE_FAILURE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
 
           ./scripts/profile-compose.sh "${mode}"
 
@@ -759,7 +759,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: treedb-performance-profile-${{ matrix.arch }}
+          name: treedx-performance-profile-${{ matrix.arch }}
           path: |
             target/profiles/performance-*.yaml
             target/profiles/performance-*.md
@@ -811,17 +811,17 @@ jobs:
               echo "Release tag '$tag' is not a supported semantic version." >&2
               exit 1
             fi
-            for image in treeseed/treedb treeseed/treedb-profiler; do
+            for image in treeseed/treedx treeseed/treedx-profiler; do
               if docker buildx imagetools inspect "${image}:${tag}" >/dev/null 2>&1; then
                 echo "Docker image ${image}:${tag} already exists." >&2
                 exit 1
               fi
             done
-            service_image_tag="treeseed/treedb:${tag}"
-            profiler_image_tag="treeseed/treedb-profiler:${tag}"
+            service_image_tag="treeseed/treedx:${tag}"
+            profiler_image_tag="treeseed/treedx-profiler:${tag}"
           else
-            service_image_tag="treeseed/treedb:latest"
-            profiler_image_tag="treeseed/treedb-profiler:latest"
+            service_image_tag="treeseed/treedx:latest"
+            profiler_image_tag="treeseed/treedx-profiler:latest"
           fi
 
           echo "service_image_tag=${service_image_tag}" >> "$GITHUB_OUTPUT"
@@ -887,8 +887,8 @@ jobs:
           tags: ${{ needs.publish-plan.outputs.service_arch_image_prefix }}-${{ matrix.arch }}
           sbom: true
           provenance: mode=max
-          cache-from: type=gha,scope=treedb-prod-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=treedb-prod-${{ matrix.arch }}
+          cache-from: type=gha,scope=treedx-prod-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=treedx-prod-${{ matrix.arch }}
 
   build-publish-profiler-image:
     needs:
@@ -948,8 +948,8 @@ jobs:
           tags: ${{ needs.publish-plan.outputs.profiler_arch_image_prefix }}-${{ matrix.arch }}
           sbom: true
           provenance: mode=max
-          cache-from: type=gha,scope=treedb-profiler-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=treedb-profiler-${{ matrix.arch }}
+          cache-from: type=gha,scope=treedx-profiler-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=treedx-profiler-${{ matrix.arch }}
 
   package-typescript-sdk:
     needs:
@@ -989,7 +989,7 @@ jobs:
         working-directory: packages/ts-sdk
 
       - name: Check generated OpenAPI metadata
-        run: npm run treedb:check-generated
+        run: npm run treedx:check-generated
         working-directory: packages/ts-sdk
 
       - name: Build
@@ -1053,7 +1053,7 @@ jobs:
         working-directory: packages/python-sdk
 
       - name: Check generated OpenAPI metadata
-        run: python scripts/check_treedb_generated_types.py
+        run: python scripts/check_treedx_generated_types.py
         working-directory: packages/python-sdk
 
       - name: Build package distributions
@@ -1106,13 +1106,13 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            /tmp/treedb-target
+            /tmp/treedx-target
           key: ${{ runner.os }}-rust-sdk-package-${{ hashFiles('packages/rust-sdk/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-rust-sdk-package-
 
       - name: Check generated OpenAPI metadata
-        run: node scripts/check_treedb_generated_types.mjs
+        run: node scripts/check_treedx_generated_types.mjs
         working-directory: packages/rust-sdk
 
       - name: Package crate artifact
@@ -1123,7 +1123,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: rust-sdk-crate
-          path: /tmp/treedb-target/package/*.crate
+          path: /tmp/treedx-target/package/*.crate
           if-no-files-found: error
 
   package-elixir-sdk:
@@ -1177,7 +1177,7 @@ jobs:
         working-directory: packages/elixir-sdk
 
       - name: Check generated OpenAPI metadata
-        run: mix run scripts/check_treedb_generated_types.exs
+        run: mix run scripts/check_treedx_generated_types.exs
         working-directory: packages/elixir-sdk
 
       - name: Build Hex package artifact
@@ -1188,7 +1188,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: elixir-sdk-hex-package
-          path: packages/elixir-sdk/tree_db_sdk-*.tar
+          path: packages/elixir-sdk/treedx_sdk-*.tar
           if-no-files-found: error
 
   publish:

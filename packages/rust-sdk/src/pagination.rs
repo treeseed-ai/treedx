@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-pub type TreeDbCursor = String;
+pub type TreeDxCursor = String;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct TreeDbPage<T> {
+pub struct TreeDxPage<T> {
     pub items: Vec<T>,
     #[serde(rename = "nextCursor", skip_serializing_if = "Option::is_none")]
     pub next_cursor: Option<String>,
@@ -15,8 +15,8 @@ pub struct TreeDbPage<T> {
     pub limit: Option<u32>,
 }
 
-pub fn create_page<T>(items: Vec<T>) -> TreeDbPage<T> {
-    TreeDbPage {
+pub fn create_page<T>(items: Vec<T>) -> TreeDxPage<T> {
+    TreeDxPage {
         items,
         next_cursor: None,
         has_more: None,
@@ -25,6 +25,6 @@ pub fn create_page<T>(items: Vec<T>) -> TreeDbPage<T> {
     }
 }
 
-pub fn get_next_cursor<T>(page: &TreeDbPage<T>) -> Option<&str> {
+pub fn get_next_cursor<T>(page: &TreeDxPage<T>) -> Option<&str> {
     page.next_cursor.as_deref()
 }

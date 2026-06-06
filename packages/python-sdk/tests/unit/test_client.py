@@ -1,5 +1,5 @@
-from treedb_sdk import TreeDbClient
-from treedb_sdk.adapters import (
+from treedx_sdk import TreeDxClient
+from treedx_sdk.adapters import (
     ArtifactsAdapter,
     BlobsAdapter,
     ContextAdapter,
@@ -16,23 +16,23 @@ from treedb_sdk.adapters import (
     SnapshotsAdapter,
     WorkspacesAdapter,
 )
-from treedb_sdk.transport import TreeDbRequest, TreeDbResponse
+from treedx_sdk.transport import TreeDxRequest, TreeDxResponse
 
 
 class MockTransport:
     def __init__(self) -> None:
-        self.requests: list[TreeDbRequest] = []
+        self.requests: list[TreeDxRequest] = []
 
-    def request(self, request: TreeDbRequest) -> TreeDbResponse[object]:
+    def request(self, request: TreeDxRequest) -> TreeDxResponse[object]:
         self.requests.append(request)
-        return TreeDbResponse(status=200, headers={}, data={"ok": True})
+        return TreeDxResponse(status=200, headers={}, data={"ok": True})
 
-    def last(self) -> TreeDbRequest:
+    def last(self) -> TreeDxRequest:
         return self.requests[-1]
 
 
 def test_client_creates_module_adapters() -> None:
-    client = TreeDbClient(base_url="http://treedb.test", transport=MockTransport())
+    client = TreeDxClient(base_url="http://treedx.test", transport=MockTransport())
     assert isinstance(client.repositories, RepositoriesAdapter)
     assert isinstance(client.workspaces, WorkspacesAdapter)
     assert isinstance(client.files, FilesAdapter)
@@ -52,6 +52,6 @@ def test_client_creates_module_adapters() -> None:
 
 def test_client_uses_custom_transport() -> None:
     transport = MockTransport()
-    client = TreeDbClient(base_url="http://treedb.test", transport=transport)
+    client = TreeDxClient(base_url="http://treedx.test", transport=transport)
     client.health()
     assert transport.last().path == "/api/v1/health"

@@ -25,9 +25,9 @@ auth:
 
 rules:
   - SDKs must support bearer token authentication.
-  - SDKs may support custom auth providers when they produce TreeDB-compatible bearer credentials.
+  - SDKs may support custom auth providers when they produce TreeDX-compatible bearer credentials.
   - Bearer tokens must be sent through Authorization headers only.
   - SDKs must not log bearer tokens.
   - Production identity must not be supplied through request JSON.
   - Connected authentication and permission integrations must remain generic.
-  - packages/trsd-sdk is a downstream example only and does not define the TreeDB auth contract.
+  - packages/trsd-sdk is a downstream example only and does not define the TreeDX auth contract.

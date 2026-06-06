@@ -2,7 +2,7 @@
 
 ## Current State
 
-TreeDB has server-side auth, scoped capability grants, stable audit events,
+TreeDX has server-side auth, scoped capability grants, stable audit events,
 federation scope reduction and execution, mirror records, mirror sync,
 repository snapshots, artifact export/lifecycle, push/fetch, and placement
 migration APIs.
@@ -43,7 +43,7 @@ Authenticated HTTPS/SSH workflows use the constrained external transport when
 enabled and configured with logical credential IDs. SSH requires strict
 `known_hosts`.
 
-Mirror sync persists records under TreeDB-native federation files:
+Mirror sync persists records under TreeDX-native federation files:
 
 - `federation/mirror_syncs.tdb`
 - `federation/mirrors/<repo_id>/<target_node_id>.tdb`
@@ -61,18 +61,18 @@ Committed primary transfer updates placement by:
 - removing the new primary from mirror nodes
 - setting `migrationState` to `stable`
 
-Migration records persist globally and per repository under TreeDB-native federation files.
+Migration records persist globally and per repository under TreeDX-native federation files.
 
 ## SDK Boundary
 
-The TypeScript SDK receives generic snapshot, artifact, mirror sync, and migration types. TreeSeed product interpretation remains outside TreeDB. SDK clients forward bearer tokens and surface TreeDB errors as `TreeDbApiError`.
+The TypeScript SDK receives generic snapshot, artifact, mirror sync, and migration types. TreeSeed product interpretation remains outside TreeDX. SDK clients forward bearer tokens and surface TreeDX errors as `TreeDxApiError`.
 
 ## Security Boundaries
 
-TreeDB keeps these constraints:
+TreeDX keeps these constraints:
 
 - no SQL, Ecto, PostgreSQL, or SQLite
 - no shell Git implementation path
-- no product package/release/template semantics in TreeDB
+- no product package/release/template semantics in TreeDX
 - no internal filesystem paths in public API responses
 - no artifact bytes, file contents, or credential-bearing remote URLs in audit records

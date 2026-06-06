@@ -1,6 +1,6 @@
 # Backup and Recovery Runbook
 
-TreeDB provides diagnostic compaction, logical backup creation, backup
+TreeDX provides diagnostic compaction, logical backup creation, backup
 verification, migration records, and guarded restore operations.
 
 ## Health and Check
@@ -25,8 +25,8 @@ Use `POST /api/v1/admin/storage/compact` with `policy:write`.
 
 Use `POST /api/v1/admin/storage/backup` with `policy:read`.
 
-Backups are `tar.zst` archives under the TreeDB recovery area, but public
-responses return only `treedb://backup/<backup_id>` logical URIs.
+Backups are `tar.zst` archives under the TreeDX recovery area, but public
+responses return only `treedx://backup/<backup_id>` logical URIs.
 
 The archive is verified by decoding and reading all entries when `verify` is
 true.
@@ -45,5 +45,5 @@ Use:
 Migration planning is read-only. Applying a migration records logical migration
 metadata and takes a backup by default. Restore verification is non-destructive
 and returns logical status. Restore apply is disabled unless
-`TREEDB_STORAGE_RESTORE_ENABLED=true`; destructive restore also requires
-`TREEDB_STORAGE_MODE=read_only_recovery` or `force: true`.
+`TREEDX_STORAGE_RESTORE_ENABLED=true`; destructive restore also requires
+`TREEDX_STORAGE_MODE=read_only_recovery` or `force: true`.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ObservabilityAdapter } from '../../src/treedb/index.js';
+import { ObservabilityAdapter } from '../../src/treedx/index.js';
 import { MockTransport } from './mock.js';
 
 describe('ObservabilityAdapter', () => {

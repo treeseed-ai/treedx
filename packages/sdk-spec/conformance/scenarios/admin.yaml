@@ -27,10 +27,10 @@ scenarios:
   steps:
   - name: execute
     action: admin.deep_health
-    description: Execute admin.deep_health through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute admin.deep_health through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: admin.storage_health_check_recover
   capabilityId: admin.storage_operations
   title: Admin / Storage Health Check Recover
@@ -45,10 +45,10 @@ scenarios:
   steps:
   - name: execute
     action: admin.storage_health_check_recover
-    description: Execute admin.storage_health_check_recover through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute admin.storage_health_check_recover through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: admin.storage_compact_backup
   capabilityId: admin.storage_operations
   title: Admin / Storage Compact Backup
@@ -63,10 +63,10 @@ scenarios:
   steps:
   - name: execute
     action: admin.storage_compact_backup
-    description: Execute admin.storage_compact_backup through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute admin.storage_compact_backup through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: admin.storage_migrations
   capabilityId: admin.storage_operations
   title: Admin / Storage Migrations
@@ -81,10 +81,10 @@ scenarios:
   steps:
   - name: execute
     action: admin.storage_migrations
-    description: Execute admin.storage_migrations through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute admin.storage_migrations through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: admin.storage_restore
   capabilityId: admin.storage_operations
   title: Admin / Storage Restore
@@ -99,10 +99,10 @@ scenarios:
   steps:
   - name: execute
     action: admin.storage_restore
-    description: Execute admin.storage_restore through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute admin.storage_restore through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: admin.import_local_repo
   capabilityId: admin.repository_operations
   title: Admin / Import Local Repo
@@ -118,10 +118,10 @@ scenarios:
   steps:
   - name: execute
     action: admin.import_local_repo
-    description: Execute admin.import_local_repo through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute admin.import_local_repo through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: admin.quarantined_workspaces
   capabilityId: admin.workspace_artifact_operations
   title: Admin / Quarantined Workspaces
@@ -138,10 +138,10 @@ scenarios:
   steps:
   - name: execute
     action: admin.quarantined_workspaces
-    description: Execute admin.quarantined_workspaces through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute admin.quarantined_workspaces through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: admin.cleanup_artifacts
   capabilityId: admin.workspace_artifact_operations
   title: Admin / Cleanup Artifacts
@@ -156,7 +156,7 @@ scenarios:
   steps:
   - name: execute
     action: admin.cleanup_artifacts
-    description: Execute admin.cleanup_artifacts through the public SDK facade against the local TreeDB conformance harness.
+    description: Execute admin.cleanup_artifacts through the public SDK facade against the local TreeDX conformance harness.
   assertions:
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
-  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+  - Responses and TreeDX error envelopes are exposed without product-specific semantics.

@@ -1,11 +1,11 @@
-# TreeDB API Contract Versioning
+# TreeDX API Contract Versioning
 
-TreeDB public compatibility is defined by `docs/api/openapi.yaml` and contract
+TreeDX public compatibility is defined by `docs/api/openapi.yaml` and contract
 tests. The API prefix is `/api/v1`.
 
 ## Contract Source
 
-- OpenAPI is the source for TreeDB HTTP request, response, error, and resource
+- OpenAPI is the source for TreeDX HTTP request, response, error, and resource
   payload shapes.
 - SDK payload types and client adapters are generated and verified in the
   independent SDK workflow.

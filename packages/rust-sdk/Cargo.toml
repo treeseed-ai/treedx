@@ -1,15 +1,15 @@
 [package]
-name = "treedb-sdk"
+name = "treedx-sdk"
 version = "0.1.0"
 edition = "2024"
 license = "Apache-2.0"
-description = "Generic Rust SDK for TreeDB."
+description = "Generic Rust SDK for TreeDX."
 publish = false
 
 [workspace]
 
 [lib]
-name = "treedb_sdk"
+name = "treedx_sdk"
 path = "src/lib.rs"
 
 [dependencies]

@@ -20,7 +20,7 @@ scenarios:
         description: Build repository context through the SDK facade.
     assertions:
       - Context build request maps to the OpenAPI endpoint.
-      - Context output is exposed as generic TreeDB context data.
+      - Context output is exposed as generic TreeDX context data.
   - id: context.parse_ctx
     capabilityId: context.repository
     title: Parse context query requests.

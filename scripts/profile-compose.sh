@@ -25,12 +25,12 @@ Modes:
   federation-performance three-node federation performance benchmark
 
 Environment overrides:
-  Any TREEDB_PROFILE_* variable may be set before invoking this script.
+  Any TREEDX_PROFILE_* variable may be set before invoking this script.
 
 Examples:
   scripts/profile-compose.sh portfolio
-  TREEDB_PROFILE_CONCURRENCY=200 scripts/profile-compose.sh read-heavy
-  TREEDB_PROFILE_DURATION=2h scripts/profile-compose.sh soak
+  TREEDX_PROFILE_CONCURRENCY=200 scripts/profile-compose.sh read-heavy
+  TREEDX_PROFILE_DURATION=2h scripts/profile-compose.sh soak
   scripts/profile-compose.sh portfolio --dev-api
 USAGE
 }
@@ -86,14 +86,14 @@ default_md="target/profiles/${mode}-${timestamp}.md"
 default_replay="target/profiles/${mode}-${timestamp}-replay.jsonl"
 default_failures="target/profiles/${mode}-${timestamp}-failures.jsonl"
 
-export TREEDB_PROFILE_OUTPUT="${TREEDB_PROFILE_OUTPUT:-$default_yaml}"
-export TREEDB_PROFILE_MARKDOWN_OUTPUT="${TREEDB_PROFILE_MARKDOWN_OUTPUT:-$default_md}"
-export TREEDB_PROFILE_REPLAY_LOG="${TREEDB_PROFILE_REPLAY_LOG:-$default_replay}"
-export TREEDB_PROFILE_FAILURE_REPLAY_LOG="${TREEDB_PROFILE_FAILURE_REPLAY_LOG:-$default_failures}"
-export TREEDB_PROFILE_REPORT_FORMAT="${TREEDB_PROFILE_REPORT_FORMAT:-both}"
-export TREEDB_PROFILE_REPO_PREFIX="${TREEDB_PROFILE_REPO_PREFIX:-profile-${mode}-}"
-export TREEDB_PROFILE_HOST_UID="${TREEDB_PROFILE_HOST_UID:-$(id -u)}"
-export TREEDB_PROFILE_HOST_GID="${TREEDB_PROFILE_HOST_GID:-$(id -g)}"
+export TREEDX_PROFILE_OUTPUT="${TREEDX_PROFILE_OUTPUT:-$default_yaml}"
+export TREEDX_PROFILE_MARKDOWN_OUTPUT="${TREEDX_PROFILE_MARKDOWN_OUTPUT:-$default_md}"
+export TREEDX_PROFILE_REPLAY_LOG="${TREEDX_PROFILE_REPLAY_LOG:-$default_replay}"
+export TREEDX_PROFILE_FAILURE_REPLAY_LOG="${TREEDX_PROFILE_FAILURE_REPLAY_LOG:-$default_failures}"
+export TREEDX_PROFILE_REPORT_FORMAT="${TREEDX_PROFILE_REPORT_FORMAT:-both}"
+export TREEDX_PROFILE_REPO_PREFIX="${TREEDX_PROFILE_REPO_PREFIX:-profile-${mode}-}"
+export TREEDX_PROFILE_HOST_UID="${TREEDX_PROFILE_HOST_UID:-$(id -u)}"
+export TREEDX_PROFILE_HOST_GID="${TREEDX_PROFILE_HOST_GID:-$(id -g)}"
 
 case "$mode" in
   mirror-federation|connected-library|federation-soak|federation-performance)
@@ -128,14 +128,14 @@ if [[ "$clean" == true ]]; then
   docker compose "${compose_files[@]}" down -v --remove-orphans
 fi
 
-echo "Running TreeDB profile mode: $mode"
+echo "Running TreeDX profile mode: $mode"
 if [[ "$dev_api" == true ]]; then
   echo "API image: development"
 else
   echo "API image: production release"
 fi
-echo "YAML report: $TREEDB_PROFILE_OUTPUT"
-echo "Markdown report: $TREEDB_PROFILE_MARKDOWN_OUTPUT"
+echo "YAML report: $TREEDX_PROFILE_OUTPUT"
+echo "Markdown report: $TREEDX_PROFILE_MARKDOWN_OUTPUT"
 
 # shellcheck disable=SC2086
-docker compose "${compose_files[@]}" up $build_flag --abort-on-container-exit --exit-code-from treedb-profiler
+docker compose "${compose_files[@]}" up $build_flag --abort-on-container-exit --exit-code-from treedx-profiler

@@ -1,7 +1,7 @@
-# TreeDB SDK Spec
+# TreeDX SDK Spec
 
-`@treedb/sdk-spec` is the shared architecture, capability, endpoint, test, and
-conformance source for TreeDB SDKs. TypeScript, Python, Rust, and Elixir SDKs
+`@treedx/sdk-spec` is the shared architecture, capability, endpoint, test, and
+conformance source for TreeDX SDKs. TypeScript, Python, Rust, and Elixir SDKs
 must consume this package as the common standard for module ownership, endpoint
 coverage, error behavior, pagination, binary handling, testing layout, and
 conformance metadata.
@@ -10,7 +10,7 @@ conformance metadata.
 
 This package is not generated SDK code, a language SDK, TreeSeed product
 semantics, or a replacement for `docs/api/openapi.yaml`. OpenAPI remains the
-TreeDB wire contract. `sdk-spec` defines how language SDKs expose and verify
+TreeDX wire contract. `sdk-spec` defines how language SDKs expose and verify
 that contract consistently.
 
 ## Package Roles
@@ -19,7 +19,7 @@ that contract consistently.
 - `packages/ts-sdk`, `packages/python-sdk`, `packages/rust-sdk`, and
   `packages/elixir-sdk` will implement this standard.
 - `packages/trsd-sdk` is a downstream TreeSeed integration reference only. It
-  may consume TreeDB SDKs later, but it does not define TreeDB SDK architecture.
+  may consume TreeDX SDKs later, but it does not define TreeDX SDK architecture.
 
 ## Consuming The Spec
 
@@ -29,7 +29,7 @@ against `schemas/sdk-manifest.schema.json`, and run conformance scenarios from
 
 ## What sdk-spec Controls
 
-`sdk-spec` controls the shared SDK contract across all TreeDB language SDKs:
+`sdk-spec` controls the shared SDK contract across all TreeDX language SDKs:
 
 - architecture modules, ports, layers, and core concepts;
 - capability IDs and direct module ownership;
@@ -40,14 +40,14 @@ against `schemas/sdk-manifest.schema.json`, and run conformance scenarios from
 - SDK manifest validation and capability matrix rendering.
 
 `sdk-spec` does not own TreeSeed product models, downstream compatibility tests,
-or live server deployment. Those remain outside the generic TreeDB SDK
+or live server deployment. Those remain outside the generic TreeDX SDK
 architecture.
 
 ## Architecture Contract
 
 `spec/architecture.yaml` is the machine-readable architecture source. It defines
 canonical layer directories, required modules, required ports, core concepts,
-and module-to-capability ownership. `spec/treedb-sdk-standard.md` is the
+and module-to-capability ownership. `spec/treedx-sdk-standard.md` is the
 human-readable version of the same contract.
 
 Once language SDK packages exist, each SDK manifest must report status for every
@@ -71,8 +71,8 @@ routes until later coverage phases.
 
 ## Shared Behavior Contracts
 
-`spec/errors.yaml` defines `TreeDbApiError`-compatible behavior and must match
-the OpenAPI `TreeDbErrorCode` enum. `spec/auth.yaml` defines bearer token, auth
+`spec/errors.yaml` defines `TreeDxApiError`-compatible behavior and must match
+the OpenAPI `TreeDxErrorCode` enum. `spec/auth.yaml` defines bearer token, auth
 provider, effective scope, and production identity behavior. `spec/pagination.yaml`
 defines opaque cursor and page behavior. `spec/binary.yaml` defines binary-safe
 body handling and multipart upload behavior.
@@ -82,7 +82,7 @@ OpenAPI, capabilities, endpoints, and conformance scenario metadata.
 
 ## Shared Test Framework
 
-TreeDB language SDKs share these required test roots:
+TreeDX language SDKs share these required test roots:
 
 - `unit`
 - `adapters`
@@ -91,7 +91,7 @@ TreeDB language SDKs share these required test roots:
 - `integration`
 
 Downstream consumers may add the optional `compatibility` root. Compatibility is
-downstream-only and must not define TreeDB SDK architecture.
+downstream-only and must not define TreeDX SDK architecture.
 
 Language root mapping:
 
@@ -116,7 +116,7 @@ the direct conformance surface.
 
 ## CI Workflows
 
-TreeDB SDK verification is integrated into the root `TreeDB Release Gate` so
+TreeDX SDK verification is integrated into the root `TreeDX Release Gate` so
 tagged service and SDK release outputs stay synchronized. `SDK Spec` runs in
 parallel with service verification. Language SDK test jobs run on both `amd64`
 and `arm64` after `SDK Spec` passes. On release-path pushes, Docker architecture
@@ -125,12 +125,12 @@ and required service profile gates, then run in parallel.
 
 | Workflow | Scope | Required For |
 | --- | --- | --- |
-| TreeDB Release Gate / SDK Spec | sdk-spec validation, OpenAPI coverage, manifests, matrix, docs gate | SDK spec, OpenAPI, manifest, conformance catalog, and SDK docs changes |
-| TreeDB Release Gate / TypeScript SDK Test | TypeScript generated metadata, build, tests on amd64 and arm64 | `packages/ts-sdk` changes |
-| TreeDB Release Gate / Python SDK Test | Python generated metadata, build, pytest on amd64 and arm64 | `packages/python-sdk` changes |
-| TreeDB Release Gate / Rust SDK Test | Rust generated metadata, fmt, clippy, tests on amd64 and arm64 | `packages/rust-sdk` changes |
-| TreeDB Release Gate / Elixir SDK Test | Elixir generated metadata, format, tests on amd64 and arm64 | `packages/elixir-sdk` changes |
-| TreeDB Release Gate / Package SDK jobs | npm, Python, crate, and Hex package artifacts after service profiles and SDK tests pass | release-path pushes |
+| TreeDX Release Gate / SDK Spec | sdk-spec validation, OpenAPI coverage, manifests, matrix, docs gate | SDK spec, OpenAPI, manifest, conformance catalog, and SDK docs changes |
+| TreeDX Release Gate / TypeScript SDK Test | TypeScript generated metadata, build, tests on amd64 and arm64 | `packages/ts-sdk` changes |
+| TreeDX Release Gate / Python SDK Test | Python generated metadata, build, pytest on amd64 and arm64 | `packages/python-sdk` changes |
+| TreeDX Release Gate / Rust SDK Test | Rust generated metadata, fmt, clippy, tests on amd64 and arm64 | `packages/rust-sdk` changes |
+| TreeDX Release Gate / Elixir SDK Test | Elixir generated metadata, format, tests on amd64 and arm64 | `packages/elixir-sdk` changes |
+| TreeDX Release Gate / Package SDK jobs | npm, Python, crate, and Hex package artifacts after service profiles and SDK tests pass | release-path pushes |
 
 Branch and pull request runs are path-filtered. Tag pushes run release gates
 without custom tag-diff filtering so release-tag verification remains reliable.
@@ -150,25 +150,25 @@ npm test
 
 cd packages/ts-sdk
 npm ci
-npm run treedb:check-generated
+npm run treedx:check-generated
 npm run build
 npm test
 
 cd packages/python-sdk
 python -m pip install -e ".[dev]"
-python scripts/check_treedb_generated_types.py
+python scripts/check_treedx_generated_types.py
 python -m build
 python -m pytest
 
 cd packages/rust-sdk
-node scripts/check_treedb_generated_types.mjs
+node scripts/check_treedx_generated_types.mjs
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo test
 
 cd packages/elixir-sdk
 mix deps.get
-mix run scripts/check_treedb_generated_types.exs
+mix run scripts/check_treedx_generated_types.exs
 mix format --check-formatted
 mix test
 ```
@@ -180,7 +180,7 @@ For release-candidate SDK verification, use:
 ```
 
 See `docs/runbooks/sdk-release.md` for the full SDK release process and how it
-relates to the root TreeDB release gate.
+relates to the root TreeDX release gate.
 
 ## Adding A Capability
 

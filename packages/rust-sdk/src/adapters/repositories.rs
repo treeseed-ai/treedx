@@ -3,8 +3,8 @@ use std::sync::Arc;
 use serde_json::Value;
 
 use crate::adapters::common::{json_request, segment};
-use crate::error::TreeDbResult;
-use crate::transport::{Transport, TreeDbHttpMethod};
+use crate::error::TreeDxResult;
+use crate::transport::{Transport, TreeDxHttpMethod};
 
 #[derive(Clone)]
 pub struct RepositoriesAdapter {
@@ -16,10 +16,10 @@ impl RepositoriesAdapter {
         Self { transport }
     }
 
-    pub async fn register(&self, body: Value) -> TreeDbResult<Value> {
+    pub async fn register(&self, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             "/api/v1/repos/register",
             Some(body),
             None,
@@ -27,10 +27,10 @@ impl RepositoriesAdapter {
         .await
     }
 
-    pub async fn list(&self) -> TreeDbResult<Value> {
+    pub async fn list(&self) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             "/api/v1/repos",
             None,
             None,
@@ -38,10 +38,10 @@ impl RepositoriesAdapter {
         .await
     }
 
-    pub async fn create(&self, body: Value) -> TreeDbResult<Value> {
+    pub async fn create(&self, body: Value) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Post,
+            TreeDxHttpMethod::Post,
             "/api/v1/repos",
             Some(body),
             None,
@@ -49,10 +49,10 @@ impl RepositoriesAdapter {
         .await
     }
 
-    pub async fn get(&self, repo_id: &str) -> TreeDbResult<Value> {
+    pub async fn get(&self, repo_id: &str) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             format!("/api/v1/repos/{}", segment(repo_id)),
             None,
             None,
@@ -60,10 +60,10 @@ impl RepositoriesAdapter {
         .await
     }
 
-    pub async fn status(&self, repo_id: &str) -> TreeDbResult<Value> {
+    pub async fn status(&self, repo_id: &str) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             format!("/api/v1/repos/{}/status", segment(repo_id)),
             None,
             None,
@@ -71,10 +71,10 @@ impl RepositoriesAdapter {
         .await
     }
 
-    pub async fn refs(&self, repo_id: &str) -> TreeDbResult<Value> {
+    pub async fn refs(&self, repo_id: &str) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             format!("/api/v1/repos/{}/refs", segment(repo_id)),
             None,
             None,
@@ -82,10 +82,10 @@ impl RepositoriesAdapter {
         .await
     }
 
-    pub async fn remotes(&self, repo_id: &str) -> TreeDbResult<Value> {
+    pub async fn remotes(&self, repo_id: &str) -> TreeDxResult<Value> {
         json_request(
             &self.transport,
-            TreeDbHttpMethod::Get,
+            TreeDxHttpMethod::Get,
             format!("/api/v1/repos/{}/remotes", segment(repo_id)),
             None,
             None,

@@ -1,13 +1,13 @@
-# TreeDB SDK Spec and Multi-Language SDK Implementation Plan
+# TreeDX SDK Spec and Multi-Language SDK Implementation Plan
 
 Status: Draft v0.1  
 Date: 2026-06-05  
-Intended location: `docs/architecture/treedb-sdk-spec-implementation-plan.md` or Canvas  
+Intended location: `docs/architecture/treedx-sdk-spec-implementation-plan.md` or Canvas  
 Primary packages: `packages/sdk-spec`, `packages/ts-sdk`, `packages/python-sdk`, `packages/rust-sdk`, `packages/elixir-sdk`
 
 ## Purpose
 
-Create one shared TreeDB SDK standard and four language-specific SDK packages that stay aligned over time:
+Create one shared TreeDX SDK standard and four language-specific SDK packages that stay aligned over time:
 
 - TypeScript
 - Python
@@ -19,8 +19,8 @@ This plan uses one step-wise development unit only: **phases**. Each phase inclu
 The completed implementation should provide:
 
 - A shared `packages/sdk-spec` standard.
-- A TypeScript TreeDB SDK implementation aligned with the existing TreeSeed SDK.
-- New Python, Rust, and Elixir TreeDB SDK packages.
+- A TypeScript TreeDX SDK implementation aligned with the existing TreeSeed SDK.
+- New Python, Rust, and Elixir TreeDX SDK packages.
 - A shared SDK test framework.
 - A shared conformance suite.
 - GitHub Actions workflows for package, generated-contract, conformance, integration, and documentation checks.
@@ -28,15 +28,15 @@ The completed implementation should provide:
 
 ## Current Situation and Planning Constraints
 
-TreeDB already has a strong API and SDK foundation:
+TreeDX already has a strong API and SDK foundation:
 
-- TreeDB public compatibility is based on `docs/api/openapi.yaml`, contract tests, stable error envelopes, and stable error codes.
+- TreeDX public compatibility is based on `docs/api/openapi.yaml`, contract tests, stable error envelopes, and stable error codes.
 - SDK payload types and client adapters are generated and verified in an independent SDK workflow.
-- The current TypeScript SDK uses generated OpenAPI-backed TreeDB API types, no-clone `AgentSdk` remote mode, TreeDB-backed ports, registry routing, and global federation methods.
-- TypeScript currently remains the reference SDK because it already integrates TreeDB remote mode with TreeSeed SDK behavior.
-- Existing TreeSeed SDK behavior must remain stable. TreeDB should provide a repository transport/backend, not replace the developer-facing TreeSeed SDK surface with raw TreeDB endpoints.
-- TreeDB APIs must stay generic: repo, ref, path, graph, search, context, and capability. TreeSeed model names, aliases, product concepts, market concepts, and workflow semantics must remain SDK-side or application-side.
-- The current root release gate verifies the TreeDB service repository. The TypeScript SDK package has independent CI/CD, so SDK package workflows need to become required checks for SDK changes without making the root TreeDB release gate depend on every language toolchain by default.
+- The current TypeScript SDK uses generated OpenAPI-backed TreeDX API types, no-clone `AgentSdk` remote mode, TreeDX-backed ports, registry routing, and global federation methods.
+- TypeScript currently remains the reference SDK because it already integrates TreeDX remote mode with TreeSeed SDK behavior.
+- Existing TreeSeed SDK behavior must remain stable. TreeDX should provide a repository transport/backend, not replace the developer-facing TreeSeed SDK surface with raw TreeDX endpoints.
+- TreeDX APIs must stay generic: repo, ref, path, graph, search, context, and capability. TreeSeed model names, aliases, product concepts, market concepts, and workflow semantics must remain SDK-side or application-side.
+- The current root release gate verifies the TreeDX service repository. The TypeScript SDK package has independent CI/CD, so SDK package workflows need to become required checks for SDK changes without making the root TreeDX release gate depend on every language toolchain by default.
 - The repository docs consistently refer to `packages/ts-sdk`. If `packages/trsd-sdk` is intended as a different package name, settle that naming during Phase 1 and update this plan before implementation begins.
 
 ## Phase 1 — Establish the Baseline and Naming Decisions
@@ -50,8 +50,8 @@ Make the current state explicit before introducing new packages, new specs, or n
 Create a planning document at one of:
 
 ```text
-docs/architecture/treedb-sdk-spec-implementation-plan.md
-docs/research/treedb-sdk-spec-implementation-plan.md
+docs/architecture/treedx-sdk-spec-implementation-plan.md
+docs/research/treedx-sdk-spec-implementation-plan.md
 ```
 
 Record the baseline:
@@ -60,18 +60,18 @@ Record the baseline:
 packages/ts-sdk
   existing npm package
   existing TreeSeed SDK public surface
-  existing TreeDB remote-mode implementation
+  existing TreeDX remote-mode implementation
   existing generated OpenAPI type flow
-  existing package graph and TreeDB contract tests
+  existing package graph and TreeDX contract tests
 
 docs/api/openapi.yaml
-  current TreeDB wire contract
+  current TreeDX wire contract
 
 docs/architecture/sdk-integration.md
-  current TypeScript SDK TreeDB remote-mode architecture
+  current TypeScript SDK TreeDX remote-mode architecture
 
 docs/research/sdk-integration-design.md
-  current AgentSdk / TreeDB mode design
+  current AgentSdk / TreeDX mode design
 
 docs/research/sdk-baseline-verification.md
   current TypeScript SDK verification baseline
@@ -103,12 +103,12 @@ npm run build
 npm test
 ```
 
-Run and record TreeDB API contract checks:
+Run and record TreeDX API contract checks:
 
 ```bash
 ./scripts/openapi-check.sh
-cd apps/api && mix test test/treedb_web/openapi_contract_test.exs
-cd apps/api && mix test test/treedb_web/route_openapi_inventory_test.exs
+cd apps/api && mix test test/treedx_web/openapi_contract_test.exs
+cd apps/api && mix test test/treedx_web/route_openapi_inventory_test.exs
 ```
 
 ### Documentation Work
@@ -125,7 +125,7 @@ The TypeScript SDK remains the reference implementation and compatibility bridge
 
 - Package names are decided.
 - Current TypeScript SDK verification status is documented.
-- Current TreeDB OpenAPI contract verification status is documented.
+- Current TreeDX OpenAPI contract verification status is documented.
 - The plan has one canonical implementation path and no unresolved package-name ambiguity.
 
 ---
@@ -145,7 +145,7 @@ packages/sdk-spec/
   README.md
   package.json
   spec/
-    treedb-sdk-standard.md
+    treedx-sdk-standard.md
     architecture.yaml
     capabilities.yaml
     endpoints.yaml
@@ -181,7 +181,7 @@ Add `packages/sdk-spec/package.json`:
 
 ```json
 {
-  "name": "@treedb/sdk-spec",
+  "name": "@treedx/sdk-spec",
   "private": true,
   "type": "module",
   "scripts": {
@@ -252,7 +252,7 @@ layers:
     public: false
 
   core:
-    description: Shared TreeDB SDK behavior across all public modules.
+    description: Shared TreeDX SDK behavior across all public modules.
     public: partial
 
   facade:
@@ -296,22 +296,22 @@ required_ports:
   - exec_adapter
 
 required_core_concepts:
-  - TreeDbClientConfig
+  - TreeDxClientConfig
   - Transport
   - AuthProvider
-  - TreeDbApiError
-  - TreeDbPage
-  - TreeDbCursor
+  - TreeDxApiError
+  - TreeDxPage
+  - TreeDxCursor
   - BinaryBody
   - MultipartUpload
   - CapabilityMatrix
   - ConformanceAdapter
 ```
 
-Create `packages/sdk-spec/spec/treedb-sdk-standard.md` with sections:
+Create `packages/sdk-spec/spec/treedx-sdk-standard.md` with sections:
 
 ```markdown
-# TreeDB SDK Standard
+# TreeDX SDK Standard
 
 ## Purpose
 ## Non-Goals
@@ -409,7 +409,7 @@ required_test_categories:
     description: Shared scenario tests driven by sdk-spec fixtures.
 
   integration:
-    description: Local or live TreeDB API tests.
+    description: Local or live TreeDX API tests.
 
   compatibility:
     description: Migration-specific tests for preserving existing public SDK behavior.
@@ -494,7 +494,7 @@ unit: pure SDK behavior, no server
 adapters: mocked transport request/response behavior
 generated: OpenAPI type freshness and export checks
 conformance: shared scenarios through SDK public API
-integration: real TreeDB server
+integration: real TreeDX server
 compatibility: TypeScript-only TreeSeed migration safety
 ```
 
@@ -717,7 +717,7 @@ Capability | TypeScript | Python | Rust | Elixir
 
 ### Phase Complete When
 
-- All current required TreeDB SDK capability groups are represented.
+- All current required TreeDX SDK capability groups are represented.
 - Endpoint references are checked against OpenAPI.
 - The capability matrix can be rendered from manifests.
 
@@ -839,10 +839,10 @@ blobs.multipart_upload
 
 ### Documentation Work
 
-In `treedb-sdk-standard.md`, document:
+In `treedx-sdk-standard.md`, document:
 
 ```text
-TreeDbApiError / equivalent shape
+TreeDxApiError / equivalent shape
 AuthProvider shape
 Pagination helper expectations
 Binary helper expectations
@@ -946,7 +946,7 @@ expect:
     serialized:
       - ".env"
       - "secret"
-      - "$TREEDB_DATA_DIR"
+      - "$TREEDX_DATA_DIR"
 ```
 
 Define required scenario IDs:
@@ -1050,12 +1050,12 @@ Make `packages/ts-sdk` implement the shared SDK architecture without breaking ex
 Target source layout:
 
 ```text
-packages/ts-sdk/src/treedb/
+packages/ts-sdk/src/treedx/
   index.ts
   client/
-    TreeDbClient.ts
-    TreeDbRegistryClient.ts
-    TreeDbFederatedClient.ts
+    TreeDxClient.ts
+    TreeDxRegistryClient.ts
+    TreeDxFederatedClient.ts
     transport.ts
     errors.ts
     auth.ts
@@ -1095,11 +1095,11 @@ Target package exports:
 ```json
 {
   "exports": {
-    "./treedb": "./dist/treedb/index.js",
-    "./treedb/client": "./dist/treedb/client/index.js",
-    "./treedb/types": "./dist/treedb/types/index.js",
-    "./treedb/adapters": "./dist/treedb/adapters/index.js",
-    "./treedb/conformance": "./dist/treedb/conformance/index.js"
+    "./treedx": "./dist/treedx/index.js",
+    "./treedx/client": "./dist/treedx/client/index.js",
+    "./treedx/types": "./dist/treedx/types/index.js",
+    "./treedx/adapters": "./dist/treedx/adapters/index.js",
+    "./treedx/conformance": "./dist/treedx/conformance/index.js"
   }
 }
 ```
@@ -1107,7 +1107,7 @@ Target package exports:
 Create `packages/ts-sdk/sdk-manifest.yaml`:
 
 ```yaml
-sdk: treedb-typescript
+sdk: treedx-typescript
 language: typescript
 version: 0.1.0
 sdkSpecVersion: 0.1.0
@@ -1177,13 +1177,13 @@ packages/ts-sdk/test/
 
   integration/
     live-api.test.ts
-    treedb-e2e.test.ts
+    treedx-e2e.test.ts
 
   compatibility/
     package-graph.test.ts
-    agent-sdk-treedb-mode.test.ts
-    content-store-treedb-backend.test.ts
-    local-vs-treedb-parity.test.ts
+    agent-sdk-treedx-mode.test.ts
+    content-store-treedx-backend.test.ts
+    local-vs-treedx-parity.test.ts
     existing-treeseed-exports.test.ts
 ```
 
@@ -1192,7 +1192,7 @@ Preserve current verification commands:
 ```bash
 cd packages/ts-sdk
 npm run build
-npx vitest run --config ./vitest.config.ts test/compatibility/package-graph.test.ts test/integration/treedb-e2e.test.ts
+npx vitest run --config ./vitest.config.ts test/compatibility/package-graph.test.ts test/integration/treedx-e2e.test.ts
 npm test
 ```
 
@@ -1201,11 +1201,11 @@ Add new commands:
 ```json
 {
   "scripts": {
-    "test:treedb-unit": "vitest run --config ./vitest.config.ts test/unit test/adapters test/generated",
-    "test:treedb-conformance": "vitest run --config ./vitest.config.ts test/conformance",
-    "test:treedb-integration": "vitest run --config ./vitest.config.ts test/integration",
-    "treedb:generate": "node scripts/generate-treedb-openapi-types.mjs",
-    "treedb:check-generated": "node scripts/check-treedb-generated-types.mjs"
+    "test:treedx-unit": "vitest run --config ./vitest.config.ts test/unit test/adapters test/generated",
+    "test:treedx-conformance": "vitest run --config ./vitest.config.ts test/conformance",
+    "test:treedx-integration": "vitest run --config ./vitest.config.ts test/integration",
+    "treedx:generate": "node scripts/generate-treedx-openapi-types.mjs",
+    "treedx:check-generated": "node scripts/check-treedx-generated-types.mjs"
   }
 }
 ```
@@ -1215,11 +1215,11 @@ Add new commands:
 Update TypeScript SDK docs:
 
 ```text
-How to import TreeDB client
-How to use TreeDB mode
+How to import TreeDX client
+How to use TreeDX mode
 How local mode remains default
 How no-clone mode works
-How TreeDB adapters map model requests to repo/ref/path queries
+How TreeDX adapters map model requests to repo/ref/path queries
 How to run TypeScript conformance
 ```
 
@@ -1230,15 +1230,15 @@ How to run TypeScript conformance
 - TypeScript has a conformance adapter.
 - TypeScript passes shared conformance.
 - Generated OpenAPI type checks still pass.
-- TreeDB mode remains opt-in and local mode remains default.
+- TreeDX mode remains opt-in and local mode remains default.
 
 ---
 
-## Phase 9 — Replace Existing TreeDB Functionality Behind the TypeScript TreeDB SDK Layer
+## Phase 9 — Replace Existing TreeDX Functionality Behind the TypeScript TreeDX SDK Layer
 
 ### Goal
 
-Migrate existing TypeScript TreeDB-related behavior behind standardized `ts-sdk` TreeDB clients and adapters without breaking the TreeSeed SDK public surface.
+Migrate existing TypeScript TreeDX-related behavior behind standardized `ts-sdk` TreeDX clients and adapters without breaking the TreeSeed SDK public surface.
 
 ### Repository Changes
 
@@ -1259,7 +1259,7 @@ Implement:
 
 ```text
 LocalContentBackend
-TreeDbContentBackend
+TreeDxContentBackend
 ```
 
 Introduce graph backend interfaces:
@@ -1267,7 +1267,7 @@ Introduce graph backend interfaces:
 ```text
 GraphBackend
 LocalGraphBackend
-TreeDbGraphBackend
+TreeDxGraphBackend
 ```
 
 Introduce exec backend interfaces:
@@ -1275,14 +1275,14 @@ Introduce exec backend interfaces:
 ```text
 ExecBackend
 LocalExecBackend
-TreeDbExecBackend
+TreeDxExecBackend
 ```
 
 Preserve `AgentSdk` configuration shape:
 
 ```ts
 const sdk = new AgentSdk({
-  treeDb: {
+  treeDx: {
     enabled: true,
     baseUrl,
     token,
@@ -1302,11 +1302,11 @@ Compatibility tests must prove:
 ```text
 Existing TreeSeed public exports remain stable.
 Existing local SDK behavior remains default.
-TreeDB mode is opt-in.
+TreeDX mode is opt-in.
 No-clone mode works when model metadata and content path maps are supplied.
-ContentStore behavior is equivalent through LocalContentBackend and TreeDbContentBackend.
-TreeDB adapters do not introduce TreeSeed product semantics into server requests.
-TreeDB error envelopes become TreeDbApiError consistently.
+ContentStore behavior is equivalent through LocalContentBackend and TreeDxContentBackend.
+TreeDX adapters do not introduce TreeSeed product semantics into server requests.
+TreeDX error envelopes become TreeDxApiError consistently.
 Binary operations work without a local clone.
 ```
 
@@ -1315,23 +1315,23 @@ Binary operations work without a local clone.
 Document migration path:
 
 ```text
-Before: direct TreeDB-specific helper or local ContentStore path.
-After: selected ContentBackend using standardized TreeDbClient adapters.
+Before: direct TreeDX-specific helper or local ContentStore path.
+After: selected ContentBackend using standardized TreeDxClient adapters.
 ```
 
 Document boundaries:
 
 ```text
 TreeSeed model registry remains responsible for model names, aliases, slugs, canonical content shapes, and product semantics.
-TreeDB receives generic repo/ref/path/query/graph/context requests.
+TreeDX receives generic repo/ref/path/query/graph/context requests.
 ```
 
 ### Phase Complete When
 
 - TreeSeed SDK public API still passes compatibility tests.
-- TreeDB-backed operations use standardized `TreeDbClient` and adapters.
-- Local-vs-TreeDB parity tests pass.
-- No raw TreeDB endpoint calls remain outside the standardized TreeDB SDK layer, except tests or documented low-level utilities.
+- TreeDX-backed operations use standardized `TreeDxClient` and adapters.
+- Local-vs-TreeDX parity tests pass.
+- No raw TreeDX endpoint calls remain outside the standardized TreeDX SDK layer, except tests or documented low-level utilities.
 
 ---
 
@@ -1350,7 +1350,7 @@ packages/python-sdk/
   pyproject.toml
   README.md
   src/
-    treedb_sdk/
+    treedx_sdk/
       __init__.py
       client.py
       config.py
@@ -1388,9 +1388,9 @@ packages/python-sdk/
 Public API target:
 
 ```python
-from treedb_sdk import TreeDbClient
+from treedx_sdk import TreeDxClient
 
-client = TreeDbClient(
+client = TreeDxClient(
     base_url="http://localhost:4000",
     token="..."
 )
@@ -1407,7 +1407,7 @@ results = client.query.search(
 Optional async API can be added after sync conformance passes:
 
 ```python
-async with TreeDbClient.async_client(base_url=base_url, token=token) as client:
+async with TreeDxClient.async_client(base_url=base_url, token=token) as client:
     result = await client.query.search(repo_id="repo_demo", query="release")
 ```
 
@@ -1511,9 +1511,9 @@ packages/rust-sdk/
 Public API target:
 
 ```rust
-use treedb_sdk::{TreeDbClient, TreeDbConfig};
+use treedx_sdk::{TreeDxClient, TreeDxConfig};
 
-let client = TreeDbClient::new(TreeDbConfig {
+let client = TreeDxClient::new(TreeDxConfig {
     base_url: "http://localhost:4000".into(),
     token: Some(token.into()),
     ..Default::default()
@@ -1592,8 +1592,8 @@ packages/elixir-sdk/
   mix.exs
   README.md
   lib/
-    tree_db_sdk.ex
-    tree_db_sdk/
+    treedx_sdk.ex
+    treedx_sdk/
       client.ex
       config.ex
       error.ex
@@ -1630,15 +1630,15 @@ Public API target:
 
 ```elixir
 client =
-  TreeDbSdk.Client.new(
+  TreeDxSdk.Client.new(
     base_url: "http://localhost:4000",
     token: token
   )
 
-{:ok, health} = TreeDbSdk.health(client)
+{:ok, health} = TreeDxSdk.health(client)
 
 {:ok, results} =
-  TreeDbSdk.Query.search(client, "repo_demo", %{
+  TreeDxSdk.Query.search(client, "repo_demo", %{
     query: "release provenance",
     paths: ["docs/**"]
   })
@@ -1772,7 +1772,7 @@ jobs:
         working-directory: packages/ts-sdk
       - run: npm run build
         working-directory: packages/ts-sdk
-      - run: npm run treedb:check-generated --if-present
+      - run: npm run treedx:check-generated --if-present
         working-directory: packages/ts-sdk
       - run: npm test
         working-directory: packages/ts-sdk
@@ -1845,11 +1845,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build TreeDB API
-        run: docker compose build treedb-api
+      - name: Build TreeDX API
+        run: docker compose build treedx-api
 
-      - name: Start TreeDB API
-        run: docker compose up -d treedb-api
+      - name: Start TreeDX API
+        run: docker compose up -d treedx-api
 
       - name: Wait for readiness
         run: |
@@ -1857,14 +1857,14 @@ jobs:
             curl -fsS http://localhost:4000/api/v1/ready && exit 0
             sleep 2
           done
-          docker compose logs treedb-api
+          docker compose logs treedx-api
           exit 1
 
       - name: Run TypeScript conformance
         run: |
           cd packages/ts-sdk
           npm ci
-          npm run test:treedb-conformance
+          npm run test:treedx-conformance
 
       - name: Run Python conformance
         run: |
@@ -1883,7 +1883,7 @@ jobs:
           mix deps.get
           mix test test/conformance
 
-      - name: Stop TreeDB API
+      - name: Stop TreeDX API
         if: always()
         run: docker compose down
 ```
@@ -1947,7 +1947,7 @@ set -euo pipefail
   cd packages/ts-sdk
   npm ci
   npm run build
-  npm run treedb:check-generated --if-present
+  npm run treedx:check-generated --if-present
   npm test
 )
 
@@ -1975,12 +1975,12 @@ set -euo pipefail
 Recommended release policy:
 
 ```text
-Root scripts/release-gate.sh remains focused on the TreeDB service, native crates, API contract, storage, security, container, and operational checks.
+Root scripts/release-gate.sh remains focused on the TreeDX service, native crates, API contract, storage, security, container, and operational checks.
 
 SDK workflows become required GitHub checks for SDK-affecting changes.
 
 For full release candidates, require:
-1. root TreeDB release gate
+1. root TreeDX release gate
 2. SDK spec workflow
 3. SDK packages workflow
 4. SDK conformance workflow
@@ -2019,7 +2019,7 @@ How optional live checks report not configured
 
 - Local SDK package test script exists.
 - CI-required SDK workflows exist.
-- Release documentation clearly separates TreeDB service gate from SDK package gates.
+- Release documentation clearly separates TreeDX service gate from SDK package gates.
 - Full release readiness includes both service and SDK checks.
 
 ---
@@ -2036,7 +2036,7 @@ Add or update:
 
 ```text
 packages/sdk-spec/README.md
-packages/sdk-spec/spec/treedb-sdk-standard.md
+packages/sdk-spec/spec/treedx-sdk-standard.md
 packages/ts-sdk/README.md
 packages/python-sdk/README.md
 packages/rust-sdk/README.md
@@ -2082,11 +2082,11 @@ TreeSeed TypeScript docs must include:
 
 ```text
 Local mode remains default
-TreeDB mode is opt-in
+TreeDX mode is opt-in
 No-clone mode requirements
 Model registry boundary
 Content path map examples
-Local-vs-TreeDB parity expectations
+Local-vs-TreeDX parity expectations
 ```
 
 ### Testing Work
@@ -2141,7 +2141,7 @@ Run all package checks:
 ./scripts/test-sdk-packages.sh
 ```
 
-Run TreeDB service gate:
+Run TreeDX service gate:
 
 ```bash
 ./scripts/release-gate.sh
@@ -2190,7 +2190,7 @@ Required documentation: complete
 - All SDKs pass shared conformance.
 - OpenAPI remains the wire contract.
 - `sdk-spec` remains the SDK architecture contract.
-- TreeSeed product semantics remain outside TreeDB.
+- TreeSeed product semantics remain outside TreeDX.
 - SDK-related GitHub Actions are required checks for SDK changes.
 - Documentation is complete enough for future developers and AI agents to continue safely.
 
@@ -2208,20 +2208,20 @@ packages/ts-sdk
   remains the TypeScript reference implementation and TreeSeed compatibility bridge
 
 packages/python-sdk
-  provides an idiomatic Python TreeDB SDK
+  provides an idiomatic Python TreeDX SDK
 
 packages/rust-sdk
-  provides an idiomatic Rust TreeDB SDK
+  provides an idiomatic Rust TreeDX SDK
 
 packages/elixir-sdk
-  provides an idiomatic Elixir TreeDB SDK
+  provides an idiomatic Elixir TreeDX SDK
 
 all SDKs
   share the same architecture
   share the same test layout
   pass the same conformance scenarios
-  expose the same TreeDB capabilities
-  preserve TreeDB security and public hygiene constraints
+  expose the same TreeDX capabilities
+  preserve TreeDX security and public hygiene constraints
   remain aligned through sdk-spec and GitHub Actions
 ```
 

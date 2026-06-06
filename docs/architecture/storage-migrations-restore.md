@@ -1,6 +1,6 @@
 # Storage Migrations And Restore
 
-TreeDB storage remains append-only by default. Storage hardening includes
+TreeDX storage remains append-only by default. Storage hardening includes
 logical migration records, guarded restore verification, and restore apply
 gates.
 
@@ -16,9 +16,9 @@ Restore endpoints:
 - `POST /api/v1/admin/storage/restore/verify`
 - `POST /api/v1/admin/storage/restore`
 
-Restore apply is disabled unless `TREEDB_STORAGE_RESTORE_ENABLED=true` and also
+Restore apply is disabled unless `TREEDX_STORAGE_RESTORE_ENABLED=true` and also
 requires recovery mode or explicit `force=true`. Public payloads use logical
-backup IDs and `treedb://backup/...` URIs only.
+backup IDs and `treedx://backup/...` URIs only.
 
-Backup retention is controlled by `TREEDB_BACKUP_RETENTION_COUNT`,
-`TREEDB_BACKUP_RETENTION_DAYS`, and optional `TREEDB_BACKUP_REMOTE_DIR`.
+Backup retention is controlled by `TREEDX_BACKUP_RETENTION_COUNT`,
+`TREEDX_BACKUP_RETENTION_DAYS`, and optional `TREEDX_BACKUP_REMOTE_DIR`.

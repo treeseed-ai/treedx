@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-data_dir="${TREEDB_DATA_DIR:-/var/lib/treedb}"
+data_dir="${TREEDX_DATA_DIR:-/var/lib/treedx}"
 
 if [ "$(id -u)" = "0" ]; then
   mkdir -p "$data_dir"

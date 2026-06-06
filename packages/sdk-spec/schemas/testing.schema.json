@@ -44,10 +44,10 @@
         },
         "compatibility": {
           "type": "object",
-          "required": ["requiredForTreeDbLanguageSdks", "allowedForDownstreamConsumers", "description"],
+          "required": ["requiredForTreeDxLanguageSdks", "allowedForDownstreamConsumers", "description"],
           "additionalProperties": true,
           "properties": {
-            "requiredForTreeDbLanguageSdks": { "type": "boolean" },
+            "requiredForTreeDxLanguageSdks": { "type": "boolean" },
             "allowedForDownstreamConsumers": { "type": "boolean" },
             "description": { "type": "string" }
           }

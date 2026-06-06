@@ -1,19 +1,19 @@
-# TreeDB OpenAPI Gap List
+# TreeDX OpenAPI Gap List
 
 Status: Typed contract coverage inventory
 
-`docs/api/openapi.yaml` is the public TreeDB HTTP contract. SDK API payload
+`docs/api/openapi.yaml` is the public TreeDX HTTP contract. SDK API payload
 types are generated from that file into
-`packages/ts-sdk/src/treedb/generated/openapi-types.ts`.
+`packages/ts-sdk/src/treedx/generated/openapi-types.ts`.
 
 ## Typed Contract Coverage
 
-Every public route in `apps/api/lib/treedb_web/router.ex` must appear in
+Every public route in `apps/api/lib/treedx_web/router.ex` must appear in
 OpenAPI with:
 
 - `operationId`
 - `summary`
-- `x-treedb-required-capabilities`
+- `x-treedx-required-capabilities`
 - route-specific success response schema
 - typed error envelope
 - request schemas where the route accepts JSON
@@ -22,11 +22,11 @@ OpenAPI with:
 
 Route and schema drift is checked by:
 
-- `apps/api/test/treedb_web/route_openapi_inventory_test.exs`
-- `apps/api/test/treedb_web/openapi_contract_test.exs`
-- `packages/ts-sdk/test/utils/treedb-openapi-contract.test.ts`
-- `packages/ts-sdk/test/utils/treedb-generated-types.test.ts`
-- `packages/ts-sdk/test/utils/treedb-sdk-request-contract.test.ts`
+- `apps/api/test/treedx_web/route_openapi_inventory_test.exs`
+- `apps/api/test/treedx_web/openapi_contract_test.exs`
+- `packages/ts-sdk/test/utils/treedx-openapi-contract.test.ts`
+- `packages/ts-sdk/test/utils/treedx-generated-types.test.ts`
+- `packages/ts-sdk/test/utils/treedx-sdk-request-contract.test.ts`
 
 ## Missing Error Examples
 
@@ -69,11 +69,11 @@ Generated type freshness is checked with:
 
 ```bash
 cd packages/ts-sdk
-npm run treedb:check-types
+npm run treedx:check-types
 ```
 
 Public SDK type names remain stable through aliases in
-`packages/ts-sdk/src/treedb/types.ts`.
+`packages/ts-sdk/src/treedx/types.ts`.
 
 ## Remaining Contract Work
 

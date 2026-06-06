@@ -1,9 +1,9 @@
-from treedb_sdk.errors import TreeDbApiError
+from treedx_sdk.errors import TreeDxApiError
 
 
 def test_error_from_response_preserves_payload() -> None:
     payload = {"error": {"code": "permission_denied", "message": "Denied", "details": {"scope": "repo"}}}
-    error = TreeDbApiError.from_response(403, payload)
+    error = TreeDxApiError.from_response(403, payload)
     assert error.status == 403
     assert error.code == "permission_denied"
     assert error.message == "Denied"
@@ -12,6 +12,6 @@ def test_error_from_response_preserves_payload() -> None:
 
 
 def test_network_error_contract() -> None:
-    error = TreeDbApiError.network("failed")
+    error = TreeDxApiError.network("failed")
     assert error.status == 0
     assert error.code == "network_error"

@@ -4,7 +4,7 @@ use std::sync::Arc;
 mod common;
 
 use common::{MockTransport, client_with_mock};
-use treedb_sdk::{TreeDbClient, TreeDbConfig};
+use treedx_sdk::{TreeDxClient, TreeDxConfig};
 
 #[tokio::test]
 async fn client_exposes_all_module_adapters() {
@@ -30,8 +30,8 @@ async fn client_exposes_all_module_adapters() {
 #[tokio::test]
 async fn custom_transport_is_used() {
     let mock = Arc::new(MockTransport::default());
-    let client = TreeDbClient::with_transport(
-        TreeDbConfig {
+    let client = TreeDxClient::with_transport(
+        TreeDxConfig {
             base_url: "http://localhost:4000".to_string(),
             ..Default::default()
         },

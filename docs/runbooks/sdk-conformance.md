@@ -2,7 +2,7 @@
 
 ## Scope
 
-TreeDB SDK conformance is a shared black-box scenario catalog. Language adapters load scenario metadata and, when `TREEDB_BASE_URL` is configured by the local harness, dispatch scenarios through public SDK methods. Without a configured server they still report clean `not_configured` behavior for optional local checks.
+TreeDX SDK conformance is a shared black-box scenario catalog. Language adapters load scenario metadata and, when `TREEDX_BASE_URL` is configured by the local harness, dispatch scenarios through public SDK methods. Without a configured server they still report clean `not_configured` behavior for optional local checks.
 
 Conformance always runs through public SDK facades. Generated clients and
 private adapters are not the direct conformance surface.
@@ -36,7 +36,7 @@ TypeScript:
 
 ```bash
 cd packages/ts-sdk
-npm run test:treedb-conformance
+npm run test:treedx-conformance
 ```
 
 Python:
@@ -83,11 +83,11 @@ npm run validate
 
 ## Not Configured Behavior
 
-Conformance adapters must return or report `not_configured` when no live TreeDB server is configured. When the local harness provides live configuration, required scenarios must dispatch through public SDK module methods and must not fake success.
+Conformance adapters must return or report `not_configured` when no live TreeDX server is configured. When the local harness provides live configuration, required scenarios must dispatch through public SDK module methods and must not fake success.
 
 ## Local Live Conformance Harness
 
-Live conformance uses the local TreeDB harness script:
+Live conformance uses the local TreeDX harness script:
 
 ```bash
 ./scripts/test-sdk-live-conformance.sh
@@ -95,11 +95,11 @@ Live conformance uses the local TreeDB harness script:
 
 The harness owns temporary repositories, credentials, storage paths, and destructive admin safety flags. It defines:
 
-- TreeDB server lifecycle or connection requirements;
+- TreeDX server lifecycle or connection requirements;
 - credential and fixture setup;
 - request/response fixture payloads;
 - per-language dispatch from scenario actions to public SDK facade calls;
-- failure reporting that preserves `TreeDbApiError`-compatible fields.
+- failure reporting that preserves `TreeDxApiError`-compatible fields.
 
 ## Implemented Baseline
 

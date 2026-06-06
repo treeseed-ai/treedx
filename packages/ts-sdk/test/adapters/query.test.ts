@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { QueryAdapter } from '../../src/treedb/index.js';
+import { QueryAdapter } from '../../src/treedx/index.js';
 import { MockTransport } from './mock.js';
 
 describe('QueryAdapter', () => {

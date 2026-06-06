@@ -2,7 +2,7 @@
 
 ## Summary
 
-Baseline verification was run against `packages/ts-sdk` before TreeDB integration changes. The SDK is currently a standalone npm package named `@treeseed/sdk` at version `0.10.22`.
+Baseline verification was run against `packages/ts-sdk` before TreeDX integration changes. The SDK is currently a standalone npm package named `@treeseed/sdk` at version `0.10.22`.
 
 ## Initial Command Results
 
@@ -81,16 +81,16 @@ Test Files  90 passed (90)
 Tests       561 passed (561)
 ```
 
-TreeDB OpenAPI type generation and contract checks are included in the SDK
+TreeDX OpenAPI type generation and contract checks are included in the SDK
 verification path.
 
 ## Suggested Next Verification
 
-For SDK-facing TreeDB changes, run:
+For SDK-facing TreeDX changes, run:
 
 ```bash
 cd packages/ts-sdk
 npm run build
-npx vitest run --config ./vitest.config.ts test/utils/package-graph.test.ts test/utils/treedb-e2e-contract.test.ts
+npx vitest run --config ./vitest.config.ts test/utils/package-graph.test.ts test/utils/treedx-e2e-contract.test.ts
 npm test
 ```

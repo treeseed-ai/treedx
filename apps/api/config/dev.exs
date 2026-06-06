@@ -1,6 +1,6 @@
 import Config
 
-config :treedb, TreeDbWeb.Endpoint,
+config :treedx, TreeDxWeb.Endpoint,
   http: [ip: {0, 0, 0, 0}, port: String.to_integer(System.get_env("PORT") || "4000")],
   check_origin: false,
   code_reloader: true,
