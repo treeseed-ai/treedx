@@ -23,4 +23,42 @@ defmodule TreeDbSdk.Client do
 
   def effective_scope(client),
     do: TreeDbSdk.Adapters.Common.json_request(client, :get, "/api/v1/policy/effective-scope")
+
+  def auth_mode(client),
+    do: TreeDbSdk.Adapters.Common.json_request(client, :get, "/api/v1/auth/mode")
+
+  def create_dev_token(client, body \\ %{}),
+    do: TreeDbSdk.Adapters.Common.json_request(client, :post, "/api/v1/auth/dev-token", body)
+
+  def operation(client, method, path, opts \\ []) do
+    method_text = method |> to_string() |> String.upcase()
+
+    known? =
+      TreeDbSdk.Generated.OpenApiTypes.operations()
+      |> Enum.any?(fn operation -> operation.method == method_text and operation.path == path end)
+
+    if known? do
+      path_params = Keyword.get(opts, :path_params, %{})
+
+      resolved =
+        Regex.replace(~r/\{([^}]+)\}/, path, fn _, name ->
+          value = Map.get(path_params, name) || Map.get(path_params, String.to_atom(name))
+
+          if is_nil(value),
+            do: raise(ArgumentError, "missing path parameter #{name} for #{method_text} #{path}")
+
+          TreeDbSdk.Adapters.Common.segment(value)
+        end)
+
+      TreeDbSdk.Adapters.Common.json_request(
+        client,
+        method_text |> String.downcase() |> String.to_atom(),
+        resolved,
+        Keyword.get(opts, :body),
+        Keyword.get(opts, :query, %{})
+      )
+    else
+      raise ArgumentError, "unknown TreeDB OpenAPI operation: #{method_text} #{path}"
+    end
+  end
 end

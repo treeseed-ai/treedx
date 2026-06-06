@@ -14,3 +14,8 @@ export * from './mirrors.js';
 export * from './migrations.js';
 export * from './exec.js';
 export * from './observability.js';
+export * from './admin.js';
+export * from './audit.js';
+export * from './policy.js';
+export * from './search-index.js';
+export * from './federation-internal.js';

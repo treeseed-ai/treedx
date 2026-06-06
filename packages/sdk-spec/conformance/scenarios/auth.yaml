@@ -1,84 +1,121 @@
 version: 0.1.0
 status: draft
-
 scenarios:
-  - id: auth.whoami
-    capabilityId: auth.whoami
-    title: Authenticated callers can resolve the current principal.
-    kind: black_box
-    required: true
-    serverRequired: true
-    endpointRefs:
-      - GET /api/v1/auth/whoami
-    fixtures:
-      repos: []
-      requests: []
-      expected: []
-    steps:
-      - name: read_principal
-        action: auth.whoami
-        description: Resolve the authenticated principal through the SDK facade.
-    assertions:
-      - Request uses Authorization bearer header.
-      - Production identity is not sent in request JSON.
-      - Principal data is exposed without transport-specific wrappers.
-  - id: auth.effective_scope
-    capabilityId: auth.whoami
-    title: Resolve effective TreeDB scope for the authenticated caller.
-    kind: black_box
-    required: true
-    serverRequired: true
-    endpointRefs:
-      - GET /api/v1/policy/effective-scope
-    fixtures:
-      repos: []
-      requests: []
-      expected: []
-    steps:
-      - name: read_effective_scope
-        action: auth.effectiveScope
-        description: Resolve effective scope through the SDK facade.
-    assertions:
-      - Request uses Authorization bearer header.
-      - Scope data is returned as generic TreeDB policy data.
-      - TreeSeed product concepts are not encoded by the SDK.
-  - id: errors.invalid_token
-    capabilityId: auth.whoami
-    title: Invalid bearer tokens become TreeDbApiError-compatible failures.
-    kind: black_box
-    required: true
-    serverRequired: conditional
-    endpointRefs:
-      - GET /api/v1/auth/whoami
-    fixtures:
-      repos: []
-      requests: []
-      expected: []
-    steps:
-      - name: call_with_invalid_token
-        action: auth.whoami
-        description: Invoke the SDK facade with an invalid bearer token.
-    assertions:
-      - Failure exposes TreeDbApiError-compatible status, code, message, details, and payload fields.
-      - Error code is invalid_token when returned by TreeDB.
-      - Bearer token value is not logged or surfaced in the error.
-  - id: errors.permission_denied
-    capabilityId: auth.whoami
-    title: Permission denials preserve TreeDB error envelope fields.
-    kind: black_box
-    required: true
-    serverRequired: conditional
-    endpointRefs:
-      - GET /api/v1/policy/effective-scope
-    fixtures:
-      repos: []
-      requests: []
-      expected: []
-    steps:
-      - name: call_without_scope
-        action: auth.effectiveScope
-        description: Invoke the SDK facade with credentials lacking required scope.
-    assertions:
-      - Failure exposes TreeDbApiError-compatible fields.
-      - Error code is permission_denied when returned by TreeDB.
-      - Structured details are preserved when returned by TreeDB.
+- id: auth.whoami
+  capabilityId: auth.whoami
+  title: Authenticated callers can resolve the current principal.
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs:
+  - GET /api/v1/auth/whoami
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: read_principal
+    action: auth.whoami
+    description: Resolve the authenticated principal through the SDK facade.
+  assertions:
+  - Request uses Authorization bearer header.
+  - Production identity is not sent in request JSON.
+  - Principal data is exposed without transport-specific wrappers.
+- id: auth.effective_scope
+  capabilityId: auth.whoami
+  title: Resolve effective TreeDB scope for the authenticated caller.
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs:
+  - GET /api/v1/policy/effective-scope
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: read_effective_scope
+    action: auth.effectiveScope
+    description: Resolve effective scope through the SDK facade.
+  assertions:
+  - Request uses Authorization bearer header.
+  - Scope data is returned as generic TreeDB policy data.
+  - TreeSeed product concepts are not encoded by the SDK.
+- id: errors.invalid_token
+  capabilityId: auth.whoami
+  title: Invalid bearer tokens become TreeDbApiError-compatible failures.
+  kind: black_box
+  required: true
+  serverRequired: conditional
+  endpointRefs:
+  - GET /api/v1/auth/whoami
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: call_with_invalid_token
+    action: auth.whoami
+    description: Invoke the SDK facade with an invalid bearer token.
+  assertions:
+  - Failure exposes TreeDbApiError-compatible status, code, message, details, and payload fields.
+  - Error code is invalid_token when returned by TreeDB.
+  - Bearer token value is not logged or surfaced in the error.
+- id: errors.permission_denied
+  capabilityId: auth.whoami
+  title: Permission denials preserve TreeDB error envelope fields.
+  kind: black_box
+  required: true
+  serverRequired: conditional
+  endpointRefs:
+  - GET /api/v1/policy/effective-scope
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: call_without_scope
+    action: auth.effectiveScope
+    description: Invoke the SDK facade with credentials lacking required scope.
+  assertions:
+  - Failure exposes TreeDbApiError-compatible fields.
+  - Error code is permission_denied when returned by TreeDB.
+  - Structured details are preserved when returned by TreeDB.
+- id: auth.mode
+  capabilityId: auth.mode_dev_token
+  title: Auth / Mode
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: &id001
+  - GET /api/v1/auth/mode
+  - POST /api/v1/auth/dev-token
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: auth.mode
+    description: Execute auth.mode through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: auth.dev_token
+  capabilityId: auth.mode_dev_token
+  title: Auth / Dev Token
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id001
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: auth.dev_token
+    description: Execute auth.dev_token through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.

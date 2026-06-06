@@ -5,9 +5,9 @@
 encode TreeSeed product semantics. `packages/trsd-sdk` is a downstream
 TreeSeed consumer/reference only.
 
-The current `sdk-manifest.yaml` intentionally reports modules, capabilities, and
-test roots as `partial` because live executable conformance dispatch is deferred
-to a later phase.
+The current `sdk-manifest.yaml` reports modules, capabilities, and test roots as
+`implemented`. The SDK exposes all 113 `/api/v1` OpenAPI operations through
+first-class module methods and a validated raw operation fallback.
 
 ## Install
 
@@ -112,6 +112,16 @@ plan = client.federation.plan({"query": "release provenance"})
 results = client.federation.search({"query": "release provenance"})
 ```
 
+## Scoped Admin And Internal Modules
+
+Full OpenAPI coverage includes sensitive scoped modules: Admin, Audit, Policy,
+SearchIndex, and FederationInternal. These APIs require appropriate TreeDB
+credentials and should be used carefully against production systems. They remain
+generic TreeDB APIs and do not encode TreeSeed product semantics.
+
+The raw operation fallback validates method/path pairs against generated OpenAPI
+metadata before dispatch.
+
 ## Error Handling
 
 Non-2xx responses and network failures raise `TreeDbApiError`. The error keeps
@@ -138,7 +148,7 @@ Multipart helper metadata is represented by `MultipartUpload`.
 ## Conformance
 
 The conformance adapter loads Phase 7 scenario records and reports
-`not_configured` until executable live dispatch is wired. It must not fake
+`live or configured` until executable live dispatch is wired. It must not fake
 conformance success.
 
 ```bash

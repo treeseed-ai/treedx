@@ -31,7 +31,7 @@ SDK-affecting release candidates should pass:
 - Focused TreeSeed regression when TypeScript SDK changes affect package
   dependency behavior
 
-`SDK Integration` is optional/manual and secret-backed in Phase 14.
+`SDK Integration` remains optional/manual and secret-backed; required live SDK conformance uses the local harness.
 
 ## Local Verification
 
@@ -70,8 +70,7 @@ npx vitest run --config ./vitest.config.ts \
 npm run build
 ```
 
-`packages/trsd-sdk` consumes `@treedb/ts-sdk` through `file:../ts-sdk`, and the
-package exports point at `dist`, so build `packages/ts-sdk` first.
+`packages/trsd-sdk` is standalone and downstream-only. Do not add local file links from `packages/trsd-sdk` to sibling SDK packages during focused regression.
 
 If `python3 -m pip` is unavailable locally, install Python packaging tooling
 before running `scripts/test-sdk-packages.sh`. The lighter dependency-free
@@ -99,8 +98,7 @@ Optional/manual integration checks:
 - `SDK Integration / rust-integration`
 - `SDK Integration / elixir-integration`
 
-`SDK Integration` remains optional/manual unless release policy later requires
-live SDK integration.
+`SDK Integration` remains optional/manual for externally supplied services; the required conformance path starts TreeDB locally.
 
 See `docs/runbooks/sdk-conformance.md` for shared scenario catalog rules and
 current adapter behavior.
@@ -116,14 +114,11 @@ The manual workflow input `base_url` overrides the base URL secret. If no base
 URL is configured, SDK integration tests pass by reporting or skipping
 not-configured behavior. This is expected in Phase 14.
 
-Current conformance adapters validate scenario catalog loading and clean
-`not_configured` behavior. Executable live conformance dispatch remains later
-work.
+Current conformance adapters validate scenario catalog loading and execute live dispatch when the local harness configures TreeDB. Optional integration tests still pass cleanly without external service config.
 
 ## Final Baseline Verification
 
-For the Phase 16 SDK baseline, final readiness means all four language SDKs
-validate as `partial` baselines, not live-conformance-complete implementations.
+For the implemented SDK baseline, final readiness means all four language SDKs validate as `implemented` manifests with full OpenAPI endpoint ownership and local-harness live conformance.
 
 Run:
 
@@ -133,8 +128,7 @@ Run:
 ./scripts/openapi-check.sh
 ```
 
-If local Python pip tooling is unavailable, record `./scripts/test-sdk-packages.sh`
-as locally blocked at Python packaging and run dependency-free Python checks:
+Python packaging tooling is required for the complete implemented SDK gate. If it is unavailable on a developer machine, record the local environment blocker and run dependency-free Python checks only as a diagnostic fallback:
 
 ```bash
 cd packages/python-sdk

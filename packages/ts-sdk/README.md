@@ -5,9 +5,9 @@ shared `packages/sdk-spec` architecture, follows `docs/api/openapi.yaml`, and
 does not encode TreeSeed product semantics. `packages/trsd-sdk` is a downstream
 TreeSeed consumer/reference only.
 
-The current `sdk-manifest.yaml` intentionally reports modules, capabilities, and
-test roots as `partial` because live executable conformance dispatch is deferred
-to a later phase.
+The current `sdk-manifest.yaml` reports modules, capabilities, and test roots as
+`implemented`. The SDK exposes all 113 `/api/v1` OpenAPI operations through
+first-class module methods and a validated raw operation fallback.
 
 ## Install
 
@@ -136,6 +136,16 @@ const plan = await client.federation.plan({ query: 'release provenance' });
 const results = await client.federation.search({ query: 'release provenance' });
 ```
 
+## Scoped Admin And Internal Modules
+
+Full OpenAPI coverage includes sensitive scoped modules: Admin, Audit, Policy,
+SearchIndex, and FederationInternal. These APIs require appropriate TreeDB
+credentials and should be used carefully against production systems. They remain
+generic TreeDB APIs and do not encode TreeSeed product semantics.
+
+The raw operation fallback validates method/path pairs against generated OpenAPI
+metadata before dispatch.
+
 ## Error Handling
 
 Non-2xx responses and network failures surface as `TreeDbApiError` with
@@ -169,10 +179,10 @@ TreeDB without SDK renumbering.
 
 ## Conformance
 
-The Phase 7 scenario catalog loads through `TreeDbConformanceAdapter`.
-Executable live conformance dispatch is deferred, so the adapter reports
-`not_configured` until server execution is wired. It must not fake conformance
-success.
+The shared scenario catalog loads through `TreeDbConformanceAdapter`. Live
+conformance runs against the local TreeDB harness for implemented SDK
+verification. Optional integration checks may still report a clean
+not-configured path when no server is configured.
 
 ```bash
 npm run test:treedb-conformance

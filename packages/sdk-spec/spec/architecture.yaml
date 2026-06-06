@@ -1,6 +1,5 @@
 version: 0.1.0
 status: draft
-
 layers:
   generated:
     description: OpenAPI-generated or OpenAPI-validated schemas and low-level operation shapes.
@@ -14,290 +13,352 @@ layers:
   conformance:
     description: Shared adapter surface for sdk-spec conformance scenarios.
     public: false
-
 requiredModules:
-  - Client
-  - Auth
-  - Repositories
-  - Workspaces
-  - Files
-  - Blobs
-  - Query
-  - Graph
-  - Context
-  - Federation
-  - Registry
-  - Snapshots
-  - Artifacts
-  - Mirrors
-  - Migrations
-  - Exec
-  - Observability
-
+- Client
+- Auth
+- Repositories
+- Workspaces
+- Files
+- Blobs
+- Query
+- Graph
+- Context
+- Federation
+- FederationInternal
+- Registry
+- Snapshots
+- Artifacts
+- Mirrors
+- Migrations
+- Exec
+- Observability
+- Admin
+- Audit
+- Policy
+- SearchIndex
 requiredPorts:
-  - transport
-  - auth_provider
-  - repository_adapter
-  - workspace_adapter
-  - file_adapter
-  - blob_adapter
-  - query_adapter
-  - graph_adapter
-  - context_adapter
-  - federation_adapter
-  - registry_adapter
-  - snapshot_adapter
-  - artifact_adapter
-  - mirror_adapter
-  - migration_adapter
-  - exec_adapter
-
+- transport
+- auth_provider
+- repository_adapter
+- workspace_adapter
+- file_adapter
+- blob_adapter
+- query_adapter
+- graph_adapter
+- context_adapter
+- federation_adapter
+- federation_internal_adapter
+- registry_adapter
+- snapshot_adapter
+- artifact_adapter
+- mirror_adapter
+- migration_adapter
+- exec_adapter
+- admin_adapter
+- audit_adapter
+- policy_adapter
+- search_index_adapter
 requiredCoreConcepts:
-  - TreeDbClientConfig
-  - Transport
-  - AuthProvider
-  - TreeDbApiError
-  - TreeDbPage
-  - TreeDbCursor
-  - BinaryBody
-  - MultipartUpload
-  - CapabilityMatrix
-  - ConformanceAdapter
-
+- TreeDbClientConfig
+- Transport
+- AuthProvider
+- TreeDbApiError
+- TreeDbPage
+- TreeDbCursor
+- BinaryBody
+- MultipartUpload
+- CapabilityMatrix
+- ConformanceAdapter
 languageSdks:
-  - typescript
-  - python
-  - rust
-  - elixir
-
+- typescript
+- python
+- rust
+- elixir
 downstreamConsumers:
-  - package: packages/trsd-sdk
-    role: TreeSeed integration reference and future TreeDB SDK consumer.
-    architectureOwner: false
-
+- package: packages/trsd-sdk
+  role: TreeSeed integration reference and future TreeDB SDK consumer.
+  architectureOwner: false
 canonicalDirectories:
   generated: generated/
   core: core/
   facade: facade/
   conformance: conformance/
-
 modules:
-  - name: Client
-    layer: core
-    ownsPorts:
-      - transport
-    capabilityIds:
-      - health.basic
-    description: Base client configuration, transport binding, health, and version access.
-  - name: Auth
-    layer: core
-    ownsPorts:
-      - auth_provider
-    capabilityIds:
-      - auth.whoami
-    description: Bearer auth, auth providers, and effective scope access.
-  - name: Repositories
-    layer: core
-    ownsPorts:
-      - repository_adapter
-    capabilityIds:
-      - repositories.lifecycle
-    description: Repository registration, creation, listing, status, refs, and remotes.
-  - name: Workspaces
-    layer: core
-    ownsPorts:
-      - workspace_adapter
-    capabilityIds:
-      - workspaces.lifecycle
-    description: Workspace create, inspect, and close behavior.
-  - name: Files
-    layer: core
-    ownsPorts:
-      - file_adapter
-    capabilityIds:
-      - files.lifecycle
-    description: Workspace file tree, read, write, patch, delete, search, status, diff, and commit behavior.
-  - name: Blobs
-    layer: core
-    ownsPorts:
-      - blob_adapter
-    capabilityIds:
-      - blobs.binary
-      - blobs.multipart
-    description: Binary blob read, write, delete, upload, download, and multipart behavior.
-  - name: Query
-    layer: core
-    ownsPorts:
-      - query_adapter
-    capabilityIds:
-      - query.repository
-    description: Repository read, path list, file search, and query behavior.
-  - name: Graph
-    layer: core
-    ownsPorts:
-      - graph_adapter
-    capabilityIds:
-      - graph.repository
-    description: Repository graph refresh and graph query behavior.
-  - name: Context
-    layer: core
-    ownsPorts:
-      - context_adapter
-    capabilityIds:
-      - context.repository
-    description: Context build and context query parse behavior.
-  - name: Federation
-    layer: core
-    ownsPorts:
-      - federation_adapter
-    capabilityIds:
-      - federation.global_query
-    description: Federated planning, search, query, graph, and context behavior.
-  - name: Registry
-    layer: core
-    ownsPorts:
-      - registry_adapter
-    capabilityIds:
-      - registry.routing
-    description: Node inventory and repository placement/routing behavior.
-  - name: Snapshots
-    layer: core
-    ownsPorts:
-      - snapshot_adapter
-    capabilityIds:
-      - snapshots.lifecycle
-    description: Repository snapshot build and retrieval behavior.
-  - name: Artifacts
-    layer: core
-    ownsPorts:
-      - artifact_adapter
-    capabilityIds:
-      - artifacts.lifecycle
-    description: Artifact export, list, get, and delete behavior.
-  - name: Mirrors
-    layer: core
-    ownsPorts:
-      - mirror_adapter
-    capabilityIds:
-      - mirrors.lifecycle
-    description: Repository mirror list, upsert, sync, health, and promote behavior.
-  - name: Migrations
-    layer: core
-    ownsPorts:
-      - migration_adapter
-    capabilityIds:
-      - migrations.lifecycle
-    description: Repository placement migration create and get behavior.
-  - name: Exec
-    layer: core
-    ownsPorts:
-      - exec_adapter
-    capabilityIds:
-      - exec.workspace
-    description: Workspace-scoped command execution behavior.
-  - name: Observability
-    layer: core
-    ownsPorts:
-      - transport
-    capabilityIds:
-      - observability.health_metrics
-    description: Readiness, health, deep health, and metrics behavior.
-
+- name: Client
+  layer: core
+  ownsPorts:
+  - transport
+  capabilityIds:
+  - health.basic
+  description: Client module operations and SDK facade behavior.
+- name: Auth
+  layer: core
+  ownsPorts:
+  - auth_provider
+  capabilityIds:
+  - auth.whoami
+  - auth.mode_dev_token
+  description: Auth module operations and SDK facade behavior.
+- name: Repositories
+  layer: core
+  ownsPorts:
+  - repository_adapter
+  capabilityIds:
+  - repositories.lifecycle
+  - repositories.push_sync
+  description: Repositories module operations and SDK facade behavior.
+- name: Workspaces
+  layer: core
+  ownsPorts:
+  - workspace_adapter
+  capabilityIds:
+  - workspaces.lifecycle
+  description: Workspaces module operations and SDK facade behavior.
+- name: Files
+  layer: core
+  ownsPorts:
+  - file_adapter
+  capabilityIds:
+  - files.lifecycle
+  description: Files module operations and SDK facade behavior.
+- name: Blobs
+  layer: core
+  ownsPorts:
+  - blob_adapter
+  capabilityIds:
+  - blobs.binary
+  - blobs.multipart
+  description: Blobs module operations and SDK facade behavior.
+- name: Query
+  layer: core
+  ownsPorts:
+  - query_adapter
+  capabilityIds:
+  - query.repository
+  description: Query module operations and SDK facade behavior.
+- name: Graph
+  layer: core
+  ownsPorts:
+  - graph_adapter
+  capabilityIds:
+  - graph.repository
+  - graph.expanded_repository
+  description: Graph module operations and SDK facade behavior.
+- name: Context
+  layer: core
+  ownsPorts:
+  - context_adapter
+  capabilityIds:
+  - context.repository
+  description: Context module operations and SDK facade behavior.
+- name: Federation
+  layer: core
+  ownsPorts:
+  - federation_adapter
+  capabilityIds:
+  - federation.global_query
+  - federation.catalog_peers_routes
+  description: Federation module operations and SDK facade behavior.
+- name: FederationInternal
+  layer: core
+  ownsPorts:
+  - federation_internal_adapter
+  capabilityIds:
+  - federation.internal_node_operations
+  description: FederationInternal module operations and SDK facade behavior.
+- name: Registry
+  layer: core
+  ownsPorts:
+  - registry_adapter
+  capabilityIds:
+  - registry.routing
+  description: Registry module operations and SDK facade behavior.
+- name: Snapshots
+  layer: core
+  ownsPorts:
+  - snapshot_adapter
+  capabilityIds:
+  - snapshots.lifecycle
+  description: Snapshots module operations and SDK facade behavior.
+- name: Artifacts
+  layer: core
+  ownsPorts:
+  - artifact_adapter
+  capabilityIds:
+  - artifacts.lifecycle
+  description: Artifacts module operations and SDK facade behavior.
+- name: Mirrors
+  layer: core
+  ownsPorts:
+  - mirror_adapter
+  capabilityIds:
+  - mirrors.lifecycle
+  description: Mirrors module operations and SDK facade behavior.
+- name: Migrations
+  layer: core
+  ownsPorts:
+  - migration_adapter
+  capabilityIds:
+  - migrations.lifecycle
+  description: Migrations module operations and SDK facade behavior.
+- name: Exec
+  layer: core
+  ownsPorts:
+  - exec_adapter
+  capabilityIds:
+  - exec.workspace
+  description: Exec module operations and SDK facade behavior.
+- name: Observability
+  layer: core
+  ownsPorts:
+  - transport
+  capabilityIds:
+  - observability.health_metrics
+  description: Observability module operations and SDK facade behavior.
+- name: Admin
+  layer: core
+  ownsPorts:
+  - admin_adapter
+  capabilityIds:
+  - admin.storage_operations
+  - admin.repository_operations
+  - admin.workspace_artifact_operations
+  description: Admin module operations and SDK facade behavior.
+- name: Audit
+  layer: core
+  ownsPorts:
+  - audit_adapter
+  capabilityIds:
+  - audit.events
+  description: Audit module operations and SDK facade behavior.
+- name: Policy
+  layer: core
+  ownsPorts:
+  - policy_adapter
+  capabilityIds:
+  - policy.capabilities_grants
+  description: Policy module operations and SDK facade behavior.
+- name: SearchIndex
+  layer: core
+  ownsPorts:
+  - search_index_adapter
+  capabilityIds:
+  - search_index.lifecycle
+  description: SearchIndex module operations and SDK facade behavior.
 ports:
-  - id: transport
-    ownerModules:
-      - Client
-      - Observability
-    required: true
-  - id: auth_provider
-    ownerModules:
-      - Auth
-    required: true
-  - id: repository_adapter
-    ownerModules:
-      - Repositories
-    required: true
-  - id: workspace_adapter
-    ownerModules:
-      - Workspaces
-    required: true
-  - id: file_adapter
-    ownerModules:
-      - Files
-    required: true
-  - id: blob_adapter
-    ownerModules:
-      - Blobs
-    required: true
-  - id: query_adapter
-    ownerModules:
-      - Query
-    required: true
-  - id: graph_adapter
-    ownerModules:
-      - Graph
-    required: true
-  - id: context_adapter
-    ownerModules:
-      - Context
-    required: true
-  - id: federation_adapter
-    ownerModules:
-      - Federation
-    required: true
-  - id: registry_adapter
-    ownerModules:
-      - Registry
-    required: true
-  - id: snapshot_adapter
-    ownerModules:
-      - Snapshots
-    required: true
-  - id: artifact_adapter
-    ownerModules:
-      - Artifacts
-    required: true
-  - id: mirror_adapter
-    ownerModules:
-      - Mirrors
-    required: true
-  - id: migration_adapter
-    ownerModules:
-      - Migrations
-    required: true
-  - id: exec_adapter
-    ownerModules:
-      - Exec
-    required: true
-
+- id: transport
+  ownerModules:
+  - Client
+  - Observability
+  required: true
+- id: auth_provider
+  ownerModules:
+  - Auth
+  required: true
+- id: repository_adapter
+  ownerModules:
+  - Repositories
+  required: true
+- id: workspace_adapter
+  ownerModules:
+  - Workspaces
+  required: true
+- id: file_adapter
+  ownerModules:
+  - Files
+  required: true
+- id: blob_adapter
+  ownerModules:
+  - Blobs
+  required: true
+- id: query_adapter
+  ownerModules:
+  - Query
+  required: true
+- id: graph_adapter
+  ownerModules:
+  - Graph
+  required: true
+- id: context_adapter
+  ownerModules:
+  - Context
+  required: true
+- id: federation_adapter
+  ownerModules:
+  - Federation
+  required: true
+- id: federation_internal_adapter
+  ownerModules:
+  - FederationInternal
+  required: true
+- id: registry_adapter
+  ownerModules:
+  - Registry
+  required: true
+- id: snapshot_adapter
+  ownerModules:
+  - Snapshots
+  required: true
+- id: artifact_adapter
+  ownerModules:
+  - Artifacts
+  required: true
+- id: mirror_adapter
+  ownerModules:
+  - Mirrors
+  required: true
+- id: migration_adapter
+  ownerModules:
+  - Migrations
+  required: true
+- id: exec_adapter
+  ownerModules:
+  - Exec
+  required: true
+- id: admin_adapter
+  ownerModules:
+  - Admin
+  required: true
+- id: audit_adapter
+  ownerModules:
+  - Audit
+  required: true
+- id: policy_adapter
+  ownerModules:
+  - Policy
+  required: true
+- id: search_index_adapter
+  ownerModules:
+  - SearchIndex
+  required: true
 coreConcepts:
-  - name: TreeDbClientConfig
-    ownerModule: Client
-    required: true
-  - name: Transport
-    ownerModule: Client
-    required: true
-  - name: AuthProvider
-    ownerModule: Auth
-    required: true
-  - name: TreeDbApiError
-    ownerModule: Client
-    required: true
-  - name: TreeDbPage
-    ownerModule: Query
-    required: true
-  - name: TreeDbCursor
-    ownerModule: Query
-    required: true
-  - name: BinaryBody
-    ownerModule: Blobs
-    required: true
-  - name: MultipartUpload
-    ownerModule: Blobs
-    required: true
-  - name: CapabilityMatrix
-    ownerModule: Client
-    required: true
-  - name: ConformanceAdapter
-    ownerModule: Client
-    required: true
+- name: TreeDbClientConfig
+  ownerModule: Client
+  required: true
+- name: Transport
+  ownerModule: Client
+  required: true
+- name: AuthProvider
+  ownerModule: Auth
+  required: true
+- name: TreeDbApiError
+  ownerModule: Client
+  required: true
+- name: TreeDbPage
+  ownerModule: Query
+  required: true
+- name: TreeDbCursor
+  ownerModule: Query
+  required: true
+- name: BinaryBody
+  ownerModule: Blobs
+  required: true
+- name: MultipartUpload
+  ownerModule: Blobs
+  required: true
+- name: CapabilityMatrix
+  ownerModule: Client
+  required: true
+- name: ConformanceAdapter
+  ownerModule: Client
+  required: true

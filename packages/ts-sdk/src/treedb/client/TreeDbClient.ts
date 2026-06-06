@@ -1,5 +1,6 @@
-import { ArtifactsAdapter, BlobsAdapter, ContextAdapter, ExecAdapter, FederationAdapter, FilesAdapter, GraphAdapter, MigrationsAdapter, MirrorsAdapter, ObservabilityAdapter, QueryAdapter, RegistryAdapter, RepositoriesAdapter, SnapshotsAdapter, WorkspacesAdapter } from '../adapters/index.js';
-import type { TreeDbClientConfig, Transport } from '../types/index.js';
+import { AdminAdapter, ArtifactsAdapter, AuditAdapter, BlobsAdapter, ContextAdapter, ExecAdapter, FederationAdapter, FederationInternalAdapter, FilesAdapter, GraphAdapter, MigrationsAdapter, MirrorsAdapter, ObservabilityAdapter, PolicyAdapter, QueryAdapter, RegistryAdapter, RepositoriesAdapter, SearchIndexAdapter, SnapshotsAdapter, WorkspacesAdapter } from '../adapters/index.js';
+import { TREE_DB_OPENAPI_OPERATIONS, type TreeDbOpenApiMethod, type TreeDbOpenApiPath } from '../generated/index.js';
+import type { BinaryBody, TreeDbClientConfig, Transport } from '../types/index.js';
 import { FetchTransport } from './transport.js';
 
 export class TreeDbClient {
@@ -19,6 +20,11 @@ export class TreeDbClient {
   readonly migrations: MigrationsAdapter;
   readonly exec: ExecAdapter;
   readonly observability: ObservabilityAdapter;
+  readonly admin: AdminAdapter;
+  readonly audit: AuditAdapter;
+  readonly policy: PolicyAdapter;
+  readonly searchIndex: SearchIndexAdapter;
+  readonly federationInternal: FederationInternalAdapter;
 
   constructor(readonly config: TreeDbClientConfig) {
     this.transport = config.transport ?? new FetchTransport(config);
@@ -38,6 +44,11 @@ export class TreeDbClient {
     this.migrations = new MigrationsAdapter(adapterContext);
     this.exec = new ExecAdapter(adapterContext);
     this.observability = new ObservabilityAdapter(adapterContext);
+    this.admin = new AdminAdapter(adapterContext);
+    this.audit = new AuditAdapter(adapterContext);
+    this.policy = new PolicyAdapter(adapterContext);
+    this.searchIndex = new SearchIndexAdapter(adapterContext);
+    this.federationInternal = new FederationInternalAdapter(adapterContext);
   }
 
   health(): Promise<unknown> {
@@ -54,5 +65,37 @@ export class TreeDbClient {
 
   effectiveScope(): Promise<unknown> {
     return this.transport.request({ method: 'GET', path: '/api/v1/policy/effective-scope' }).then((response) => response.data);
+  }
+
+  authMode(): Promise<unknown> {
+    return this.transport.request({ method: 'GET', path: '/api/v1/auth/mode' }).then((response) => response.data);
+  }
+
+  createDevToken(input?: unknown): Promise<unknown> {
+    return this.transport.request({ method: 'POST', path: '/api/v1/auth/dev-token', body: input }).then((response) => response.data);
+  }
+
+  operation<T = unknown>(
+    method: TreeDbOpenApiMethod,
+    path: TreeDbOpenApiPath,
+    options: {
+      pathParams?: Record<string, string | number>;
+      query?: Record<string, string | number | boolean | undefined>;
+      body?: unknown;
+      binaryBody?: BinaryBody;
+      headers?: Record<string, string>;
+    } = {}
+  ): Promise<T> {
+    if (!TREE_DB_OPENAPI_OPERATIONS.some((operation) => operation.method === method && operation.path === path)) {
+      throw new Error(`Unknown TreeDB OpenAPI operation: ${method} ${path}`);
+    }
+    const resolvedPath = path.replace(/\{([^}]+)\}/g, (_match, key: string) => {
+      const value = options.pathParams?.[key];
+      if (value === undefined) {
+        throw new Error(`Missing path parameter ${key} for ${method} ${path}`);
+      }
+      return encodeURIComponent(String(value));
+    });
+    return this.transport.request<T>({ method, path: resolvedPath, query: options.query, body: options.body, binaryBody: options.binaryBody, headers: options.headers }).then((response) => response.data);
   }
 }

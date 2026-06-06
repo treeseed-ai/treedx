@@ -3,49 +3,62 @@ language: rust
 version: 0.1.0
 sdkSpecVersion: 0.1.0
 openapiVersion: 0.10.0
-
 testLayout:
-  unit: partial
-  adapters: partial
-  generated: partial
-  conformance: partial
-  integration: partial
-
+  unit: implemented
+  adapters: implemented
+  generated: implemented
+  conformance: implemented
+  integration: implemented
 modules:
-  Client: partial
-  Auth: partial
-  Repositories: partial
-  Workspaces: partial
-  Files: partial
-  Blobs: partial
-  Query: partial
-  Graph: partial
-  Context: partial
-  Federation: partial
-  Registry: partial
-  Snapshots: partial
-  Artifacts: partial
-  Mirrors: partial
-  Migrations: partial
-  Exec: partial
-  Observability: partial
-
+  Client: implemented
+  Auth: implemented
+  Repositories: implemented
+  Workspaces: implemented
+  Files: implemented
+  Blobs: implemented
+  Query: implemented
+  Graph: implemented
+  Context: implemented
+  Federation: implemented
+  FederationInternal: implemented
+  Registry: implemented
+  Snapshots: implemented
+  Artifacts: implemented
+  Mirrors: implemented
+  Migrations: implemented
+  Exec: implemented
+  Observability: implemented
+  Admin: implemented
+  Audit: implemented
+  Policy: implemented
+  SearchIndex: implemented
 capabilities:
-  health.basic: partial
-  auth.whoami: partial
-  repositories.lifecycle: partial
-  workspaces.lifecycle: partial
-  files.lifecycle: partial
-  blobs.binary: partial
-  blobs.multipart: partial
-  query.repository: partial
-  graph.repository: partial
-  context.repository: partial
-  federation.global_query: partial
-  registry.routing: partial
-  snapshots.lifecycle: partial
-  artifacts.lifecycle: partial
-  mirrors.lifecycle: partial
-  migrations.lifecycle: partial
-  exec.workspace: partial
-  observability.health_metrics: partial
+  health.basic: implemented
+  auth.whoami: implemented
+  auth.mode_dev_token: implemented
+  repositories.lifecycle: implemented
+  repositories.push_sync: implemented
+  workspaces.lifecycle: implemented
+  files.lifecycle: implemented
+  blobs.binary: implemented
+  blobs.multipart: implemented
+  query.repository: implemented
+  graph.repository: implemented
+  graph.expanded_repository: implemented
+  context.repository: implemented
+  federation.global_query: implemented
+  federation.catalog_peers_routes: implemented
+  federation.internal_node_operations: implemented
+  registry.routing: implemented
+  snapshots.lifecycle: implemented
+  artifacts.lifecycle: implemented
+  mirrors.lifecycle: implemented
+  migrations.lifecycle: implemented
+  exec.workspace: implemented
+  observability.health_metrics: implemented
+  admin.storage_operations: implemented
+  admin.repository_operations: implemented
+  admin.workspace_artifact_operations: implemented
+  audit.events: implemented
+  policy.capabilities_grants: implemented
+  search_index.lifecycle: implemented

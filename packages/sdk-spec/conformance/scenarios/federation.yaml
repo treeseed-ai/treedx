@@ -1,85 +1,205 @@
 version: 0.1.0
 status: draft
-
 scenarios:
-  - id: federation.plan
-    capabilityId: federation.global_query
-    title: Plan a federated query.
-    kind: black_box
-    required: true
-    serverRequired: true
-    endpointRefs:
-      - POST /api/v1/federation/query/plan
-    fixtures:
-      repos: []
-      requests: []
-      expected: []
-    steps:
-      - name: plan_query
-        action: federation.plan
-        description: Plan a federated query through the SDK facade.
-    assertions:
-      - Planning response is exposed as generic federation data.
-      - Hidden routes and unauthorized scopes are not synthesized by the SDK.
-  - id: federation.global_search
-    capabilityId: federation.global_query
-    title: Run global search.
-    kind: black_box
-    required: true
-    serverRequired: true
-    endpointRefs:
-      - POST /api/v1/search
-    fixtures:
-      repos: []
-      requests: []
-      expected: []
-    steps:
-      - name: global_search
-        action: federation.search
-        description: Run global search through the SDK facade.
-    assertions:
-      - Search request remains OpenAPI-aligned.
-      - Results preserve authorized repository and path metadata.
-  - id: federation.global_query
-    capabilityId: federation.global_query
-    title: Run global query, graph, and context requests.
-    kind: black_box
-    required: true
-    serverRequired: true
-    endpointRefs:
-      - POST /api/v1/query
-      - POST /api/v1/context/build
-      - POST /api/v1/graph/query
-    fixtures:
-      repos: []
-      requests: []
-      expected: []
-    steps:
-      - name: global_query
-        action: federation.query
-        description: Run a global query through the SDK facade.
-      - name: global_context_graph
-        action: federation.contextGraph
-        description: Run global context and graph operations through the SDK facade.
-    assertions:
-      - Global responses preserve reduced authorized scopes.
-      - Context and graph outputs remain generic TreeDB data.
-  - id: federation.partial_failure
-    capabilityId: federation.global_query
-    title: Surface sanitized federated partial failures.
-    kind: black_box
-    required: true
-    serverRequired: conditional
-    endpointRefs:
-      - POST /api/v1/query
-    fixtures:
-      repos: []
-      requests: []
-      expected: []
-    steps:
-      - name: partial_failure_query
-        action: federation.query
-        description: Run a federated query with a partial downstream failure.
-    assertions:
-      - Partial failures expose TreeDbApiError-compatible metadata when fatal.
-      - Non-fatal partial failures are sanitized and do not expose hidden paths or credentials.
+- id: federation.plan
+  capabilityId: federation.global_query
+  title: Plan a federated query.
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs:
+  - POST /api/v1/federation/query/plan
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: plan_query
+    action: federation.plan
+    description: Plan a federated query through the SDK facade.
+  assertions:
+  - Planning response is exposed as generic federation data.
+  - Hidden routes and unauthorized scopes are not synthesized by the SDK.
+- id: federation.global_search
+  capabilityId: federation.global_query
+  title: Run global search.
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs:
+  - POST /api/v1/search
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: global_search
+    action: federation.search
+    description: Run global search through the SDK facade.
+  assertions:
+  - Search request remains OpenAPI-aligned.
+  - Results preserve authorized repository and path metadata.
+- id: federation.global_query
+  capabilityId: federation.global_query
+  title: Run global query, graph, and context requests.
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs:
+  - POST /api/v1/query
+  - POST /api/v1/context/build
+  - POST /api/v1/graph/query
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: global_query
+    action: federation.query
+    description: Run a global query through the SDK facade.
+  - name: global_context_graph
+    action: federation.contextGraph
+    description: Run global context and graph operations through the SDK facade.
+  assertions:
+  - Global responses preserve reduced authorized scopes.
+  - Context and graph outputs remain generic TreeDB data.
+- id: federation.partial_failure
+  capabilityId: federation.global_query
+  title: Surface sanitized federated partial failures.
+  kind: black_box
+  required: true
+  serverRequired: conditional
+  endpointRefs:
+  - POST /api/v1/query
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: partial_failure_query
+    action: federation.query
+    description: Run a federated query with a partial downstream failure.
+  assertions:
+  - Partial failures expose TreeDbApiError-compatible metadata when fatal.
+  - Non-fatal partial failures are sanitized and do not expose hidden paths or credentials.
+- id: federation.catalog
+  capabilityId: federation.catalog_peers_routes
+  title: Federation / Catalog
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: &id001
+  - GET /api/v1/federation/catalog
+  - POST /api/v1/federation/catalog/push
+  - POST /api/v1/federation/catalog/sync
+  - GET /api/v1/federation/peers
+  - GET /api/v1/federation/peers/{node_id}
+  - POST /api/v1/federation/nodes/register
+  - POST /api/v1/federation/peers/{node_id}/trust
+  - POST /api/v1/federation/peers/{node_id}/revoke
+  - GET /api/v1/federation/routes
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: federation.catalog
+    description: Execute federation.catalog through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: federation.catalog_sync_push
+  capabilityId: federation.catalog_peers_routes
+  title: Federation / Catalog Sync Push
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id001
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: federation.catalog_sync_push
+    description: Execute federation.catalog_sync_push through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: federation.peers_lifecycle
+  capabilityId: federation.catalog_peers_routes
+  title: Federation / Peers Lifecycle
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id001
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: federation.peers_lifecycle
+    description: Execute federation.peers_lifecycle through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: federation.routes
+  capabilityId: federation.catalog_peers_routes
+  title: Federation / Routes
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id001
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: federation.routes
+    description: Execute federation.routes through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: federation.internal_health_proxy
+  capabilityId: federation.internal_node_operations
+  title: Federation / Internal Health Proxy
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: &id002
+  - GET /api/v1/internal/federation/health
+  - POST /api/v1/internal/federation/proxy
+  - POST /api/v1/internal/federation/repos/{repo_id}/mirror/export
+  - POST /api/v1/internal/federation/repos/{repo_id}/mirror/import
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: federation.internal_health_proxy
+    description: Execute federation.internal_health_proxy through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: federation.internal_mirror_export_import
+  capabilityId: federation.internal_node_operations
+  title: Federation / Internal Mirror Export Import
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id002
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: federation.internal_mirror_export_import
+    description: Execute federation.internal_mirror_export_import through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.

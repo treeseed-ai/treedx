@@ -1,42 +1,102 @@
 version: 0.1.0
 status: draft
-
 scenarios:
-  - id: graph.refresh
-    capabilityId: graph.repository
-    title: Refresh repository graph indexes.
-    kind: black_box
-    required: true
-    serverRequired: true
-    endpointRefs:
-      - POST /api/v1/repos/{repo_id}/graph/refresh
-    fixtures:
-      repos: []
-      requests: []
-      expected: []
-    steps:
-      - name: refresh_graph
-        action: graph.refresh
-        description: Refresh repository graph data through the SDK facade.
-    assertions:
-      - Refresh request uses OpenAPI-aligned repository identifiers.
-      - Refresh result is exposed as generic graph data.
-  - id: graph.query
-    capabilityId: graph.repository
-    title: Query repository graph data.
-    kind: black_box
-    required: true
-    serverRequired: true
-    endpointRefs:
-      - POST /api/v1/repos/{repo_id}/graph/query
-    fixtures:
-      repos: []
-      requests: []
-      expected: []
-    steps:
-      - name: query_graph
-        action: graph.query
-        description: Query repository graph data through the SDK facade.
-    assertions:
-      - Graph query payload remains OpenAPI-aligned.
-      - Nodes and edges are exposed without product-specific interpretation.
+- id: graph.refresh
+  capabilityId: graph.repository
+  title: Refresh repository graph indexes.
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs:
+  - POST /api/v1/repos/{repo_id}/graph/refresh
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: refresh_graph
+    action: graph.refresh
+    description: Refresh repository graph data through the SDK facade.
+  assertions:
+  - Refresh request uses OpenAPI-aligned repository identifiers.
+  - Refresh result is exposed as generic graph data.
+- id: graph.query
+  capabilityId: graph.repository
+  title: Query repository graph data.
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs:
+  - POST /api/v1/repos/{repo_id}/graph/query
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: query_graph
+    action: graph.query
+    description: Query repository graph data through the SDK facade.
+  assertions:
+  - Graph query payload remains OpenAPI-aligned.
+  - Nodes and edges are exposed without product-specific interpretation.
+- id: graph.refresh_job_node
+  capabilityId: graph.expanded_repository
+  title: Graph / Refresh Job Node
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: &id001
+  - GET /api/v1/repos/{repo_id}/graph/refresh-jobs/{job_id}
+  - GET /api/v1/repos/{repo_id}/graph/nodes/{node_id}
+  - POST /api/v1/repos/{repo_id}/graph/related
+  - POST /api/v1/repos/{repo_id}/graph/subgraph
+  - POST /api/v1/repos/{repo_id}/graph/search-files
+  - POST /api/v1/repos/{repo_id}/graph/search-sections
+  - POST /api/v1/repos/{repo_id}/graph/search-entities
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: graph.refresh_job_node
+    description: Execute graph.refresh_job_node through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: graph.related_subgraph
+  capabilityId: graph.expanded_repository
+  title: Graph / Related Subgraph
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id001
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: graph.related_subgraph
+    description: Execute graph.related_subgraph through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: graph.search_entities_files_sections
+  capabilityId: graph.expanded_repository
+  title: Graph / Search Entities Files Sections
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id001
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: graph.search_entities_files_sections
+    description: Execute graph.search_entities_files_sections through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.

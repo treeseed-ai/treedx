@@ -1,57 +1,76 @@
 version: 0.1.0
 status: draft
-
 scenarios:
-  - id: repositories.register_get_status
-    capabilityId: repositories.lifecycle
-    title: Register, create, inspect, list, and read repository status.
-    kind: black_box
-    required: true
-    serverRequired: true
-    endpointRefs:
-      - POST /api/v1/repos/register
-      - GET /api/v1/repos
-      - POST /api/v1/repos
-      - GET /api/v1/repos/{repo_id}
-      - GET /api/v1/repos/{repo_id}/status
-    fixtures:
-      repos: []
-      requests: []
-      expected: []
-    steps:
-      - name: register_repository
-        action: repositories.register
-        description: Register a repository through the SDK facade.
-      - name: create_repository
-        action: repositories.create
-        description: Create a repository through the SDK facade.
-      - name: inspect_repository
-        action: repositories.get
-        description: Fetch repository metadata and status.
-    assertions:
-      - Repository identifiers are passed through as generic TreeDB identifiers.
-      - Repository status is exposed without TreeSeed product concepts.
-      - SDK errors preserve TreeDbApiError-compatible fields.
-  - id: repositories.refs_remotes
-    capabilityId: repositories.lifecycle
-    title: Read repository refs and remotes.
-    kind: black_box
-    required: true
-    serverRequired: true
-    endpointRefs:
-      - GET /api/v1/repos/{repo_id}/refs
-      - GET /api/v1/repos/{repo_id}/remotes
-    fixtures:
-      repos: []
-      requests: []
-      expected: []
-    steps:
-      - name: list_refs
-        action: repositories.refs
-        description: List repository refs through the SDK facade.
-      - name: list_remotes
-        action: repositories.remotes
-        description: List repository remotes through the SDK facade.
-    assertions:
-      - Ref names are preserved as returned by TreeDB.
-      - Remote metadata is exposed as generic repository data.
+- id: repositories.register_get_status
+  capabilityId: repositories.lifecycle
+  title: Register, create, inspect, list, and read repository status.
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs:
+  - POST /api/v1/repos/register
+  - GET /api/v1/repos
+  - POST /api/v1/repos
+  - GET /api/v1/repos/{repo_id}
+  - GET /api/v1/repos/{repo_id}/status
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: register_repository
+    action: repositories.register
+    description: Register a repository through the SDK facade.
+  - name: create_repository
+    action: repositories.create
+    description: Create a repository through the SDK facade.
+  - name: inspect_repository
+    action: repositories.get
+    description: Fetch repository metadata and status.
+  assertions:
+  - Repository identifiers are passed through as generic TreeDB identifiers.
+  - Repository status is exposed without TreeSeed product concepts.
+  - SDK errors preserve TreeDbApiError-compatible fields.
+- id: repositories.refs_remotes
+  capabilityId: repositories.lifecycle
+  title: Read repository refs and remotes.
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs:
+  - GET /api/v1/repos/{repo_id}/refs
+  - GET /api/v1/repos/{repo_id}/remotes
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: list_refs
+    action: repositories.refs
+    description: List repository refs through the SDK facade.
+  - name: list_remotes
+    action: repositories.remotes
+    description: List repository remotes through the SDK facade.
+  assertions:
+  - Ref names are preserved as returned by TreeDB.
+  - Remote metadata is exposed as generic repository data.
+- id: repositories.push_sync
+  capabilityId: repositories.push_sync
+  title: Repositories / Push Sync
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs:
+  - POST /api/v1/repos/{repo_id}/push
+  - POST /api/v1/repos/{repo_id}/sync
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: repositories.push_sync
+    description: Execute repositories.push_sync through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.

@@ -33,3 +33,8 @@ __all__ = [
     "Transport",
     "WorkspacePort",
 ]
+from .admin_port import AdminAdapter
+from .audit_port import AuditAdapter
+from .policy_port import PolicyAdapter
+from .search_index_port import SearchIndexAdapter
+from .federation_internal_port import FederationInternalAdapter

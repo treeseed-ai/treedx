@@ -1,90 +1,139 @@
 version: 0.1.0
 status: draft
-coverageMode: advisory
-
+coverageMode: required
 groups:
   Client:
-    - GET /api/v1/health
-    - GET /api/v1/version
+  - GET /api/v1/health
+  - GET /api/v1/version
   Auth:
-    - GET /api/v1/auth/whoami
-    - GET /api/v1/policy/effective-scope
+  - GET /api/v1/auth/whoami
+  - GET /api/v1/policy/effective-scope
+  - GET /api/v1/auth/mode
+  - POST /api/v1/auth/dev-token
   Repositories:
-    - POST /api/v1/repos/register
-    - GET /api/v1/repos
-    - POST /api/v1/repos
-    - GET /api/v1/repos/{repo_id}
-    - GET /api/v1/repos/{repo_id}/status
-    - GET /api/v1/repos/{repo_id}/refs
-    - GET /api/v1/repos/{repo_id}/remotes
+  - POST /api/v1/repos/register
+  - GET /api/v1/repos
+  - POST /api/v1/repos
+  - GET /api/v1/repos/{repo_id}
+  - GET /api/v1/repos/{repo_id}/status
+  - GET /api/v1/repos/{repo_id}/refs
+  - GET /api/v1/repos/{repo_id}/remotes
+  - POST /api/v1/repos/{repo_id}/push
+  - POST /api/v1/repos/{repo_id}/sync
   Workspaces:
-    - POST /api/v1/repos/{repo_id}/workspaces
-    - GET /api/v1/workspaces/{workspace_id}
-    - POST /api/v1/workspaces/{workspace_id}/close
+  - POST /api/v1/repos/{repo_id}/workspaces
+  - GET /api/v1/workspaces/{workspace_id}
+  - POST /api/v1/workspaces/{workspace_id}/close
   Files:
-    - GET /api/v1/workspaces/{workspace_id}/tree
-    - GET /api/v1/workspaces/{workspace_id}/files
-    - PUT /api/v1/workspaces/{workspace_id}/files
-    - PATCH /api/v1/workspaces/{workspace_id}/files
-    - DELETE /api/v1/workspaces/{workspace_id}/files
-    - POST /api/v1/workspaces/{workspace_id}/search
-    - GET /api/v1/workspaces/{workspace_id}/status
-    - GET /api/v1/workspaces/{workspace_id}/diff
-    - POST /api/v1/workspaces/{workspace_id}/commit
+  - GET /api/v1/workspaces/{workspace_id}/tree
+  - GET /api/v1/workspaces/{workspace_id}/files
+  - PUT /api/v1/workspaces/{workspace_id}/files
+  - PATCH /api/v1/workspaces/{workspace_id}/files
+  - DELETE /api/v1/workspaces/{workspace_id}/files
+  - POST /api/v1/workspaces/{workspace_id}/search
+  - GET /api/v1/workspaces/{workspace_id}/status
+  - GET /api/v1/workspaces/{workspace_id}/diff
+  - POST /api/v1/workspaces/{workspace_id}/commit
   Blobs:
-    - POST /api/v1/repos/{repo_id}/blobs/read
-    - POST /api/v1/workspaces/{workspace_id}/blobs/write
-    - POST /api/v1/workspaces/{workspace_id}/blobs/delete
-    - GET /api/v1/workspaces/{workspace_id}/blobs/download
-    - PUT /api/v1/workspaces/{workspace_id}/blobs/upload
-  MultipartUploads:
-    - POST /api/v1/workspaces/{workspace_id}/blobs/uploads
-    - PUT /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/parts/{part_number}
-    - POST /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/complete
-    - DELETE /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}
+  - POST /api/v1/repos/{repo_id}/blobs/read
+  - POST /api/v1/workspaces/{workspace_id}/blobs/write
+  - POST /api/v1/workspaces/{workspace_id}/blobs/delete
+  - GET /api/v1/workspaces/{workspace_id}/blobs/download
+  - PUT /api/v1/workspaces/{workspace_id}/blobs/upload
+  - POST /api/v1/workspaces/{workspace_id}/blobs/uploads
+  - PUT /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/parts/{part_number}
+  - POST /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/complete
+  - DELETE /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}
   Query:
-    - POST /api/v1/repos/{repo_id}/files/read
-    - POST /api/v1/repos/{repo_id}/paths/list
-    - POST /api/v1/repos/{repo_id}/files/search
-    - POST /api/v1/repos/{repo_id}/query
+  - POST /api/v1/repos/{repo_id}/files/read
+  - POST /api/v1/repos/{repo_id}/paths/list
+  - POST /api/v1/repos/{repo_id}/files/search
+  - POST /api/v1/repos/{repo_id}/query
   Graph:
-    - POST /api/v1/repos/{repo_id}/graph/refresh
-    - POST /api/v1/repos/{repo_id}/graph/query
+  - POST /api/v1/repos/{repo_id}/graph/refresh
+  - POST /api/v1/repos/{repo_id}/graph/query
+  - GET /api/v1/repos/{repo_id}/graph/refresh-jobs/{job_id}
+  - GET /api/v1/repos/{repo_id}/graph/nodes/{node_id}
+  - POST /api/v1/repos/{repo_id}/graph/related
+  - POST /api/v1/repos/{repo_id}/graph/subgraph
+  - POST /api/v1/repos/{repo_id}/graph/search-files
+  - POST /api/v1/repos/{repo_id}/graph/search-sections
+  - POST /api/v1/repos/{repo_id}/graph/search-entities
   Context:
-    - POST /api/v1/repos/{repo_id}/context/build
-    - POST /api/v1/repos/{repo_id}/context/parse-ctx
+  - POST /api/v1/repos/{repo_id}/context/build
+  - POST /api/v1/repos/{repo_id}/context/parse-ctx
   Federation:
-    - POST /api/v1/federation/query/plan
-    - POST /api/v1/search
-    - POST /api/v1/query
-    - POST /api/v1/context/build
-    - POST /api/v1/graph/query
+  - POST /api/v1/federation/query/plan
+  - POST /api/v1/search
+  - POST /api/v1/query
+  - POST /api/v1/context/build
+  - POST /api/v1/graph/query
+  - GET /api/v1/federation/catalog
+  - POST /api/v1/federation/catalog/push
+  - POST /api/v1/federation/catalog/sync
+  - GET /api/v1/federation/peers
+  - GET /api/v1/federation/peers/{node_id}
+  - POST /api/v1/federation/nodes/register
+  - POST /api/v1/federation/peers/{node_id}/trust
+  - POST /api/v1/federation/peers/{node_id}/revoke
+  - GET /api/v1/federation/routes
+  FederationInternal:
+  - GET /api/v1/internal/federation/health
+  - POST /api/v1/internal/federation/proxy
+  - POST /api/v1/internal/federation/repos/{repo_id}/mirror/export
+  - POST /api/v1/internal/federation/repos/{repo_id}/mirror/import
   Registry:
-    - GET /api/v1/node
-    - GET /api/v1/registry/nodes
-    - GET /api/v1/registry/repos/{repo_id}/placement
-    - POST /api/v1/registry/repos/{repo_id}/placement
+  - GET /api/v1/node
+  - GET /api/v1/registry/nodes
+  - GET /api/v1/registry/repos/{repo_id}/placement
+  - POST /api/v1/registry/repos/{repo_id}/placement
   Snapshots:
-    - POST /api/v1/repos/{repo_id}/snapshots/build
-    - GET /api/v1/repos/{repo_id}/snapshots/{snapshot_id}
+  - POST /api/v1/repos/{repo_id}/snapshots/build
+  - GET /api/v1/repos/{repo_id}/snapshots/{snapshot_id}
   Artifacts:
-    - POST /api/v1/repos/{repo_id}/artifacts/export
-    - GET /api/v1/repos/{repo_id}/artifacts
-    - GET /api/v1/repos/{repo_id}/artifacts/{artifact_id}
-    - DELETE /api/v1/repos/{repo_id}/artifacts/{artifact_id}
+  - POST /api/v1/repos/{repo_id}/artifacts/export
+  - GET /api/v1/repos/{repo_id}/artifacts
+  - GET /api/v1/repos/{repo_id}/artifacts/{artifact_id}
+  - DELETE /api/v1/repos/{repo_id}/artifacts/{artifact_id}
   Mirrors:
-    - GET /api/v1/repos/{repo_id}/mirrors
-    - POST /api/v1/repos/{repo_id}/mirrors
-    - POST /api/v1/repos/{repo_id}/mirrors/{mirror_id}/sync
-    - POST /api/v1/repos/{repo_id}/mirrors/{mirror_id}/health
-    - POST /api/v1/repos/{repo_id}/mirrors/{mirror_id}/promote
+  - GET /api/v1/repos/{repo_id}/mirrors
+  - POST /api/v1/repos/{repo_id}/mirrors
+  - POST /api/v1/repos/{repo_id}/mirrors/{mirror_id}/sync
+  - POST /api/v1/repos/{repo_id}/mirrors/{mirror_id}/health
+  - POST /api/v1/repos/{repo_id}/mirrors/{mirror_id}/promote
   Migrations:
-    - POST /api/v1/repos/{repo_id}/migrations
-    - GET /api/v1/repos/{repo_id}/migrations/{migration_id}
+  - POST /api/v1/repos/{repo_id}/migrations
+  - GET /api/v1/repos/{repo_id}/migrations/{migration_id}
   Exec:
-    - POST /api/v1/workspaces/{workspace_id}/exec
+  - POST /api/v1/workspaces/{workspace_id}/exec
   Observability:
-    - GET /api/v1/health
-    - GET /api/v1/ready
-    - GET /api/v1/health/deep
-    - GET /api/v1/metrics
+  - GET /api/v1/ready
+  - GET /api/v1/health/deep
+  - GET /api/v1/metrics
+  Admin:
+  - GET /api/v1/admin/health/deep
+  - GET /api/v1/admin/storage/health
+  - POST /api/v1/admin/storage/check
+  - POST /api/v1/admin/storage/recover
+  - POST /api/v1/admin/storage/compact
+  - POST /api/v1/admin/storage/backup
+  - GET /api/v1/admin/storage/migrations
+  - POST /api/v1/admin/storage/migrations/plan
+  - POST /api/v1/admin/storage/migrations/apply
+  - POST /api/v1/admin/storage/migrations/rollback
+  - POST /api/v1/admin/storage/restore/verify
+  - POST /api/v1/admin/storage/restore
+  - GET /api/v1/admin/workspaces/quarantined
+  - POST /api/v1/admin/artifacts/cleanup
+  - POST /api/v1/admin/repos/import-local
+  Audit:
+  - GET /api/v1/audit/events
+  Policy:
+  - GET /api/v1/policy/capabilities
+  - GET /api/v1/policy/grants
+  - POST /api/v1/policy/grants
+  - POST /api/v1/policy/refresh
+  SearchIndex:
+  - GET /api/v1/repos/{repo_id}/search/index/status
+  - POST /api/v1/repos/{repo_id}/search/index/refresh
+  - POST /api/v1/repos/{repo_id}/search/index/compact

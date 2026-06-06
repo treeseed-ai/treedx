@@ -30,3 +30,9 @@ class RepositoriesAdapter:
 
     def remotes(self, repo_id: str) -> Any:
         return json_request(self.transport, "GET", f"/api/v1/repos/{segment(repo_id)}/remotes")
+
+    def push(self, repo_id: str, body: Any | None = None) -> Any:
+        return json_request(self.transport, "POST", f"/api/v1/repos/{segment(repo_id)}/push", body)
+
+    def sync(self, repo_id: str, body: Any | None = None) -> Any:
+        return json_request(self.transport, "POST", f"/api/v1/repos/{segment(repo_id)}/sync", body)

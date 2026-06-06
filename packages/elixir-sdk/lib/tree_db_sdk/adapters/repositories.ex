@@ -47,4 +47,22 @@ defmodule TreeDbSdk.Repositories do
       %{}
     )
   end
+
+  def push(client, repo_id, body \\ %{}),
+    do:
+      Common.json_request(
+        client,
+        :post,
+        "/api/v1/repos/" <> Common.segment(repo_id) <> "/push",
+        body
+      )
+
+  def sync(client, repo_id, body \\ %{}),
+    do:
+      Common.json_request(
+        client,
+        :post,
+        "/api/v1/repos/" <> Common.segment(repo_id) <> "/sync",
+        body
+      )
 end

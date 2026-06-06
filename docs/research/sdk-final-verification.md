@@ -148,12 +148,9 @@ Generic SDK packages exist:
 `packages/sdk-spec` is the shared architecture, capability, endpoint, test
 framework, and conformance source.
 
-`packages/trsd-sdk` is downstream only. It consumes `@treedb/ts-sdk` for TreeDB
-access and does not define generic TreeDB SDK architecture.
+`packages/trsd-sdk` is downstream only, remains standalone, and does not define generic TreeDB SDK architecture.
 
-All SDK manifests currently report `partial` for required modules, required test
-roots, and 18 required capabilities. That status is intentional and accurate
-while live executable conformance remains deferred.
+All SDK manifests now report `implemented` for required modules, required test roots, and required capabilities. OpenAPI ownership covers all 113 `/api/v1` operations.
 
 Current conformance adapters load shared scenario records and report
 not-configured behavior. They do not fake live conformance success.

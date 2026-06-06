@@ -2,10 +2,7 @@
 
 ## Scope
 
-TreeDB SDK conformance is a shared black-box scenario catalog. Current language
-adapters load scenario metadata and report clean `not_configured` behavior.
-Live executable scenario dispatch, fixture payloads, and server lifecycle
-management remain later SDK implementation work.
+TreeDB SDK conformance is a shared black-box scenario catalog. Language adapters load scenario metadata and, when `TREEDB_BASE_URL` is configured by the local harness, dispatch scenarios through public SDK methods. Without a configured server they still report clean `not_configured` behavior for optional local checks.
 
 Conformance always runs through public SDK facades. Generated clients and
 private adapters are not the direct conformance surface.
@@ -86,15 +83,17 @@ npm run validate
 
 ## Not Configured Behavior
 
-Current conformance adapters must return or report `not_configured` when no live
-TreeDB server is configured. If a server flag is set today, adapters still
-report `not_configured` with a message that executable dispatch is deferred.
+Conformance adapters must return or report `not_configured` when no live TreeDB server is configured. When the local harness provides live configuration, required scenarios must dispatch through public SDK module methods and must not fake success.
 
-Adapters must not fake conformance success.
+## Local Live Conformance Harness
 
-## Future Live Conformance
+Live conformance uses the local TreeDB harness script:
 
-Future live conformance work must define:
+```bash
+./scripts/test-sdk-live-conformance.sh
+```
+
+The harness owns temporary repositories, credentials, storage paths, and destructive admin safety flags. It defines:
 
 - TreeDB server lifecycle or connection requirements;
 - credential and fixture setup;
@@ -102,7 +101,6 @@ Future live conformance work must define:
 - per-language dispatch from scenario actions to public SDK facade calls;
 - failure reporting that preserves `TreeDbApiError`-compatible fields.
 
-## Phase 16 Baseline
+## Implemented Baseline
 
-Current Phase 16 baseline conformance means scenario catalog loading plus clean
-`not_configured` adapter behavior. It does not mean live scenario execution.
+The implemented SDK baseline means scenario catalog loading plus live dispatch under the local harness. Optional integration tests may still report `not_configured` when no server is configured.

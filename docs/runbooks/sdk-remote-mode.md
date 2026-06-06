@@ -54,9 +54,7 @@ const sdk = new AgentSdk({
 SDK live checks are run by the independent SDK package workflow. The top-level
 TreeDB release gate does not invoke SDK scripts or require an SDK checkout.
 
-For TreeSeed focused regression, build `packages/ts-sdk` first because
-`packages/trsd-sdk` consumes `@treedb/ts-sdk` through `file:../ts-sdk` and the
-exports point at `dist`.
+For TreeSeed focused regression, keep `packages/trsd-sdk` standalone. Do not add local file links from TreeSeed SDK code to sibling SDK packages.
 
 ## Mutating Check
 

@@ -1,279 +1,420 @@
 version: 0.1.0
 status: draft
-
 coverage:
-  mode: advisory
+  mode: required
   openApiSource: ../../docs/api/openapi.yaml
   endpointFormat: METHOD /api/v1/path
   requiredLanguageSdks:
-    - typescript
-    - python
-    - rust
-    - elixir
-
+  - typescript
+  - python
+  - rust
+  - elixir
 capabilities:
-  - id: health.basic
-    status: required
-    type: sdk
-    required: true
-    module: Client
-    summary: Read basic service health and version information.
-    endpoints:
-      - GET /api/v1/health
-      - GET /api/v1/version
-    conformanceScenarios:
-      - health.basic
-
-  - id: auth.whoami
-    status: required
-    type: sdk
-    required: true
-    module: Auth
-    summary: Resolve the authenticated principal and effective TreeDB scope.
-    endpoints:
-      - GET /api/v1/auth/whoami
-      - GET /api/v1/policy/effective-scope
-    conformanceScenarios:
-      - auth.whoami
-      - auth.effective_scope
-      - errors.invalid_token
-      - errors.permission_denied
-
-  - id: repositories.lifecycle
-    status: required
-    type: sdk
-    required: true
-    module: Repositories
-    summary: Register, create, list, inspect, and read repository refs/remotes.
-    endpoints:
-      - POST /api/v1/repos/register
-      - GET /api/v1/repos
-      - POST /api/v1/repos
-      - GET /api/v1/repos/{repo_id}
-      - GET /api/v1/repos/{repo_id}/status
-      - GET /api/v1/repos/{repo_id}/refs
-      - GET /api/v1/repos/{repo_id}/remotes
-    conformanceScenarios:
-      - repositories.register_get_status
-      - repositories.refs_remotes
-
-  - id: workspaces.lifecycle
-    status: required
-    type: sdk
-    required: true
-    module: Workspaces
-    summary: Create, inspect, and close repository workspaces.
-    endpoints:
-      - POST /api/v1/repos/{repo_id}/workspaces
-      - GET /api/v1/workspaces/{workspace_id}
-      - POST /api/v1/workspaces/{workspace_id}/close
-    conformanceScenarios:
-      - workspaces.create_get_close
-
-  - id: files.lifecycle
-    status: required
-    type: sdk
-    required: true
-    module: Files
-    summary: Read, write, patch, delete, search, diff, and commit workspace files.
-    endpoints:
-      - GET /api/v1/workspaces/{workspace_id}/tree
-      - GET /api/v1/workspaces/{workspace_id}/files
-      - PUT /api/v1/workspaces/{workspace_id}/files
-      - PATCH /api/v1/workspaces/{workspace_id}/files
-      - DELETE /api/v1/workspaces/{workspace_id}/files
-      - POST /api/v1/workspaces/{workspace_id}/search
-      - GET /api/v1/workspaces/{workspace_id}/status
-      - GET /api/v1/workspaces/{workspace_id}/diff
-      - POST /api/v1/workspaces/{workspace_id}/commit
-    conformanceScenarios:
-      - files.tree_read_write_patch_delete
-      - files.search_status_diff_commit
-
-  - id: blobs.binary
-    status: required
-    type: sdk
-    required: true
-    module: Blobs
-    summary: Move binary repository and workspace blob content without text coercion.
-    endpoints:
-      - POST /api/v1/repos/{repo_id}/blobs/read
-      - POST /api/v1/workspaces/{workspace_id}/blobs/write
-      - POST /api/v1/workspaces/{workspace_id}/blobs/delete
-      - GET /api/v1/workspaces/{workspace_id}/blobs/download
-      - PUT /api/v1/workspaces/{workspace_id}/blobs/upload
-    conformanceScenarios:
-      - blobs.read_write_download_upload
-
-  - id: blobs.multipart
-    status: required
-    type: sdk
-    required: true
-    module: Blobs
-    summary: Create, upload parts for, complete, and abort multipart blob uploads.
-    endpoints:
-      - POST /api/v1/workspaces/{workspace_id}/blobs/uploads
-      - PUT /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/parts/{part_number}
-      - POST /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/complete
-      - DELETE /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}
-    conformanceScenarios:
-      - blobs.multipart_upload
-
-  - id: query.repository
-    status: required
-    type: sdk
-    required: true
-    module: Query
-    summary: Read repository files, list paths, search files, and run repository queries.
-    endpoints:
-      - POST /api/v1/repos/{repo_id}/files/read
-      - POST /api/v1/repos/{repo_id}/paths/list
-      - POST /api/v1/repos/{repo_id}/files/search
-      - POST /api/v1/repos/{repo_id}/query
-    conformanceScenarios:
-      - query.read_file
-      - query.paths_list
-      - query.search_filter_sort
-      - query.changed_paths
-      - query.pagination
-
-  - id: graph.repository
-    status: required
-    type: sdk
-    required: true
-    module: Graph
-    summary: Refresh repository graph indexes and query repository graph data.
-    endpoints:
-      - POST /api/v1/repos/{repo_id}/graph/refresh
-      - POST /api/v1/repos/{repo_id}/graph/query
-    conformanceScenarios:
-      - graph.refresh
-      - graph.query
-
-  - id: context.repository
-    status: required
-    type: sdk
-    required: true
-    module: Context
-    summary: Build repository context packs and parse context query requests.
-    endpoints:
-      - POST /api/v1/repos/{repo_id}/context/build
-      - POST /api/v1/repos/{repo_id}/context/parse-ctx
-    conformanceScenarios:
-      - context.build
-      - context.parse_ctx
-
-  - id: federation.global_query
-    status: required
-    type: sdk
-    required: true
-    module: Federation
-    summary: Plan and execute global search, query, graph, and context requests.
-    endpoints:
-      - POST /api/v1/federation/query/plan
-      - POST /api/v1/search
-      - POST /api/v1/query
-      - POST /api/v1/context/build
-      - POST /api/v1/graph/query
-    conformanceScenarios:
-      - federation.plan
-      - federation.global_search
-      - federation.global_query
-      - federation.partial_failure
-
-  - id: registry.routing
-    status: required
-    type: sdk
-    required: true
-    module: Registry
-    summary: Read local node, registry node inventory, and repository placement routing.
-    endpoints:
-      - GET /api/v1/node
-      - GET /api/v1/registry/nodes
-      - GET /api/v1/registry/repos/{repo_id}/placement
-      - POST /api/v1/registry/repos/{repo_id}/placement
-    conformanceScenarios:
-      - registry.local_node
-      - registry.nodes
-      - registry.repo_placement
-
-  - id: snapshots.lifecycle
-    status: required
-    type: sdk
-    required: true
-    module: Snapshots
-    summary: Build and retrieve repository snapshots.
-    endpoints:
-      - POST /api/v1/repos/{repo_id}/snapshots/build
-      - GET /api/v1/repos/{repo_id}/snapshots/{snapshot_id}
-    conformanceScenarios:
-      - snapshots.build_get
-
-  - id: artifacts.lifecycle
-    status: required
-    type: sdk
-    required: true
-    module: Artifacts
-    summary: Export, list, read, and delete repository artifacts.
-    endpoints:
-      - POST /api/v1/repos/{repo_id}/artifacts/export
-      - GET /api/v1/repos/{repo_id}/artifacts
-      - GET /api/v1/repos/{repo_id}/artifacts/{artifact_id}
-      - DELETE /api/v1/repos/{repo_id}/artifacts/{artifact_id}
-    conformanceScenarios:
-      - artifacts.export
-      - artifacts.list_get_delete
-
-  - id: mirrors.lifecycle
-    status: required
-    type: sdk
-    required: true
-    module: Mirrors
-    summary: List, create or update, sync, health-check, and promote repository mirrors.
-    endpoints:
-      - GET /api/v1/repos/{repo_id}/mirrors
-      - POST /api/v1/repos/{repo_id}/mirrors
-      - POST /api/v1/repos/{repo_id}/mirrors/{mirror_id}/sync
-      - POST /api/v1/repos/{repo_id}/mirrors/{mirror_id}/health
-      - POST /api/v1/repos/{repo_id}/mirrors/{mirror_id}/promote
-    conformanceScenarios:
-      - mirrors.create_health_promote
-      - mirrors.sync
-
-  - id: migrations.lifecycle
-    status: required
-    type: sdk
-    required: true
-    module: Migrations
-    summary: Create and retrieve repository placement migrations.
-    endpoints:
-      - POST /api/v1/repos/{repo_id}/migrations
-      - GET /api/v1/repos/{repo_id}/migrations/{migration_id}
-    conformanceScenarios:
-      - migrations.create_get
-
-  - id: exec.workspace
-    status: required
-    type: sdk
-    required: true
-    module: Exec
-    summary: Execute workspace-scoped commands through TreeDB policy boundaries.
-    endpoints:
-      - POST /api/v1/workspaces/{workspace_id}/exec
-    conformanceScenarios:
-      - exec.read_only
-      - exec.write_limited
-
-  - id: observability.health_metrics
-    status: required
-    type: sdk
-    required: true
-    module: Observability
-    summary: Read health, readiness, deep health, and metrics endpoints.
-    endpoints:
-      - GET /api/v1/health
-      - GET /api/v1/ready
-      - GET /api/v1/health/deep
-      - GET /api/v1/metrics
-    conformanceScenarios:
-      - observability.health_metrics
+- id: health.basic
+  status: required
+  type: sdk
+  required: true
+  module: Client
+  summary: Read basic service health and version information.
+  endpoints:
+  - GET /api/v1/health
+  - GET /api/v1/version
+  conformanceScenarios:
+  - health.basic
+- id: auth.whoami
+  status: required
+  type: sdk
+  required: true
+  module: Auth
+  summary: Resolve the authenticated principal and effective TreeDB scope.
+  endpoints:
+  - GET /api/v1/auth/whoami
+  - GET /api/v1/policy/effective-scope
+  conformanceScenarios:
+  - auth.whoami
+  - auth.effective_scope
+  - errors.invalid_token
+  - errors.permission_denied
+- id: auth.mode_dev_token
+  status: required
+  type: sdk
+  required: true
+  module: Auth
+  summary: Read auth mode and create development tokens for local/dev harnesses.
+  endpoints:
+  - GET /api/v1/auth/mode
+  - POST /api/v1/auth/dev-token
+  conformanceScenarios:
+  - auth.mode
+  - auth.dev_token
+- id: repositories.lifecycle
+  status: required
+  type: sdk
+  required: true
+  module: Repositories
+  summary: Register, create, list, inspect, and read repository refs/remotes.
+  endpoints:
+  - POST /api/v1/repos/register
+  - GET /api/v1/repos
+  - POST /api/v1/repos
+  - GET /api/v1/repos/{repo_id}
+  - GET /api/v1/repos/{repo_id}/status
+  - GET /api/v1/repos/{repo_id}/refs
+  - GET /api/v1/repos/{repo_id}/remotes
+  conformanceScenarios:
+  - repositories.register_get_status
+  - repositories.refs_remotes
+- id: repositories.push_sync
+  status: required
+  type: sdk
+  required: true
+  module: Repositories
+  summary: Push and sync repository content through TreeDB repository operations.
+  endpoints:
+  - POST /api/v1/repos/{repo_id}/push
+  - POST /api/v1/repos/{repo_id}/sync
+  conformanceScenarios:
+  - repositories.push_sync
+- id: workspaces.lifecycle
+  status: required
+  type: sdk
+  required: true
+  module: Workspaces
+  summary: Create, inspect, and close repository workspaces.
+  endpoints:
+  - POST /api/v1/repos/{repo_id}/workspaces
+  - GET /api/v1/workspaces/{workspace_id}
+  - POST /api/v1/workspaces/{workspace_id}/close
+  conformanceScenarios:
+  - workspaces.create_get_close
+- id: files.lifecycle
+  status: required
+  type: sdk
+  required: true
+  module: Files
+  summary: Read, write, patch, delete, search, diff, and commit workspace files.
+  endpoints:
+  - GET /api/v1/workspaces/{workspace_id}/tree
+  - GET /api/v1/workspaces/{workspace_id}/files
+  - PUT /api/v1/workspaces/{workspace_id}/files
+  - PATCH /api/v1/workspaces/{workspace_id}/files
+  - DELETE /api/v1/workspaces/{workspace_id}/files
+  - POST /api/v1/workspaces/{workspace_id}/search
+  - GET /api/v1/workspaces/{workspace_id}/status
+  - GET /api/v1/workspaces/{workspace_id}/diff
+  - POST /api/v1/workspaces/{workspace_id}/commit
+  conformanceScenarios:
+  - files.tree_read_write_patch_delete
+  - files.search_status_diff_commit
+- id: blobs.binary
+  status: required
+  type: sdk
+  required: true
+  module: Blobs
+  summary: Move binary repository and workspace blob content without text coercion.
+  endpoints:
+  - POST /api/v1/repos/{repo_id}/blobs/read
+  - POST /api/v1/workspaces/{workspace_id}/blobs/write
+  - POST /api/v1/workspaces/{workspace_id}/blobs/delete
+  - GET /api/v1/workspaces/{workspace_id}/blobs/download
+  - PUT /api/v1/workspaces/{workspace_id}/blobs/upload
+  conformanceScenarios:
+  - blobs.read_write_download_upload
+- id: blobs.multipart
+  status: required
+  type: sdk
+  required: true
+  module: Blobs
+  summary: Create, upload parts for, complete, and abort multipart blob uploads.
+  endpoints:
+  - POST /api/v1/workspaces/{workspace_id}/blobs/uploads
+  - PUT /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/parts/{part_number}
+  - POST /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/complete
+  - DELETE /api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}
+  conformanceScenarios:
+  - blobs.multipart_upload
+- id: query.repository
+  status: required
+  type: sdk
+  required: true
+  module: Query
+  summary: Read repository files, list paths, search files, and run repository queries.
+  endpoints:
+  - POST /api/v1/repos/{repo_id}/files/read
+  - POST /api/v1/repos/{repo_id}/paths/list
+  - POST /api/v1/repos/{repo_id}/files/search
+  - POST /api/v1/repos/{repo_id}/query
+  conformanceScenarios:
+  - query.read_file
+  - query.paths_list
+  - query.search_filter_sort
+  - query.changed_paths
+  - query.pagination
+- id: graph.repository
+  status: required
+  type: sdk
+  required: true
+  module: Graph
+  summary: Refresh repository graph indexes and query repository graph data.
+  endpoints:
+  - POST /api/v1/repos/{repo_id}/graph/refresh
+  - POST /api/v1/repos/{repo_id}/graph/query
+  conformanceScenarios:
+  - graph.refresh
+  - graph.query
+- id: graph.expanded_repository
+  status: required
+  type: sdk
+  required: true
+  module: Graph
+  summary: Read graph refresh jobs, nodes, related entities, subgraphs, and graph-backed search.
+  endpoints:
+  - GET /api/v1/repos/{repo_id}/graph/refresh-jobs/{job_id}
+  - GET /api/v1/repos/{repo_id}/graph/nodes/{node_id}
+  - POST /api/v1/repos/{repo_id}/graph/related
+  - POST /api/v1/repos/{repo_id}/graph/subgraph
+  - POST /api/v1/repos/{repo_id}/graph/search-files
+  - POST /api/v1/repos/{repo_id}/graph/search-sections
+  - POST /api/v1/repos/{repo_id}/graph/search-entities
+  conformanceScenarios:
+  - graph.refresh_job_node
+  - graph.related_subgraph
+  - graph.search_entities_files_sections
+- id: context.repository
+  status: required
+  type: sdk
+  required: true
+  module: Context
+  summary: Build repository context packs and parse context query requests.
+  endpoints:
+  - POST /api/v1/repos/{repo_id}/context/build
+  - POST /api/v1/repos/{repo_id}/context/parse-ctx
+  conformanceScenarios:
+  - context.build
+  - context.parse_ctx
+- id: federation.global_query
+  status: required
+  type: sdk
+  required: true
+  module: Federation
+  summary: Plan and execute global search, query, graph, and context requests.
+  endpoints:
+  - POST /api/v1/federation/query/plan
+  - POST /api/v1/search
+  - POST /api/v1/query
+  - POST /api/v1/context/build
+  - POST /api/v1/graph/query
+  conformanceScenarios:
+  - federation.plan
+  - federation.global_search
+  - federation.global_query
+  - federation.partial_failure
+- id: federation.catalog_peers_routes
+  status: required
+  type: sdk
+  required: true
+  module: Federation
+  summary: Read and maintain federation catalog, peer, node, and route metadata.
+  endpoints:
+  - GET /api/v1/federation/catalog
+  - POST /api/v1/federation/catalog/push
+  - POST /api/v1/federation/catalog/sync
+  - GET /api/v1/federation/peers
+  - GET /api/v1/federation/peers/{node_id}
+  - POST /api/v1/federation/nodes/register
+  - POST /api/v1/federation/peers/{node_id}/trust
+  - POST /api/v1/federation/peers/{node_id}/revoke
+  - GET /api/v1/federation/routes
+  conformanceScenarios:
+  - federation.catalog
+  - federation.catalog_sync_push
+  - federation.peers_lifecycle
+  - federation.routes
+- id: federation.internal_node_operations
+  status: required
+  type: internal
+  required: true
+  module: FederationInternal
+  summary: Run internal federation health, proxy, and mirror transfer operations.
+  endpoints:
+  - GET /api/v1/internal/federation/health
+  - POST /api/v1/internal/federation/proxy
+  - POST /api/v1/internal/federation/repos/{repo_id}/mirror/export
+  - POST /api/v1/internal/federation/repos/{repo_id}/mirror/import
+  conformanceScenarios:
+  - federation.internal_health_proxy
+  - federation.internal_mirror_export_import
+- id: registry.routing
+  status: required
+  type: sdk
+  required: true
+  module: Registry
+  summary: Read local node, registry node inventory, and repository placement routing.
+  endpoints:
+  - GET /api/v1/node
+  - GET /api/v1/registry/nodes
+  - GET /api/v1/registry/repos/{repo_id}/placement
+  - POST /api/v1/registry/repos/{repo_id}/placement
+  conformanceScenarios:
+  - registry.local_node
+  - registry.nodes
+  - registry.repo_placement
+- id: snapshots.lifecycle
+  status: required
+  type: sdk
+  required: true
+  module: Snapshots
+  summary: Build and retrieve repository snapshots.
+  endpoints:
+  - POST /api/v1/repos/{repo_id}/snapshots/build
+  - GET /api/v1/repos/{repo_id}/snapshots/{snapshot_id}
+  conformanceScenarios:
+  - snapshots.build_get
+- id: artifacts.lifecycle
+  status: required
+  type: sdk
+  required: true
+  module: Artifacts
+  summary: Export, list, read, and delete repository artifacts.
+  endpoints:
+  - POST /api/v1/repos/{repo_id}/artifacts/export
+  - GET /api/v1/repos/{repo_id}/artifacts
+  - GET /api/v1/repos/{repo_id}/artifacts/{artifact_id}
+  - DELETE /api/v1/repos/{repo_id}/artifacts/{artifact_id}
+  conformanceScenarios:
+  - artifacts.export
+  - artifacts.list_get_delete
+- id: mirrors.lifecycle
+  status: required
+  type: sdk
+  required: true
+  module: Mirrors
+  summary: List, create or update, sync, health-check, and promote repository mirrors.
+  endpoints:
+  - GET /api/v1/repos/{repo_id}/mirrors
+  - POST /api/v1/repos/{repo_id}/mirrors
+  - POST /api/v1/repos/{repo_id}/mirrors/{mirror_id}/sync
+  - POST /api/v1/repos/{repo_id}/mirrors/{mirror_id}/health
+  - POST /api/v1/repos/{repo_id}/mirrors/{mirror_id}/promote
+  conformanceScenarios:
+  - mirrors.create_health_promote
+  - mirrors.sync
+- id: migrations.lifecycle
+  status: required
+  type: sdk
+  required: true
+  module: Migrations
+  summary: Create and retrieve repository placement migrations.
+  endpoints:
+  - POST /api/v1/repos/{repo_id}/migrations
+  - GET /api/v1/repos/{repo_id}/migrations/{migration_id}
+  conformanceScenarios:
+  - migrations.create_get
+- id: exec.workspace
+  status: required
+  type: sdk
+  required: true
+  module: Exec
+  summary: Execute workspace-scoped commands through TreeDB policy boundaries.
+  endpoints:
+  - POST /api/v1/workspaces/{workspace_id}/exec
+  conformanceScenarios:
+  - exec.read_only
+  - exec.write_limited
+- id: observability.health_metrics
+  status: required
+  type: sdk
+  required: true
+  module: Observability
+  summary: Read readiness, deep health, and metrics endpoints.
+  endpoints:
+  - GET /api/v1/health
+  - GET /api/v1/ready
+  - GET /api/v1/health/deep
+  - GET /api/v1/metrics
+  conformanceScenarios:
+  - observability.health_metrics
+- id: admin.storage_operations
+  status: required
+  type: admin
+  required: true
+  module: Admin
+  summary: Run scoped admin storage health, maintenance, migration, backup, and restore operations.
+  endpoints:
+  - GET /api/v1/admin/health/deep
+  - GET /api/v1/admin/storage/health
+  - POST /api/v1/admin/storage/check
+  - POST /api/v1/admin/storage/recover
+  - POST /api/v1/admin/storage/compact
+  - POST /api/v1/admin/storage/backup
+  - GET /api/v1/admin/storage/migrations
+  - POST /api/v1/admin/storage/migrations/plan
+  - POST /api/v1/admin/storage/migrations/apply
+  - POST /api/v1/admin/storage/migrations/rollback
+  - POST /api/v1/admin/storage/restore/verify
+  - POST /api/v1/admin/storage/restore
+  conformanceScenarios:
+  - admin.deep_health
+  - admin.storage_health_check_recover
+  - admin.storage_compact_backup
+  - admin.storage_migrations
+  - admin.storage_restore
+- id: admin.repository_operations
+  status: required
+  type: admin
+  required: true
+  module: Admin
+  summary: Import local repositories through the admin API.
+  endpoints:
+  - POST /api/v1/admin/repos/import-local
+  conformanceScenarios:
+  - admin.import_local_repo
+- id: admin.workspace_artifact_operations
+  status: required
+  type: admin
+  required: true
+  module: Admin
+  summary: Inspect quarantined workspaces and clean up artifacts through scoped admin APIs.
+  endpoints:
+  - GET /api/v1/admin/workspaces/quarantined
+  - POST /api/v1/admin/artifacts/cleanup
+  conformanceScenarios:
+  - admin.quarantined_workspaces
+  - admin.cleanup_artifacts
+- id: audit.events
+  status: required
+  type: sdk
+  required: true
+  module: Audit
+  summary: Read TreeDB audit event records.
+  endpoints:
+  - GET /api/v1/audit/events
+  conformanceScenarios:
+  - audit.events
+- id: policy.capabilities_grants
+  status: required
+  type: sdk
+  required: true
+  module: Policy
+  summary: Read policy capabilities, manage grants, and refresh policy state.
+  endpoints:
+  - GET /api/v1/policy/capabilities
+  - GET /api/v1/policy/grants
+  - POST /api/v1/policy/grants
+  - POST /api/v1/policy/refresh
+  conformanceScenarios:
+  - policy.capabilities
+  - policy.grants_lifecycle
+  - policy.refresh
+- id: search_index.lifecycle
+  status: required
+  type: sdk
+  required: true
+  module: SearchIndex
+  summary: Read, refresh, and compact repository search indexes.
+  endpoints:
+  - GET /api/v1/repos/{repo_id}/search/index/status
+  - POST /api/v1/repos/{repo_id}/search/index/refresh
+  - POST /api/v1/repos/{repo_id}/search/index/compact
+  conformanceScenarios:
+  - search_index.refresh_status_compact

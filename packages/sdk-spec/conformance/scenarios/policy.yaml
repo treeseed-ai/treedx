@@ -1,0 +1,61 @@
+version: 0.1.0
+status: draft
+scenarios:
+- id: policy.capabilities
+  capabilityId: policy.capabilities_grants
+  title: Policy / Capabilities
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: &id001
+  - GET /api/v1/policy/capabilities
+  - GET /api/v1/policy/grants
+  - POST /api/v1/policy/grants
+  - POST /api/v1/policy/refresh
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: policy.capabilities
+    description: Execute policy.capabilities through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: policy.grants_lifecycle
+  capabilityId: policy.capabilities_grants
+  title: Policy / Grants Lifecycle
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id001
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: policy.grants_lifecycle
+    description: Execute policy.grants_lifecycle through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: policy.refresh
+  capabilityId: policy.capabilities_grants
+  title: Policy / Refresh
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id001
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: policy.refresh
+    description: Execute policy.refresh through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.

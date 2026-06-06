@@ -101,6 +101,9 @@ require_text packages/ts-sdk/README.md "npm run treedb:check-generated"
 require_text packages/python-sdk/README.md "python scripts/check_treedb_generated_types.py"
 require_text packages/rust-sdk/README.md "node scripts/check_treedb_generated_types.mjs"
 require_text packages/elixir-sdk/README.md "mix run scripts/check_treedb_generated_types.exs"
-require_text docs/architecture/treedb-sdk-spec-implementation-plan.md "Phase 15 is complete"
+require_text docs/architecture/treedb-sdk-spec-implementation-plan.md "implemented"
+for term in Admin Audit Policy SearchIndex FederationInternal "Live conformance" implemented; do
+  require_text docs/architecture/treedb-sdk-spec-implementation-plan.md "$term"
+done
 
 printf 'sdk docs check passed\n'

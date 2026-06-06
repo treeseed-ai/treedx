@@ -1,0 +1,162 @@
+version: 0.1.0
+status: draft
+scenarios:
+- id: admin.deep_health
+  capabilityId: admin.storage_operations
+  title: Admin / Deep Health
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: &id001
+  - GET /api/v1/admin/health/deep
+  - GET /api/v1/admin/storage/health
+  - POST /api/v1/admin/storage/check
+  - POST /api/v1/admin/storage/recover
+  - POST /api/v1/admin/storage/compact
+  - POST /api/v1/admin/storage/backup
+  - GET /api/v1/admin/storage/migrations
+  - POST /api/v1/admin/storage/migrations/plan
+  - POST /api/v1/admin/storage/migrations/apply
+  - POST /api/v1/admin/storage/migrations/rollback
+  - POST /api/v1/admin/storage/restore/verify
+  - POST /api/v1/admin/storage/restore
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: admin.deep_health
+    description: Execute admin.deep_health through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: admin.storage_health_check_recover
+  capabilityId: admin.storage_operations
+  title: Admin / Storage Health Check Recover
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id001
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: admin.storage_health_check_recover
+    description: Execute admin.storage_health_check_recover through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: admin.storage_compact_backup
+  capabilityId: admin.storage_operations
+  title: Admin / Storage Compact Backup
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id001
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: admin.storage_compact_backup
+    description: Execute admin.storage_compact_backup through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: admin.storage_migrations
+  capabilityId: admin.storage_operations
+  title: Admin / Storage Migrations
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id001
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: admin.storage_migrations
+    description: Execute admin.storage_migrations through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: admin.storage_restore
+  capabilityId: admin.storage_operations
+  title: Admin / Storage Restore
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id001
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: admin.storage_restore
+    description: Execute admin.storage_restore through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: admin.import_local_repo
+  capabilityId: admin.repository_operations
+  title: Admin / Import Local Repo
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs:
+  - POST /api/v1/admin/repos/import-local
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: admin.import_local_repo
+    description: Execute admin.import_local_repo through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: admin.quarantined_workspaces
+  capabilityId: admin.workspace_artifact_operations
+  title: Admin / Quarantined Workspaces
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: &id002
+  - GET /api/v1/admin/workspaces/quarantined
+  - POST /api/v1/admin/artifacts/cleanup
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: admin.quarantined_workspaces
+    description: Execute admin.quarantined_workspaces through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.
+- id: admin.cleanup_artifacts
+  capabilityId: admin.workspace_artifact_operations
+  title: Admin / Cleanup Artifacts
+  kind: black_box
+  required: true
+  serverRequired: true
+  endpointRefs: *id002
+  fixtures:
+    repos: []
+    requests: []
+    expected: []
+  steps:
+  - name: execute
+    action: admin.cleanup_artifacts
+    description: Execute admin.cleanup_artifacts through the public SDK facade against the local TreeDB conformance harness.
+  assertions:
+  - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
+  - Responses and TreeDB error envelopes are exposed without product-specific semantics.

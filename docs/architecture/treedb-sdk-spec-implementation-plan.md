@@ -1,12 +1,13 @@
 # TreeDB SDK Spec and Multi-Language SDK Implementation Plan
 
-Status: Draft v0.2  
-Date: 2026-06-05  
-Canonical location: `docs/architecture/treedb-sdk-spec-implementation-plan.md`  
-Plan implementation status: Baseline complete through Phase 16.  
-Non-canonical draft: `sdk-plan.md`  
-SDK manifest status: `partial` for TypeScript, Python, Rust, and Elixir.  
-Live executable conformance: deferred.  
+Status: Draft v0.2
+Date: 2026-06-05
+Canonical location: `docs/architecture/treedb-sdk-spec-implementation-plan.md`
+Plan implementation status: Implemented SDK baseline with full `/api/v1` OpenAPI coverage.
+Non-canonical draft: `sdk-plan.md`
+SDK manifest status: `implemented` for TypeScript, Python, Rust, and Elixir.
+Live executable conformance: local TreeDB harness.
+Live conformance uses the local TreeDB harness for implemented SDK verification.
 
 Primary packages:
 
@@ -52,20 +53,26 @@ The completed implementation should provide:
 | 5 | Capability and endpoint coverage | Complete |
 | 6 | Error/auth/pagination/binary contracts | Complete |
 | 7 | Shared conformance catalog | Complete |
-| 8 | TypeScript SDK baseline | Complete, `partial` manifest |
+| 8 | TypeScript SDK baseline | Complete, `implemented` manifest |
 | 9 | TreeSeed downstream integration | Complete |
-| 10 | Python SDK baseline | Complete, `partial` manifest |
-| 11 | Rust SDK baseline | Complete, `partial` manifest |
-| 12 | Elixir SDK baseline | Complete, `partial` manifest |
+| 10 | Python SDK baseline | Complete, `implemented` manifest |
+| 11 | Rust SDK baseline | Complete, `implemented` manifest |
+| 12 | Elixir SDK baseline | Complete, `implemented` manifest |
 | 13 | SDK GitHub Actions | Complete |
 | 14 | Release gate relationship and local SDK gate | Complete |
 | 15 | Documentation and onboarding | Complete |
 | 16 | Final verification and baseline completion | Complete |
 
 `Complete` means the planned baseline work for the phase exists and validates.
-For language SDK packages, capability status remains `partial` until live
-executable conformance and full integration maturity are implemented in a later
-plan.
+For language SDK packages, capability status is `implemented` after full `/api/v1` OpenAPI endpoint ownership, first-class scoped modules, generated metadata checks, and local-harness conformance coverage.
+
+## Full OpenAPI Implemented Baseline
+
+Historical phase notes before the implemented baseline may mention `partial` as an earlier status. The current completed state is `implemented` for all four language SDK manifests.
+
+## Full OpenAPI Implemented Baseline
+
+All four generic SDK packages now expose every `/api/v1` operation declared in `docs/api/openapi.yaml`. Sensitive and administrative surfaces are explicit scoped modules: `Admin`, `Audit`, `Policy`, `SearchIndex`, and `FederationInternal`. `packages/sdk-spec` owns all 113 operations, and OpenAPI coverage has zero advisory-uncovered operations. SDK manifests report `implemented`; TreeSeed remains a standalone downstream package and does not define generic SDK architecture.
 
 ## Current Situation and Planning Constraints
 
@@ -2239,9 +2246,7 @@ Run:
 ```
 
 Run focused `packages/trsd-sdk` regression when TypeScript SDK changes can
-affect its local `file:../ts-sdk` dependency behavior. Build `packages/ts-sdk`
-first because `packages/trsd-sdk` consumes `@treedb/ts-sdk` exports from
-`dist`.
+affect the standalone TreeSeed package boundary. `packages/trsd-sdk` must not depend on sibling SDK package paths or generated `dist` output.
 
 ### Documentation Work
 
@@ -2490,9 +2495,9 @@ Python generated metadata and source/test compile checks pass locally
 Python package install/build/pytest pass when Python pip tooling is available
 Rust package tests pass
 Elixir package tests pass
-SDK conformance catalog loading and not_configured adapter behavior pass
+SDK conformance catalog loading and local-harness conformance behavior passes
 Integration tests pass or report not configured cleanly
-Capability matrix shows all required capabilities partial for TypeScript, Python, Rust, and Elixir
+Capability matrix shows all required capabilities implemented for TypeScript, Python, Rust, and Elixir
 Documentation commands are accurate
 ```
 
@@ -2509,16 +2514,16 @@ Add final status block to the plan:
 Status: Baseline complete
 Spec version: 0.1.0
 Required SDKs: TypeScript, Python, Rust, Elixir
-Required SDK manifest status: partial
-Required conformance: scenario catalog loading and not_configured adapter behavior
+Required SDK manifest status: implemented
+Required conformance: scenario catalog loading plus local-harness live dispatch
 Required package workflows: defined in SDK Spec, SDK Packages, SDK Conformance, and SDK Integration
 Required documentation: complete
-Live executable conformance: deferred
+Live executable conformance: local TreeDB harness
 ```
 
 ### Phase Complete When
 
-- All four SDKs expose the same required capability set as partial baselines.
+- All four SDKs expose the same required capability set as implemented baselines.
 - All four SDKs use the same test category layout.
 - TreeSeed migration safety tests live in packages/trsd-sdk and do not define TreeDB SDK architecture.
 - All SDKs pass shared conformance catalog loading and clean not_configured adapter behavior.
@@ -2534,7 +2539,7 @@ Phase 16 is complete. The TreeDB SDK baseline now includes `sdk-spec`, generic
 TypeScript, Python, Rust, and Elixir SDK packages, SDK CI workflows, local SDK
 package and documentation gates, shared conformance scenario metadata, and
 release/conformance/onboarding documentation. All SDK manifests accurately
-report partial status while live executable conformance remains deferred. The
+report implemented status with full OpenAPI ownership and local-harness conformance. The
 final verification record documents package checks, dependency-free Python
 validation where local pip tooling is unavailable, focused TreeSeed downstream
 regression, and the root OpenAPI gate. `sdk-plan.md` remains untouched as a
@@ -2568,8 +2573,8 @@ packages/elixir-sdk
 all SDKs
   share the same architecture
   share the same test layout
-  load the same conformance scenarios and report not_configured until live dispatch exists
-  expose the same TreeDB capabilities as partial baselines
+  load the same conformance scenarios and dispatch live through the local harness when configured
+  expose the same TreeDB capabilities as implemented baselines
   preserve TreeDB security and public hygiene constraints
   remain aligned through sdk-spec and GitHub Actions
 ```

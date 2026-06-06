@@ -14,3 +14,8 @@ export * from './artifact-port.js';
 export * from './mirror-port.js';
 export * from './migration-port.js';
 export * from './exec-port.js';
+export * from './admin-port.js';
+export * from './audit-port.js';
+export * from './policy-port.js';
+export * from './search-index-port.js';
+export * from './federation-internal-port.js';

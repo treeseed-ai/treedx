@@ -1,3 +1,8 @@
+from .federation_internal import FederationInternalAdapter
+from .search_index import SearchIndexAdapter
+from .policy import PolicyAdapter
+from .audit import AuditAdapter
+from .admin import AdminAdapter
 from .artifacts import ArtifactsAdapter
 from .blobs import BlobsAdapter
 from .context import ContextAdapter
@@ -15,6 +20,11 @@ from .snapshots import SnapshotsAdapter
 from .workspaces import WorkspacesAdapter
 
 __all__ = [
+    "FederationInternalAdapter",
+    "SearchIndexAdapter",
+    "PolicyAdapter",
+    "AuditAdapter",
+    "AdminAdapter",
     "ArtifactsAdapter",
     "BlobsAdapter",
     "ContextAdapter",

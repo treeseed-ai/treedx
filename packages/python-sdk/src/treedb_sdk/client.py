@@ -1,27 +1,36 @@
 from __future__ import annotations
 
 from typing import Any, Mapping
+import re
 
 from .adapters import (
+    AdminAdapter,
+    AuditAdapter,
     ArtifactsAdapter,
     BlobsAdapter,
     ContextAdapter,
     ExecAdapter,
     FederationAdapter,
+    FederationInternalAdapter,
     FilesAdapter,
     GraphAdapter,
     MigrationsAdapter,
     MirrorsAdapter,
     ObservabilityAdapter,
+    PolicyAdapter,
     QueryAdapter,
     RegistryAdapter,
     RepositoriesAdapter,
+    SearchIndexAdapter,
     SnapshotsAdapter,
     WorkspacesAdapter,
 )
 from .auth import AuthProvider
 from .config import TreeDbClientConfig
 from .transport import HttpxTransport, Transport, TreeDbRequest
+from .generated import TREE_DB_OPENAPI_OPERATIONS
+from .binary import BinaryBody
+from .adapters.common import segment
 
 
 class TreeDbClient:
@@ -58,6 +67,11 @@ class TreeDbClient:
         self.migrations = MigrationsAdapter(self.transport)
         self.exec = ExecAdapter(self.transport)
         self.observability = ObservabilityAdapter(self.transport)
+        self.admin = AdminAdapter(self.transport)
+        self.audit = AuditAdapter(self.transport)
+        self.policy = PolicyAdapter(self.transport)
+        self.search_index = SearchIndexAdapter(self.transport)
+        self.federation_internal = FederationInternalAdapter(self.transport)
 
     def health(self) -> Any:
         return self.observability.health()
@@ -70,6 +84,31 @@ class TreeDbClient:
 
     def effective_scope(self) -> Any:
         return self.transport.request(TreeDbRequest(method="GET", path="/api/v1/policy/effective-scope")).data
+
+    def auth_mode(self) -> Any:
+        return self.transport.request(TreeDbRequest(method="GET", path="/api/v1/auth/mode")).data
+
+    def create_dev_token(self, body: Any | None = None) -> Any:
+        return self.transport.request(TreeDbRequest(method="POST", path="/api/v1/auth/dev-token", body=body)).data
+
+    def operation(
+        self,
+        method: str,
+        path: str,
+        path_params: Mapping[str, str | int] | None = None,
+        query: Mapping[str, str | int | float | bool | None] | None = None,
+        body: Any | None = None,
+        binary_body: BinaryBody | None = None,
+        headers: Mapping[str, str] | None = None,
+    ) -> Any:
+        if not any(operation["method"] == method and operation["path"] == path for operation in TREE_DB_OPENAPI_OPERATIONS):
+            raise ValueError(f"Unknown TreeDB OpenAPI operation: {method} {path}")
+        resolved = path
+        for name in re.findall(r"\{([^}]+)\}", path):
+            if path_params is None or name not in path_params:
+                raise ValueError(f"Missing path parameter {name} for {method} {path}")
+            resolved = resolved.replace("{" + name + "}", segment(str(path_params[name])))
+        return self.transport.request(TreeDbRequest(method=method, path=resolved, query=query, body=body, binary_body=binary_body, headers=headers)).data
 
 
 class TreeDbRegistryClient:
