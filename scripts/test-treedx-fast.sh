@@ -1,21 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedx-target}" cargo fmt --all -- --check
-CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedx-target}" cargo clippy --workspace -- -D warnings
-CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedx-target}" cargo test --workspace
+TREEDX_BUILD_TMP_DIR="${TREEDX_BUILD_TMP_DIR:-${TMPDIR:-/tmp}}"
+TREEDX_TARGET_DIR="${TREEDX_TARGET_DIR:-${TREEDX_BUILD_TMP_DIR%/}/treedx-target}"
+
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo fmt --all -- --check
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo clippy --workspace -- -D warnings
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo test --workspace
 
 (
   cd apps/api
-  CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedx-target}" \
-  RUSTLER_TARGET_DIR="${RUSTLER_TARGET_DIR:-/tmp/treedx-target}" \
+  CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" \
+  RUSTLER_TARGET_DIR="${RUSTLER_TARGET_DIR:-$TREEDX_TARGET_DIR}" \
   mix deps.get
 
-  CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedx-target}" \
-  RUSTLER_TARGET_DIR="${RUSTLER_TARGET_DIR:-/tmp/treedx-target}" \
+  CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" \
+  RUSTLER_TARGET_DIR="${RUSTLER_TARGET_DIR:-$TREEDX_TARGET_DIR}" \
   mix format --check-formatted
 
-  CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedx-target}" \
-  RUSTLER_TARGET_DIR="${RUSTLER_TARGET_DIR:-/tmp/treedx-target}" \
+  CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" \
+  RUSTLER_TARGET_DIR="${RUSTLER_TARGET_DIR:-$TREEDX_TARGET_DIR}" \
   mix test
 )

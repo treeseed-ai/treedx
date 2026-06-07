@@ -5,7 +5,7 @@ defmodule TreeDx.Federation.RouteTableTest do
     dir =
       Path.join(
         System.tmp_dir!(),
-        "treedx-route-table-test-#{System.unique_integer([:positive])}"
+        "treedx-route-table-test-#{System.os_time(:nanosecond)}-#{System.unique_integer([:positive])}"
       )
 
     Application.put_env(:treedx, :data_dir, dir)
