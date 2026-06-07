@@ -290,7 +290,7 @@ shape. The default is `--fixture small-docs --size small`.
 Scenarios are workload definitions under `scenarios/`. The endpoint matrix in
 `endpoint_matrix.yaml` maps every OpenAPI operation to setup requirements,
 tags, expected status, and a validation rule. The profiler verifies that the
-matrix accounts for every operation in `docs/api/openapi.json`.
+matrix accounts for every operation in `docs/api/openapi.yaml`.
 
 Every exercised operation has a correctness assertion. Routes that are not run
 because they require admin access, destructive behavior, exec, federation, or

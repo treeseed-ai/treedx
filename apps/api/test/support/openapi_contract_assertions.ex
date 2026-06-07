@@ -1,12 +1,12 @@
 defmodule TreeDxWeb.OpenApiContractAssertions do
   import ExUnit.Assertions
 
-  @openapi_json Path.expand("../../../../docs/api/openapi.json", __DIR__)
+  @openapi_yaml Path.expand("../../../../docs/api/openapi.yaml", __DIR__)
 
   def openapi do
-    @openapi_json
+    @openapi_yaml
     |> File.read!()
-    |> Jason.decode!()
+    |> parse_yaml!()
   end
 
   def operation(openapi, method, path) do
@@ -114,4 +114,39 @@ defmodule TreeDxWeb.OpenApiContractAssertions do
       Map.fetch!(acc, part)
     end)
   end
+
+  defp parse_yaml!(yaml) do
+    case :yamerl_constr.string(String.to_charlist(yaml)) do
+      [doc] -> normalize_yaml(doc)
+      [] -> %{}
+    end
+  end
+
+  defp normalize_yaml(value) when is_list(value) do
+    cond do
+      List.ascii_printable?(value) ->
+        to_string(value)
+
+      Keyword.keyword?(value) or Enum.all?(value, &match?({_, _}, &1)) ->
+        Map.new(value, fn {key, val} -> {to_string_key(key), normalize_yaml(val)} end)
+
+      true ->
+        Enum.map(value, &normalize_yaml/1)
+    end
+  end
+
+  defp normalize_yaml(value) when is_map(value) do
+    Map.new(value, fn {key, val} -> {to_string_key(key), normalize_yaml(val)} end)
+  end
+
+  defp normalize_yaml(value) when is_binary(value), do: value
+  defp normalize_yaml(value) when is_boolean(value), do: value
+  defp normalize_yaml(nil), do: nil
+  defp normalize_yaml(:null), do: nil
+  defp normalize_yaml(value) when is_atom(value), do: Atom.to_string(value)
+  defp normalize_yaml(value), do: value
+
+  defp to_string_key(value) when is_binary(value), do: value
+  defp to_string_key(value) when is_atom(value), do: Atom.to_string(value)
+  defp to_string_key(value), do: to_string(value)
 end

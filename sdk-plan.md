@@ -1708,14 +1708,12 @@ on:
     paths:
       - "packages/sdk-spec/**"
       - "docs/api/openapi.yaml"
-      - "docs/api/openapi.json"
       - ".github/workflows/sdk-spec.yml"
   push:
     branches: [main]
     paths:
       - "packages/sdk-spec/**"
       - "docs/api/openapi.yaml"
-      - "docs/api/openapi.json"
 
 jobs:
   validate-sdk-spec:
@@ -1751,7 +1749,6 @@ on:
       - "packages/rust-sdk/**"
       - "packages/elixir-sdk/**"
       - "docs/api/openapi.yaml"
-      - "docs/api/openapi.json"
       - ".github/workflows/sdk-packages.yml"
   push:
     branches: [main]

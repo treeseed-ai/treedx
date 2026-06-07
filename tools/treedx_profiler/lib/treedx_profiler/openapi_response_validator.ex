@@ -38,25 +38,7 @@ defmodule TreeDxProfiler.OpenApiResponseValidator do
   end
 
   defp load_spec do
-    env_path = System.get_env("TREEDX_OPENAPI_PATH")
-
-    path =
-      [
-        env_path,
-        Path.expand("docs/api/openapi.json", File.cwd!()),
-        Path.expand("../../docs/api/openapi.json", File.cwd!()),
-        Path.expand("../../../docs/api/openapi.json", __DIR__)
-      ]
-      |> Enum.reject(&is_nil/1)
-      |> Enum.find(&File.exists?/1)
-
-    if path do
-      {:ok, path |> File.read!() |> Jason.decode!()}
-    else
-      {:error, "docs/api/openapi.json not found"}
-    end
-  rescue
-    error -> {:error, Exception.message(error)}
+    TreeDxProfiler.OpenApiSpec.load()
   end
 
   defp find_operation(%{"paths" => paths}, operation_id) do

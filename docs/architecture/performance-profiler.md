@@ -163,7 +163,7 @@ unverified races fail the reliability budget.
 
 ## OpenAPI Coverage
 
-The profiler reads `docs/api/openapi.json` and verifies
+The profiler reads `docs/api/openapi.yaml` and verifies
 `tools/treedx_profiler/endpoint_matrix.yaml` accounts for every public
 operation. The endpoint matrix adds setup state, request templates, tags,
 expected statuses, scenario weights, and validation rules that OpenAPI cannot
