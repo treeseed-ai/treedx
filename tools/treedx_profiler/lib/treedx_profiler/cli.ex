@@ -1,7 +1,7 @@
 defmodule TreeDxProfiler.CLI do
   @moduledoc false
 
-  alias TreeDxProfiler.{Report, ScenarioRunner}
+  alias TreeDxProfiler.{FailureSummary, Report, ScenarioRunner}
 
   @switches [
     base_url: :string,
@@ -128,6 +128,7 @@ defmodule TreeDxProfiler.CLI do
         if get_in(report, ["summary", "totalErrors"]) > 0 or
              get_in(report, ["assertions", "failed"]) > 0 or
              get_in(report, ["reliabilityBudget", "passed"]) == false or below_required_rps? do
+          FailureSummary.print(report, opts)
           System.halt(2)
         end
 
