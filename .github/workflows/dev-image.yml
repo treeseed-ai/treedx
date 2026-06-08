@@ -65,7 +65,6 @@ jobs:
             platform: linux/arm64
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
-    environment: production
     permissions:
       contents: read
 
@@ -101,7 +100,6 @@ jobs:
       - image-plan
       - build-publish-dev-image
     runs-on: ubuntu-24.04
-    environment: production
     permissions:
       contents: read
 
