@@ -830,18 +830,12 @@ jobs:
   build-publish-image:
     needs:
       - publish-plan
-      - profile
-      - profile-federation
-      - profile-performance
       - test-typescript-sdk
       - test-python-sdk
       - test-rust-sdk
       - test-elixir-sdk
     if: >-
       needs.publish-plan.result == 'success' &&
-      needs.profile.result == 'success' &&
-      needs.profile-federation.result == 'success' &&
-      needs.profile-performance.result == 'success' &&
       needs.test-typescript-sdk.result == 'success' &&
       needs.test-python-sdk.result == 'success' &&
       needs.test-rust-sdk.result == 'success' &&
@@ -891,18 +885,12 @@ jobs:
   build-publish-profiler-image:
     needs:
       - publish-plan
-      - profile
-      - profile-federation
-      - profile-performance
       - test-typescript-sdk
       - test-python-sdk
       - test-rust-sdk
       - test-elixir-sdk
     if: >-
       needs.publish-plan.result == 'success' &&
-      needs.profile.result == 'success' &&
-      needs.profile-federation.result == 'success' &&
-      needs.profile-performance.result == 'success' &&
       needs.test-typescript-sdk.result == 'success' &&
       needs.test-python-sdk.result == 'success' &&
       needs.test-rust-sdk.result == 'success' &&
@@ -1291,10 +1279,6 @@ jobs:
       - publish-plan
       - build-publish-image
       - build-publish-profiler-image
-      - package-typescript-sdk
-      - package-python-sdk
-      - package-rust-sdk
-      - package-elixir-sdk
     runs-on: ubuntu-latest
     environment: production
     permissions:
