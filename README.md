@@ -4,6 +4,35 @@ TreeDX is a repository-native API service and storage engine for managing portfo
 
 TreeDX is intentionally generic. It stores and operates on Git/repository primitives such as repositories, refs, commits, trees, blobs, paths, workspaces, mirrors, nodes, placements, audit events, and indexes. Product-specific concepts from TreeSeed or any other application belong outside TreeDX.
 
+## For Users
+
+Use TreeDX when you need a service that can store, inspect, index, query, snapshot, mirror, and federate Git repositories without repeatedly cloning them for every worker or agent.
+
+Treeseed uses TreeDX for repository intelligence and federation through `@treeseed/sdk` and `@treeseed/api`:
+
+- SDK owns the Treeseed integration/client layer.
+- API owns public TreeDX federation hosting inside Treeseed deployments.
+- Admin and Market may display repository-backed results, but they do not own TreeDX internals.
+- TreeDX remains product-neutral and does not implement Treeseed admin workflows, billing/ecommerce, capacity-provider runtime, or market policy.
+
+Quick local start:
+
+```bash
+docker compose build treedx-api
+docker compose up -d treedx-api
+docker compose logs -f treedx-api
+```
+
+Treeseed package image workflows use:
+
+```bash
+trsd package image --package treedx --branch staging --plan --json
+trsd package image --package treedx --branch staging --sync-config --json
+trsd package image --package treedx --branch staging --execute --json
+```
+
+See the root workspace [Package Ownership](../../docs/package-ownership.md) guide for how TreeDX fits with SDK, API, Admin, Agent, UI, and Market.
+
 ## Current Status
 
 TreeDX has a working repository-native API, storage, graph/search/context, snapshot/artifact, audit, registry, SDK, observability, and release verification surface.
