@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - run: npm ci || (echo "dependency install failed; retrying" && npm ci)
+      - run: npm ci --ignore-scripts || (echo "dependency install failed; retrying" && npm ci --ignore-scripts)
       - name: Compute image tags
         id: tags
         run: |
