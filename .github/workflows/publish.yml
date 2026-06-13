@@ -1,4 +1,4 @@
-name: Development Image TreeDX
+name: Publish Image TreeDX
 
 on:
   workflow_dispatch:
@@ -32,7 +32,7 @@ jobs:
         id: meta
         with:
           images: ${{ matrix.image }}
-          tags: type=raw,value=dev-${{ github.ref_name }}-${{ github.sha }}
+          tags: type=semver,pattern={{version}}
       - uses: docker/build-push-action@v6
         with:
           context: .

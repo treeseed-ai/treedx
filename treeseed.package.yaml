@@ -1,9 +1,16 @@
 id: treedx
 name: TreeDX
 kind: beam-elixir-rust
+type: image-service
 repository: treeseed-ai/treedx
 versionSource: apps/api/mix.exs
 image: treeseed/treedx
+workflowTemplateVersion: "1"
+githubEnvironments:
+  - staging
+  - production
+requiredSecrets:
+  - DOCKERHUB_TOKEN
 verify:
   fast: scripts/test-treedx-fast.sh
   local: scripts/test-all.sh
