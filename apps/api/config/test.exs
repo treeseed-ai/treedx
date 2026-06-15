@@ -7,4 +7,6 @@ config :treedx, TreeDxWeb.Endpoint,
 
 config :logger, level: :warning
 
-config :treedx, data_dir: Path.join(System.tmp_dir!(), "treedx-test-data")
+config :treedx,
+  data_dir: Path.join(System.tmp_dir!(), "treedx-test-data"),
+  dev_principal: [actor_id: "actor_demo", tenant_id: "tenant_demo"]

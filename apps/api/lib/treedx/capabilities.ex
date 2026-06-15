@@ -50,7 +50,9 @@ defmodule TreeDx.Capabilities do
 
   def effective_scope(nil, repo_id, opts) do
     if Keyword.get(opts, :allow_dev_default, false) and TreeDx.Auth.mode() == "dev" do
-      effective_scope(%{"actorId" => "actor_demo"}, repo_id, [])
+      with {:ok, principal} <- TreeDx.Auth.dev_principal() do
+        effective_scope(principal, repo_id, [])
+      end
     else
       {:error, %{code: "authentication_required", message: "Authentication required."}}
     end
@@ -191,7 +193,8 @@ defmodule TreeDx.Capabilities do
 
       String.ends_with?(pattern, "/**") ->
         prefix = String.trim_trailing(pattern, "**")
-        String.starts_with?(value, prefix)
+        directory = String.trim_trailing(prefix, "/")
+        value == directory or String.starts_with?(value, prefix)
 
       String.ends_with?(pattern, "*") ->
         prefix = String.trim_trailing(pattern, "*")

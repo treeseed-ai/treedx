@@ -207,11 +207,7 @@ defmodule TreeDxWeb.InternalFederationController do
 
   defp maybe_put_local_dev_authorization(headers) do
     if TreeDx.Auth.mode() == "dev" do
-      case TreeDx.Auth.create_dev_token(%{
-             actorId: "actor_demo",
-             tenantId: "tenant_demo",
-             expiresInSeconds: 300
-           }) do
+      case TreeDx.Auth.create_dev_token(%{expiresInSeconds: 300}) do
         {:ok, %{accessToken: token}} -> Map.put(headers, "authorization", "Bearer #{token}")
         _ -> headers
       end

@@ -12,7 +12,17 @@ services:
       PHX_HOST: 0.0.0.0
       PORT: "4000"
       TREEDX_DATA_DIR: /var/lib/treedx
-      TREEDX_AUTH_MODE: dev
+      TREEDX_AUTH_MODE: connected
+      TREEDX_AUTH_VERIFIER: hs256_dev
+      TREEDX_ALLOW_DEV_VERIFIER_IN_PROD: "true"
+      TREEDX_JWT_ISSUER: ${TREESEED_TREEDX_JWT_ISSUER:-https://api.treeseed.local/treedx}
+      TREEDX_JWT_AUDIENCE: ${TREESEED_TREEDX_JWT_AUDIENCE:-treedx-local}
+      TREEDX_JWT_HS256_SECRET: ${TREESEED_TREEDX_JWT_HS256_SECRET:-treeseed-local-treedx-jwt-secret}
+      TREEDX_BOOTSTRAP_TRUST_ACTOR_ID: ${TREESEED_TREEDX_PROXY_ACTOR_ID:-treeseed-api}
+      TREEDX_BOOTSTRAP_TRUST_TENANT_ID: ${TREESEED_TREEDX_PROXY_TENANT_ID:-treeseed-control-plane}
+      TREEDX_BOOTSTRAP_TRUST_REPO_IDS: "*"
+      TREEDX_BOOTSTRAP_TRUST_REFS: "*"
+      TREEDX_BOOTSTRAP_TRUST_PATHS: "**"
       TREEDX_REGISTRY_MODE: local
       TREEDX_DEV_HOT_RELOAD: "true"
       TREEDX_NODE_ID: node_local

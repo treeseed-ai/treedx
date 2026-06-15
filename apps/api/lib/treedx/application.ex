@@ -19,6 +19,7 @@ defmodule TreeDx.Application do
       {:ok, _} = TreeDx.Store.seed_dev_records(node_id(), base_url())
     else
       {:ok, _} = TreeDx.Store.seed_local_records(node_id(), base_url())
+      :ok = bootstrap_configured_trust_grant()
     end
 
     TreeDx.Audit.append("app.data_dir_initialized", %{
@@ -53,6 +54,55 @@ defmodule TreeDx.Application do
   end
 
   defp node_id, do: System.get_env("TREEDX_NODE_ID") || "node_local"
+
+  defp bootstrap_configured_trust_grant do
+    actor_id = System.get_env("TREEDX_BOOTSTRAP_TRUST_ACTOR_ID")
+    tenant_id = System.get_env("TREEDX_BOOTSTRAP_TRUST_TENANT_ID")
+
+    cond do
+      blank?(actor_id) and blank?(tenant_id) ->
+        :ok
+
+      blank?(actor_id) or blank?(tenant_id) ->
+        raise "TREEDX_BOOTSTRAP_TRUST_ACTOR_ID and TREEDX_BOOTSTRAP_TRUST_TENANT_ID must be configured together."
+
+      true ->
+        capabilities =
+          System.get_env("TREEDX_BOOTSTRAP_TRUST_CAPABILITIES")
+          |> csv(TreeDx.Capabilities.canonical())
+
+        refs = System.get_env("TREEDX_BOOTSTRAP_TRUST_REFS") |> csv(["*"])
+        paths = System.get_env("TREEDX_BOOTSTRAP_TRUST_PATHS") |> csv(["**"])
+        repo_ids = System.get_env("TREEDX_BOOTSTRAP_TRUST_REPO_IDS") |> csv(["*"])
+
+        {:ok, _grant} =
+          TreeDx.Capabilities.put_grant(%{
+            "actorId" => actor_id,
+            "tenantId" => tenant_id,
+            "repoIds" => repo_ids,
+            "capabilities" => capabilities,
+            "refs" => refs,
+            "paths" => paths
+          })
+
+        :ok
+    end
+  end
+
+  defp csv(nil, fallback), do: fallback
+
+  defp csv(value, fallback) when is_binary(value) do
+    value
+    |> String.split(",", trim: true)
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+    |> case do
+      [] -> fallback
+      entries -> entries
+    end
+  end
+
+  defp blank?(value), do: !is_binary(value) or String.trim(value) == ""
 
   defp validate_auth! do
     case TreeDx.Auth.validate_boot_config() do

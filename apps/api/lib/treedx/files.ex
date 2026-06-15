@@ -422,12 +422,7 @@ defmodule TreeDx.Files do
   end
 
   defp workspace_text_files(ctx, root) do
-    with {:ok, base_entries} <-
-           TreeDx.Git.list_tree_recursive(
-             TreeDx.RepositoryStorage.path!(ctx.repo),
-             ctx.workspace["baseCommitSha"],
-             empty_to_nil(root)
-           ),
+    with {:ok, base_entries} <- list_base_tree_recursive(ctx, root),
          {:ok, overlays} <- TreeDx.Store.list_workspace_files(ctx.workspace["id"]) do
       base_files =
         base_entries
@@ -459,6 +454,19 @@ defmodule TreeDx.Files do
         end)
 
       {:ok, Enum.map(files, fn {path, {content, source}} -> {path, content, source} end)}
+    end
+  end
+
+  defp list_base_tree_recursive(ctx, root) do
+    case TreeDx.Git.list_tree_recursive(
+           TreeDx.RepositoryStorage.path!(ctx.repo),
+           ctx.workspace["baseCommitSha"],
+           empty_to_nil(root)
+         ) do
+      {:ok, entries} -> {:ok, entries}
+      {:error, %{"code" => "not_found"}} -> {:ok, []}
+      {:error, %{code: "not_found"}} -> {:ok, []}
+      other -> other
     end
   end
 

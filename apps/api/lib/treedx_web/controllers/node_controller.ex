@@ -19,7 +19,7 @@ defmodule TreeDxWeb.NodeController do
 
       {:error, _} ->
         if TreeDx.Auth.mode() == "dev" do
-          {:ok, TreeDx.Auth.principal("actor_demo", "tenant_demo")}
+          TreeDx.Auth.dev_principal()
         else
           {:error, %{code: "authentication_required", message: "Authentication required."}}
         end

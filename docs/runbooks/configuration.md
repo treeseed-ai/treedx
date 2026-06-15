@@ -6,6 +6,12 @@ Core settings:
 
 - `TREEDX_DATA_DIR`
 - `TREEDX_AUTH_MODE`
+- `TREEDX_AUTH_VERIFIER`
+- `TREEDX_JWT_ISSUER`
+- `TREEDX_JWT_AUDIENCE`
+- `TREEDX_JWT_HS256_SECRET` or `TREEDX_JWKS_URL`, depending on verifier
+- `TREEDX_DEV_ACTOR_ID` when using standalone `TREEDX_AUTH_MODE=dev`
+- `TREEDX_DEV_TENANT_ID` when using standalone `TREEDX_AUTH_MODE=dev`
 - `TREEDX_STORAGE_MODE`
 - `TREEDX_EXEC_BACKEND`
 - `TREEDX_NODE_ID`
@@ -16,6 +22,25 @@ Operational settings:
 
 - `TREEDX_HEALTH_CHECK_AUTH_PROVIDER=false`
 - `TREEDX_HEALTH_CHECK_TIMEOUT_MS=2000`
+- `TREEDX_BOOTSTRAP_TRUST_ACTOR_ID`
+- `TREEDX_BOOTSTRAP_TRUST_TENANT_ID`
+- `TREEDX_BOOTSTRAP_TRUST_CAPABILITIES`
+- `TREEDX_BOOTSTRAP_TRUST_REPO_IDS=*`
+- `TREEDX_BOOTSTRAP_TRUST_REFS=*`
+- `TREEDX_BOOTSTRAP_TRUST_PATHS=**`
+
+When `TREEDX_AUTH_MODE=connected`, bootstrap trust settings may be used by an
+owning control plane to seed an initial service-principal capability grant.
+TreeDX does not assign product semantics to that principal; it only stores the
+configured actor, tenant, repo, ref, path, and capability envelope. Treeseed
+local and hosted environments use this same connected-auth process so local
+repository behavior matches production.
+
+`TREEDX_AUTH_MODE=dev` is only for standalone TreeDX development and tests. It
+does not infer a built-in principal; callers must pass `actorId` and `tenantId`
+to `/api/v1/auth/dev-token` or configure `TREEDX_DEV_ACTOR_ID` and
+`TREEDX_DEV_TENANT_ID`. Treeseed-managed local development should use
+`connected` mode, not dev-token auth.
 
 Runtime resource and performance tuning settings:
 
