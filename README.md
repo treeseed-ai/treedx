@@ -13,7 +13,7 @@ Treeseed uses TreeDX for repository intelligence and federation through `@treese
 - SDK owns the Treeseed integration/client layer.
 - API owns public TreeDX federation hosting inside Treeseed deployments.
 - Admin and Market may display repository-backed results, but they do not own TreeDX internals.
-- TreeDX remains product-neutral and does not implement Treeseed admin workflows, billing/ecommerce, capacity-provider runtime, or market policy.
+- TreeDX remains product-neutral and does not implement Treeseed admin workflows, billing/ecommerce, capacity-provider runtime, assignment policy, agent classes, or market policy.
 
 Quick local start:
 
@@ -1171,7 +1171,7 @@ TreeDX may store, inspect, index, and query repository files that contain:
 - releases
 - platform workflow files
 
-TreeDX must not understand the product meaning of those concepts. That interpretation belongs in SDK, core, market, agent, platform, or control-plane code.
+TreeDX must not understand the product meaning of those concepts. That interpretation belongs in SDK, API, core, market, agent, platform, or control-plane code. Treeseed capacity-provider runners should access TreeDX through project-scoped Treeseed API proxy handles rather than raw TreeDX credentials.
 
 Research notes for the current SDK compatibility target live in:
 
