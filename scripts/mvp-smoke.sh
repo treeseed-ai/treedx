@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TREEDX_URL="${TREEDX_URL:-http://localhost:4000}"
+if [[ -z "${TREEDX_API_HOST_PORT:-}" && -z "${TREEDX_URL:-}" ]]; then
+  TREEDX_API_HOST_PORT="$(
+    node -e "const server = require('node:net').createServer(); server.listen(0, '127.0.0.1', () => { console.log(server.address().port); server.close(); });"
+  )"
+  export TREEDX_API_HOST_PORT
+fi
+
+TREEDX_URL="${TREEDX_URL:-http://localhost:${TREEDX_API_HOST_PORT:-4000}}"
 TREEDX_KEEP_RUNNING="${TREEDX_KEEP_RUNNING:-0}"
 TREEDX_SMOKE_COMPOSE_FILE="${TREEDX_SMOKE_COMPOSE_FILE:-profiles/compose.profile.yaml}"
 TOKEN=""

@@ -18,7 +18,7 @@ defmodule TreeDx.Federation.RouteTableTest do
     on_exit(fn ->
       System.delete_env("TREEDX_FEDERATION_LOAD_AWARE_READS")
       System.delete_env("TREEDX_FEDERATION_LOAD_AWARE_READ_PRESSURE")
-      File.rm_rf!(dir)
+      File.rm_rf(dir)
     end)
 
     :ok
