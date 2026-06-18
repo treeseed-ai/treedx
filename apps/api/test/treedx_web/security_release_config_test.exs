@@ -83,6 +83,21 @@ defmodule TreeDxWeb.SecurityReleaseConfigTest do
       }),
       ["missing_ssh_known_hosts", "missing_remote_credential_provider"]
     )
+
+    assert_codes(
+      Map.merge(base_env(dir), %{
+        "TREEDX_REMOTE_CREDENTIAL_PROVIDER" => "treeseed_bridge"
+      }),
+      [
+        "missing_treeseed_team_id",
+        "missing_treeseed_project_id",
+        "missing_treeseed_repository",
+        "missing_treeseed_github_installation_id",
+        "missing_treeseed_api_base_url",
+        "missing_treeseed_service_id",
+        "missing_treeseed_service_secret"
+      ]
+    )
   end
 
   test "rejects fallback secrets, unsafe restore, and invalid data directory", %{dir: dir} do

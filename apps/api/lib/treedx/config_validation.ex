@@ -179,6 +179,34 @@ defmodule TreeDx.ConfigValidation do
         errors
       end
 
+    errors =
+      if provider == "treeseed_bridge" do
+        errors
+        |> require_keys(env, [
+          {"TREEDX_TREESEED_TEAM_ID", "missing_treeseed_team_id"},
+          {"TREEDX_TREESEED_PROJECT_ID", "missing_treeseed_project_id"},
+          {"TREEDX_TREESEED_REPOSITORY", "missing_treeseed_repository"},
+          {"TREEDX_TREESEED_GITHUB_INSTALLATION_ID", "missing_treeseed_github_installation_id"}
+        ])
+        |> require_one(
+          env,
+          ["TREEDX_TREESEED_API_BASE_URL", "TREESEED_API_BASE_URL"],
+          "missing_treeseed_api_base_url"
+        )
+        |> require_one(
+          env,
+          ["TREEDX_TREESEED_SERVICE_ID", "TREESEED_WEB_SERVICE_ID"],
+          "missing_treeseed_service_id"
+        )
+        |> require_one(
+          env,
+          ["TREEDX_TREESEED_SERVICE_SECRET", "TREESEED_WEB_SERVICE_SECRET"],
+          "missing_treeseed_service_secret"
+        )
+      else
+        errors
+      end
+
     if truthy?(env["TREEDX_GIT_SSH_ENABLED"]) do
       errors
       |> require_keys(env, [{"TREEDX_GIT_SSH_KNOWN_HOSTS", "missing_ssh_known_hosts"}])
