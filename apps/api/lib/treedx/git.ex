@@ -75,13 +75,11 @@ defmodule TreeDx.Git do
       File.exists?(release_worker) ->
         {:binary, release_worker, ["commit-overlay", input_path], []}
 
-      File.exists?(Path.expand("../../target/debug/treedx_git_worker", File.cwd!())) ->
-        {:binary, Path.expand("../../target/debug/treedx_git_worker", File.cwd!()),
-         ["commit-overlay", input_path], []}
+      executable = target_worker("debug") ->
+        {:binary, executable, ["commit-overlay", input_path], []}
 
-      File.exists?(Path.expand("../../target/release/treedx_git_worker", File.cwd!())) ->
-        {:binary, Path.expand("../../target/release/treedx_git_worker", File.cwd!()),
-         ["commit-overlay", input_path], []}
+      executable = target_worker("release") ->
+        {:binary, executable, ["commit-overlay", input_path], []}
 
       System.find_executable("cargo") ->
         {:binary, "cargo",
@@ -109,5 +107,17 @@ defmodule TreeDx.Git do
 
   defp repo_root do
     System.get_env("TREEDX_ROOT_DIR") || Path.expand("../..", File.cwd!())
+  end
+
+  defp target_worker(profile) do
+    candidates =
+      [
+        System.get_env("CARGO_TARGET_DIR"),
+        Path.expand("../../target", File.cwd!())
+      ]
+      |> Enum.reject(&is_nil/1)
+      |> Enum.map(&Path.expand("treedx_git_worker", Path.join(&1, profile)))
+
+    Enum.find(candidates, &File.exists?/1)
   end
 end
