@@ -12,5 +12,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - run: true
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "27"
+          elixir-version: "1.17"
       - run: bash scripts/release-gate.sh
