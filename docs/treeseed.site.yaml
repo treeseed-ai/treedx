@@ -1,0 +1,51 @@
+name: TreeDX Knowledge Hub
+slug: treeseed-treedx-docs
+siteUrl: https://treedx.treeseed.ai
+contactEmail: hello@treeseed.email
+hosting:
+  kind: self_hosted_project
+  registration: none
+  teamId: treeseed
+  projectId: treedx
+hub:
+  mode: treeseed_hosted
+runtime:
+  mode: treeseed_managed
+  registration: none
+cloudflare:
+  workerName: treeseed-treedx-docs
+  pages:
+    projectName: treeseed-treedx-docs
+    productionBranch: main
+    stagingBranch: staging
+    buildOutputDir: dist
+surfaces:
+  web:
+    enabled: true
+    provider: cloudflare
+    rootDir: .
+    publicBaseUrl: https://treedx.treeseed.ai
+    localBaseUrl: http://127.0.0.1:4321
+    local:
+      runtime: local
+    environments:
+      staging:
+        domain: treedx-docs-staging.treeseed.ai
+      prod:
+        domain: treedx.treeseed.ai
+providers:
+  agents:
+    execution: codex
+    mutation: local_branch
+    repository: git
+    verification: local
+    notification: sdk_message
+    research: project_graph
+  deploy: cloudflare
+  dns: cloudflare-dns
+  content:
+    serving: local_collections
+    runtime: team_scoped_r2_overlay
+    publish: team_scoped_r2_overlay
+    docs: default
+  site: default

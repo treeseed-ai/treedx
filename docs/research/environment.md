@@ -53,13 +53,13 @@ SDK scripts recorded for compatibility:
 | `setup` | `npm install` |
 | `setup:ci` | `npm ci` |
 | `build` | `npm run build:dist` |
-| `build:dist` | `node ./scripts/run-ts.mjs ./scripts/build-dist.ts` |
+| `build:dist` | `tsx ./scripts/build-dist.ts` |
 | `test` | `npm run test:unit` |
 | `test:unit` | `vitest run --config ./vitest.config.ts` |
 | `test:unit:fast` | `vitest run --config ./vitest.fast.config.ts` |
 | `lint` | `npm run fixtures:check && npm run build:dist` |
-| `verify` | `node ./scripts/verify-driver.mjs` |
-| `release:verify` | `node ./scripts/run-ts.mjs ./scripts/release-verify.ts` |
+| `verify` | `tsx ./scripts/verify-driver.ts` |
+| `release:verify` | `tsx ./scripts/release-verify.ts` |
 
 ## Runtime Assumptions
 

@@ -123,7 +123,7 @@ function writeIfChanged(relativePath, before, after) {
 
 function usage(code) {
   const out = code === 0 ? console.log : console.error;
-  out("Usage: scripts/bump-release-version.mjs VERSION");
+  out("Usage: scripts/bump-release-version.ts VERSION");
   out("");
   out("VERSION must be a semantic version without a v prefix, for example 0.1.2.");
   process.exit(code);

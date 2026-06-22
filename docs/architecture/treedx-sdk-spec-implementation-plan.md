@@ -279,10 +279,10 @@ packages/sdk-spec/
       expected/
     scenarios/
   scripts/
-    validate-spec.mjs
-    render-capability-matrix.mjs
-    check-openapi-coverage.mjs
-    check-sdk-manifest.mjs
+    validate-spec.ts
+    render-capability-matrix.ts
+    check-openapi-coverage.ts
+    check-sdk-manifest.ts
 ```
 
 Add `packages/sdk-spec/package.json`:
@@ -293,10 +293,10 @@ Add `packages/sdk-spec/package.json`:
   "private": true,
   "type": "module",
   "scripts": {
-    "validate": "node scripts/validate-spec.mjs",
-    "check-openapi-coverage": "node scripts/check-openapi-coverage.mjs",
-    "check-sdk-manifests": "node scripts/check-sdk-manifest.mjs",
-    "render-capability-matrix": "node scripts/render-capability-matrix.mjs",
+    "validate": "tsx scripts/validate-spec.ts",
+    "check-openapi-coverage": "tsx scripts/check-openapi-coverage.ts",
+    "check-sdk-manifests": "tsx scripts/check-sdk-manifest.ts",
+    "render-capability-matrix": "tsx scripts/render-capability-matrix.ts",
     "test": "npm run validate && npm run check-openapi-coverage"
   },
   "devDependencies": {
@@ -598,7 +598,7 @@ packages/elixir-sdk/test/
 
 ### Testing Work
 
-Add `packages/sdk-spec/scripts/check-sdk-manifest.mjs` checks:
+Add `packages/sdk-spec/scripts/check-sdk-manifest.ts` checks:
 
 ```text
 Each SDK manifest declares all required test roots.
@@ -631,8 +631,8 @@ compatibility: downstream product SDK migration safety, such as packages/trsd-sd
 
 Phase 4 is complete. `testing.yaml` defines the shared required and optional
 test roots, per-category responsibilities, language target layouts, and
-manifest test layout requirements. `validate-spec.mjs` enforces the shared
-framework, and `check-sdk-manifest.mjs` validates future SDK manifests and
+manifest test layout requirements. `validate-spec.ts` enforces the shared
+framework, and `check-sdk-manifest.ts` validates future SDK manifests and
 implemented test roots.
 
 ---
@@ -828,7 +828,7 @@ capabilities:
 
 ### Testing Work
 
-Implement `check-openapi-coverage.mjs`:
+Implement `check-openapi-coverage.ts`:
 
 ```text
 Load docs/api/openapi.yaml.
@@ -1001,7 +1001,7 @@ Binary helper expectations
 Phase 6 is complete. `errors.yaml`, `auth.yaml`, `pagination.yaml`, and
 `binary.yaml` define shared cross-language behavior contracts for
 `TreeDxApiError`-compatible errors, bearer auth providers, opaque cursor
-pagination, binary-safe payloads, and multipart uploads. `validate-spec.mjs`
+pagination, binary-safe payloads, and multipart uploads. `validate-spec.ts`
 schema-validates these files and cross-checks them against OpenAPI,
 capabilities, endpoints, and conformance scenario metadata.
 
@@ -1190,7 +1190,7 @@ How fixture repos are prepared
 
 Phase 7 is complete. `packages/sdk-spec/conformance/scenarios` contains the
 shared black-box scenario catalog for every required capability scenario ID.
-`validate-spec.mjs` enforces scenario uniqueness, capability ownership,
+`validate-spec.ts` enforces scenario uniqueness, capability ownership,
 endpoint references, fixture hygiene, and required steps/assertions. The
 scenario catalog is metadata/assertion oriented; executable language harnesses
 remain later SDK implementation work.
@@ -1378,8 +1378,8 @@ Add new commands:
     "test:treedx-unit": "vitest run --config ./vitest.config.ts test/unit test/adapters test/generated",
     "test:treedx-conformance": "vitest run --config ./vitest.config.ts test/conformance",
     "test:treedx-integration": "vitest run --config ./vitest.config.ts test/integration",
-    "treedx:generate": "node scripts/generate-treedx-openapi-types.mjs",
-    "treedx:check-generated": "node scripts/check-treedx-generated-types.mjs"
+    "treedx:generate": "tsx scripts/generate-treedx-openapi-types.ts",
+    "treedx:check-generated": "tsx scripts/check-treedx-generated-types.ts"
   }
 }
 ```
@@ -1699,8 +1699,8 @@ packages/rust-sdk/
   README.md
   sdk-manifest.yaml
   scripts/
-    generate_treedx_openapi_types.mjs
-    check_treedx_generated_types.mjs
+    generate_treedx_openapi_types.ts
+    check_treedx_generated_types.ts
   src/
     lib.rs
     auth.rs
@@ -2158,7 +2158,7 @@ python3 -m pytest
 python3 -m twine check dist/*
 
 cd packages/rust-sdk
-node scripts/check_treedx_generated_types.mjs
+tsx scripts/check_treedx_generated_types.ts
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo test
@@ -2446,7 +2446,7 @@ python3 scripts/check_treedx_generated_types.py
 python3 -m compileall -q src tests
 
 cd packages/rust-sdk
-node scripts/check_treedx_generated_types.mjs
+tsx scripts/check_treedx_generated_types.ts
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo test

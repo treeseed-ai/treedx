@@ -37,7 +37,7 @@ section "Python SDK"
 section "Rust SDK"
 (
   cd packages/rust-sdk
-  node scripts/check_treedx_generated_types.mjs
+  tsx scripts/check_treedx_generated_types.ts
   cargo fmt --all -- --check
   cargo clippy --all-targets -- -D warnings
   cargo test

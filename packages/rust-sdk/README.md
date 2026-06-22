@@ -206,7 +206,7 @@ not-configured behavior.
 ## Development Commands
 
 ```bash
-node scripts/check_treedx_generated_types.mjs
+tsx scripts/check_treedx_generated_types.ts
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo test

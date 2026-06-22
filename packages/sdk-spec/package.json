@@ -4,14 +4,15 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
-    "validate": "node scripts/validate-spec.mjs",
-    "check-openapi-coverage": "node scripts/check-openapi-coverage.mjs",
-    "check-sdk-manifests": "node scripts/check-sdk-manifest.mjs",
-    "render-capability-matrix": "node scripts/render-capability-matrix.mjs",
+    "validate": "tsx scripts/validate-spec.ts",
+    "check-openapi-coverage": "tsx scripts/check-openapi-coverage.ts",
+    "check-sdk-manifests": "tsx scripts/check-sdk-manifest.ts",
+    "render-capability-matrix": "tsx scripts/render-capability-matrix.ts",
     "test": "npm run validate && npm run check-openapi-coverage"
   },
   "devDependencies": {
     "ajv": "^8.17.1",
-    "yaml": "^2.7.0"
+    "yaml": "^2.7.0",
+    "tsx": "^4.21.0"
   }
 }

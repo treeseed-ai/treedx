@@ -20,7 +20,7 @@ fn endpoint_strings_from_sdk_spec() -> BTreeSet<String> {
 #[test]
 fn generated_openapi_metadata_is_fresh() {
     let output = Command::new("node")
-        .arg("scripts/check_treedx_generated_types.mjs")
+        .arg("scripts/check_treedx_generated_types.ts")
         .output()
         .expect("run generated metadata freshness check");
     assert!(

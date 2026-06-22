@@ -154,7 +154,7 @@ If a worktree already contains intentional release fixes, update only the
 version files and commit everything together:
 
 ```bash
-scripts/bump-release-version.mjs 0.1.2
+scripts/bump-release-version.ts 0.1.2
 ```
 
 ## Package Registry Setup

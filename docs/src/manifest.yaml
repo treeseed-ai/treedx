@@ -1,0 +1,48 @@
+id: treeseed-treedx-docs
+siteConfigPath: ./src/config.yaml
+content:
+  docs: ./src/content/knowledge
+  pages: ./src/content/pages
+  notes: ./src/content/notes
+  questions: ./src/content/questions
+  objectives: ./src/content/objectives
+  proposals: ./src/content/proposals
+  decisions: ./src/content/decisions
+  people: ./src/content/people
+  agents: ./src/content/agents
+  books: ./src/content/books
+  templates: ./src/content/templates
+  knowledge_packs: ./src/content/knowledge-packs
+  workdays: ./src/content/workdays
+features:
+  docs: true
+  books: true
+  notes: true
+  questions: true
+  objectives: true
+  proposals: true
+  decisions: true
+  agents: true
+  forms: false
+site:
+  models:
+    knowledge_packs:
+      rendered: false
+    workdays:
+      rendered: false
+providers:
+  agents:
+    execution: codex
+    mutation: local_branch
+    repository: git
+    verification: local
+    notification: sdk_message
+    research: project_graph
+  deploy: cloudflare
+  dns: cloudflare-dns
+  content:
+    serving: local_collections
+    runtime: team_scoped_r2_overlay
+    publish: team_scoped_r2_overlay
+    docs: default
+  site: default

@@ -162,7 +162,7 @@ python -m build
 python -m pytest
 
 cd packages/rust-sdk
-node scripts/check_treedx_generated_types.mjs
+tsx scripts/check_treedx_generated_types.ts
 cargo fmt --all -- --check
 cargo clippy --all-targets -- -D warnings
 cargo test

@@ -13,7 +13,7 @@ versions. VERSION must be a semantic version without a v prefix, for example:
 
 This script intentionally refuses to run from a dirty worktree so release
 commits do not accidentally include unrelated changes. Use
-scripts/bump-release-version.mjs VERSION directly when you only want to update
+scripts/bump-release-version.ts VERSION directly when you only want to update
 the files.
 USAGE
 }
@@ -58,7 +58,7 @@ fi
 
 if [[ -n "$(git status --short)" ]]; then
   echo "Refusing to create a release tag from a dirty worktree." >&2
-  echo "Commit or stash existing changes, or run scripts/bump-release-version.mjs $version directly." >&2
+  echo "Commit or stash existing changes, or run scripts/bump-release-version.ts $version directly." >&2
   exit 1
 fi
 
@@ -71,7 +71,7 @@ if git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
   fi
 fi
 
-scripts/bump-release-version.mjs "$version"
+scripts/bump-release-version.ts "$version"
 
 git add \
   apps/api/lib/treedx/version.ex \

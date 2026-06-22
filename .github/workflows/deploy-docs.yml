@@ -1,0 +1,73 @@
+name: Deploy Package Knowledge Hub
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - prod
+      action_kind:
+        required: true
+        default: deploy_web
+        type: choice
+        options:
+          - deploy_web
+          - publish_content
+          - monitor
+      project_id:
+        required: false
+        type: string
+      preview_id:
+        required: false
+        type: string
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    environment: ${{ inputs.environment == 'prod' && 'production' || 'staging' }}
+    defaults:
+      run:
+        working-directory: docs
+    env:
+      TREESEED_BOOTSTRAP_MODE: auto
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      TREESEED_CLOUDFLARE_PAGES_PROJECT_NAME: ${{ vars.TREESEED_CLOUDFLARE_PAGES_PROJECT_NAME || 'treeseed-treedx-docs' }}
+      TREESEED_CONTENT_BUCKET_NAME: ${{ vars.TREESEED_CONTENT_BUCKET_NAME }}
+      TREESEED_CONTENT_BUCKET_BINDING: ${{ vars.TREESEED_CONTENT_BUCKET_BINDING }}
+      TREESEED_PROJECT_ID: ${{ inputs.project_id || vars.TREESEED_PROJECT_ID || 'treedx' }}
+      TREESEED_WORKFLOW_ACTION: ${{ inputs.action_kind }}
+      TREESEED_WORKFLOW_ENVIRONMENT: ${{ inputs.environment }}
+      TREESEED_WORKFLOW_PROJECT: ${{ inputs.project_id || vars.TREESEED_PROJECT_ID || 'treedx' }}
+      TREESEED_WORKFLOW_PREVIEW_ID: ${{ inputs.preview_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs/package.json
+
+      - name: Install docs dependencies
+        run: npm install --ignore-scripts
+
+      - name: Check docs hub
+        run: npm run check
+
+      - name: Build docs hub
+        run: npm run build
+
+      - name: Run Treeseed docs workflow action
+        run: |
+          set -euo pipefail
+          EXTRA_ARGS=()
+          if [[ -n "${TREESEED_WORKFLOW_PROJECT:-}" ]]; then EXTRA_ARGS+=(--project-id "${TREESEED_WORKFLOW_PROJECT}"); fi
+          if [[ -n "${TREESEED_WORKFLOW_PREVIEW_ID:-}" ]]; then EXTRA_ARGS+=(--preview-id "${TREESEED_WORKFLOW_PREVIEW_ID}"); fi
+          node ./node_modules/@treeseed/sdk/scripts/tenant-workflow-action.js --action "${TREESEED_WORKFLOW_ACTION}" --environment "${TREESEED_WORKFLOW_ENVIRONMENT}" "${EXTRA_ARGS[@]}"

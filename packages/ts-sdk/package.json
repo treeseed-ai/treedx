@@ -53,14 +53,15 @@
     "test:treedx-unit": "vitest run --config ./vitest.config.ts test/unit test/adapters test/generated",
     "test:treedx-conformance": "vitest run --config ./vitest.config.ts test/conformance",
     "test:treedx-integration": "vitest run --config ./vitest.config.ts test/integration",
-    "treedx:generate": "node scripts/generate-treedx-openapi-types.mjs",
-    "treedx:check-generated": "node scripts/check-treedx-generated-types.mjs"
+    "treedx:generate": "tsx scripts/generate-treedx-openapi-types.ts",
+    "treedx:check-generated": "tsx scripts/check-treedx-generated-types.ts"
   },
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^24.6.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.2",
-    "yaml": "^2.8.1"
+    "yaml": "^2.8.1",
+    "tsx": "^4.21.0"
   }
 }

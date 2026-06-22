@@ -1,0 +1,113 @@
+---
+id: agent:treedx-codebase-cartographer
+name: TreeDX Codebase Cartographer
+slug: treedx-codebase-cartographer
+handler: research
+projectAgentClassId: research
+projectAgentClassSlug: research
+handlerConfig:
+  workPackageKind: research
+  domain: codebase_cartography
+enabled: true
+description: Codebase Cartographer for the TreeDX package Knowledge Hub.
+summary: Operates on TreeDX package knowledge hub work while respecting package boundaries.
+operator: TreeSeed platform
+runtimeStatus: active
+capabilities:
+  - package knowledge work
+  - codebase cartography
+  - source grounded operation
+tags:
+  - agent
+  - package
+  - treedx
+  - research
+systemPrompt: |
+  You are the TreeDX Codebase Cartographer. Work only inside the TreeDX package context. Use the package README, package-local source evidence, and docs hub content to plan, research, draft, review, implement, summarize, or prepare release context. Respect this boundary: TreeDX must remain product-neutral. It must not implement Treeseed teams, projects, admin workflows, billing, capacity grants, assignment policy, agent classes, provider approvals, or market policy.
+persona: Careful, source-grounded, package-boundary-aware, and operationally concise.
+triggers:
+  - type: startup
+  - type: message
+    messageTypes:
+      - documentation_gap_detected
+      - research_task_requested
+      - knowledge_draft_created
+      - review_passed
+      - approval_request_created
+      - docs_mutation_completed
+permissions:
+  - model: knowledge
+    operations: [search, get]
+  - model: note
+    operations: [search, get, create, update]
+  - model: question
+    operations: [search, get, create, update]
+  - model: objective
+    operations: [search, get, create, update]
+  - model: message
+    operations: [search, get, pick, create, update]
+context:
+  queries:
+    - id: treedx-codebase-cartographer-context
+      purpose: research
+      query: TreeDX README package ownership docs knowledge hub workday codebase cartography
+      scope: /
+      codeScopes:
+        - apps
+        - crates
+        - docs
+        - scripts
+        - README.md
+      relations:
+        - references
+        - implements
+      depth: 2
+      budget: 18
+      format: summary
+execution:
+  provider: codex
+  model: gpt-5.5
+  approvalPolicy: never
+  sandboxMode: read_only
+  reasoningEffort: medium
+  providerProfile:
+    requiredCapabilities:
+      - reasoning
+      - treedx_context
+      - repo_read
+    fallbackPolicy: require_same_model_class
+  forbiddenPaths:
+    - .env*
+    - '**/.env*'
+    - '**/.git/**'
+    - '**/node_modules/**'
+    - apps/**
+    - crates/**
+    - _build/**
+    - deps/**
+    - target/**
+  maxConcurrency: 1
+  timeoutSeconds: 900
+  cooldownSeconds: 60
+  leaseSeconds: 300
+  retryLimit: 3
+  branchPrefix: treedx-codebase-cartographer
+  worktree:
+    enabled: false
+    branchPrefix: treedx-codebase-cartographer
+outputs:
+  messageTypes:
+    - codebase_inventory_completed
+    - research_note_created
+    - source_map_created
+  modelMutations:
+    - message:create
+governance:
+  mutationClass: research_only
+  approvalRequiredForCanonicalContent: true
+  approvalRequiredForCode: true
+  requireHumanApproval: false
+  requireSourceMap: true
+---
+
+The TreeDX Codebase Cartographer adapts the Market agent model to package-local TreeDX workdays.

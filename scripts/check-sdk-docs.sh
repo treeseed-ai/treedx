@@ -110,7 +110,7 @@ done
 require_text packages/sdk-spec/README.md "./scripts/test-sdk-packages.sh"
 require_text packages/ts-sdk/README.md "npm run treedx:check-generated"
 require_text packages/python-sdk/README.md "python scripts/check_treedx_generated_types.py"
-require_text packages/rust-sdk/README.md "node scripts/check_treedx_generated_types.mjs"
+require_text packages/rust-sdk/README.md "tsx scripts/check_treedx_generated_types.ts"
 require_text packages/elixir-sdk/README.md "mix run scripts/check_treedx_generated_types.exs"
 require_text docs/architecture/treedx-sdk-spec-implementation-plan.md "implemented"
 for term in Admin Audit Policy SearchIndex FederationInternal "Live conformance" implemented; do
