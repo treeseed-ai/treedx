@@ -154,7 +154,7 @@ defmodule TreeDx.Capabilities do
       token_scope["capabilities"] || token_scope[:capabilities] || []
     )
     |> maybe_intersect("refs", token_scope["refs"] || token_scope[:refs] || [])
-    |> maybe_intersect("paths", token_scope["paths"] || token_scope[:paths] || [])
+    |> maybe_intersect_paths(token_scope["paths"] || token_scope[:paths] || [])
   end
 
   defp intersect_token_scope(scope, _principal), do: scope
@@ -164,6 +164,31 @@ defmodule TreeDx.Capabilities do
   defp maybe_intersect(scope, key, values) do
     existing = scope[key] || []
     Map.put(scope, key, Enum.filter(existing, &(&1 in values or "*" in values or "**" in values)))
+  end
+
+  defp maybe_intersect_paths(scope, []), do: scope
+
+  defp maybe_intersect_paths(scope, token_paths) do
+    existing = scope["paths"] || []
+
+    paths =
+      for existing_path <- existing,
+          token_path <- token_paths,
+          reduced <- intersect_path_pattern(existing_path, token_path),
+          uniq: true,
+          do: reduced
+
+    Map.put(scope, "paths", paths)
+  end
+
+  defp intersect_path_pattern(existing, requested) do
+    cond do
+      existing in ["**", "*"] -> [requested]
+      requested in ["**", "*"] -> [existing]
+      match_pattern?(existing, requested) -> [requested]
+      match_pattern?(requested, existing) -> [existing]
+      true -> []
+    end
   end
 
   defp denied(details) do

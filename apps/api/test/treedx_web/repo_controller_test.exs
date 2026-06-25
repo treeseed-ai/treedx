@@ -96,6 +96,18 @@ defmodule TreeDxWeb.RepoControllerTest do
     conn =
       build_conn()
       |> put_req_header("authorization", "Bearer #{token}")
+      |> post("/api/v1/repos/#{repo_id}/workspaces", %{
+        workspace_params
+        | "branchName" => "agent/plain-demo"
+      })
+
+    plain_workspace = json_response(conn, 200)
+    assert plain_workspace["branchName"] == "refs/heads/agent/plain-demo"
+    assert plain_workspace["effectiveScope"]["refs"] == ["refs/heads/agent/plain-demo"]
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", "Bearer #{token}")
       |> post("/api/v1/repos/#{repo_id}/workspaces", workspace_params)
 
     assert json_response(conn, 409)["error"]["code"] == "conflict"

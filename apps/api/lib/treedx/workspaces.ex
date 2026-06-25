@@ -4,7 +4,7 @@ defmodule TreeDx.Workspaces do
   def create(repo_id, params, principal) do
     mode = normalize_mode(params["mode"] || "read_only")
     base_ref = params["baseRef"] || "refs/heads/main"
-    branch_name = params["branchName"]
+    branch_name = normalize_branch_name(params["branchName"])
     allowed_paths = params["allowedPaths"] || ["**"]
     ttl = params["ttlSeconds"] || 1800
     local_node_id = System.get_env("TREEDX_NODE_ID") || "node_local"
@@ -306,6 +306,12 @@ defmodule TreeDx.Workspaces do
       "workspace:exec:verification",
       "git:diff"
     ]
+
+  defp normalize_branch_name(nil), do: nil
+  defp normalize_branch_name(""), do: ""
+  defp normalize_branch_name("refs/" <> _ = branch_name), do: branch_name
+  defp normalize_branch_name(branch_name) when is_binary(branch_name), do: "refs/heads/#{branch_name}"
+  defp normalize_branch_name(branch_name), do: branch_name
 
   defp workspace_refs(_scope, %{branch_name: branch_name}) when is_binary(branch_name),
     do: [branch_name]

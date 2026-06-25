@@ -9,15 +9,11 @@ defmodule TreeDx.Audit.Writer do
   end
 
   def append(event) do
-    if async_enabled?() and Process.whereis(__MODULE__) do
-      case GenServer.call(__MODULE__, {:append, event}, 5_000) do
-        :ok ->
-          {:ok, normalize_event(event)}
+    writer = Process.whereis(__MODULE__)
 
-        :sync ->
-          TreeDx.Observability.Metrics.incr("treedx_audit_sync_fallback_total")
-          TreeDx.Store.append_audit_event(event)
-      end
+    if async_enabled?() and writer do
+      GenServer.cast(writer, {:append, event})
+      {:ok, normalize_event(event)}
     else
       TreeDx.Store.append_audit_event(event)
     end
@@ -37,18 +33,20 @@ defmodule TreeDx.Audit.Writer do
     end
   end
 
-  def handle_call({:append, event}, _from, state) do
+  def handle_cast({:append, event}, state) do
     if length(state.queue) >= queue_max() do
-      {:reply, :sync, state, flush_interval()}
+      TreeDx.Observability.Metrics.incr("treedx_audit_sync_fallback_total")
+      _ = TreeDx.Store.append_audit_event(event)
+      {:noreply, state, flush_interval()}
     else
       queue = [event | state.queue]
       state = %{state | queue: queue}
       TreeDx.Observability.Metrics.put_gauge("treedx_audit_queue_depth", length(queue))
 
       if length(queue) >= batch_size() do
-        {:reply, :ok, flush_state(state), flush_interval()}
+        {:noreply, flush_state(state), flush_interval()}
       else
-        {:reply, :ok, state, flush_interval()}
+        {:noreply, state, flush_interval()}
       end
     end
   end

@@ -153,7 +153,77 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
     assert json_response(conn, 200)["file"]["encoding"] == "base64"
   end
 
+  test "connected JWT path scope narrows broader repository grants", %{repo_id: repo_id} do
+    old_auth = System.get_env("TREEDX_AUTH_MODE")
+    old_issuer = System.get_env("TREEDX_JWT_ISSUER")
+    old_audience = System.get_env("TREEDX_JWT_AUDIENCE")
+    old_secret = System.get_env("TREEDX_JWT_HS256_SECRET")
+
+    System.put_env("TREEDX_AUTH_MODE", "connected")
+    System.put_env("TREEDX_JWT_ISSUER", "https://issuer.example.invalid")
+    System.put_env("TREEDX_JWT_AUDIENCE", "treedx")
+    System.put_env("TREEDX_JWT_HS256_SECRET", "test-secret")
+
+    on_exit(fn ->
+      restore_env("TREEDX_AUTH_MODE", old_auth)
+      restore_env("TREEDX_JWT_ISSUER", old_issuer)
+      restore_env("TREEDX_JWT_AUDIENCE", old_audience)
+      restore_env("TREEDX_JWT_HS256_SECRET", old_secret)
+    end)
+
+    token =
+      jwt(%{
+        "iss" => "https://issuer.example.invalid",
+        "aud" => "treedx",
+        "sub" => "actor_demo",
+        "treedx_actor_id" => "actor_demo",
+        "treedx_tenant_id" => "tenant_demo",
+        "treedx_repo_ids" => [repo_id],
+        "treedx_capabilities" => ["files:read"],
+        "treedx_refs" => ["*"],
+        "treedx_paths" => ["docs/**"],
+        "exp" => System.system_time(:second) + 3600,
+        "jti" => "repo_query_connected_scope_test"
+      })
+
+    conn =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/paths/list", %{"paths" => ["**"]})
+
+    paths = json_response(conn, 200)["entries"] |> Enum.map(& &1["path"])
+    assert "docs/readme.md" in paths
+    assert "docs/page.mdx" in paths
+    refute "outside.md" in paths
+
+    conn =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{"path" => "docs/readme.md"})
+
+    assert json_response(conn, 200)["file"]["path"] == "docs/readme.md"
+
+    conn =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{"path" => "outside.md"})
+
+    assert json_response(conn, 403)["error"]["code"] == "permission_denied"
+  end
+
   defp auth(conn, token), do: put_req_header(conn, "authorization", "Bearer #{token}")
+
+  defp jwt(payload) do
+    header = %{"alg" => "HS256", "typ" => "JWT"} |> Jason.encode!() |> b64()
+    body = payload |> Jason.encode!() |> b64()
+    signature = :crypto.mac(:hmac, :sha256, "test-secret", "#{header}.#{body}") |> b64()
+    "#{header}.#{body}.#{signature}"
+  end
+
+  defp b64(bytes), do: Base.url_encode64(bytes, padding: false)
+
+  defp restore_env(name, nil), do: System.delete_env(name)
+  defp restore_env(name, value), do: System.put_env(name, value)
 
   defp create_query_fixture(path) do
     File.rm_rf!(path)
@@ -188,6 +258,7 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
     """)
 
     File.write!(Path.join(path, ".env"), "SECRET=true\n")
+    File.write!(Path.join(path, "outside.md"), "outside docs scope\n")
     File.write!(Path.join(path, "docs/binary.dat"), <<255, 0, 1>>)
     git(path, ["add", "."])
     git(path, ["commit", "-m", "init"])
