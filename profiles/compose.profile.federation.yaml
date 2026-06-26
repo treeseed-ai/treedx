@@ -11,6 +11,8 @@ services:
       PORT: "4000"
       TREEDX_DATA_DIR: /var/lib/treedx
       TREEDX_AUTH_MODE: dev
+      TREEDX_DEV_ACTOR_ID: actor_demo
+      TREEDX_DEV_TENANT_ID: tenant_demo
       TREEDX_REGISTRY_MODE: local
       TREEDX_NODE_ID: node_a
       TREEDX_FEDERATION_ENABLED: "true"
@@ -60,6 +62,8 @@ services:
       PORT: "4000"
       TREEDX_DATA_DIR: /var/lib/treedx
       TREEDX_AUTH_MODE: dev
+      TREEDX_DEV_ACTOR_ID: actor_demo
+      TREEDX_DEV_TENANT_ID: tenant_demo
       TREEDX_REGISTRY_MODE: local
       TREEDX_NODE_ID: node_b
       TREEDX_FEDERATION_ENABLED: "true"
@@ -111,6 +115,8 @@ services:
       PORT: "4000"
       TREEDX_DATA_DIR: /var/lib/treedx
       TREEDX_AUTH_MODE: dev
+      TREEDX_DEV_ACTOR_ID: actor_demo
+      TREEDX_DEV_TENANT_ID: tenant_demo
       TREEDX_REGISTRY_MODE: local
       TREEDX_NODE_ID: node_c
       TREEDX_FEDERATION_ENABLED: "true"
