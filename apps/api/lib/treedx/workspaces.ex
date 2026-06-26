@@ -310,7 +310,10 @@ defmodule TreeDx.Workspaces do
   defp normalize_branch_name(nil), do: nil
   defp normalize_branch_name(""), do: ""
   defp normalize_branch_name("refs/" <> _ = branch_name), do: branch_name
-  defp normalize_branch_name(branch_name) when is_binary(branch_name), do: "refs/heads/#{branch_name}"
+
+  defp normalize_branch_name(branch_name) when is_binary(branch_name),
+    do: "refs/heads/#{branch_name}"
+
   defp normalize_branch_name(branch_name), do: branch_name
 
   defp workspace_refs(_scope, %{branch_name: branch_name}) when is_binary(branch_name),

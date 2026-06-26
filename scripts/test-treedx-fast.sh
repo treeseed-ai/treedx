@@ -7,6 +7,7 @@ TREEDX_TARGET_DIR="${TREEDX_TARGET_DIR:-${TREEDX_BUILD_TMP_DIR%/}/treedx-target}
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo fmt --all -- --check
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo clippy --workspace -- -D warnings
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo test --workspace
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo build -p treedx_git --bin treedx_git_worker
 
 (
   cd apps/api

@@ -17,4 +17,4 @@ jobs:
           otp-version: "27"
           elixir-version: "1.17.3"
       - run: mix local.hex --force && mix local.rebar --force
-      - run: bash scripts/test-all.sh
+      - run: bash scripts/release-gate.sh
