@@ -93,6 +93,13 @@ execution:
   worktree:
     enabled: false
     branchPrefix: treedx-governance-steward
+tools:
+  allowed:
+    - treedx.build_context
+    - treedx.search_workspace
+    - treedx.read_repository_files
+    - treedx.read_workspace_file
+    - treeseed.status
 outputs:
   messageTypes:
     - approval_request_created
@@ -102,9 +109,6 @@ outputs:
     - message:create
 governance:
   mutationClass: governance_only
-  approvalRequiredForCanonicalContent: true
-  approvalRequiredForCode: true
-  requireHumanApproval: true
   requireSourceMap: false
 ---
 

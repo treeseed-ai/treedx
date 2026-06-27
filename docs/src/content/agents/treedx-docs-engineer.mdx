@@ -108,6 +108,18 @@ execution:
   worktree:
     enabled: true
     branchPrefix: treedx-docs-engineer
+tools:
+  allowed:
+    - treedx.build_context
+    - treedx.search_workspace
+    - treedx.read_repository_files
+    - treedx.read_workspace_file
+    - treedx.write_workspace_file
+    - treedx.commit_workspace
+    - treeseed.status
+    - treeseed.dev_plan
+    - treeseed.changed_paths
+    - treeseed.verify
 outputs:
   messageTypes:
     - docs_mutation_completed
@@ -119,9 +131,6 @@ outputs:
     - note:create
 governance:
   mutationClass: approved_docs_mutation
-  approvalRequiredForCanonicalContent: true
-  approvalRequiredForCode: true
-  requireHumanApproval: true
   requireSourceMap: false
 ---
 
