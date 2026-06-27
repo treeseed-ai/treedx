@@ -108,11 +108,11 @@ The TypeScript SDK is intentionally tested and released independently from this 
 
 TreeDX owns the implementation, release gate, Docker image workflows, generated SDK publication, and profiler image gates. Treeseed API hosting consumes TreeDX through the SDK-owned reconciliation platform documented in the root workspace `docs/reconciliation-platform.md`.
 
-- `treeseed.package.yaml` declares the TreeDX repository, image target, development-image workflow, tag policy, credential needs, and hosting override variable.
+- `treeseed.package.yaml` declares the TreeDX repository, image target, source-build policy, production image workflow, credential needs, and hosting integration.
 - Tagged release images are cut only from merges to `main`.
-- Staging may publish pruneable development images, including the mutable `dev-staging` tag and immutable SHA-qualified development tags.
-- `trsd package image --package treedx --branch staging --plan|--sync-config|--execute --json` is the package workflow surface; `trsd db image` remains a TreeDX-domain wrapper.
-- `packages/api` owns public TreeDX federation hosting and reconciles the selected image into Railway services, domains, variables, and volumes.
+- Staging builds TreeDX from GitHub source at an exact commit through Railway reconciliation.
+- `trsd package image --package treedx --branch staging --plan --json` reports source-build behavior; production image publication uses semantic release tags from `main`.
+- `packages/api` owns public TreeDX federation hosting and reconciles the selected source build or production image into Railway services, domains, variables, and volumes.
 
 ## Architecture
 

@@ -17,7 +17,7 @@ It starts two services:
   auth for turnkey local profiling.
 - `treedx-profiler`: profiler client that waits for API health, runs over HTTP,
   writes YAML and Markdown reports, and exits. This service uses the
-  development image because it builds and runs the standalone escript.
+  profiler image because it builds and runs the standalone escript.
 
 Both services share `treedx-data:/var/lib/treedx`, so fixture repositories are
 generated under `/var/lib/treedx/profiler` and can be registered through the

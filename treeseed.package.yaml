@@ -6,6 +6,9 @@ repository: treeseed-ai/treedx
 versionSource: apps/api/mix.exs
 image: treeseed/treedx
 workflowTemplateVersion: "1"
+deploymentSource:
+  staging: git
+  prod: image
 githubEnvironments:
   - staging
   - production
@@ -15,18 +18,6 @@ verify:
   fast: scripts/test-treedx-fast.sh
   local: scripts/test-all.sh
   release: scripts/release-gate.sh
-developmentImages:
-  workflow: dev-image.yml
-  defaultBranch: staging
-  tagPrefix: dev
-  movingTag: true
-  architectures:
-    - amd64
-    - arm64
-  hosting:
-    app: api
-    environment: staging
-    envVar: TREESEED_PUBLIC_TREEDX_IMAGE_REF
 projectArchitecture:
   topology: single_repository_site
   rootPath: .
