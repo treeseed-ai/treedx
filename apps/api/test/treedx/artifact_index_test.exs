@@ -11,7 +11,11 @@ defmodule TreeDx.ArtifactIndexTest do
     Application.put_env(:treedx, :data_dir, dir)
     TreeDx.Store.init!(node_id: "node_local")
 
-    on_exit(fn -> File.rm_rf!(dir) end)
+    on_exit(fn ->
+      Application.delete_env(:treedx, :data_dir)
+      cleanup_dir(dir)
+    end)
+
     :ok
   end
 
@@ -42,5 +46,23 @@ defmodule TreeDx.ArtifactIndexTest do
 
     assert [] = TreeDx.Artifacts.Index.list("repo_demo")
     assert is_nil(TreeDx.Artifacts.Index.get("repo_demo", "artifact_demo"))
+  end
+
+  defp cleanup_dir(dir, attempts \\ 5)
+
+  defp cleanup_dir(dir, attempts) when attempts > 1 do
+    case File.rm_rf(dir) do
+      {:ok, _} ->
+        :ok
+
+      {:error, _reason, _path} ->
+        Process.sleep(25)
+        cleanup_dir(dir, attempts - 1)
+    end
+  end
+
+  defp cleanup_dir(dir, _attempts) do
+    File.rm_rf(dir)
+    :ok
   end
 end
