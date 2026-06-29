@@ -40,11 +40,7 @@ ENV MIX_ENV=prod \
     TREEDX_DATA_DIR=/var/lib/treedx
 COPY . .
 WORKDIR /workspace/treedx/apps/api
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-  --mount=type=cache,target=/usr/local/cargo/git \
-  --mount=type=cache,target=/workspace/treedx/target \
-  --mount=type=cache,target=/workspace/treedx/apps/api/deps \
-  mix deps.get --only prod \
+RUN mix deps.get --only prod \
   && mix compile \
   && cargo build --release -p treedx_git --bin treedx_git_worker \
   && mix release \

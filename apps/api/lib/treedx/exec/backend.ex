@@ -9,7 +9,7 @@ defmodule TreeDx.Exec.Backend do
   end
 
   def backend_name do
-    System.get_env("TREEDX_EXEC_BACKEND") || "direct_dev"
+    TreeDx.Env.get("TREEDX_EXEC_BACKEND") || "direct_dev"
   end
 
   def resource_limits(params \\ %{}) do
@@ -54,7 +54,7 @@ defmodule TreeDx.Exec.Backend do
   defp validate_runtime(TreeDx.Exec.Backends.DirectDev) do
     production? = TreeDx.Auth.mode() == "connected" or System.get_env("MIX_ENV") == "prod"
 
-    if production? and System.get_env("TREEDX_ALLOW_DIRECT_EXEC_IN_PROD") != "true" do
+    if production? and TreeDx.Env.get("TREEDX_ALLOW_DIRECT_EXEC_IN_PROD") != "true" do
       {:error,
        %{
          code: "sandbox_policy_denied",
@@ -68,7 +68,7 @@ defmodule TreeDx.Exec.Backend do
   defp validate_runtime(_module), do: :ok
 
   defp env_number(name, default) do
-    case Integer.parse(System.get_env(name, "#{default}")) do
+    case Integer.parse(TreeDx.Env.get(name, "#{default}")) do
       {value, _} -> value
       _ -> default
     end

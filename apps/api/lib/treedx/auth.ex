@@ -1,7 +1,7 @@
 defmodule TreeDx.Auth do
   @moduledoc false
 
-  def mode, do: System.get_env("TREEDX_AUTH_MODE") || "dev"
+  def mode, do: TreeDx.Env.get("TREEDX_AUTH_MODE") || "dev"
 
   def create_dev_token(params \\ %{}) do
     if mode() != "dev" do
@@ -114,7 +114,7 @@ defmodule TreeDx.Auth do
       Application.get_env(:treedx, :dev_principal, [])
       |> Keyword.get(key)
 
-    env_value = System.get_env(env)
+    env_value = TreeDx.Env.get(env)
 
     cond do
       is_binary(configured) and configured != "" ->

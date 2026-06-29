@@ -8,7 +8,7 @@ defmodule TreeDx.Auth.Verifier do
   }
 
   def type do
-    System.get_env("TREEDX_AUTH_VERIFIER") || legacy_default()
+    TreeDx.Env.get("TREEDX_AUTH_VERIFIER") || legacy_default()
   end
 
   def verify(token) do
@@ -36,7 +36,7 @@ defmodule TreeDx.Auth.Verifier do
 
   defp validate_runtime_safety do
     if type() == "hs256_dev" && prod_runtime?() &&
-         System.get_env("TREEDX_ALLOW_DEV_VERIFIER_IN_PROD") != "true" do
+         TreeDx.Env.get("TREEDX_ALLOW_DEV_VERIFIER_IN_PROD") != "true" do
       {:error,
        %{
          code: "auth_not_configured",
@@ -73,6 +73,6 @@ defmodule TreeDx.Auth.Verifier do
   end
 
   defp legacy_default do
-    if System.get_env("TREEDX_JWT_HS256_SECRET"), do: "hs256_dev", else: nil
+    if TreeDx.Env.get("TREEDX_JWT_HS256_SECRET"), do: "hs256_dev", else: nil
   end
 end

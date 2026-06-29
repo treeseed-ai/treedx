@@ -23,6 +23,8 @@ defmodule TreeDx.ConfigValidation do
   def validate_release_gate_env(env \\ System.get_env()), do: validate_env(env)
 
   def validate_env(env) when is_map(env) do
+    env = TreeDx.Env.normalize(env)
+
     errors =
       []
       |> require_secret_key(env)

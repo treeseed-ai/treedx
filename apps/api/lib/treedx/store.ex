@@ -2,13 +2,13 @@ defmodule TreeDx.Store do
   @moduledoc false
 
   def data_dir do
-    System.get_env("TREEDX_DATA_DIR") || Application.get_env(:treedx, :data_dir) ||
+    TreeDx.Env.get("TREEDX_DATA_DIR") || Application.get_env(:treedx, :data_dir) ||
       "/var/lib/treedx"
   end
 
   def init!(opts \\ %{}) do
     opts = Map.new(opts)
-    node_id = Map.get(opts, :node_id) || System.get_env("TREEDX_NODE_ID") || "node_local"
+    node_id = Map.get(opts, :node_id) || TreeDx.Env.get("TREEDX_NODE_ID") || "node_local"
     ensure_lock_marker!()
 
     {:ok, report} =

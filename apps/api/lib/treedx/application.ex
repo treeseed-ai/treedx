@@ -4,8 +4,10 @@ defmodule TreeDx.Application do
 
   @impl true
   def start(_type, _args) do
+    TreeDx.Env.apply_prefixed_aliases!()
+
     data_dir =
-      System.get_env("TREEDX_DATA_DIR") || Application.get_env(:treedx, :data_dir) ||
+      TreeDx.Env.get("TREEDX_DATA_DIR") || Application.get_env(:treedx, :data_dir) ||
         "/var/lib/treedx"
 
     Application.put_env(:treedx, :data_dir, data_dir)
@@ -53,11 +55,11 @@ defmodule TreeDx.Application do
     :ok
   end
 
-  defp node_id, do: System.get_env("TREEDX_NODE_ID") || "node_local"
+  defp node_id, do: TreeDx.Env.get("TREEDX_NODE_ID") || "node_local"
 
   defp bootstrap_configured_trust_grant do
-    actor_id = System.get_env("TREEDX_BOOTSTRAP_TRUST_ACTOR_ID")
-    tenant_id = System.get_env("TREEDX_BOOTSTRAP_TRUST_TENANT_ID")
+    actor_id = TreeDx.Env.get("TREEDX_BOOTSTRAP_TRUST_ACTOR_ID")
+    tenant_id = TreeDx.Env.get("TREEDX_BOOTSTRAP_TRUST_TENANT_ID")
 
     cond do
       blank?(actor_id) and blank?(tenant_id) ->
@@ -68,12 +70,12 @@ defmodule TreeDx.Application do
 
       true ->
         capabilities =
-          System.get_env("TREEDX_BOOTSTRAP_TRUST_CAPABILITIES")
+          TreeDx.Env.get("TREEDX_BOOTSTRAP_TRUST_CAPABILITIES")
           |> csv(TreeDx.Capabilities.canonical())
 
-        refs = System.get_env("TREEDX_BOOTSTRAP_TRUST_REFS") |> csv(["*"])
-        paths = System.get_env("TREEDX_BOOTSTRAP_TRUST_PATHS") |> csv(["**"])
-        repo_ids = System.get_env("TREEDX_BOOTSTRAP_TRUST_REPO_IDS") |> csv(["*"])
+        refs = TreeDx.Env.get("TREEDX_BOOTSTRAP_TRUST_REFS") |> csv(["*"])
+        paths = TreeDx.Env.get("TREEDX_BOOTSTRAP_TRUST_PATHS") |> csv(["**"])
+        repo_ids = TreeDx.Env.get("TREEDX_BOOTSTRAP_TRUST_REPO_IDS") |> csv(["*"])
 
         {:ok, _grant} =
           TreeDx.Capabilities.put_grant(%{

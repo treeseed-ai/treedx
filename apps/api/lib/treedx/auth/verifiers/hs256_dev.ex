@@ -57,14 +57,14 @@ defmodule TreeDx.Auth.Verifiers.Hs256Dev do
   end
 
   def clock_skew do
-    case Integer.parse(System.get_env("TREEDX_JWT_CLOCK_SKEW_SECONDS") || "") do
+    case Integer.parse(TreeDx.Env.get("TREEDX_JWT_CLOCK_SKEW_SECONDS") || "") do
       {value, _} when value >= 0 -> value
       _ -> @default_skew
     end
   end
 
-  def issuer, do: System.get_env("TREEDX_JWT_ISSUER")
-  def audience, do: System.get_env("TREEDX_JWT_AUDIENCE")
+  def issuer, do: TreeDx.Env.get("TREEDX_JWT_ISSUER")
+  def audience, do: TreeDx.Env.get("TREEDX_JWT_AUDIENCE")
 
   def invalid, do: {:error, %{code: "invalid_token", message: "Invalid bearer token."}}
 
@@ -132,7 +132,7 @@ defmodule TreeDx.Auth.Verifiers.Hs256Dev do
     end
   end
 
-  defp secret, do: System.get_env("TREEDX_JWT_HS256_SECRET")
+  defp secret, do: TreeDx.Env.get("TREEDX_JWT_HS256_SECRET")
 
   defp secure_compare(left, right) when byte_size(left) == byte_size(right) do
     :crypto.hash_equals(left, right)
