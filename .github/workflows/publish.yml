@@ -29,7 +29,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - run: true
       - name: Compute image tags
         id: tags
         run: |

@@ -8,14 +8,8 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: erlef/setup-beam@v1
-        with:
-          otp-version: "27"
-          elixir-version: "1.17.3"
-      - run: mix local.hex --force && mix local.rebar --force
-      - run: bash scripts/release-gate.sh
+      - run: bash scripts/test-all.sh
