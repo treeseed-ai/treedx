@@ -13,7 +13,7 @@ githubEnvironments:
   - staging
   - production
 requiredSecrets:
-  - DOCKERHUB_TOKEN
+  - TREESEED_DOCKERHUB_TOKEN
 verify:
   fast: scripts/test-treedx-fast.sh
   local: scripts/test-all.sh
