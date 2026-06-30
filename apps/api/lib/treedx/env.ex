@@ -43,17 +43,14 @@ defmodule TreeDx.Env do
   def get(name, default \\ nil) when is_binary(name) do
     case prefixed(name) do
       nil -> System.get_env(name) || default
-      prefixed_name -> System.get_env(prefixed_name) || System.get_env(name) || default
+      prefixed_name -> System.get_env(name) || System.get_env(prefixed_name) || default
     end
   end
 
   def normalize(env) when is_map(env) do
     Enum.reduce(@aliases, env, fn {legacy, prefixed}, acc ->
       cond do
-        present?(Map.get(acc, legacy)) ->
-          acc
-
-        present?(Map.get(acc, prefixed)) ->
+        !present?(Map.get(acc, legacy)) and present?(Map.get(acc, prefixed)) ->
           Map.put(acc, legacy, Map.get(acc, prefixed))
 
         true ->
