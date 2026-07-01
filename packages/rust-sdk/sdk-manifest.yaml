@@ -1,6 +1,6 @@
 sdk: treedx-rust
 language: rust
-version: 0.2.0
+version: 0.2.1
 sdkSpecVersion: 0.1.0
 openapiVersion: 0.10.0
 testLayout:
