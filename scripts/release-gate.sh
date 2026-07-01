@@ -18,6 +18,7 @@ run_stage() {
 }
 
 run_stage "TreeDX tests" "${TREEDX_TEST_ALL_TIMEOUT_SECONDS:-1200}" ./scripts/test-all.sh
+run_stage "TreeDX SDK packages" "${TREEDX_SDK_PACKAGES_TIMEOUT_SECONDS:-1800}" ./scripts/test-sdk-packages.sh
 run_stage "TreeDX security check" "${TREEDX_SECURITY_CHECK_TIMEOUT_SECONDS:-1200}" ./scripts/security-check.sh
 run_stage "TreeDX MVP smoke" "${TREEDX_MVP_SMOKE_TIMEOUT_SECONDS:-900}" ./scripts/mvp-smoke.sh
 run_stage "TreeDX federation live check" "${TREEDX_FEDERATION_LIVE_TIMEOUT_SECONDS:-120}" ./scripts/federation-live-check.sh
