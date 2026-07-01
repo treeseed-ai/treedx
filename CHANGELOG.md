@@ -1,0 +1,65 @@
+# Changelog
+
+## [0.2.0] - 2026-07-01
+
+### Added
+
+- feat(api): fix Railway IaC-only reconciliation and TreeDX env names (ab9d1a228d83)
+- feat(config): fix staging deploy env, image-backed Railway services, (9a8a8e48f038)
+- feat(source): fix staging CI deploy workflow and TreeDX advisory (988b364d78bc)
+
+### Changed
+
+- docs(docs): implement model-aware agent content tools (91068de5f1ec)
+- Close ecommerce architecture criteria (148e84a8ad61)
+- docs(docs): Save reconciliation platform and live acceptance updates (c295f4de1d4f)
+- Removing the now completed SDK plan. (336f2ac665ed)
+- Cleaning up the OpenAPI specification so it is only defined in YAML. (3067958c4914)
+
+### Fixed
+
+- fix(release): add SDK package testing to release gates (0868f9bebddf)
+- ci(ci): fix scoped project domains for staging Pages (9a5f972cc9c8)
+- fix(api): fix Railway IaC-only reconciliation and TreeDX env names (220e4d95bfdb)
+- ci(ci): fix Railway staging Dockerfile builds and persistent volumes (dc0f41b01d64)
+- ci(ci): fix staging Railway source builds and volumes (8b6b203fcfa2)
+- fix(api): fix staging Railway source builds and volumes (106595c7fbeb)
+- test(tests): fix stage verification cleanup issues (4f9e517a682b)
+- fix(api): clean agent assignment runtime and remove provider api (21919a0b66ca)
+- ci(ci): promotion checkpoint after API and TreeDX CI fixes (28023f8853cb)
+- fix(config): clean capacity runtime storage and hosting manifests (bc55073aac0e)
+- ci(ci): fix action preflight failures (3ef095f28fae)
+- build(api): fix local release graph rehearsal preflight (6d269458f7ec)
+- fix(config): environment registry coverage and service credential (3cce1af1f9f5)
+- ci(ci): Fix workflow checks for non Node packages (ee48763affba)
+- fix: avoid provider cli install in image workflows (1a28b6a88886)
+- fix: build treedx images on native runners (9137ef9f29d1)
+- fix: honor runtime TreeDX data dir (27d5a80f4d2d)
+- fix(docker): avoid remote Dockerfile frontend during release (61177430a1d1)
+- fix(docker): refresh TreeDX runtime image for mounted volumes (9631da7d2971)
+- fix(docker): initialize mounted TreeDX data volumes (53c481246b61)
+
+### Infrastructure
+
+- ci(ci): restore TreeDX release gate Beam setup (a8978c40318f)
+- ci(ci): promotion checkpoint for TreeDX CI environment and hosted gate (fe3d25b28412)
+- docs(docs): update workflow documentation (fd38bd2a4873)
+- ci(ci): Add recursive submodule checkout to package workflows (0bab55f9058f)
+- ci(ci): Complete unified reconciliation switch dev save closure (88ae5c602dcc)
+- ci: bootstrap TreeDX security scan tools (9e6faebe201e)
+- ci(ci): stage package submodule restructuring (e85d57d11427)
+- docs(docs): stage package submodule restructuring (0838383d22c6)
+- ci: use staging environment for TreeDX dev images (7b6b5407f140)
+- chore: declare TreeDX Treeseed package metadata (fc7577ed0ad3)
+- ci: use synced Docker Hub config for TreeDX images (feb311efc683)
+- ci: run TreeDX dev images outside production environment (1e2669673cb2)
+- ci: gate secondary artifacts on TreeDX image publish (f3f63afb337b)
+- ci: add staging TreeDX development image workflow (693f9ef833ce)
+- ci: decouple TreeDX image publish from profiling (1de7bafff500)
+- chore(release): prepare TreeDX 0.1.3 (05434366f810)
+
+### Tests
+
+- ci(docs): checkpoint before verify action and local dev stack validation (125dd9a12e0f)
+- chore(docs): migrate scripts to tsx and TypeScript (d0ef72cd56cb)
+- docs(api): security tightening and demo workflow checkpoint (5e6f2cdc92f7)

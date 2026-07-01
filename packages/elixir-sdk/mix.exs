@@ -4,7 +4,7 @@ defmodule TreeDxSdk.MixProject do
   def project do
     [
       app: :treedx,
-      version: "0.1.6",
+      version: "0.2.0",
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       description: "Generic Elixir SDK for TreeDX.",
