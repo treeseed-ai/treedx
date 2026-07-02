@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.6] - 2026-07-02
+
+### Fixed
+
+- fix(release): publish TreeDX SDK artifacts (276609ab14fd)
+
 ## [0.2.5] - 2026-07-02
 
 ### Fixed
