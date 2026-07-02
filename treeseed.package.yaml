@@ -14,6 +14,8 @@ githubEnvironments:
   - production
 requiredSecrets:
   - TREESEED_DOCKERHUB_TOKEN
+requiredVariables:
+  - TREESEED_DOCKERHUB_USERNAME
 verify:
   fast: scripts/test-treedx-fast.sh
   local: scripts/test-all.sh
