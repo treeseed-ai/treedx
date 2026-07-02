@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3] - 2026-07-02
+
+### Tests
+
+- test: clean treedx sdk verifier artifacts (6032881bafed)
+- test: isolate audit event storage (59da210c4ca2)
+
 ## [0.2.2] - 2026-07-01
 
 ### Changed
