@@ -9,11 +9,32 @@ workflowTemplateVersion: "1"
 deploymentSource:
   staging: git
   prod: image
+artifacts:
+  - provider: docker
+    name: treeseed/treedx
+    dockerfile: Dockerfile
+    target: prod
+    role: service
+    architectures:
+      - amd64
+      - arm64
+  - provider: docker
+    name: treeseed/treedx-profiler
+    dockerfile: Dockerfile.profiler
+    target: profiler
+    role: profiler
+    architectures:
+      - amd64
+      - arm64
 githubEnvironments:
   - staging
   - production
 requiredSecrets:
   - TREESEED_DOCKERHUB_TOKEN
+  - NPM_TOKEN
+  - PYPI_API_TOKEN
+  - CARGO_REGISTRY_TOKEN
+  - HEX_API_KEY
 requiredVariables:
   - TREESEED_DOCKERHUB_USERNAME
 verify:
