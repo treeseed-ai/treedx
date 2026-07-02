@@ -5,6 +5,12 @@ section() {
   printf '\n==> %s\n' "$1"
 }
 
+cleanup_generated_outputs() {
+  git clean -fd packages/python-sdk/dist packages/rust-sdk/target >/dev/null
+}
+
+trap cleanup_generated_outputs EXIT
+
 tsx_bin() {
   local candidate="../sdk-spec/node_modules/.bin/tsx"
   if [[ -x "$candidate" ]]; then
