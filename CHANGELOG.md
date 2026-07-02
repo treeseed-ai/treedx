@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.7] - 2026-07-02
+
+### Fixed
+
+- fix(release): keep Rust SDK build output untracked (424d8248b233)
+
 ## [0.2.6] - 2026-07-02
 
 ### Fixed
