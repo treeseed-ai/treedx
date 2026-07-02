@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.8] - 2026-07-02
+
+### Fixed
+
+- fix(release): shrink Rust SDK crate package (eacaee8d26b2)
+
 ## [0.2.7] - 2026-07-02
 
 ### Fixed
