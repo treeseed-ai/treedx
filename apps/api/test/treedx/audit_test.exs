@@ -3,6 +3,8 @@ defmodule TreeDx.AuditTest do
 
   setup do
     dir = Path.join(System.tmp_dir!(), "treedx-audit-test-#{System.unique_integer([:positive])}")
+    File.rm_rf!(dir)
+    on_exit(fn -> File.rm_rf!(dir) end)
     Application.put_env(:treedx, :data_dir, dir)
     TreeDx.Store.init!(node_id: "node_local")
     {:ok, _} = TreeDx.Store.seed_dev_records("node_local", "http://localhost:4000")
