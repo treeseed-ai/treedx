@@ -6,6 +6,11 @@ license = "Apache-2.0"
 description = "Generic Rust SDK for TreeDX."
 repository = "https://github.com/treeseed-ai/treedx"
 readme = "README.md"
+include = [
+	"Cargo.toml",
+	"README.md",
+	"src/**/*.rs",
+]
 
 [workspace]
 
