@@ -1,6 +1,6 @@
 defmodule TreeDx.Version do
   @moduledoc false
-  @version "0.2.15"
+  @version "0.2.16"
   @api_version "v1"
 
   def version, do: @version
