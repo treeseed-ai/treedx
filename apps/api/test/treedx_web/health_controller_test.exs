@@ -10,7 +10,7 @@ defmodule TreeDxWeb.HealthControllerTest do
     assert_public_hygiene!(health)
 
     conn = get(build_conn(), "/api/v1/version")
-    assert json_response(conn, 200)["version"] == "0.2.19"
+    assert json_response(conn, 200)["version"] == "0.2.20"
   end
 
   test "readiness and public deep health are sanitized" do
