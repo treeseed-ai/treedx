@@ -1,20 +1,1329 @@
-name: Verify TreeDX
+name: TreeDX Release Gate
 
 on:
-  push:
-  pull_request:
   workflow_dispatch:
+    inputs:
+      performance_profile:
+        description: Run optional 100 RPS performance profile
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+  pull_request:
+    paths:
+      - "apps/api/**"
+      - "apps/api/native/**"
+      - "config/**"
+      - "lib/**"
+      - "test/**"
+      - "native/**"
+      - "profiles/**"
+      - "tools/treedx_profiler/**"
+      - "scripts/release-gate.sh"
+      - "scripts/test-all.sh"
+      - "scripts/test-treedx-fast.sh"
+      - "scripts/openapi-check.sh"
+      - "scripts/storage-recovery-check.sh"
+      - "scripts/security-check.sh"
+      - "scripts/mvp-smoke.sh"
+      - "scripts/federation-live-check.sh"
+      - "scripts/profile-compose.sh"
+      - "scripts/profile-treedx.sh"
+      - "scripts/profile-treedx-smoke.sh"
+      - "Dockerfile"
+      - "Dockerfile.profiler"
+      - "docker-healthcheck.c"
+      - "docker-profiler-entrypoint.sh"
+      - "docker-compose*.yml"
+      - "compose*.yml"
+      - "mix.exs"
+      - "mix.lock"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "apps/api/mix.exs"
+      - "apps/api/mix.lock"
+      - "docs/api/openapi.yaml"
+      - "docs/architecture/treedx-spec-implementation-plan.md"
+      - "docs/runbooks/sdk-release.md"
+      - "docs/runbooks/sdk-conformance.md"
+      - "packages/sdk-spec/**"
+      - "packages/ts-sdk/**"
+      - "packages/python-sdk/**"
+      - "packages/rust-sdk/**"
+      - "packages/elixir-sdk/**"
+      - "scripts/check-sdk-docs.sh"
+      - "scripts/test-sdk-packages.sh"
+      - "scripts/test-sdk-live-conformance.sh"
+      - ".github/workflows/release-gate.yml"
+  push:
+    branches:
+      - "**"
+    tags:
+      - "*"
+    paths:
+      - "apps/api/**"
+      - "apps/api/native/**"
+      - "config/**"
+      - "lib/**"
+      - "test/**"
+      - "native/**"
+      - "profiles/**"
+      - "tools/treedx_profiler/**"
+      - "scripts/release-gate.sh"
+      - "scripts/test-all.sh"
+      - "scripts/test-treedx-fast.sh"
+      - "scripts/openapi-check.sh"
+      - "scripts/storage-recovery-check.sh"
+      - "scripts/security-check.sh"
+      - "scripts/mvp-smoke.sh"
+      - "scripts/federation-live-check.sh"
+      - "scripts/profile-compose.sh"
+      - "scripts/profile-treedx.sh"
+      - "scripts/profile-treedx-smoke.sh"
+      - "Dockerfile"
+      - "Dockerfile.profiler"
+      - "docker-healthcheck.c"
+      - "docker-profiler-entrypoint.sh"
+      - "docker-compose*.yml"
+      - "compose*.yml"
+      - "mix.exs"
+      - "mix.lock"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "apps/api/mix.exs"
+      - "apps/api/mix.lock"
+      - "docs/api/openapi.yaml"
+      - "docs/architecture/treedx-spec-implementation-plan.md"
+      - "docs/runbooks/sdk-release.md"
+      - "docs/runbooks/sdk-conformance.md"
+      - "packages/sdk-spec/**"
+      - "packages/ts-sdk/**"
+      - "packages/python-sdk/**"
+      - "packages/rust-sdk/**"
+      - "packages/elixir-sdk/**"
+      - "scripts/check-sdk-docs.sh"
+      - "scripts/test-sdk-packages.sh"
+      - "scripts/test-sdk-live-conformance.sh"
+      - ".github/workflows/release-gate.yml"
+
+env:
+  CARGO_TARGET_DIR: /tmp/treedx-target
+  RUSTLER_TARGET_DIR: /tmp/treedx-target
+  MIX_ENV: test
+  CARGO_TERM_COLOR: always
+  CARGO_HTTP_MULTIPLEXING: false
+  CARGO_NET_RETRY: 10
+  TREEDX_LIVE_NODE_A_URL: ${{ secrets.TREEDX_LIVE_NODE_A_URL }}
+  TREEDX_LIVE_NODE_A_TOKEN: ${{ secrets.TREEDX_LIVE_NODE_A_TOKEN }}
+  TREEDX_LIVE_NODE_A_REPO_ID: ${{ secrets.TREEDX_LIVE_NODE_A_REPO_ID }}
+  TREEDX_LIVE_NODE_B_URL: ${{ secrets.TREEDX_LIVE_NODE_B_URL }}
+  TREEDX_LIVE_NODE_B_TOKEN: ${{ secrets.TREEDX_LIVE_NODE_B_TOKEN }}
+  TREEDX_LIVE_NODE_B_REPO_ID: ${{ secrets.TREEDX_LIVE_NODE_B_REPO_ID }}
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    name: Verify (${{ matrix.arch }})
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            ca-certificates \
+            curl \
+            git \
+            jq \
+            libssl-dev \
+            openssl \
+            pkg-config \
+            zstd
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust target
+        uses: actions/cache@v4
         with:
-          submodules: recursive
-      - uses: erlef/setup-beam@v1
+          path: /tmp/treedx-target
+          key: ${{ runner.os }}-${{ matrix.arch }}-treedx-rust-${{ hashFiles('Cargo.lock', 'apps/api/native/**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-treedx-rust-
+
+      - name: Cache Cargo registry and tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/cargo-audit
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-${{ matrix.arch }}-treedx-cargo-tools-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-treedx-cargo-tools-
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        env:
+          ImageOS: ubuntu24
+        with:
+          otp-version: "27"
+          elixir-version: "1.17"
+
+      - name: Install scanner tools
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          retry() {
+            local attempt
+            for attempt in 1 2 3 4 5; do
+              if "$@"; then
+                return 0
+              fi
+              if [[ "$attempt" == "5" ]]; then
+                return 1
+              fi
+              sleep $((attempt * 5))
+            done
+          }
+
+          if ! command -v cargo-audit >/dev/null 2>&1; then
+            retry cargo install cargo-audit --locked
+          fi
+
+          retry bash -c 'curl --http1.1 -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh -s -- -b /usr/local/bin'
+          retry bash -c 'curl --http1.1 -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin'
+
+      - name: Run release gate
+        run: ./scripts/release-gate.sh
+
+  sdk-spec:
+    runs-on: ubuntu-24.04
+    name: SDK Spec
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: packages/sdk-spec/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: packages/sdk-spec
+
+      - name: Validate SDK spec
+        run: npm run validate
+        working-directory: packages/sdk-spec
+
+      - name: Check OpenAPI coverage
+        run: npm run check-openapi-coverage
+        working-directory: packages/sdk-spec
+
+      - name: Check SDK manifests
+        run: npm run check-sdk-manifests
+        working-directory: packages/sdk-spec
+
+      - name: Render capability matrix
+        run: npm run render-capability-matrix
+        working-directory: packages/sdk-spec
+
+      - name: Run SDK spec tests
+        run: npm test
+        working-directory: packages/sdk-spec
+
+      - name: Check SDK documentation
+        run: ./scripts/check-sdk-docs.sh
+
+  test-typescript-sdk:
+    needs: sdk-spec
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    name: TypeScript SDK Test (${{ matrix.arch }})
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: packages/ts-sdk/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: packages/ts-sdk
+
+      - name: Check generated OpenAPI metadata
+        run: npm run treedx:check-generated
+        working-directory: packages/ts-sdk
+
+      - name: Build
+        run: npm run build
+        working-directory: packages/ts-sdk
+
+      - name: Run unit, adapter, and generated tests
+        run: npm run test:treedx-unit
+        working-directory: packages/ts-sdk
+
+      - name: Run conformance tests
+        run: npm run test:treedx-conformance
+        working-directory: packages/ts-sdk
+
+      - name: Run integration tests
+        run: npm run test:treedx-integration
+        working-directory: packages/ts-sdk
+
+      - name: Run full test suite
+        run: npm test
+        working-directory: packages/ts-sdk
+
+  test-python-sdk:
+    needs: sdk-spec
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    name: Python SDK Test (${{ matrix.arch }})
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: packages/python-sdk/pyproject.toml
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+        working-directory: packages/python-sdk
+
+      - name: Validate package metadata source
+        run: |
+          python - <<'PY'
+          import tomllib
+          from pathlib import Path
+
+          pyproject = Path("pyproject.toml")
+          license_value = tomllib.loads(pyproject.read_text())["project"]["license"]
+          print(f"project.license = {license_value!r}")
+          if license_value != "Apache-2.0":
+              raise SystemExit("packages/python-sdk/pyproject.toml must use Apache-2.0")
+          PY
+        working-directory: packages/python-sdk
+
+      - name: Install package and dev dependencies
+        run: python -m pip install -e ".[dev]"
+        working-directory: packages/python-sdk
+
+      - name: Check generated OpenAPI metadata
+        run: python scripts/check_treedx_generated_types.py
+        working-directory: packages/python-sdk
+
+      - name: Build package distributions
+        run: python -m build
+        working-directory: packages/python-sdk
+
+      - name: Run unit tests
+        run: python -m pytest tests/unit
+        working-directory: packages/python-sdk
+
+      - name: Run adapter tests
+        run: python -m pytest tests/adapters
+        working-directory: packages/python-sdk
+
+      - name: Run generated metadata tests
+        run: python -m pytest tests/generated
+        working-directory: packages/python-sdk
+
+      - name: Run conformance tests
+        run: python -m pytest tests/conformance
+        working-directory: packages/python-sdk
+
+      - name: Run integration tests
+        run: python -m pytest tests/integration
+        working-directory: packages/python-sdk
+
+      - name: Run full test suite
+        run: python -m pytest
+        working-directory: packages/python-sdk
+
+  test-rust-sdk:
+    needs: sdk-spec
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    name: Rust SDK Test (${{ matrix.arch }})
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            /tmp/treedx-target
+          key: ${{ runner.os }}-${{ matrix.arch }}-rust-sdk-${{ hashFiles('packages/rust-sdk/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-rust-sdk-
+
+      - name: Check generated OpenAPI metadata
+        run: node scripts/check_treedx_generated_types.mjs
+        working-directory: packages/rust-sdk
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+        working-directory: packages/rust-sdk
+
+      - name: Run clippy
+        run: cargo clippy --all-targets -- -D warnings
+        working-directory: packages/rust-sdk
+
+      - name: Run tests
+        run: cargo test
+        working-directory: packages/rust-sdk
+
+  test-elixir-sdk:
+    needs: sdk-spec
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    name: Elixir SDK Test (${{ matrix.arch }})
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        env:
+          ImageOS: ubuntu24
         with:
           otp-version: "27"
           elixir-version: "1.17.3"
-      - run: mix local.hex --force && mix local.rebar --force
-      - run: bash scripts/release-gate.sh
+
+      - name: Cache Mix dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/elixir-sdk/deps
+            packages/elixir-sdk/_build
+          key: ${{ runner.os }}-${{ matrix.arch }}-elixir-sdk-${{ hashFiles('packages/elixir-sdk/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-elixir-sdk-
+
+      - name: Install Hex
+        run: mix local.hex --force
+        working-directory: packages/elixir-sdk
+
+      - name: Install dependencies
+        run: mix deps.get
+        working-directory: packages/elixir-sdk
+
+      - name: Check generated OpenAPI metadata
+        run: mix run scripts/check_treedx_generated_types.exs
+        working-directory: packages/elixir-sdk
+
+      - name: Check formatting
+        run: mix format --check-formatted
+        working-directory: packages/elixir-sdk
+
+      - name: Run tests
+        run: mix test
+        working-directory: packages/elixir-sdk
+
+  profile:
+    needs: verify
+    if: >-
+      github.event_name == 'push' &&
+      (
+        github.ref == 'refs/heads/main' ||
+        github.ref == 'refs/heads/staging' ||
+        startsWith(github.ref, 'refs/tags/')
+      )
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    name: Profile (${{ matrix.arch }})
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run architecture profile
+        shell: bash
+        env:
+          TREEDX_CI_PROFILE_MODE: ${{ vars.TREEDX_CI_PROFILE_MODE }}
+          TREEDX_PROFILE_DURATION: ${{ vars.TREEDX_CI_PROFILE_DURATION }}
+          TREEDX_PROFILE_CONCURRENCY: ${{ vars.TREEDX_CI_PROFILE_CONCURRENCY }}
+          TREEDX_PROFILE_SIZE: ${{ vars.TREEDX_CI_PROFILE_SIZE }}
+          TREEDX_PROFILE_FIXTURE: ${{ vars.TREEDX_CI_PROFILE_FIXTURE }}
+          TREEDX_PROFILE_SCENARIO: ${{ vars.TREEDX_CI_PROFILE_SCENARIO }}
+          TREEDX_PROFILE_LOAD_MODE: ${{ vars.TREEDX_CI_PROFILE_LOAD_MODE }}
+          TREEDX_PROFILE_ITERATIONS: ${{ vars.TREEDX_CI_PROFILE_ITERATIONS }}
+          TREEDX_PROFILE_RELIABILITY_VERIFIER: ${{ vars.TREEDX_CI_PROFILE_RELIABILITY_VERIFIER }}
+          TREEDX_PROFILE_DURATION_IS_CONTROLLING: ${{ vars.TREEDX_CI_PROFILE_DURATION_IS_CONTROLLING }}
+          TREEDX_PROFILE_MINIMUM_MEASURED_DURATION: ${{ vars.TREEDX_CI_PROFILE_MINIMUM_MEASURED_DURATION }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p target/profiles
+
+          mode="${TREEDX_CI_PROFILE_MODE:-portfolio}"
+          export TREEDX_PROFILE_DURATION="${TREEDX_PROFILE_DURATION:-10m}"
+          export TREEDX_PROFILE_ITERATIONS="${TREEDX_PROFILE_ITERATIONS:-}"
+          export TREEDX_PROFILE_RELIABILITY_VERIFIER="${TREEDX_PROFILE_RELIABILITY_VERIFIER:-true}"
+          export TREEDX_PROFILE_DURATION_IS_CONTROLLING="${TREEDX_PROFILE_DURATION_IS_CONTROLLING:-true}"
+          export TREEDX_PROFILE_MINIMUM_MEASURED_DURATION="${TREEDX_PROFILE_MINIMUM_MEASURED_DURATION:-10m}"
+          export TREEDX_PROFILE_CONCURRENCY="${TREEDX_PROFILE_CONCURRENCY:-25}"
+          export TREEDX_PROFILE_INCLUDE_EXEC="false"
+          export TREEDX_PROFILE_OUTPUT="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
+          export TREEDX_PROFILE_MARKDOWN_OUTPUT="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"
+          export TREEDX_PROFILE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
+          export TREEDX_PROFILE_FAILURE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
+          export TREEDX_PROFILE_REPORT_FORMAT="both"
+
+          ./scripts/profile-compose.sh "${mode}"
+
+      - name: Capture compose logs
+        if: failure()
+        shell: bash
+        run: |
+          mkdir -p target/profiles
+          docker compose logs --no-color > "target/profiles/profile-compose-${{ matrix.arch }}.log" 2>&1 || true
+
+      - name: Upload profile reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: treedx-profile-${{ matrix.arch }}
+          path: |
+            target/profiles/ci-*.yaml
+            target/profiles/ci-*.md
+            target/profiles/ci-*-replay.jsonl
+            target/profiles/ci-*-failures.jsonl
+            target/profiles/*.log
+          if-no-files-found: ignore
+
+  profile-federation:
+    needs: verify
+    if: >-
+      github.event_name == 'push' &&
+      (
+        github.ref == 'refs/heads/main' ||
+        github.ref == 'refs/heads/staging' ||
+        startsWith(github.ref, 'refs/tags/')
+      )
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+            mode: mirror-federation
+          - arch: amd64
+            runner: ubuntu-24.04
+            mode: connected-library
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            mode: mirror-federation
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            mode: connected-library
+    runs-on: ${{ matrix.runner }}
+    name: Federation Profile (${{ matrix.arch }}, ${{ matrix.mode }})
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run federation profile
+        shell: bash
+        env:
+          TREEDX_CI_FEDERATION_PROFILE_DURATION: ${{ vars.TREEDX_CI_FEDERATION_PROFILE_DURATION }}
+          TREEDX_CI_FEDERATION_PROFILE_CONCURRENCY: ${{ vars.TREEDX_CI_FEDERATION_PROFILE_CONCURRENCY }}
+          TREEDX_CI_FEDERATION_PROFILE_SIZE: ${{ vars.TREEDX_CI_FEDERATION_PROFILE_SIZE }}
+          TREEDX_CI_FEDERATION_PROFILE_ENABLED: ${{ vars.TREEDX_CI_FEDERATION_PROFILE_ENABLED }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p target/profiles
+
+          if [[ "${TREEDX_CI_FEDERATION_PROFILE_ENABLED:-true}" == "false" ]]; then
+            echo "Federation profile disabled by TREEDX_CI_FEDERATION_PROFILE_ENABLED=false"
+            exit 0
+          fi
+
+          mode="${{ matrix.mode }}"
+          export TREEDX_PROFILE_DURATION="${TREEDX_CI_FEDERATION_PROFILE_DURATION:-10m}"
+          export TREEDX_PROFILE_MINIMUM_MEASURED_DURATION="${TREEDX_CI_FEDERATION_PROFILE_DURATION:-10m}"
+          export TREEDX_PROFILE_DURATION_IS_CONTROLLING="true"
+          export TREEDX_PROFILE_ITERATIONS=""
+          export TREEDX_PROFILE_CONCURRENCY="${TREEDX_CI_FEDERATION_PROFILE_CONCURRENCY:-25}"
+          export TREEDX_PROFILE_SIZE="${TREEDX_CI_FEDERATION_PROFILE_SIZE:-small}"
+          export TREEDX_PROFILE_REPORT_FORMAT="both"
+          export TREEDX_PROFILE_INCLUDE_EXEC="false"
+          export TREEDX_PROFILE_INCLUDE_FEDERATION="true"
+          export TREEDX_PROFILE_OUTPUT="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
+          export TREEDX_PROFILE_MARKDOWN_OUTPUT="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"
+          export TREEDX_PROFILE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
+          export TREEDX_PROFILE_FAILURE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
+
+          ./scripts/profile-compose.sh "${mode}"
+
+      - name: Capture compose logs
+        if: failure()
+        shell: bash
+        run: |
+          mkdir -p target/profiles
+          docker compose logs --no-color > "target/profiles/federation-compose-${{ matrix.mode }}-${{ matrix.arch }}.log" 2>&1 || true
+
+      - name: Upload federation profile reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: treedx-federation-profile-${{ matrix.mode }}-${{ matrix.arch }}
+          path: |
+            target/profiles/ci-*.yaml
+            target/profiles/ci-*.md
+            target/profiles/ci-*-replay.jsonl
+            target/profiles/ci-*-failures.jsonl
+            target/profiles/*.log
+          if-no-files-found: ignore
+
+  profile-performance:
+    needs: verify
+    if: >-
+      (
+        github.event_name == 'workflow_dispatch' &&
+        inputs.performance_profile == 'true'
+      ) ||
+      (
+        github.event_name == 'push' &&
+        (
+          github.ref == 'refs/heads/main' ||
+          github.ref == 'refs/heads/staging' ||
+          startsWith(github.ref, 'refs/tags/')
+        )
+      )
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    name: Performance Profile (${{ matrix.arch }})
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run performance profile
+        shell: bash
+        env:
+          TREEDX_PROFILE_DURATION: ${{ vars.TREEDX_CI_PERFORMANCE_PROFILE_DURATION }}
+          TREEDX_PROFILE_CONCURRENCY: ${{ vars.TREEDX_CI_PERFORMANCE_PROFILE_CONCURRENCY }}
+          TREEDX_PROFILE_TARGET_PRIMARY_RPS: ${{ vars.TREEDX_CI_PERFORMANCE_TARGET_PRIMARY_RPS }}
+          TREEDX_PROFILE_PROBE_SAMPLING_RATE: ${{ vars.TREEDX_CI_PERFORMANCE_PROBE_SAMPLING_RATE }}
+          TREEDX_RUNTIME_CPU_BUDGET: ${{ vars.TREEDX_CI_PERFORMANCE_CPU_BUDGET }}
+          TREEDX_RUNTIME_MEMORY_BUDGET_MB: ${{ vars.TREEDX_CI_PERFORMANCE_MEMORY_BUDGET_MB }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p target/profiles
+          cat > target/profiles/performance-errors-only-budget.json <<'JSON'
+          {
+            "maxTotalErrors": 0,
+            "maxAssertionFailures": 0,
+            "maxOpenApiFailures": 0,
+            "maxReconciliationDrift": 0,
+            "maxUnverifiedRaces": 0,
+            "maxValidationProbeFailures": 0,
+            "maxNegativeTestFailures": 0,
+            "maxMetamorphicFailures": 0,
+            "maxEndpointConsistencyFailures": 0,
+            "maxDelayedConsistencyFailures": 0,
+            "maxPermissionMatrixFailures": 0,
+            "minMeasuredDurationRatio": 0,
+            "maxRaceInterferenceRate": 1000000,
+            "maxP99MsByCategory": {}
+          }
+          JSON
+
+          mode="performance"
+          export TREEDX_PROFILE_PROFILE_PURPOSE="performance"
+          export TREEDX_PROFILE_DURATION="${TREEDX_PROFILE_DURATION:-10m}"
+          export TREEDX_PROFILE_MINIMUM_MEASURED_DURATION="${TREEDX_PROFILE_DURATION}"
+          export TREEDX_PROFILE_DURATION_IS_CONTROLLING="true"
+          export TREEDX_PROFILE_ITERATIONS=""
+          export TREEDX_PROFILE_CONCURRENCY="${TREEDX_PROFILE_CONCURRENCY:-150}"
+          export TREEDX_PROFILE_TARGET_PRIMARY_RPS="${TREEDX_PROFILE_TARGET_PRIMARY_RPS:-100}"
+          export TREEDX_PROFILE_VALIDATION_PROBE_MODE="sampled"
+          export TREEDX_PROFILE_PROBE_SAMPLING_RATE="${TREEDX_PROFILE_PROBE_SAMPLING_RATE:-0.10}"
+          export TREEDX_RUNTIME_CPU_BUDGET="${TREEDX_RUNTIME_CPU_BUDGET:-4}"
+          export TREEDX_RUNTIME_MEMORY_BUDGET_MB="${TREEDX_RUNTIME_MEMORY_BUDGET_MB:-4096}"
+          export TREEDX_PROFILE_FAIL_BELOW_PRIMARY_RPS=""
+          export TREEDX_PROFILE_INCLUDE_EXEC="false"
+          export TREEDX_PROFILE_RELIABILITY_BUDGET="target/profiles/performance-errors-only-budget.json"
+          export TREEDX_PROFILE_REPORT_FORMAT="both"
+          export TREEDX_PROFILE_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
+          export TREEDX_PROFILE_MARKDOWN_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"
+          export TREEDX_PROFILE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
+          export TREEDX_PROFILE_FAILURE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
+
+          ./scripts/profile-compose.sh "${mode}"
+
+      - name: Capture compose logs
+        if: failure()
+        shell: bash
+        run: |
+          mkdir -p target/profiles
+          docker compose logs --no-color > "target/profiles/performance-compose-${{ matrix.arch }}.log" 2>&1 || true
+
+      - name: Upload performance profile reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: treedx-performance-profile-${{ matrix.arch }}
+          path: |
+            target/profiles/performance-*.yaml
+            target/profiles/performance-*.md
+            target/profiles/performance-*-replay.jsonl
+            target/profiles/performance-*-failures.jsonl
+            target/profiles/*.log
+          if-no-files-found: ignore
+
+  publish-plan:
+    runs-on: ubuntu-latest
+    needs: verify
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+    permissions:
+      contents: read
+    outputs:
+      service_image_tag: ${{ steps.docker_tag.outputs.service_image_tag }}
+      service_arch_image_prefix: ${{ steps.docker_tag.outputs.service_arch_image_prefix }}
+      profiler_image_tag: ${{ steps.docker_tag.outputs.profiler_image_tag }}
+      profiler_arch_image_prefix: ${{ steps.docker_tag.outputs.profiler_arch_image_prefix }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Docker tag
+        id: docker_tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          semver='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z][0-9A-Za-z.-]*)?$'
+
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            tag="${GITHUB_REF_NAME}"
+            if [[ "$tag" == v* ]]; then
+              echo "Release tags must be semantic versions without a v prefix." >&2
+              exit 1
+            fi
+            if [[ "$tag" == *+* ]]; then
+              echo "Release tags with build metadata cannot be published as exact Docker tags." >&2
+              exit 1
+            fi
+            if [[ ! "$tag" =~ $semver ]]; then
+              echo "Release tag '$tag' is not a supported semantic version." >&2
+              exit 1
+            fi
+            for image in treeseed/treedx treeseed/treedx-profiler; do
+              if docker buildx imagetools inspect "${image}:${tag}" >/dev/null 2>&1; then
+                echo "Docker image ${image}:${tag} already exists." >&2
+                exit 1
+              fi
+            done
+            service_image_tag="treeseed/treedx:${tag}"
+            profiler_image_tag="treeseed/treedx-profiler:${tag}"
+          else
+            service_image_tag="treeseed/treedx:latest"
+            profiler_image_tag="treeseed/treedx-profiler:latest"
+          fi
+
+          echo "service_image_tag=${service_image_tag}" >> "$GITHUB_OUTPUT"
+          echo "service_arch_image_prefix=${service_image_tag}" >> "$GITHUB_OUTPUT"
+          echo "profiler_image_tag=${profiler_image_tag}" >> "$GITHUB_OUTPUT"
+          echo "profiler_arch_image_prefix=${profiler_image_tag}" >> "$GITHUB_OUTPUT"
+
+  build-publish-image:
+    needs:
+      - publish-plan
+      - profile
+      - profile-federation
+      - profile-performance
+      - test-typescript-sdk
+      - test-python-sdk
+      - test-rust-sdk
+      - test-elixir-sdk
+    if: >-
+      needs.publish-plan.result == 'success' &&
+      needs.profile.result == 'success' &&
+      needs.profile-federation.result == 'success' &&
+      needs.profile-performance.result == 'success' &&
+      needs.test-typescript-sdk.result == 'success' &&
+      needs.test-python-sdk.result == 'success' &&
+      needs.test-rust-sdk.result == 'success' &&
+      needs.test-elixir-sdk.result == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push architecture image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          target: prod
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ${{ needs.publish-plan.outputs.service_arch_image_prefix }}-${{ matrix.arch }}
+          sbom: true
+          provenance: mode=max
+          cache-from: type=gha,scope=treedx-prod-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=treedx-prod-${{ matrix.arch }}
+
+  build-publish-profiler-image:
+    needs:
+      - publish-plan
+      - profile
+      - profile-federation
+      - profile-performance
+      - test-typescript-sdk
+      - test-python-sdk
+      - test-rust-sdk
+      - test-elixir-sdk
+    if: >-
+      needs.publish-plan.result == 'success' &&
+      needs.profile.result == 'success' &&
+      needs.profile-federation.result == 'success' &&
+      needs.profile-performance.result == 'success' &&
+      needs.test-typescript-sdk.result == 'success' &&
+      needs.test-python-sdk.result == 'success' &&
+      needs.test-rust-sdk.result == 'success' &&
+      needs.test-elixir-sdk.result == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push profiler architecture image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.profiler
+          target: profiler
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ${{ needs.publish-plan.outputs.profiler_arch_image_prefix }}-${{ matrix.arch }}
+          sbom: true
+          provenance: mode=max
+          cache-from: type=gha,scope=treedx-profiler-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=treedx-profiler-${{ matrix.arch }}
+
+  package-typescript-sdk:
+    needs:
+      - publish-plan
+      - profile
+      - profile-federation
+      - profile-performance
+      - test-typescript-sdk
+      - test-python-sdk
+      - test-rust-sdk
+      - test-elixir-sdk
+    if: >-
+      needs.publish-plan.result == 'success' &&
+      needs.profile.result == 'success' &&
+      needs.profile-federation.result == 'success' &&
+      needs.profile-performance.result == 'success' &&
+      needs.test-typescript-sdk.result == 'success' &&
+      needs.test-python-sdk.result == 'success' &&
+      needs.test-rust-sdk.result == 'success' &&
+      needs.test-elixir-sdk.result == 'success'
+    runs-on: ubuntu-24.04
+    name: Publish TypeScript SDK
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          scope: "@treeseed"
+          cache: npm
+          cache-dependency-path: packages/ts-sdk/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: packages/ts-sdk
+
+      - name: Check generated OpenAPI metadata
+        run: npm run treedx:check-generated
+        working-directory: packages/ts-sdk
+
+      - name: Build
+        run: npm run build
+        working-directory: packages/ts-sdk
+
+      - name: Check release tag matches package version
+        if: github.ref_type == 'tag'
+        shell: bash
+        working-directory: packages/ts-sdk
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          tag="${GITHUB_REF_NAME#v}"
+          if [[ "$tag" != "$version" ]]; then
+            echo "Release tag '${GITHUB_REF_NAME}' does not match @treeseed/treedx version '${version}'." >&2
+            exit 1
+          fi
+
+      - name: Pack npm artifact
+        run: |
+          mkdir -p release-artifacts
+          npm pack --pack-destination ./release-artifacts
+        working-directory: packages/ts-sdk
+
+      - name: Upload npm package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ts-sdk-npm-package
+          path: packages/ts-sdk/release-artifacts/*.tgz
+          if-no-files-found: error
+
+      - name: Publish npm package
+        if: github.ref_type == 'tag'
+        run: npm publish --access public
+        working-directory: packages/ts-sdk
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  package-python-sdk:
+    needs:
+      - publish-plan
+      - profile
+      - profile-federation
+      - profile-performance
+      - test-typescript-sdk
+      - test-python-sdk
+      - test-rust-sdk
+      - test-elixir-sdk
+    if: >-
+      needs.publish-plan.result == 'success' &&
+      needs.profile.result == 'success' &&
+      needs.profile-federation.result == 'success' &&
+      needs.profile-performance.result == 'success' &&
+      needs.test-typescript-sdk.result == 'success' &&
+      needs.test-python-sdk.result == 'success' &&
+      needs.test-rust-sdk.result == 'success' &&
+      needs.test-elixir-sdk.result == 'success'
+    runs-on: ubuntu-24.04
+    name: Publish Python SDK
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: packages/python-sdk/pyproject.toml
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+        working-directory: packages/python-sdk
+
+      - name: Install package and build tools
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install twine
+        working-directory: packages/python-sdk
+
+      - name: Check generated OpenAPI metadata
+        run: python scripts/check_treedx_generated_types.py
+        working-directory: packages/python-sdk
+
+      - name: Check release tag matches package version
+        if: github.ref_type == 'tag'
+        shell: bash
+        working-directory: packages/python-sdk
+        run: |
+          set -euo pipefail
+          version="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          tag="${GITHUB_REF_NAME#v}"
+          if [[ "$tag" != "$version" ]]; then
+            echo "Release tag '${GITHUB_REF_NAME}' does not match treedx version '${version}'." >&2
+            exit 1
+          fi
+
+      - name: Build package distributions
+        run: python -m build
+        working-directory: packages/python-sdk
+
+      - name: Validate package metadata
+        run: python -m twine check dist/*
+        working-directory: packages/python-sdk
+
+      - name: Upload Python package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-sdk-dist
+          path: packages/python-sdk/dist/*
+          if-no-files-found: error
+
+      - name: Publish Python distributions
+        if: github.ref_type == 'tag'
+        run: python -m twine upload --non-interactive dist/*
+        working-directory: packages/python-sdk
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+
+  package-rust-sdk:
+    needs:
+      - publish-plan
+      - profile
+      - profile-federation
+      - profile-performance
+      - test-typescript-sdk
+      - test-python-sdk
+      - test-rust-sdk
+      - test-elixir-sdk
+    if: >-
+      needs.publish-plan.result == 'success' &&
+      needs.profile.result == 'success' &&
+      needs.profile-federation.result == 'success' &&
+      needs.profile-performance.result == 'success' &&
+      needs.test-typescript-sdk.result == 'success' &&
+      needs.test-python-sdk.result == 'success' &&
+      needs.test-rust-sdk.result == 'success' &&
+      needs.test-elixir-sdk.result == 'success'
+    runs-on: ubuntu-24.04
+    name: Publish Rust SDK
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            /tmp/treedx-target
+          key: ${{ runner.os }}-rust-sdk-package-${{ hashFiles('packages/rust-sdk/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-rust-sdk-package-
+
+      - name: Check generated OpenAPI metadata
+        run: node scripts/check_treedx_generated_types.mjs
+        working-directory: packages/rust-sdk
+
+      - name: Check release tag matches crate version
+        if: github.ref_type == 'tag'
+        shell: bash
+        working-directory: packages/rust-sdk
+        run: |
+          set -euo pipefail
+          version="$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')"
+          tag="${GITHUB_REF_NAME#v}"
+          if [[ "$tag" != "$version" ]]; then
+            echo "Release tag '${GITHUB_REF_NAME}' does not match treedx crate version '${version}'." >&2
+            exit 1
+          fi
+
+      - name: Package crate artifact
+        run: cargo package --locked
+        working-directory: packages/rust-sdk
+
+      - name: Upload crate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-sdk-crate
+          path: /tmp/treedx-target/package/*.crate
+          if-no-files-found: error
+
+      - name: Publish crate
+        if: github.ref_type == 'tag'
+        run: cargo publish --locked --token "$CARGO_REGISTRY_TOKEN"
+        working-directory: packages/rust-sdk
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  package-elixir-sdk:
+    needs:
+      - publish-plan
+      - profile
+      - profile-federation
+      - profile-performance
+      - test-typescript-sdk
+      - test-python-sdk
+      - test-rust-sdk
+      - test-elixir-sdk
+    if: >-
+      needs.publish-plan.result == 'success' &&
+      needs.profile.result == 'success' &&
+      needs.profile-federation.result == 'success' &&
+      needs.profile-performance.result == 'success' &&
+      needs.test-typescript-sdk.result == 'success' &&
+      needs.test-python-sdk.result == 'success' &&
+      needs.test-rust-sdk.result == 'success' &&
+      needs.test-elixir-sdk.result == 'success'
+    runs-on: ubuntu-24.04
+    name: Publish Elixir SDK
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: "27"
+          elixir-version: "1.17.3"
+
+      - name: Cache Mix dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/elixir-sdk/deps
+            packages/elixir-sdk/_build
+          key: ${{ runner.os }}-elixir-sdk-package-${{ hashFiles('packages/elixir-sdk/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-elixir-sdk-package-
+
+      - name: Install Hex
+        run: mix local.hex --force
+        working-directory: packages/elixir-sdk
+
+      - name: Install dependencies
+        run: |
+          mix deps.get
+          MIX_ENV=dev mix deps.get
+        working-directory: packages/elixir-sdk
+
+      - name: Check generated OpenAPI metadata
+        run: mix run scripts/check_treedx_generated_types.exs
+        working-directory: packages/elixir-sdk
+
+      - name: Check release tag matches package version
+        if: github.ref_type == 'tag'
+        shell: bash
+        working-directory: packages/elixir-sdk
+        run: |
+          set -euo pipefail
+          version="$(mix run -e 'IO.write(Mix.Project.config()[:version])')"
+          tag="${GITHUB_REF_NAME#v}"
+          if [[ "$tag" != "$version" ]]; then
+            echo "Release tag '${GITHUB_REF_NAME}' does not match treedx version '${version}'." >&2
+            exit 1
+          fi
+
+      - name: Build Hex package artifact
+        run: MIX_ENV=dev mix hex.build
+        working-directory: packages/elixir-sdk
+
+      - name: Upload Hex package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: elixir-sdk-hex-package
+          path: packages/elixir-sdk/treedx-*.tar
+          if-no-files-found: error
+
+      - name: Publish Hex package
+        if: github.ref_type == 'tag'
+        run: MIX_ENV=dev mix hex.publish --yes
+        working-directory: packages/elixir-sdk
+        env:
+          HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
+
+  publish:
+    needs:
+      - publish-plan
+      - build-publish-image
+      - build-publish-profiler-image
+      - package-typescript-sdk
+      - package-python-sdk
+      - package-rust-sdk
+      - package-elixir-sdk
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Publish Docker manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker buildx imagetools create \
+            -t "${{ needs.publish-plan.outputs.service_image_tag }}" \
+            "${{ needs.publish-plan.outputs.service_arch_image_prefix }}-amd64" \
+            "${{ needs.publish-plan.outputs.service_arch_image_prefix }}-arm64"
+
+          docker buildx imagetools create \
+            -t "${{ needs.publish-plan.outputs.profiler_image_tag }}" \
+            "${{ needs.publish-plan.outputs.profiler_arch_image_prefix }}-amd64" \
+            "${{ needs.publish-plan.outputs.profiler_arch_image_prefix }}-arm64"
+
+          docker buildx imagetools inspect "${{ needs.publish-plan.outputs.service_image_tag }}"
+          docker buildx imagetools inspect "${{ needs.publish-plan.outputs.profiler_image_tag }}"

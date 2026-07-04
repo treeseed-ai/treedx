@@ -5,10 +5,17 @@ type: image-service
 repository: treeseed-ai/treedx
 versionSource: apps/api/mix.exs
 image: treeseed/treedx
-workflowTemplateVersion: "1"
+workflowTemplateVersion: custom
 deploymentSource:
   staging: git
   prod: image
+releaseGate:
+  workflow: .github/workflows/release-gate.yml
+dockerImages:
+  releaseWorkflow: release-gate.yml
+  architectures:
+    - amd64
+    - arm64
 artifacts:
   - provider: docker
     name: treeseed/treedx
@@ -30,13 +37,12 @@ githubEnvironments:
   - staging
   - production
 requiredSecrets:
-  - TREESEED_DOCKERHUB_TOKEN
+  - DOCKERHUB_TOKEN
+  - DOCKERHUB_USERNAME
   - NPM_TOKEN
   - PYPI_API_TOKEN
   - CARGO_REGISTRY_TOKEN
   - HEX_API_KEY
-requiredVariables:
-  - TREESEED_DOCKERHUB_USERNAME
 verify:
   fast: scripts/test-treedx-fast.sh
   local: scripts/test-all.sh
