@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.29] - 2026-07-04
+
+### Fixed
+
+- fix(sdk): restore Rust generated metadata checker entrypoint (a1c12b9d25a9)
+
+### Infrastructure
+
+- ci(release): restore TreeDX release gate (584296afc108)
+
 ## [0.2.28] - 2026-07-04
 
 ### Changed
