@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.30] - 2026-07-04
+
+### Fixed
+
+- fix(graph): satisfy release gate clippy (7a7435fcdf35)
+- fix(ci): run release gate for graph crate changes (9c735eda6fc1)
+- fix(graph): publish graph segments atomically (0ef060e01e27)
+
 ## [0.2.29] - 2026-07-04
 
 ### Fixed
