@@ -4,7 +4,7 @@ defmodule TreeDx.MixProject do
   def project do
     [
       app: :treedx,
-      version: "0.2.25",
+      version: "0.2.26",
       elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
