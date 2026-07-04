@@ -974,7 +974,7 @@ dependencies = [
 
 [[package]]
 name = "treedx"
-version = "0.2.23"
+version = "0.2.24"
 dependencies = [
  "async-trait",
  "bytes",
