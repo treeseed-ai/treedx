@@ -1,6 +1,6 @@
 {
   "name": "@treeseed/treedx",
-  "version": "0.2.24",
+  "version": "0.2.25",
   "description": "Generic TypeScript SDK for TreeDX.",
   "license": "Apache-2.0",
   "type": "module",
