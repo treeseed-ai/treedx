@@ -164,7 +164,7 @@ Elixir owns process boundaries and lifecycle concerns:
 - `TreeDx.Blobs` and upload controllers: binary-safe repository/workspace blob transport and multipart uploads.
 - `TreeDx.Snapshots` and `TreeDx.Artifacts`: repository snapshot build, artifact export/download, listing, deletion, and cleanup.
 - `TreeDx.Mirrors` and `TreeDx.Pushes`: registry mirror creation/listing, gix-backed sync orchestration, push planning/execution, and sanitized remote metadata.
-- `TreeDx.Migrations`: dry-run and committed placement migration planning.
+- `TreeDx.Migrations`: plan and committed placement migration planning.
 - `TreeDx.AdminStorage`: storage health, recursive checks, compaction, backup, migration, guarded restore verification, and restore apply gates.
 - `TreeDx.Federation`: global search/query/context/graph planning, routing, execution, and result merge.
 - `TreeDx.Observability`: scrubber, in-memory metrics, telemetry handlers, health checks, and production JSON log formatting.
@@ -542,7 +542,7 @@ POST /api/v1/graph/query
 
 Audit events are stored in TreeDX-native append-only files under `audit/events.tdb`. Event payloads include actor, tenant, repository, node, workspace, operation, status, request ID, requested scope, effective scope, and sanitized metadata. File contents, unsanitized commands, full stdout, and full stderr are not stored by default.
 
-The federation planner is still available for dry-run scope inspection. Global search, query, context, and graph endpoints execute only after reducing requested repository/ref/path scope to the caller's effective authorized scope. Local placements execute in-process; configured remote placements use reduced-scope HTTP routing with sanitized partial-failure responses. Unauthorized repositories, paths, snippets, counts, and graph IDs are not serialized.
+The federation planner is still available for plan scope inspection. Global search, query, context, and graph endpoints execute only after reducing requested repository/ref/path scope to the caller's effective authorized scope. Local placements execute in-process; configured remote placements use reduced-scope HTTP routing with sanitized partial-failure responses. Unauthorized repositories, paths, snippets, counts, and graph IDs are not serialized.
 
 Federation is a live routing fabric rather than a separate coordinator service.
 Any node can receive a request, resolve the repository or workspace route from
@@ -957,7 +957,7 @@ Sync a mirror:
 curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/mirrors/$MIRROR_ID/sync \
   -H "authorization: Bearer $TREEDX_TOKEN" \
   -H 'content-type: application/json' \
-  -d '{"remoteName":"origin","dryRun":false}'
+  -d '{"remoteName":"origin","planOnly":false}'
 ```
 
 Create a migration dry run:
@@ -966,7 +966,7 @@ Create a migration dry run:
 curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/migrations \
   -H "authorization: Bearer $TREEDX_TOKEN" \
   -H 'content-type: application/json' \
-  -d '{"targetNodeId":"node_mirror","mode":"primary_transfer","dryRun":true,"requireMirrorSynced":false}'
+  -d '{"targetNodeId":"node_mirror","mode":"primary_transfer","planOnly":true,"requireMirrorSynced":false}'
 ```
 
 Mirror fetch uses gix network APIs for HTTP(S) and local file remotes. Push supports local path and `file://` remotes through the native path and authenticated HTTPS/SSH through an opt-in constrained external transport. Public requests provide logical `credentialId` values only. Credential-bearing URLs are rejected, SSH requires known hosts, and audit payloads never include raw credentials or full transport output. The published production image keeps the runtime package set small and does not include the shell `git` binary; deployments that enable external Git transport should use a derived image or worker environment that supplies `git` under the same credential and audit controls.
@@ -1003,7 +1003,7 @@ The repository includes a repeatable end-to-end proof that runs the main TreeDX 
 - write, inspect, diff, and commit a file through the workspace API
 - refresh graph data on the committed branch
 - build a repository snapshot and export artifact metadata
-- create a migration dry-run and exercise storage operations
+- create a migration plan and exercise storage operations
 - inspect audit events
 - simulate restart/replay for repository, placement, audit, graph manifest, and snapshot manifest state
 
@@ -1118,7 +1118,7 @@ The project currently has:
 - Rust store tests for workspace file overlays and committed workspace lease release.
 - Rust graph tests for generic graph extraction, deterministic ranking/query behavior, segment write/read, checksum recovery, and `ctx` DSL parsing.
 - Elixir context and controller tests for store initialization, auth, repository registration, repository status, refs/remotes/sync, workspace lifecycle, health/version, policy, registry, mirror endpoints, File API workflows, Repository Query workflows, Graph/Context API workflows, and SDK query/graph mapping contracts.
-- End-to-end tests for authenticated repository registration, workspace update/commit, graph/context, federation planning/execution, snapshot/artifact export, migration dry-run, audit coverage, public path hygiene, and restart-style replay.
+- End-to-end tests for authenticated repository registration, workspace update/commit, graph/context, federation planning/execution, snapshot/artifact export, migration plan, audit coverage, public path hygiene, and restart-style replay.
 - OpenAPI server contract tests.
 - Security boundary, observability, storage recovery, and release-gate tests.
 

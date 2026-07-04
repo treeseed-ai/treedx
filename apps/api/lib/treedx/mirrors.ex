@@ -89,10 +89,11 @@ defmodule TreeDx.Mirrors do
       remoteUrl: params["remoteUrl"] || repo["remoteUrl"],
       remoteName: remote_name,
       refspecs: refspecs,
-      dryRun: params["dryRun"] == true
+      plan: params["planOnly"] == true,
+      planOnly: params["planOnly"] == true
     }
 
-    case fetch_or_dry_run(repo, input) do
+    case fetch_or_plan(repo, input) do
       {:ok, result} ->
         sync_record =
           put_sync_record(
@@ -253,8 +254,8 @@ defmodule TreeDx.Mirrors do
   end
 
   def promote(repo_id, mirror_id, params, principal) do
-    dry_run = params["dryRun"] != false
-    capability = if dry_run, do: "migration:read", else: "migration:write"
+    plan = params["planOnly"] != false
+    capability = if plan, do: "migration:read", else: "migration:write"
 
     with {:ok, _scope} <- TreeDx.Capabilities.require_capability(principal, capability, repo_id),
          {:ok, mirror} <- get_mirror(repo_id, mirror_id),
@@ -271,21 +272,21 @@ defmodule TreeDx.Mirrors do
              "migrationState" => "stable"
            })
         |> Map.put("primaryNodeId", mirror["targetNodeId"])
-        |> Map.put("migrationState", if(dry_run, do: "planned", else: "stable"))
+        |> Map.put("migrationState", if(plan, do: "planned", else: "stable"))
 
-      event = if(dry_run, do: "mirror.promotion_planned", else: "mirror.promoted")
+      event = if(plan, do: "mirror.promotion_planned", else: "mirror.promoted")
 
       result = %{
         mirrorId: mirror_id,
         repoId: repo_id,
-        dryRun: dry_run,
-        status: if(dry_run, do: "planned", else: "promoted"),
+        planOnly: plan,
+        status: if(plan, do: "planned", else: "promoted"),
         previousPlacement: placement,
         resultingPlacement: resulting
       }
 
       result =
-        if dry_run do
+        if plan do
           result
         else
           {:ok, stored} = TreeDx.Store.put_repository_placement(resulting)
@@ -298,7 +299,7 @@ defmodule TreeDx.Mirrors do
         repo_id: repo_id,
         operation: "mirror.promote",
         status: "ok",
-        data: %{mirrorId: mirror_id, dryRun: dry_run}
+        data: %{mirrorId: mirror_id, planOnly: plan}
       })
 
       {:ok, %{promotion: result}}
@@ -314,7 +315,7 @@ defmodule TreeDx.Mirrors do
     end
   end
 
-  defp fetch_or_dry_run(repo, %{dryRun: true} = input) do
+  defp fetch_or_plan(repo, %{planOnly: true} = input) do
     with {:ok, git} <- TreeDx.Git.inspect_repository(TreeDx.RepositoryStorage.path!(repo)) do
       {:ok,
        %{
@@ -325,12 +326,12 @@ defmodule TreeDx.Mirrors do
          "receivedPack" => false,
          "beforeHead" => git["head"],
          "afterHead" => git["head"],
-         "status" => "dry_run"
+         "status" => "plan"
        }}
     end
   end
 
-  defp fetch_or_dry_run(_repo, input), do: TreeDx.Git.fetch_remote(input)
+  defp fetch_or_plan(_repo, input), do: TreeDx.Git.fetch_remote(input)
 
   defp put_sync_record(mirror, repo_id, result, started_at, status, error, remote_url) do
     TreeDx.Store.put_mirror_sync(%{

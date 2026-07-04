@@ -71,7 +71,7 @@ defmodule TreeDxWeb.FederationCatalogControllerTest do
     assert Enum.any?(json_response(conn, 200)["peers"], &(&1["nodeId"] == "node_b"))
   end
 
-  test "trusted federation mirror peer can be used as migration dry-run target", %{token: token} do
+  test "trusted federation mirror peer can be used as migration plan target", %{token: token} do
     repo_conn =
       build_conn()
       |> put_req_header("authorization", "Bearer #{token}")
@@ -111,12 +111,12 @@ defmodule TreeDxWeb.FederationCatalogControllerTest do
         "sourceNodeId" => "node_a",
         "targetNodeId" => "node_b",
         "mode" => "primary_transfer",
-        "dryRun" => true,
+        "planOnly" => true,
         "requireMirrorSynced" => false
       })
 
     body = json_response(migration_conn, 200)
     assert body["migration"]["targetNodeId"] == "node_b"
-    assert body["migration"]["dryRun"] == true
+    assert body["migration"]["planOnly"] == true
   end
 end

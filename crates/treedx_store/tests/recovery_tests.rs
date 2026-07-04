@@ -84,7 +84,7 @@ fn compaction_preserves_latest_records_and_skips_audit_logs() {
         dir.path(),
         StorageCompactInput {
             logs: vec![],
-            dry_run: false,
+            plan: false,
             backup_before: true,
         },
     )

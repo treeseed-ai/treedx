@@ -7,7 +7,7 @@ defmodule TreeDxWeb.AdminStorageCompactionBackupTest do
     compact =
       build_conn()
       |> auth_conn(token)
-      |> post("/api/v1/admin/storage/compact", %{"dryRun" => true})
+      |> post("/api/v1/admin/storage/compact", %{"planOnly" => true})
       |> json!(200)
 
     assert compact["compact"]["status"] == "ok"
@@ -27,7 +27,7 @@ defmodule TreeDxWeb.AdminStorageCompactionBackupTest do
 
   test "compact and backup enforce capabilities" do
     build_conn()
-    |> post("/api/v1/admin/storage/compact", %{"dryRun" => true})
+    |> post("/api/v1/admin/storage/compact", %{"planOnly" => true})
     |> json_response(401)
 
     build_conn()

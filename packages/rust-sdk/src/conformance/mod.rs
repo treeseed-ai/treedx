@@ -121,7 +121,7 @@ impl TreeDxConformanceAdapter {
                 ),
             ]);
             if !matches!(method, TreeDxHttpMethod::Get | TreeDxHttpMethod::Delete) {
-                options.body = Some(serde_json::json!({ "dryRun": true }));
+                options.body = Some(serde_json::json!({ "planOnly": true }));
             }
             if let Err(error) = self.client.operation(method, path, options).await {
                 return TreeDxConformanceResult {

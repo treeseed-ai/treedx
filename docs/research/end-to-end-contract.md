@@ -51,7 +51,7 @@ The fast test covers auth, policy, node and placement lookup, workspace
 creation, repository search, graph refresh, context build, federation
 planning/execution, file and blob writes, exec, status/diff, commit,
 committed-ref reads, graph refresh/search on the committed branch, snapshot
-build, artifact export, migration dry-run, audit listing, and replay.
+build, artifact export, migration plan, audit listing, and replay.
 
 ## Restart And Recovery
 

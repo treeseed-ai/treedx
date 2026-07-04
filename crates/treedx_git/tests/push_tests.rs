@@ -23,7 +23,7 @@ fn local_bare_repo_push_updates_explicit_ref() {
         remote_url: Some(format!("file://{}", remote.path().display())),
         remote_name: Some("origin".to_string()),
         refspecs: vec!["refs/heads/main:refs/heads/main".to_string()],
-        dry_run: false,
+        plan: false,
         expected_remote_head: None,
     })
     .unwrap();
@@ -38,7 +38,7 @@ fn local_bare_repo_push_updates_explicit_ref() {
 }
 
 #[test]
-fn dry_run_validates_without_remote_mutation() {
+fn plan_validates_without_remote_mutation() {
     let local = tempdir().unwrap();
     let remote = tempdir().unwrap();
     git(local.path(), &["init", "-b", "main"]);
@@ -57,12 +57,12 @@ fn dry_run_validates_without_remote_mutation() {
         remote_url: Some(format!("file://{}", remote.path().display())),
         remote_name: Some("origin".to_string()),
         refspecs: vec!["refs/heads/main:refs/heads/main".to_string()],
-        dry_run: true,
+        plan: true,
         expected_remote_head: None,
     })
     .unwrap();
 
-    assert_eq!(result.status, "dry_run");
+    assert_eq!(result.status, "plan");
     assert_eq!(result.updated_refs, vec!["refs/heads/main"]);
     assert!(git_stdout_bare_result(remote.path(), &["rev-parse", "refs/heads/main"]).is_err());
 }
@@ -85,7 +85,7 @@ fn push_rejects_unsafe_or_unsupported_refspecs_and_urls() {
         remote_url: Some("file:///tmp/remote.git".to_string()),
         remote_name: None,
         refspecs: vec!["refs/heads/*:refs/heads/*".to_string()],
-        dry_run: true,
+        plan: true,
         expected_remote_head: None,
     })
     .unwrap_err();
@@ -96,7 +96,7 @@ fn push_rejects_unsafe_or_unsupported_refspecs_and_urls() {
         remote_url: Some("https://token@example.invalid/repo.git".to_string()),
         remote_name: None,
         refspecs: vec!["refs/heads/main:refs/heads/main".to_string()],
-        dry_run: true,
+        plan: true,
         expected_remote_head: None,
     })
     .unwrap_err();
@@ -107,7 +107,7 @@ fn push_rejects_unsafe_or_unsupported_refspecs_and_urls() {
         remote_url: Some("ssh://example.invalid/repo.git".to_string()),
         remote_name: None,
         refspecs: vec!["refs/heads/main:refs/heads/main".to_string()],
-        dry_run: true,
+        plan: true,
         expected_remote_head: None,
     })
     .unwrap_err();

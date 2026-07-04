@@ -23,7 +23,7 @@ pub fn compact_storage(
     } else {
         input.logs
     };
-    let backup_id = if input.backup_before && !input.dry_run {
+    let backup_id = if input.backup_before && !input.plan {
         Some(
             create_backup(
                 data_dir,
@@ -51,13 +51,13 @@ pub fn compact_storage(
         if relative.starts_with("audit/") {
             continue;
         }
-        let result = compact_one(data_dir, &relative, input.dry_run)?;
+        let result = compact_one(data_dir, &relative, input.plan)?;
         files.push(result);
     }
 
     Ok(StorageCompactResult {
         status: "ok".to_string(),
-        dry_run: input.dry_run,
+        plan: input.plan,
         backup_id,
         files,
     })
@@ -124,7 +124,7 @@ pub fn list_tdb_logs(data_dir: &Path) -> Result<Vec<String>, StoreError> {
 fn compact_one(
     data_dir: &Path,
     relative: &str,
-    dry_run: bool,
+    plan: bool,
 ) -> Result<StorageCompactFileResult, StoreError> {
     let path = data_dir.join(relative);
     if !path.exists() {
@@ -162,7 +162,7 @@ fn compact_one(
     let rendered = render_log(header.as_deref(), latest.values())?;
     let bytes_after = rendered.len() as u64;
 
-    if !dry_run && bytes_after < bytes_before {
+    if !plan && bytes_after < bytes_before {
         let tmp = path.with_extension("tdb.compact.tmp");
         {
             let mut file = File::create(&tmp)?;
@@ -178,7 +178,7 @@ fn compact_one(
         records_after,
         bytes_before,
         bytes_after,
-        compacted: !dry_run && bytes_after < bytes_before,
+        compacted: !plan && bytes_after < bytes_before,
     })
 }
 

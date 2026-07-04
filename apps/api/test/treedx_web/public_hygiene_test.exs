@@ -103,7 +103,7 @@ defmodule TreeDxWeb.PublicHygieneTest do
       |> auth_conn(token)
       |> post("/api/v1/repos/#{repo_id}/migrations", %{
         "targetNodeId" => "node_local",
-        "dryRun" => true,
+        "planOnly" => true,
         "requireMirrorSynced" => false
       })
       |> json!(200)

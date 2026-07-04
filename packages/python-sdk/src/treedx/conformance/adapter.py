@@ -56,7 +56,7 @@ class TreeDxConformanceAdapter:
                     method,
                     path,
                     path_params=path_params,
-                    body=None if method in {"GET", "DELETE"} else {"dryRun": True},
+                    body=None if method in {"GET", "DELETE"} else {"planOnly": True},
                 )
             return TreeDxConformanceResult(scenario_id=scenario.id, status="passed")
         except Exception as error:

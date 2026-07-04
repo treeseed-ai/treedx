@@ -11,7 +11,7 @@ Use `POST /api/v1/repos/:repo_id/push` with `git:push`.
 - SSH push is available only when explicitly enabled with credential IDs and strict known_hosts.
 - Credential-bearing URLs are rejected.
 - Public responses and audit payloads redact local/file remote paths.
-- Non-dry-run push supports local path and `file://` remotes through the native
+- Non-plan push supports local path and `file://` remotes through the native
   path.
 - Authenticated HTTPS and SSH push/fetch require `credentialId` and
   `TREEDX_GIT_EXTERNAL_TRANSPORT_ENABLED=true`.
@@ -26,7 +26,7 @@ Use `POST /api/v1/repos/:repo_id/push` with `git:push`.
 
 Use `POST /api/v1/repos/:repo_id/sync` with `git:fetch`.
 
-Request body can include `remoteName`, `remoteUrl`, `refspecs`, and `dryRun`.
+Request body can include `remoteName`, `remoteUrl`, `refspecs`, and `planOnly`.
 Audit payloads include only sanitized remote metadata and refspec counts.
 
 ## Mirror Health and Promotion
@@ -36,5 +36,5 @@ Use:
 - `POST /api/v1/repos/:repo_id/mirrors/:mirror_id/health`
 - `POST /api/v1/repos/:repo_id/mirrors/:mirror_id/promote`
 
-Promotion dry-run requires `migration:read`. Applying promotion requires
+Promotion plan requires `migration:read`. Applying promotion requires
 `migration:write`.

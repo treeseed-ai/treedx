@@ -117,7 +117,7 @@ Modes:
 - `write-heavy`: workspace-heavy fixture focused on writes, patches, commits, blobs, and snapshots.
 - `graph`: graph-rich fixture focused on graph refresh/query/context/search-index paths.
 - `binary`: binary-assets fixture focused on blob, multipart, and artifact lifecycle paths.
-- `admin`: small admin/storage diagnostic run with explicit destructive dry-run coverage.
+- `admin`: small admin/storage diagnostic run with explicit destructive plan coverage.
 - `soak`: 24-hour growing portfolio run for reliability monitoring.
 - `mirror-federation`: three-node mirror-cluster profile with catalog
   convergence, write proxy, mirror reads, and reliability verification.

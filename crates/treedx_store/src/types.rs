@@ -345,7 +345,7 @@ pub struct MigrationRecord {
     pub target_node_id: String,
     pub mode: String,
     pub status: String,
-    pub dry_run: bool,
+    pub plan: bool,
     pub require_mirror_synced: bool,
     pub previous_placement: Option<RepositoryPlacementRecord>,
     pub resulting_placement: Option<RepositoryPlacementRecord>,
@@ -640,7 +640,7 @@ pub struct StorageCompactInput {
     #[serde(default)]
     pub logs: Vec<String>,
     #[serde(default)]
-    pub dry_run: bool,
+    pub plan: bool,
     #[serde(default = "default_backup_before")]
     pub backup_before: bool,
 }
@@ -664,7 +664,7 @@ pub struct StorageCompactFileResult {
 #[serde(rename_all = "camelCase")]
 pub struct StorageCompactResult {
     pub status: String,
-    pub dry_run: bool,
+    pub plan: bool,
     pub backup_id: Option<String>,
     pub files: Vec<StorageCompactFileResult>,
 }
@@ -761,7 +761,7 @@ pub struct SearchIndexCompactInput {
     pub repo_id: String,
     pub ref_name: String,
     #[serde(default)]
-    pub dry_run: bool,
+    pub plan: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -769,7 +769,7 @@ pub struct SearchIndexCompactInput {
 pub struct SearchIndexCompactResult {
     pub repo_id: String,
     pub ref_name: String,
-    pub dry_run: bool,
+    pub plan: bool,
     pub segments_before: u64,
     pub segments_after: u64,
     pub compacted: bool,

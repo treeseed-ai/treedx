@@ -2,7 +2,7 @@ use tempfile::tempdir;
 use treedx_store::*;
 
 #[test]
-fn compaction_dry_run_is_deterministic_and_non_mutating() {
+fn compaction_plan_is_deterministic_and_non_mutating() {
     let dir = tempdir().unwrap();
     init_data_dir(
         dir.path(),
@@ -29,7 +29,7 @@ fn compaction_dry_run_is_deterministic_and_non_mutating() {
         dir.path(),
         StorageCompactInput {
             logs: vec!["catalog/repositories.tdb".to_string()],
-            dry_run: true,
+            plan: true,
             backup_before: false,
         },
     )
@@ -38,7 +38,7 @@ fn compaction_dry_run_is_deterministic_and_non_mutating() {
         dir.path(),
         StorageCompactInput {
             logs: vec!["catalog/repositories.tdb".to_string()],
-            dry_run: true,
+            plan: true,
             backup_before: false,
         },
     )

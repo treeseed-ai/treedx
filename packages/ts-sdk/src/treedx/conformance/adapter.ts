@@ -49,7 +49,7 @@ export class TreeDxConformanceAdapter {
             upload_id: process.env.TREEDX_CONFORMANCE_UPLOAD_ID ?? 'upload_conformance',
             part_number: process.env.TREEDX_CONFORMANCE_PART_NUMBER ?? 1
           },
-          body: method === 'GET' || method === 'DELETE' ? undefined : { dryRun: true }
+          body: method === 'GET' || method === 'DELETE' ? undefined : { planOnly: true }
         });
       }
       return { scenarioId: scenario.id, status: 'passed' };

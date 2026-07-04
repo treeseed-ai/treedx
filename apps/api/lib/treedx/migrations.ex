@@ -12,7 +12,7 @@ defmodule TreeDx.Migrations do
            TreeDx.Store.get_repository_placement(repo_id),
          {:ok, _target_node} <- target_node(params["targetNodeId"]),
          :ok <- validate_synced_mirror(repo_id, params, placement) do
-      dry_run = params["dryRun"] == true
+      plan = params["planOnly"] == true
       now = DateTime.utc_now() |> DateTime.to_iso8601()
       source_node_id = params["sourceNodeId"] || placement["primaryNodeId"]
       target_node_id = params["targetNodeId"]
@@ -24,29 +24,29 @@ defmodule TreeDx.Migrations do
         sourceNodeId: source_node_id,
         targetNodeId: target_node_id,
         mode: params["mode"] || "primary_transfer",
-        status: if(dry_run, do: "planned", else: "completed"),
-        dryRun: dry_run,
+        status: if(plan, do: "planned", else: "completed"),
+        plan: plan,
         requireMirrorSynced: params["requireMirrorSynced"] != false,
         previousPlacement: placement,
-        resultingPlacement: if(dry_run, do: nil, else: resulting_placement),
+        resultingPlacement: if(plan, do: nil, else: resulting_placement),
         validation: %{mirrorSynced: true},
         createdByActorId: principal["actorId"],
         createdAt: now,
-        completedAt: if(dry_run, do: nil, else: now)
+        completedAt: if(plan, do: nil, else: now)
       }
 
       with {:ok, migration} <- TreeDx.Store.put_migration(record),
-           {:ok, placement} <- maybe_update_placement(dry_run, resulting_placement) do
+           {:ok, placement} <- maybe_update_placement(plan, resulting_placement) do
         TreeDx.Audit.append("migration.created", %{
           actor_id: principal["actorId"],
           tenant_id: principal["tenantId"],
           repo_id: repo_id,
           operation: "migration.create",
-          status: if(dry_run, do: "planned", else: "ok"),
+          status: if(plan, do: "planned", else: "ok"),
           data: %{migrationId: migration["id"], targetNodeId: target_node_id}
         })
 
-        if !dry_run do
+        if !plan do
           TreeDx.Audit.append("migration.completed", %{
             actor_id: principal["actorId"],
             tenant_id: principal["tenantId"],
@@ -57,7 +57,7 @@ defmodule TreeDx.Migrations do
           })
         end
 
-        {:ok, %{migration: migration, placement: placement}}
+        {:ok, %{migration: public_migration(migration), placement: placement}}
       end
     else
       {:ok, nil} ->
@@ -86,11 +86,17 @@ defmodule TreeDx.Migrations do
            ),
          {:ok, migration} when is_map(migration) <-
            TreeDx.Store.get_migration(repo_id, migration_id) do
-      {:ok, %{migration: migration}}
+      {:ok, %{migration: public_migration(migration)}}
     else
       {:ok, nil} -> {:error, %{code: "not_found", message: "Migration not found."}}
       other -> other
     end
+  end
+
+  defp public_migration(migration) when is_map(migration) do
+    migration
+    |> Map.put("planOnly", migration["plan"])
+    |> Map.delete("plan")
   end
 
   defp target_node(nil),

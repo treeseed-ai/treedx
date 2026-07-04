@@ -37,7 +37,7 @@ defmodule TreeDx.AdminStorage do
   def compact(params, principal, request_id) do
     input = %{
       logs: params["logs"] || [],
-      dryRun: params["dryRun"] == true,
+      plan: params["planOnly"] == true,
       backupBefore: params["backupBefore"] != false
     }
 
@@ -48,7 +48,7 @@ defmodule TreeDx.AdminStorage do
         operation: "storage.compact",
         status: "ok",
         request_id: request_id,
-        data: %{dryRun: result["dryRun"], fileCount: length(result["files"] || [])}
+        data: %{planOnly: result["plan"], fileCount: length(result["files"] || [])}
       })
 
       {:ok, %{compact: redact_compact(result)}}
@@ -91,7 +91,7 @@ defmodule TreeDx.AdminStorage do
       migrationId: migration_id(target),
       fromVersion: storage_manifest()["formatVersion"] || "unknown",
       toVersion: target,
-      dryRun: true,
+      planOnly: true,
       reversible: true,
       logs: known_logs(),
       status: "planned"
@@ -115,7 +115,7 @@ defmodule TreeDx.AdminStorage do
       record =
         plan
         |> Map.merge(%{
-          dryRun: false,
+          planOnly: false,
           status: "applied",
           backupId: backup && backup["backupId"],
           startedAt: now(),
@@ -189,7 +189,7 @@ defmodule TreeDx.AdminStorage do
        %{
          restore: %{
            backupId: backup_id,
-           dryRun: true,
+           planOnly: true,
            verified: verified,
            uri: "treedx://backup/#{backup_id}"
          }
@@ -208,10 +208,10 @@ defmodule TreeDx.AdminStorage do
       record = %{
         restoreId: "restore_#{System.unique_integer([:positive])}",
         backupId: verify.backupId,
-        dryRun: params["dryRun"] == true,
+        planOnly: params["planOnly"] == true,
         backupBeforeRestore: params["backupBeforeRestore"] != false,
         preRestoreBackupId: pre_backup && pre_backup["backupId"],
-        status: if(params["dryRun"] == true, do: "verified", else: "restored"),
+        status: if(params["planOnly"] == true, do: "verified", else: "restored"),
         startedAt: now(),
         completedAt: now(),
         uri: "treedx://backup/#{verify.backupId}"
@@ -225,7 +225,7 @@ defmodule TreeDx.AdminStorage do
         operation: "storage.restore",
         status: "ok",
         request_id: request_id,
-        data: Map.take(record, [:restoreId, :backupId, :dryRun, :status])
+        data: Map.take(record, [:restoreId, :backupId, :planOnly, :status])
       })
 
       {:ok, %{restore: record}}
@@ -298,7 +298,7 @@ defmodule TreeDx.AdminStorage do
   defp maybe_pre_restore_backup(_params), do: maybe_backup_before(%{})
 
   defp restore_enabled?(params) do
-    if System.get_env("TREEDX_STORAGE_RESTORE_ENABLED") == "true" or params["dryRun"] == true do
+    if System.get_env("TREEDX_STORAGE_RESTORE_ENABLED") == "true" or params["planOnly"] == true do
       :ok
     else
       {:error, %{code: "permission_denied", message: "Storage restore is disabled."}}
@@ -307,7 +307,7 @@ defmodule TreeDx.AdminStorage do
 
   defp restore_mode?(params) do
     if storage_mode() == "read_only_recovery" or params["force"] == true or
-         params["dryRun"] == true do
+         params["planOnly"] == true do
       :ok
     else
       {:error,
@@ -430,7 +430,10 @@ defmodule TreeDx.AdminStorage do
   end
 
   defp redact_compact(result) do
-    Map.update(result, "files", [], fn files ->
+    result
+    |> Map.put("planOnly", result["plan"])
+    |> Map.delete("plan")
+    |> Map.update("files", [], fn files ->
       Enum.map(
         files,
         &Map.take(&1, [

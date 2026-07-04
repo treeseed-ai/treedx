@@ -306,7 +306,7 @@ fn mirror_sync_and_migration_records_persist_and_replay() {
             target_node_id: "node_b".to_string(),
             mode: "primary_transfer".to_string(),
             status: "planned".to_string(),
-            dry_run: true,
+            plan: true,
             require_mirror_synced: false,
             previous_placement: None,
             resulting_placement: None,

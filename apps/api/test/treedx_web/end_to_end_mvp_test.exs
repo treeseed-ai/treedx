@@ -321,7 +321,7 @@ defmodule TreeDxWeb.EndToEndMvpTest do
         "targetNodeId" => "node_mirror",
         "sourceNodeId" => "node_local",
         "mode" => "primary_transfer",
-        "dryRun" => true,
+        "planOnly" => true,
         "requireMirrorSynced" => false
       })
       |> json!(200)

@@ -18,8 +18,8 @@ Use `POST /api/v1/admin/storage/compact` with `policy:write`.
 
 - Audit logs are never compacted.
 - Latest-record logs are compacted by record ID.
-- `dryRun: true` reports planned file statistics without rewriting logs.
-- `backupBefore` defaults to true for non-dry-run compaction.
+- `planOnly: true` reports planned file statistics without rewriting logs.
+- `backupBefore` defaults to true for non-plan compaction.
 
 ## Backup
 

@@ -54,7 +54,7 @@ fn input(path: &std::path::Path, remote_url: &str, refspec: &str) -> PushRemoteI
         remote_url: Some(remote_url.to_string()),
         remote_name: None,
         refspecs: vec![refspec.to_string()],
-        dry_run: true,
+        plan: true,
         expected_remote_head: None,
     }
 }

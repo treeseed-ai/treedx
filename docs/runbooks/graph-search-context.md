@@ -58,7 +58,7 @@ If `ready` is false, repository search falls back to direct scanning.
 ```bash
 curl -sS -H "authorization: Bearer $TOKEN" \
   -H "content-type: application/json" \
-  -d '{"dryRun":true}' \
+  -d '{"planOnly":true}' \
   "$TREEDX_URL/api/v1/repos/$REPO_ID/search/index/compact"
 ```
 

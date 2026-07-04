@@ -23,6 +23,19 @@ pub fn fetch_remote(input: FetchRemoteInput) -> Result<FetchRemoteResult, GitErr
         }
     }
 
+    if input.plan {
+        return Ok(FetchRemoteResult {
+            remote_name,
+            remote_url: input.remote_url,
+            refspecs,
+            updated_refs: Vec::new(),
+            received_pack: false,
+            before_head: before_head.clone(),
+            after_head: before_head,
+            status: "plan".to_string(),
+        });
+    }
+
     let repo = gix::open(repo_path).map_err(|err| GitError::Git(err.to_string()))?;
     let mut remote = if let Some(url) = input.remote_url.as_deref() {
         repo.remote_at(url)
@@ -46,7 +59,6 @@ pub fn fetch_remote(input: FetchRemoteInput) -> Result<FetchRemoteResult, GitErr
         .map_err(|err| GitError::Git(err.to_string()))?;
     let interrupt = AtomicBool::new(false);
     let outcome = prepare
-        .with_dry_run(input.dry_run)
         .receive(gix::progress::Discard, &interrupt)
         .map_err(|err| GitError::Git(err.to_string()))?;
 
@@ -66,7 +78,7 @@ pub fn fetch_remote(input: FetchRemoteInput) -> Result<FetchRemoteResult, GitErr
         received_pack,
         before_head,
         after_head,
-        status: if input.dry_run { "dry_run" } else { "synced" }.to_string(),
+        status: if input.plan { "plan" } else { "synced" }.to_string(),
     })
 }
 
@@ -84,7 +96,7 @@ pub fn push_remote(input: PushRemoteInput) -> Result<PushRemoteResult, GitError>
     if is_unsupported_ssh(&remote_url) {
         return Err(GitError::UnsupportedTransport(remote_url));
     }
-    if (remote_url.starts_with("http://") || remote_url.starts_with("https://")) && !input.dry_run {
+    if (remote_url.starts_with("http://") || remote_url.starts_with("https://")) && !input.plan {
         return Err(GitError::UnsupportedTransport(remote_url));
     }
 
@@ -105,7 +117,7 @@ pub fn push_remote(input: PushRemoteInput) -> Result<PushRemoteResult, GitError>
         }
     }
 
-    if !input.dry_run {
+    if !input.plan {
         let remote_path = remote_path
             .as_ref()
             .ok_or_else(|| GitError::UnsupportedTransport(remote_url.clone()))?;
@@ -125,7 +137,7 @@ pub fn push_remote(input: PushRemoteInput) -> Result<PushRemoteResult, GitError>
         .transpose()?
         .unwrap_or_default();
     let after_head = remote_path.as_deref().and_then(current_head);
-    let updated_refs = if input.dry_run {
+    let updated_refs = if input.plan {
         updates.iter().map(|(_, dst, _)| dst.clone()).collect()
     } else {
         after_refs
@@ -143,7 +155,7 @@ pub fn push_remote(input: PushRemoteInput) -> Result<PushRemoteResult, GitError>
         rejected_refs: Vec::new(),
         before_head,
         after_head,
-        status: if input.dry_run { "dry_run" } else { "pushed" }.to_string(),
+        status: if input.plan { "plan" } else { "pushed" }.to_string(),
         backend: "gix".to_string(),
     })
 }

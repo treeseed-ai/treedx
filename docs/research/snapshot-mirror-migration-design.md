@@ -52,7 +52,7 @@ Sync records include mirror ID, source/target node IDs, sanitized remote metadat
 
 ## Migration Contract
 
-Placement migration is explicit and audited. Dry-run migration persists a planned migration without changing placement. Committed migration validates the target node and, when requested, requires a synced mirror before transferring primary placement.
+Placement migration is explicit and audited. Plan migration persists a planned migration without changing placement. Committed migration validates the target node and, when requested, requires a synced mirror before transferring primary placement.
 
 Committed primary transfer updates placement by:
 

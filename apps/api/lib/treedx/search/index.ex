@@ -67,14 +67,14 @@ defmodule TreeDx.Search.Index do
            TreeDx.Store.compact_search_index(%{
              repoId: repo_id,
              refName: ref,
-             dryRun: params["dryRun"] == true
+             plan: params["planOnly"] == true
            }) do
       {:ok,
        %{
          compact: %{
            repoId: repo_id,
            ref: ref,
-           dryRun: result["dryRun"],
+           planOnly: result["plan"],
            segmentsBefore: result["segmentsBefore"],
            segmentsAfter: result["segmentsAfter"],
            compacted: result["compacted"]

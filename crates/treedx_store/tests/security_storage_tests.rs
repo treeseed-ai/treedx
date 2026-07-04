@@ -42,7 +42,7 @@ fn storage_security_reports_logical_files_only_and_preserves_audit_logs() {
         dir.path(),
         StorageCompactInput {
             logs: vec![],
-            dry_run: false,
+            plan: false,
             backup_before: false,
         },
     )

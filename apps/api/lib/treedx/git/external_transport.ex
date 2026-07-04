@@ -13,13 +13,11 @@ defmodule TreeDx.Git.ExternalTransport do
   def push(input, credential) do
     with :ok <- enabled?(),
          :ok <- validate_transport(input.remoteUrl, credential) do
-      run_git(
-        input.repoPath,
-        push_args(input),
-        input,
-        credential,
-        if(input.dryRun, do: "dry_run", else: "pushed")
-      )
+      if input.planOnly do
+        planned_result(input)
+      else
+        run_git(input.repoPath, push_args(input), input, credential, "pushed")
+      end
     end
   end
 
@@ -81,9 +79,22 @@ defmodule TreeDx.Git.ExternalTransport do
   end
 
   defp push_args(input) do
-    args = ["push"]
-    args = if input.dryRun, do: args ++ ["--dry-run"], else: args
-    args ++ [input.remoteUrl | input.refspecs || []]
+    ["push", input.remoteUrl | input.refspecs || []]
+  end
+
+  defp planned_result(input) do
+    {:ok,
+     %{
+       "remoteName" => input.remoteName || "origin",
+       "remoteUrl" => RemoteUrl.sanitize(input.remoteUrl),
+       "refspecs" => input.refspecs || [],
+       "updatedRefs" => input.refspecs || [],
+       "rejectedRefs" => [],
+       "beforeHead" => nil,
+       "afterHead" => nil,
+       "status" => "plan",
+       "backend" => "git_external_transport"
+     }}
   end
 
   defp run_git(repo_path, args, input, credential, status) do

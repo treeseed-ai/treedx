@@ -803,7 +803,7 @@ capabilities:
       - GET /api/v1/repos/{repo_id}/migrations/{migration_id}
     conformance:
       - mirrors.create_health_promote
-      - migrations.dry_run
+      - migrations.plan
 
   exec.workspace:
     status: required
@@ -1130,7 +1130,7 @@ federation.partial_failure
 snapshots.build_get_export
 artifacts.list_get_delete
 mirrors.create_health_promote
-migrations.dry_run
+migrations.plan
 exec.read_only
 exec.write_limited
 observability.health_metrics

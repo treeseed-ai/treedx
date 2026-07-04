@@ -17,7 +17,8 @@ defmodule TreeDx.Pushes do
         remoteUrl: remote_url,
         remoteName: remote_name,
         refspecs: refspecs,
-        dryRun: truthy?(params["dryRun"]),
+        plan: truthy?(params["planOnly"]),
+        planOnly: truthy?(params["planOnly"]),
         expectedRemoteHead: params["expectedRemoteHead"],
         credentialId: params["credentialId"]
       }
@@ -32,7 +33,7 @@ defmodule TreeDx.Pushes do
           remoteName: remote_name,
           remoteUrl: sanitize_remote_url(remote_url),
           refspecCount: length(refspecs),
-          dryRun: input.dryRun
+          planOnly: input.planOnly
         }
       })
 
@@ -50,7 +51,7 @@ defmodule TreeDx.Pushes do
               remoteName: result["remoteName"],
               remoteUrl: result["remoteUrl"],
               refspecCount: length(result["refspecs"] || []),
-              dryRun: result["status"] == "dry_run",
+              planOnly: result["status"] == "plan",
               backend: result["backend"],
               updatedRefs: result["updatedRefs"] || []
             }
@@ -69,7 +70,7 @@ defmodule TreeDx.Pushes do
               remoteName: remote_name,
               remoteUrl: sanitize_remote_url(remote_url),
               refspecCount: length(refspecs),
-              dryRun: input.dryRun,
+              planOnly: input.planOnly,
               code: error["code"] || error[:code]
             }
           })
@@ -96,7 +97,8 @@ defmodule TreeDx.Pushes do
         remoteUrl: remote_url,
         remoteName: remote_name,
         refspecs: params["refspecs"] || ["+refs/heads/*:refs/remotes/#{remote_name}/*"],
-        dryRun: truthy?(params["dryRun"]),
+        plan: truthy?(params["planOnly"]),
+        planOnly: truthy?(params["planOnly"]),
         credentialId: params["credentialId"]
       }
 
@@ -114,7 +116,7 @@ defmodule TreeDx.Pushes do
               remoteName: result["remoteName"],
               remoteUrl: result["remoteUrl"],
               refspecCount: length(result["refspecs"] || []),
-              dryRun: result["status"] == "dry_run",
+              planOnly: result["status"] == "plan",
               updatedRefs: result["updatedRefs"] || []
             }
           })

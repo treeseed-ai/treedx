@@ -44,10 +44,10 @@ defmodule TreeDxWeb.SearchIndexControllerTest do
     compact =
       build_conn()
       |> auth(token)
-      |> post("/api/v1/repos/#{repo_id}/search/index/compact", %{"dryRun" => true})
+      |> post("/api/v1/repos/#{repo_id}/search/index/compact", %{"planOnly" => true})
       |> json_response(200)
 
-    assert compact["compact"]["dryRun"] == true
+    assert compact["compact"]["planOnly"] == true
     assert compact["compact"]["segmentsBefore"] == 1
   end
 

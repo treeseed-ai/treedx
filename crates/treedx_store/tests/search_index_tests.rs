@@ -67,25 +67,25 @@ fn search_index_manifests_segments_and_compaction_replay() {
         2
     );
 
-    let dry_run = compact_search_index(
+    let plan = compact_search_index(
         dir.path(),
         SearchIndexCompactInput {
             repo_id: "repo_test".to_string(),
             ref_name: "refs/heads/main".to_string(),
-            dry_run: true,
+            plan: true,
         },
     )
     .unwrap();
-    assert_eq!(dry_run.segments_before, 2);
-    assert_eq!(dry_run.segments_after, 1);
-    assert!(!dry_run.compacted);
+    assert_eq!(plan.segments_before, 2);
+    assert_eq!(plan.segments_after, 1);
+    assert!(!plan.compacted);
 
     let compacted = compact_search_index(
         dir.path(),
         SearchIndexCompactInput {
             repo_id: "repo_test".to_string(),
             ref_name: "refs/heads/main".to_string(),
-            dry_run: false,
+            plan: false,
         },
     )
     .unwrap();

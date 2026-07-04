@@ -21,30 +21,30 @@ defmodule TreeDxWeb.PushControllerTest do
     {:ok, token: token, repo_id: repo["repoId"], remote_path: remote_path}
   end
 
-  test "actor with git push can dry-run and push an allowed ref", %{
+  test "actor with git push can plan and push an allowed ref", %{
     token: token,
     repo_id: repo_id,
     remote_path: remote_path
   } do
-    dry_run =
+    plan =
       build_conn()
       |> auth_conn(token)
       |> post("/api/v1/repos/#{repo_id}/push", %{
         "refspecs" => ["refs/heads/main:refs/heads/main"],
-        "dryRun" => true
+        "planOnly" => true
       })
       |> json!(200)
 
-    assert dry_run["push"]["status"] == "dry_run"
-    assert dry_run["push"]["backend"] == "gix"
-    assert_public_hygiene!(dry_run)
+    assert plan["push"]["status"] == "plan"
+    assert plan["push"]["backend"] == "gix"
+    assert_public_hygiene!(plan)
 
     pushed =
       build_conn()
       |> auth_conn(token)
       |> post("/api/v1/repos/#{repo_id}/push", %{
         "refspecs" => ["refs/heads/main:refs/heads/main"],
-        "dryRun" => false
+        "planOnly" => false
       })
       |> json!(200)
 
@@ -63,7 +63,7 @@ defmodule TreeDxWeb.PushControllerTest do
       |> post("/api/v1/repos/#{repo_id}/push", %{
         "remoteUrl" => "https://token@example.invalid/repo.git",
         "refspecs" => ["refs/heads/main:refs/heads/main"],
-        "dryRun" => true
+        "planOnly" => true
       })
       |> json!(422)
 
@@ -77,7 +77,7 @@ defmodule TreeDxWeb.PushControllerTest do
       |> auth_conn(limited_token)
       |> post("/api/v1/repos/#{repo_id}/push", %{
         "refspecs" => ["refs/heads/main:refs/heads/main"],
-        "dryRun" => true
+        "planOnly" => true
       })
       |> json!(403)
 
@@ -91,14 +91,14 @@ defmodule TreeDxWeb.PushControllerTest do
       |> auth_conn(scoped_token)
       |> post("/api/v1/repos/#{repo_id}/push", %{
         "refspecs" => ["refs/heads/main:refs/heads/main"],
-        "dryRun" => true
+        "planOnly" => true
       })
       |> json!(403)
 
     assert wrong_ref["error"]["code"] == "permission_denied"
   end
 
-  test "mirror health and promotion dry-run are audited and protected", %{
+  test "mirror health and promotion plan are audited and protected", %{
     token: token,
     repo_id: repo_id
   } do
@@ -122,7 +122,7 @@ defmodule TreeDxWeb.PushControllerTest do
       build_conn()
       |> auth_conn(token)
       |> post("/api/v1/repos/#{repo_id}/mirrors/#{mirror["id"]}/promote", %{
-        "dryRun" => true,
+        "planOnly" => true,
         "requireSynced" => true
       })
       |> json!(200)

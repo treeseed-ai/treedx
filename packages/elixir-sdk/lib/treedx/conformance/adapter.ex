@@ -33,7 +33,7 @@ defmodule TreeDxSdk.Conformance.Adapter do
     result =
       Enum.reduce_while(Map.get(scenario, "endpointRefs", []), :ok, fn endpoint_ref, :ok ->
         [method, path] = String.split(endpoint_ref, " ", parts: 2)
-        body = if method in ["GET", "DELETE"], do: nil, else: %{dryRun: true}
+        body = if method in ["GET", "DELETE"], do: nil, else: %{planOnly: true}
 
         case TreeDxSdk.Client.operation(client, method, path,
                path_params: path_params,

@@ -41,11 +41,11 @@ defmodule TreeDxWeb.AdminStorageControllerTest do
     compact =
       build_conn()
       |> auth_conn(token)
-      |> post("/api/v1/admin/storage/compact", %{"dryRun" => true})
+      |> post("/api/v1/admin/storage/compact", %{"planOnly" => true})
       |> json!(200)
 
     assert compact["compact"]["status"] == "ok"
-    assert compact["compact"]["dryRun"] == true
+    assert compact["compact"]["planOnly"] == true
     assert Enum.any?(compact["compact"]["files"], &(&1["file"] == "catalog/manifest.tdb"))
     assert_public_hygiene!(compact)
 

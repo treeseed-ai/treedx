@@ -91,9 +91,9 @@ pub fn compact_search_index(
     Ok(SearchIndexCompactResult {
         repo_id: input.repo_id,
         ref_name: input.ref_name,
-        dry_run: input.dry_run,
+        plan: input.plan,
         segments_before: before,
         segments_after: after,
-        compacted: !input.dry_run && after < before,
+        compacted: !input.plan && after < before,
     })
 }

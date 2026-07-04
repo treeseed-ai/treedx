@@ -416,7 +416,7 @@ defmodule TreeDxProfiler.ScenarioRunner do
       "/api/v1/repos/#{repo_id}/sync",
       "syncRepository",
       "repository",
-      %{"dryRun" => true},
+      %{"planOnly" => true},
       &assert_ok/1
     )
     |> call!(
@@ -427,8 +427,8 @@ defmodule TreeDxProfiler.ScenarioRunner do
       %{
         "remoteUrl" => repo.path,
         "remoteName" => "profiler",
-        "refspecs" => ["refs/heads/main:refs/heads/profile-push-dry-run"],
-        "dryRun" => true
+        "refspecs" => ["refs/heads/main:refs/heads/profile-push-plan"],
+        "planOnly" => true
       },
       &assert_ok_or_expected_error/1,
       expected: [200, 409, 422]
@@ -527,7 +527,7 @@ defmodule TreeDxProfiler.ScenarioRunner do
           "targetNodeId" => target_node_id,
           "sourceNodeId" => source_node_id,
           "mode" => "primary_transfer",
-          "dryRun" => true,
+          "planOnly" => true,
           "requireMirrorSynced" => false
         },
         expected: [200, 409, 422],
@@ -554,7 +554,7 @@ defmodule TreeDxProfiler.ScenarioRunner do
         "/api/v1/repos/#{repo_id}/mirrors/#{mirror_id}/sync",
         "syncMirror",
         "mirror",
-        %{"remoteUrl" => primary_repo(state).path, "remoteName" => "profiler", "dryRun" => true},
+        %{"remoteUrl" => primary_repo(state).path, "remoteName" => "profiler", "planOnly" => true},
         &assert_ok_or_expected_error/1,
         expected: [200, 409, 422]
       )
@@ -571,7 +571,7 @@ defmodule TreeDxProfiler.ScenarioRunner do
         "/api/v1/repos/#{repo_id}/mirrors/#{mirror_id}/promote",
         "promoteMirror",
         "mirror",
-        %{"dryRun" => true, "requireSynced" => false},
+        %{"planOnly" => true, "requireSynced" => false},
         &assert_ok/1
       )
 
@@ -985,7 +985,7 @@ defmodule TreeDxProfiler.ScenarioRunner do
       "/api/v1/repos/#{repo_id}/search/index/compact",
       "compactSearchIndex",
       "search",
-      %{"dryRun" => true},
+      %{"planOnly" => true},
       &assert_ok_or_forbidden/1
     )
   end
@@ -1322,7 +1322,7 @@ defmodule TreeDxProfiler.ScenarioRunner do
         "/api/v1/admin/storage/compact",
         "compactAdminStorage",
         "admin",
-        %{"dryRun" => true, "backupBefore" => false},
+        %{"planOnly" => true, "backupBefore" => false},
         &assert_ok/1
       )
 
@@ -1411,7 +1411,7 @@ defmodule TreeDxProfiler.ScenarioRunner do
           "admin",
           %{
             "backupId" => backup_id,
-            "dryRun" => true,
+            "planOnly" => true,
             "backupBeforeRestore" => false
           },
           &assert_ok/1
@@ -1427,7 +1427,7 @@ defmodule TreeDxProfiler.ScenarioRunner do
         "/api/v1/admin/artifacts/cleanup",
         "cleanupArtifacts",
         "artifact",
-        %{"dryRun" => true},
+        %{"planOnly" => true},
         &assert_ok_or_expected_error/1,
         expected: [200, 422]
       )

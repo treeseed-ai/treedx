@@ -111,7 +111,7 @@ pub struct FetchRemoteInput {
     pub remote_url: Option<String>,
     pub remote_name: Option<String>,
     pub refspecs: Vec<String>,
-    pub dry_run: bool,
+    pub plan: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -134,7 +134,7 @@ pub struct PushRemoteInput {
     pub remote_url: Option<String>,
     pub remote_name: Option<String>,
     pub refspecs: Vec<String>,
-    pub dry_run: bool,
+    pub plan: bool,
     #[serde(default)]
     pub expected_remote_head: Option<String>,
 }
