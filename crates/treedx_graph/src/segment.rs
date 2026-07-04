@@ -7,6 +7,7 @@ use std::collections::BTreeMap;
 use std::fs::{self, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,9 +29,20 @@ pub fn write_graph_segments(
         &index.manifest.repo_id,
         &index.manifest.graph_version,
     );
-    if root.exists() {
+    if root.exists()
+        && read_graph_segments(
+            data_dir,
+            &index.manifest.repo_id,
+            &index.manifest.graph_version,
+        )
+        .is_ok()
+    {
+        write_latest_manifest(data_dir, &index.manifest)?;
+        return Ok(index.manifest.clone());
+    } else if root.exists() {
         fs::remove_dir_all(&root)?;
     }
+
     fs::create_dir_all(&root)?;
     write_records(
         &root.join("manifest.tdb"),
@@ -64,17 +76,21 @@ pub fn write_graph_segments(
             .map(|edge| (edge.id.clone(), edge.clone()))
             .collect::<Vec<_>>(),
     )?;
+    write_latest_manifest(data_dir, &index.manifest)?;
+    Ok(index.manifest.clone())
+}
+
+fn write_latest_manifest(data_dir: &Path, manifest: &GraphManifest) -> Result<(), GraphError> {
     let latest_dir = data_dir
         .join("graph/repos")
-        .join(&index.manifest.repo_id)
+        .join(&manifest.repo_id)
         .join("latest");
     fs::create_dir_all(&latest_dir)?;
     write_records(
-        &latest_dir.join(format!("{}.tdb", short_hash(&index.manifest.ref_name))),
+        &latest_dir.join(format!("{}.tdb", short_hash(&manifest.ref_name))),
         "graph_latest",
-        &[("latest".to_string(), index.manifest.clone())],
-    )?;
-    Ok(index.manifest.clone())
+        &[("latest".to_string(), manifest.clone())],
+    )
 }
 
 pub fn read_graph_segments(
@@ -139,11 +155,12 @@ fn write_records<T: Serialize + Clone>(
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
+    let tmp_path = temp_path(path);
     let mut file = OpenOptions::new()
         .create(true)
         .write(true)
         .truncate(true)
-        .open(path)?;
+        .open(&tmp_path)?;
     writeln!(file, "# treedx:{kind}:v1")?;
     for (id, payload) in records {
         let envelope = SegmentEnvelope {
@@ -157,7 +174,24 @@ fn write_records<T: Serialize + Clone>(
         writeln!(file, "{}", serde_json::to_string(&envelope)?)?;
     }
     file.sync_data()?;
+    drop(file);
+    fs::rename(&tmp_path, path).map_err(|error| {
+        let _ = fs::remove_file(&tmp_path);
+        error
+    })?;
     Ok(())
+}
+
+fn temp_path(path: &Path) -> PathBuf {
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+    let file_name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("records.tdb");
+    path.with_file_name(format!(".{file_name}.{}.{}.tmp", std::process::id(), nonce))
 }
 
 fn read_records<T: DeserializeOwned + Serialize>(

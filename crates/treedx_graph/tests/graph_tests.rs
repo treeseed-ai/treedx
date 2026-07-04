@@ -153,6 +153,33 @@ fn writes_reads_and_verifies_segments() {
 }
 
 #[test]
+fn repeated_segment_publish_reuses_valid_graph_version() {
+    let index = sample_index();
+    let root =
+        std::env::temp_dir().join(format!("treedx-graph-repeat-test-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&root);
+
+    let first = write_graph_segments(&root, &index).expect("initial segments write");
+    let second = write_graph_segments(&root, &index).expect("repeat segments write");
+
+    assert_eq!(second.graph_version, first.graph_version);
+    let reread =
+        read_graph_segments(&root, "repo_test", &first.graph_version).expect("segments read");
+    assert_eq!(reread.nodes.len(), index.nodes.len());
+
+    let segment_root = root
+        .join("graph/repos/repo_test")
+        .join(&first.graph_version);
+    let temp_files = fs::read_dir(&segment_root)
+        .unwrap()
+        .filter_map(Result::ok)
+        .filter(|entry| entry.file_name().to_string_lossy().ends_with(".tmp"))
+        .count();
+    assert_eq!(temp_files, 0);
+    let _ = fs::remove_dir_all(&root);
+}
+
+#[test]
 fn parses_ctx_dsl_subset() {
     let parsed = parse_ctx_dsl(
         "ctx \"release provenance\" for research in /docs via references depth 1 limit 8 budget 1200 as brief",
