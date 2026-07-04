@@ -175,9 +175,8 @@ fn write_records<T: Serialize + Clone>(
     }
     file.sync_data()?;
     drop(file);
-    fs::rename(&tmp_path, path).map_err(|error| {
+    fs::rename(&tmp_path, path).inspect_err(|_error| {
         let _ = fs::remove_file(&tmp_path);
-        error
     })?;
     Ok(())
 }
