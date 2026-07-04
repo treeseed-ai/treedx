@@ -113,7 +113,7 @@ Production hardening storage and artifact operations add:
 | POST | `/api/v1/admin/storage/migrations/apply` | `AdminStorageController.apply_migration` | `policy:write` | no | no | no | no | no | `storage.migration_applied` | guarded migration apply with backup metadata |
 | POST | `/api/v1/admin/storage/migrations/rollback` | `AdminStorageController.rollback_migration` | `policy:write` | no | no | no | no | no | `storage.migration_rolled_back` | reversible migration rollback |
 | POST | `/api/v1/admin/storage/restore/verify` | `AdminStorageController.verify_restore` | `policy:read` | no | no | no | no | no | `storage.restore_verified` | verifies logical backup before restore |
-| POST | `/api/v1/admin/storage/restore` | `AdminStorageController.restore` | `policy:write` | no | no | no | no | no | `storage.restore_checked` | restore disabled unless explicitly configured or dry run |
+| POST | `/api/v1/admin/storage/restore` | `AdminStorageController.restore` | `policy:write` | no | no | no | no | no | `storage.restore_checked` | restore disabled unless explicitly configured or plan mode |
 | POST | `/api/v1/admin/artifacts/cleanup` | `ArtifactController.cleanup` | `policy:write` | no | no | no | no | no | `artifact.cleanup` | retention cleanup by logical artifact ID |
 
 Exec hardening uses `POST /api/v1/workspaces/:workspace_id/exec` with

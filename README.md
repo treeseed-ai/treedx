@@ -960,7 +960,7 @@ curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/mirrors/$MIRROR_ID
   -d '{"remoteName":"origin","planOnly":false}'
 ```
 
-Create a migration dry run:
+Create a migration plan:
 
 ```bash
 curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/migrations \

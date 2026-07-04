@@ -56,7 +56,7 @@ defmodule TreeDxWeb.AdminStorageMigrationRestoreTest do
     assert_public_hygiene!(verify)
   end
 
-  test "restore apply requires explicit enablement or dry run", %{conn: conn} do
+  test "restore apply requires explicit enablement or plan mode", %{conn: conn} do
     token = dev_token!(conn)
 
     response =

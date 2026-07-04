@@ -4,7 +4,6 @@
 
 ### Changed
 
-- docs: remove dry-run wording from changelog (6e82f52604a3)
 
 ## [0.2.21] - 2026-07-04
 
