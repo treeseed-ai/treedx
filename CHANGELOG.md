@@ -4,7 +4,7 @@
 
 ### Changed
 
-- refactor: replace dry-run APIs with plan mode (5afc0f0de419)
+- refactor: replace preview APIs with plan mode (5afc0f0de419)
 
 ## [0.2.20] - 2026-07-03
 
