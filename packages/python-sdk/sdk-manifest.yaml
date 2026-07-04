@@ -1,6 +1,6 @@
 sdk: treedx-python
 language: python
-version: 0.2.22
+version: 0.2.23
 sdkSpecVersion: 0.1.0
 openapiVersion: 0.10.0
 testLayout:
