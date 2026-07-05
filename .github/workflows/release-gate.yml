@@ -862,6 +862,7 @@ jobs:
     environment: production
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - name: Checkout
@@ -923,6 +924,7 @@ jobs:
     environment: production
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - name: Checkout
@@ -1329,3 +1331,30 @@ jobs:
 
           docker buildx imagetools inspect "${{ needs.publish-plan.outputs.service_image_tag }}"
           docker buildx imagetools inspect "${{ needs.publish-plan.outputs.profiler_image_tag }}"
+
+      - name: Verify Docker Hub manifests and attestations
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          verify_attestation() {
+            local image="$1"
+            local raw
+            echo "Verifying Docker Hub attestation for ${image}"
+            raw="$(docker buildx imagetools inspect --raw "${image}")"
+            if ! grep -q 'application/vnd.in-toto+json' <<<"${raw}"; then
+              echo "Missing in-toto attestation manifest for ${image}" >&2
+              exit 1
+            fi
+          }
+
+          for ref in \
+            "${{ needs.publish-plan.outputs.service_arch_image_prefix }}-amd64" \
+            "${{ needs.publish-plan.outputs.service_arch_image_prefix }}-arm64" \
+            "${{ needs.publish-plan.outputs.service_image_tag }}" \
+            "${{ needs.publish-plan.outputs.profiler_arch_image_prefix }}-amd64" \
+            "${{ needs.publish-plan.outputs.profiler_arch_image_prefix }}-arm64" \
+            "${{ needs.publish-plan.outputs.profiler_image_tag }}"; do
+            docker buildx imagetools inspect "${ref}" >/dev/null
+            verify_attestation "${ref}"
+          done

@@ -21,7 +21,7 @@ defmodule TreeDxProfiler.MixProject do
   defp deps do
     [
       {:jason, "~> 1.4"},
-      {:req, "~> 0.5"},
+      {:req, "~> 0.6.2"},
       {:yamerl, "~> 0.10"},
       {:ymlr, "~> 5.0"}
     ]

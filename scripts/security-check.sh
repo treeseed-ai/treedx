@@ -48,7 +48,30 @@ ensure_scanner_tool syft https://raw.githubusercontent.com/anchore/syft/main/ins
 ensure_scanner_tool trivy https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh
 require_tool docker
 
+check_hex_security_advisories() {
+  local app_dir="$1"
+  local log_path
+  log_path="$(mktemp)"
+  (
+    cd "$app_dir"
+    mix deps.get 2>&1 | tee "$log_path"
+    status="${PIPESTATUS[0]}"
+    if [[ "$status" -ne 0 ]]; then
+      exit "$status"
+    fi
+  )
+  if grep -E 'VULNERABLE!|Found packages with security advisories' "$log_path" >/dev/null; then
+    echo "Hex security advisories found in ${app_dir}; update or replace vulnerable dependencies before release." >&2
+    cat "$log_path" >&2
+    rm -f "$log_path"
+    exit 1
+  fi
+  rm -f "$log_path"
+}
+
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/tmp/treedx-target}" cargo audit
+check_hex_security_advisories apps/api
+check_hex_security_advisories tools/treedx_profiler
 
 mkdir -p target
 syft dir:. -o spdx-json=target/treedx-sbom.spdx.json
@@ -59,4 +82,4 @@ trivy image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL treedx-secur
 
 docker build -t treedx-profiler-security-scan:local -f Dockerfile.profiler --target profiler .
 syft treedx-profiler-security-scan:local -o spdx-json=target/treedx-profiler-image-sbom.spdx.json
-trivy image --exit-code 0 --ignore-unfixed --severity HIGH,CRITICAL treedx-profiler-security-scan:local
+trivy image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL treedx-profiler-security-scan:local
