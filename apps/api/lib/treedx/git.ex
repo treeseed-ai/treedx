@@ -75,12 +75,6 @@ defmodule TreeDx.Git do
       File.exists?(release_worker) ->
         {:binary, release_worker, ["commit-overlay", input_path], []}
 
-      executable = target_worker("debug") ->
-        {:binary, executable, ["commit-overlay", input_path], []}
-
-      executable = target_worker("release") ->
-        {:binary, executable, ["commit-overlay", input_path], []}
-
       System.find_executable("cargo") ->
         {:binary, "cargo",
          [
@@ -94,6 +88,12 @@ defmodule TreeDx.Git do
            "commit-overlay",
            input_path
          ], [cd: repo_root()]}
+
+      executable = target_worker("debug") ->
+        {:binary, executable, ["commit-overlay", input_path], []}
+
+      executable = target_worker("release") ->
+        {:binary, executable, ["commit-overlay", input_path], []}
 
       true ->
         {:error,

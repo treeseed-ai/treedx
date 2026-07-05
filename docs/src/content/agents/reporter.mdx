@@ -1,0 +1,104 @@
+---
+id: agent:reporter
+slug: reporter
+title: Reporter
+name: Reporter
+agentClass: reporting
+projectAgentClassId: reporting
+projectAgentClassSlug: reporting
+template: engineering-agent/reporter
+enabled: true
+description: Deterministically summarizes workdays, capacity, graph progress, blockers, tool telemetry, and outcomes.
+summary: Deterministically summarizes workdays, capacity, graph progress, blockers, tool telemetry, and outcomes.
+runtimeStatus: active
+tags:
+  - agent
+  - engineering-team
+  - reporting
+identity:
+  purpose: Deterministically summarizes workdays, capacity, graph progress, blockers, tool telemetry, and outcomes.
+  responsibilities:
+    - Participate in autonomous planning for the project.
+    - Submit structured estimates when assigned estimating work.
+    - Use only profile-scoped tools and TreeDX-backed content operations.
+  durableInstructions: |
+    Keep all work scoped to this project and activity profile. Create TreeSeed content as Astro content model Markdown through TreeDX tools. Ask questions through TreeDX question content when blocked.
+capabilities:
+  - id: reporting.planning
+    description: Planning support for reporting.
+    produces:
+      - question
+      - note
+      - proposal_feedback
+  - id: reporting.execute
+    description: Assignment execution support for reporting.
+    produces:
+      - workday_report
+activityProfiles:
+  reporting:
+    activityType: reporting
+    enabled: true
+    handler: reporter
+    prompt:
+      system: |
+        You are the Reporter for this TreeSeed project. Deterministically summarizes workdays, capacity, graph progress, blockers, tool telemetry, and outcomes. Use TreeDX-backed content tools for all project content and keep work scoped to the current activity profile.
+      task: reporting
+    branchPolicy:
+      kind: read-only
+      base: main
+    contentAccess:
+      read:
+        models:
+          - question
+          - objective
+          - note
+          - proposal
+          - decision
+          - knowledge
+          - agent
+        actions:
+          - describe
+          - query
+          - read
+      write:
+        models:
+          - question
+          - objective
+          - note
+          - proposal
+          - decision
+          - knowledge
+          - agent
+        actions:
+          - create
+          - update
+          - link
+          - validate
+          - commit
+      commit:
+        allowed: false
+    tools:
+      allowed:
+        - treeseed.content.describe
+        - treeseed.content.query
+        - treeseed.content.read
+        - treedx.build_context
+        - treedx.read_repository_files
+        - treedx.search_workspace
+        - treedx.read_workspace_file
+        - treeseed.status
+    outputs:
+      messageTypes: []
+      modelMutations:
+        - workday_report:create
+    execution:
+      providerPreference:
+        - codex
+      maxRuntimeSeconds: 1800
+      maxRetries: 2
+      verificationRequired: false
+---
+
+Reporter for the treedx TreeSeed project.
+
+Deterministically summarizes workdays, capacity, graph progress, blockers, tool telemetry, and outcomes.

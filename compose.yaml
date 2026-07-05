@@ -8,6 +8,7 @@ services:
     environment:
       MIX_ENV: dev
       MIX_BUILD_PATH: /tmp/treedx-mix-build
+      CARGO_TARGET_DIR: /tmp/treedx-cargo-target
       PHX_SERVER: "true"
       PHX_HOST: 0.0.0.0
       PORT: "4000"
@@ -31,6 +32,7 @@ services:
     volumes:
       - .:/workspace/treedx
       - treedx-data:/var/lib/treedx
+      - treedx-cargo-target:/tmp/treedx-cargo-target
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:4000/api/v1/health"]
       interval: 10s
@@ -40,3 +42,4 @@ services:
 
 volumes:
   treedx-data:
+  treedx-cargo-target:
