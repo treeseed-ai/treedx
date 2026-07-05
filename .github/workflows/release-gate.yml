@@ -1342,8 +1342,12 @@ jobs:
             local raw
             echo "Verifying Docker Hub attestation for ${image}"
             raw="$(docker buildx imagetools inspect --raw "${image}")"
-            if ! grep -q 'application/vnd.in-toto+json' <<<"${raw}"; then
-              echo "Missing in-toto attestation manifest for ${image}" >&2
+            if ! grep -q '"vnd.docker.reference.type"[[:space:]]*:[[:space:]]*"attestation-manifest"' <<<"${raw}"; then
+              echo "Missing Docker attestation manifest for ${image}" >&2
+              exit 1
+            fi
+            if ! grep -q '"vnd.docker.reference.digest"[[:space:]]*:[[:space:]]*"sha256:' <<<"${raw}"; then
+              echo "Docker attestation manifest for ${image} does not reference an image digest" >&2
               exit 1
             fi
           }
