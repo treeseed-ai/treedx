@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.34] - 2026-07-05
+
+### Fixed
+
+- ci(ci): fix Docker Hub attestation verification (87a2b536f1e9)
+
+### Infrastructure
+
+- ci(source): harden container image release security (af1b3bd96934)
+
 ## [0.2.33] - 2026-07-05
 
 ### Changed
