@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.35] - 2026-07-06
+
+### Changed
+
+- docs(docs): complete starter, api guarantee, and agent live reliability (26d43ea8af47)
+
 ## [0.2.34] - 2026-07-05
 
 ### Fixed
