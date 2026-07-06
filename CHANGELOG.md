@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.37] - 2026-07-06
+
+### Added
+
+- feat(source): fix TreeDX profiler security advisories (f7a2aae51a50)
+
+### Fixed
+
+- fix(api): update hpax to address security advisory (7589ea2c58f9)
+
 ## [0.2.36] - 2026-07-06
 
 ### Changed
