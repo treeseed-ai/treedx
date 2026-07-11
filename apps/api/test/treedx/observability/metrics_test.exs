@@ -45,7 +45,11 @@ defmodule TreeDx.Observability.MetricsTest do
       error_code: "permission_denied"
     })
 
-    [counter] = Metrics.snapshot().counters
+    counter =
+      Enum.find(Metrics.snapshot().counters, &(&1.name == "treedx_http_errors_total"))
+
+    assert counter
+    assert counter.value == 1
     refute Map.has_key?(counter.labels, "actor_id")
     refute Map.has_key?(counter.labels, "code")
     assert counter.labels["route"] == "redacted"
