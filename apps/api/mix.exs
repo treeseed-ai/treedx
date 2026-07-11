@@ -25,7 +25,8 @@ defmodule TreeDx.MixProject do
 
   defp deps do
     [
-      {:phoenix, "~> 1.8.7"},
+      {:phoenix, "~> 1.8.9"},
+      {:plug, "~> 1.20.3"},
       {:jason, "~> 1.4"},
       {:bandit, "~> 1.8"},
       {:rustler, "~> 0.38.0"},
