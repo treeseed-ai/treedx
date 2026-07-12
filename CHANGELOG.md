@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.38] - 2026-07-12
+
+### Added
+
+- feat(api): Patch TreeDX Phoenix and Plug security advisories (17b71fe0b1c0)
+
+### Tests
+
+- test(tests): Make TreeDX metrics test state-safe (ae76d2b9d52b)
+
 ## [0.2.37] - 2026-07-06
 
 ### Added
