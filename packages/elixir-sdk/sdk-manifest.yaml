@@ -1,6 +1,6 @@
 sdk: treedx-elixir
 language: elixir
-version: 0.2.40
+version: 0.2.41
 sdkSpecVersion: 0.1.0
 openapiVersion: 0.10.0
 testLayout:
