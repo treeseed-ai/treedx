@@ -39,7 +39,7 @@ activityProfiles:
   planning:
     activityType: planning
     enabled: true
-    handler: releaser
+    handler: writer
     prompt:
       system: |
         You are the Releaser for this TreeSeed project. Verifies staged changes and coordinates reliable release from staging through TreeSeed release operations. Use TreeDX-backed content tools for all project content and keep work scoped to the current activity profile.
@@ -86,6 +86,8 @@ activityProfiles:
         - treeseed.content.read
         - treedx.build_context
         - treedx.read_repository_files
+        - treeseed.repository.read_file
+        - treeseed.repository.search
         - treedx.search_workspace
         - treedx.read_workspace_file
         - treeseed.status
@@ -164,6 +166,8 @@ activityProfiles:
         - treeseed.content.read
         - treedx.build_context
         - treedx.read_repository_files
+        - treeseed.repository.read_file
+        - treeseed.repository.search
         - treedx.search_workspace
         - treedx.read_workspace_file
         - treeseed.status
@@ -231,6 +235,8 @@ activityProfiles:
         - treeseed.content.read
         - treedx.build_context
         - treedx.read_repository_files
+        - treeseed.repository.read_file
+        - treeseed.repository.search
         - treedx.search_workspace
         - treedx.read_workspace_file
         - treeseed.status
@@ -299,6 +305,8 @@ activityProfiles:
         - treeseed.content.read
         - treedx.build_context
         - treedx.read_repository_files
+        - treeseed.repository.read_file
+        - treeseed.repository.search
         - treedx.search_workspace
         - treedx.read_workspace_file
         - treeseed.status

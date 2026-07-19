@@ -154,6 +154,19 @@ fn workspaces_persist_and_writable_lease_conflicts() {
     assert!(first.lease_id.is_some());
     assert!(get_workspace(dir.path(), "ws_one").unwrap().is_some());
 
+    let replay = put_workspace(dir.path(), input.clone()).unwrap();
+    assert_eq!(replay.id, first.id);
+    assert_eq!(replay.lease_id, first.lease_id);
+
+    let mut mismatched_replay = input.clone();
+    mismatched_replay.allowed_paths = vec!["**".to_string()];
+    assert_eq!(
+        put_workspace(dir.path(), mismatched_replay)
+            .unwrap_err()
+            .code(),
+        "conflict"
+    );
+
     let mut duplicate = input;
     duplicate.id = Some("ws_two".to_string());
     let error = put_workspace(dir.path(), duplicate).unwrap_err();

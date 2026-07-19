@@ -39,14 +39,14 @@ activityProfiles:
   planning:
     activityType: planning
     enabled: true
-    handler: actor
+    handler: writer
     prompt:
       system: |
         You are the Tester for this TreeSeed project. Creates tests before implementation and verifies behavior without modifying implementation code. Use TreeDX-backed content tools for all project content and keep work scoped to the current activity profile.
       task: planning
     branchPolicy:
-      kind: read-only
-      base: main
+      kind: staging-content
+      base: staging
     contentAccess:
       read:
         models:
@@ -77,7 +77,7 @@ activityProfiles:
           - validate
           - commit
       commit:
-        allowed: false
+        allowed: true
     tools:
       allowed:
         - treeseed.content.describe
@@ -85,9 +85,18 @@ activityProfiles:
         - treeseed.content.read
         - treedx.build_context
         - treedx.read_repository_files
+        - treeseed.repository.read_file
+        - treeseed.repository.search
         - treedx.search_workspace
         - treedx.read_workspace_file
         - treeseed.status
+        - treeseed.content.create
+        - treeseed.content.update
+        - treeseed.content.link
+        - treeseed.content.validate
+        - treeseed.content.commit
+        - treedx.write_workspace_file
+        - treedx.commit_workspace
     outputs:
       messageTypes: []
       modelMutations:
@@ -153,6 +162,8 @@ activityProfiles:
         - treeseed.content.read
         - treedx.build_context
         - treedx.read_repository_files
+        - treeseed.repository.read_file
+        - treeseed.repository.search
         - treedx.search_workspace
         - treedx.read_workspace_file
         - treeseed.status
@@ -220,6 +231,8 @@ activityProfiles:
         - treeseed.content.read
         - treedx.build_context
         - treedx.read_repository_files
+        - treeseed.repository.read_file
+        - treeseed.repository.search
         - treedx.search_workspace
         - treedx.read_workspace_file
         - treeseed.status
@@ -293,6 +306,8 @@ activityProfiles:
         - treeseed.content.read
         - treedx.build_context
         - treedx.read_repository_files
+        - treeseed.repository.read_file
+        - treeseed.repository.search
         - treedx.search_workspace
         - treedx.read_workspace_file
         - treeseed.status

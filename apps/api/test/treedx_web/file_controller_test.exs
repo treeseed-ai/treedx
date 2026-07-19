@@ -17,6 +17,43 @@ defmodule TreeDxWeb.FileControllerTest do
     {:ok, token: token, repo_id: repo_id}
   end
 
+  test "replays deterministic workspace creation without a duplicate writable lease", %{
+    token: token,
+    repo_id: repo_id
+  } do
+    request = %{
+      "workspaceId" => "ws_assignment_replay_12345678",
+      "baseRef" => "refs/heads/main",
+      "branchName" => "refs/heads/agent/replay-safe",
+      "mode" => "writable",
+      "allowedPaths" => ["docs/**"],
+      "ttlSeconds" => 1800
+    }
+
+    first =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/workspaces", request)
+      |> json_response(200)
+
+    replay =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/workspaces", request)
+      |> json_response(200)
+
+    assert first["workspaceId"] == request["workspaceId"]
+    assert replay["workspaceId"] == first["workspaceId"]
+
+    conflict =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/workspaces", %{request | "allowedPaths" => ["**"]})
+      |> json_response(409)
+
+    assert conflict["error"]["code"] == "conflict"
+  end
+
   test "lists, reads, writes, patches, deletes, searches, diffs, and commits files", %{
     token: token,
     repo_id: repo_id

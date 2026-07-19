@@ -34,6 +34,25 @@ pub fn put_workspace(
         )
     });
 
+    if let Some(existing) = get_workspace(data_dir, &id)? {
+        let same_request = existing.repository_id == input.repository_id
+            && existing.actor_id == input.actor_id
+            && existing.tenant_id == input.tenant_id
+            && existing.base_ref == input.base_ref
+            && existing.base_commit_sha == input.base_commit_sha
+            && existing.branch_name == input.branch_name
+            && existing.mode == input.mode
+            && existing.allowed_paths == input.allowed_paths;
+        if existing.status == "ready" && existing.expires_at > now && same_request {
+            return Ok(existing);
+        }
+        if existing.status == "ready" || existing.status == "committed" || !same_request {
+            return Err(StoreError::Conflict(format!(
+                "workspace id already exists with different state: {id}"
+            )));
+        }
+    }
+
     let mut lease = None;
     if input.mode == "writable" {
         let branch_name = input.branch_name.clone().ok_or_else(|| {
@@ -264,6 +283,9 @@ fn acquire_writable_lease(
     let id = lease_id(repo_id, branch_name);
     if let Some(existing) = get_lease(data_dir, &id)? {
         if existing.status == "active" && existing.expires_at > Utc::now() {
+            if existing.workspace_id == workspace_id && existing.actor_id == actor_id {
+                return Ok(existing);
+            }
             return Err(StoreError::Conflict(format!(
                 "writable lease already exists for {repo_id} {branch_name}"
             )));

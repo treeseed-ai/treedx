@@ -11,7 +11,8 @@ defmodule TreeDx.Workspaces do
 
     required_repo_capability = if mode == "writable", do: "repos:write", else: "repos:read"
 
-    with {:ok, create_scope} <-
+    with {:ok, workspace_id} <- normalize_workspace_id(params["workspaceId"]),
+         {:ok, create_scope} <-
            TreeDx.Capabilities.require_capability(principal, "workspace:create", repo_id),
          {:ok, repo_scope} <-
            TreeDx.Capabilities.require_capability(principal, required_repo_capability, repo_id),
@@ -32,7 +33,8 @@ defmodule TreeDx.Workspaces do
              base_commit_sha: base_resolved["target"],
              branch_name: branch_name,
              allowed_paths: allowed_paths,
-             ttl: ttl
+             ttl: ttl,
+             workspace_id: workspace_id
            }) do
       TreeDx.Audit.append("workspace.created", %{
         actor_id: actor_id(principal),
@@ -47,6 +49,19 @@ defmodule TreeDx.Workspaces do
       other -> other
     end
   end
+
+  defp normalize_workspace_id(nil), do: {:ok, TreeDx.Ids.workspace()}
+
+  defp normalize_workspace_id("ws_" <> _ = workspace_id) do
+    if String.match?(workspace_id, ~r/^ws_[A-Za-z0-9_-]{8,128}$/) do
+      {:ok, workspace_id}
+    else
+      {:error, %{code: "validation_error", message: "workspaceId is invalid."}}
+    end
+  end
+
+  defp normalize_workspace_id(_),
+    do: {:error, %{code: "validation_error", message: "workspaceId is invalid."}}
 
   def get(workspace_id, principal) do
     with {:ok, workspace} when is_map(workspace) <- TreeDx.Store.get_workspace(workspace_id),
@@ -199,7 +214,7 @@ defmodule TreeDx.Workspaces do
   end
 
   defp persist_workspace(repo, placement, principal, scope, opts) do
-    workspace_id = TreeDx.Ids.workspace()
+    workspace_id = opts.workspace_id
     materialized_path = Path.join([TreeDx.Store.data_dir(), "workspaces", "active", workspace_id])
     File.mkdir_p!(materialized_path)
 
