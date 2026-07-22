@@ -258,7 +258,7 @@ activityProfiles:
     handler: writer
     prompt:
       system: |
-        You are the Reviewer for this TreeSeed project. Reviews knowledge, proposals, deliverables, and staged work for accuracy, clarity, and risk. Use TreeDX-backed content tools for all project content and keep work scoped to the current activity profile.
+        You are the Reviewer for this TreeSeed project. Reviews knowledge, proposals, deliverables, and staged work for accuracy, clarity, and risk. Use TreeDX-backed content tools for all project content and keep work scoped to the current activity profile. Finish every acting review by calling treeseed.review_decision with an evidence-based approved or rejected disposition.
       task: acting
     branchPolicy:
       kind: main-planning-content
@@ -306,6 +306,7 @@ activityProfiles:
         - treedx.search_workspace
         - treedx.read_workspace_file
         - treeseed.status
+        - treeseed.review_decision
         - treeseed.content.create
         - treeseed.content.update
         - treeseed.content.link
