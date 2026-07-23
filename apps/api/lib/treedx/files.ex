@@ -1,7 +1,7 @@
 defmodule TreeDx.Files do
   @moduledoc false
 
-  alias TreeDx.Files.{Diff, Overlay, Patch, PathPolicy, Search}
+  alias TreeDx.Files.{Diff, Overlay, Patch, PathPolicy, Search, WorkspaceFiles}
   alias TreeDx.Runtime.Pool
 
   @default_search_limit 20
@@ -12,10 +12,10 @@ defmodule TreeDx.Files do
     with {:ok, ctx} <- context(workspace_id, principal, "files:read"),
          {:ok, path} <- PathPolicy.normalize(params["path"], allow_empty: true),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
-         {:ok, entries} <- base_tree(ctx, path),
+         {:ok, entries} <- WorkspaceFiles.tree(ctx, path),
          {:ok, overlays} <- TreeDx.Store.list_workspace_files(workspace_id) do
       include_deleted = truthy?(params["includeDeleted"])
-      merged = merge_tree_entries(entries, overlays, path, include_deleted)
+      merged = WorkspaceFiles.merge_tree(entries, overlays, path, include_deleted)
       audit("file.tree_listed", ctx, %{workspaceId: workspace_id, path: path})
       {:ok, %{workspaceId: workspace_id, path: path, entries: merged}}
     end
@@ -25,7 +25,7 @@ defmodule TreeDx.Files do
     with {:ok, ctx} <- context(workspace_id, principal, "files:read"),
          {:ok, path} <- PathPolicy.normalize(params["path"]),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
-         {:ok, file} <- current_file(ctx, path) do
+         {:ok, file} <- WorkspaceFiles.current(ctx, path) do
       audit("file.read", ctx, %{workspaceId: workspace_id, path: path})
       {:ok, Map.delete(file, :contentBase64)}
     end
@@ -41,9 +41,10 @@ defmodule TreeDx.Files do
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
          {:ok, content} <- utf8_content(params["content"]),
          :ok <- enforce_size(content),
-         {:ok, state} <- file_state(ctx, path),
+         {:ok, state} <- WorkspaceFiles.state(ctx, path),
          :ok <- expected_sha_value(state.sha, params["expectedSha"]),
-         {:ok, record} <- put_overlay(ctx, path, content, params["expectedSha"], state.base_sha) do
+         {:ok, record} <-
+           WorkspaceFiles.put(ctx, path, content, params["expectedSha"], state.base_sha) do
       audit("file.written", ctx, %{
         workspaceId: workspace_id,
         path: path,
@@ -71,11 +72,12 @@ defmodule TreeDx.Files do
     with {:ok, ctx} <- writable_context(workspace_id, principal, "files:write"),
          {:ok, path} <- PathPolicy.normalize(params["path"]),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
-         {:ok, state} <- existing_file_state(ctx, path),
+         {:ok, state} <- WorkspaceFiles.existing(ctx, path),
          :ok <- expected_sha_value(state.sha, params["expectedSha"]),
          {:ok, patched} <- Patch.apply(state.content, params["patch"], path),
          :ok <- enforce_size(patched),
-         {:ok, record} <- put_overlay(ctx, path, patched, params["expectedSha"], state.base_sha) do
+         {:ok, record} <-
+           WorkspaceFiles.put(ctx, path, patched, params["expectedSha"], state.base_sha) do
       audit("file.patched", ctx, %{
         workspaceId: workspace_id,
         path: path,
@@ -103,7 +105,7 @@ defmodule TreeDx.Files do
     with {:ok, ctx} <- writable_context(workspace_id, principal, "files:delete"),
          {:ok, path} <- PathPolicy.normalize(params["path"]),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
-         {:ok, state} <- existing_file_state(ctx, path),
+         {:ok, state} <- WorkspaceFiles.existing(ctx, path),
          :ok <- expected_sha_value(state.sha, params["expectedSha"]),
          {:ok, _record} <-
            TreeDx.Store.put_workspace_file(%{
@@ -127,7 +129,7 @@ defmodule TreeDx.Files do
          :ok <- validate_query(query),
          {:ok, path} <- PathPolicy.normalize(path_param, allow_empty: true),
          :ok <- PathPolicy.authorize(ctx.workspace, path, truthy?(params["allowProtected"])),
-         {:ok, files} <- workspace_text_files(ctx, path) do
+         {:ok, files} <- WorkspaceFiles.text_files(ctx, path) do
       limit = limit |> coerce_int(@default_search_limit) |> min(@max_search_limit)
       results = Search.find(files, query, limit, truthy?(params["caseSensitive"]))
       truncated = length(results) > limit
@@ -289,199 +291,6 @@ defmodule TreeDx.Files do
     end
   end
 
-  defp current_file(ctx, path) do
-    with {:ok, state} <- existing_file_state(ctx, path) do
-      {:ok,
-       %{
-         path: state.path,
-         encoding: "utf8",
-         content: state.content,
-         sha: state.sha,
-         source: to_string(state.source),
-         stat: state.stat
-       }}
-    end
-  end
-
-  defp existing_file_state(ctx, path) do
-    with {:ok, state} <- file_state(ctx, path) do
-      if state.source == :missing do
-        {:error, %{code: "not_found", message: "File not found."}}
-      else
-        {:ok, state}
-      end
-    end
-  end
-
-  defp file_state(ctx, path) do
-    with {:ok, overlay} <- TreeDx.Store.get_workspace_file(ctx.workspace["id"], path) do
-      case overlay do
-        %{"op" => "delete", "baseSha" => base_sha} ->
-          {:ok,
-           %{
-             source: :missing,
-             path: path,
-             content: nil,
-             sha: nil,
-             base_sha: base_sha,
-             stat: nil,
-             record: overlay
-           }}
-
-        %{"op" => "put"} = record ->
-          with {:ok, content} <- Overlay.read_overlay(record) do
-            {:ok,
-             %{
-               source: :overlay,
-               path: path,
-               content: content,
-               sha: record["contentHash"],
-               base_sha: record["baseSha"],
-               stat: %{size: record["size"], mtime: record["updatedAt"]},
-               record: record
-             }}
-          end
-
-        nil ->
-          case base_file(ctx, path) do
-            {:ok, file} ->
-              {:ok,
-               %{
-                 source: :base,
-                 path: path,
-                 content: file.content,
-                 sha: file.sha,
-                 base_sha: file.sha,
-                 stat: file.stat,
-                 record: nil
-               }}
-
-            {:error, %{code: "not_found"}} ->
-              {:ok,
-               %{
-                 source: :missing,
-                 path: path,
-                 content: nil,
-                 sha: nil,
-                 base_sha: nil,
-                 stat: nil,
-                 record: nil
-               }}
-
-            other ->
-              other
-          end
-      end
-    end
-  end
-
-  defp base_file(ctx, path) do
-    case TreeDx.Git.read_blob(
-           TreeDx.RepositoryStorage.path!(ctx.repo),
-           ctx.workspace["baseCommitSha"],
-           path
-         ) do
-      {:ok, blob} ->
-        with {:ok, bytes} <- Base.decode64(blob["contentBase64"]),
-             {:ok, content} <- Overlay.utf8(bytes) do
-          {:ok,
-           %{
-             path: path,
-             encoding: "utf8",
-             content: content,
-             sha: blob["objectId"],
-             source: "base",
-             stat: %{size: blob["byteLength"], mtime: nil}
-           }}
-        else
-          :error ->
-            {:error, %{code: "unsupported_media_type", message: "File is not valid UTF-8."}}
-
-          other ->
-            other
-        end
-
-      {:error, %{"code" => "not_found"}} ->
-        {:error, %{code: "not_found", message: "File not found."}}
-
-      other ->
-        other
-    end
-  end
-
-  defp base_tree(ctx, path) do
-    case TreeDx.Git.list_tree(
-           TreeDx.RepositoryStorage.path!(ctx.repo),
-           ctx.workspace["baseCommitSha"],
-           empty_to_nil(path)
-         ) do
-      {:ok, entries} -> {:ok, entries}
-      {:error, %{"code" => "not_found"}} -> {:ok, []}
-      other -> other
-    end
-  end
-
-  defp workspace_text_files(ctx, root) do
-    with {:ok, base_entries} <- list_base_tree_recursive(ctx, root),
-         {:ok, overlays} <- TreeDx.Store.list_workspace_files(ctx.workspace["id"]) do
-      base_files =
-        base_entries
-        |> Enum.filter(&(&1["kind"] == "blob"))
-        |> Enum.map(fn entry ->
-          case base_file(ctx, entry["path"]) do
-            {:ok, file} -> {entry["path"], file.content, "base"}
-            _ -> nil
-          end
-        end)
-        |> Enum.reject(&is_nil/1)
-        |> Map.new(fn {path, content, source} -> {path, {content, source}} end)
-
-      files =
-        Enum.reduce(overlays, base_files, fn record, acc ->
-          cond do
-            !under_path?(record["path"], root) ->
-              acc
-
-            record["op"] == "delete" ->
-              Map.delete(acc, record["path"])
-
-            true ->
-              case Overlay.read_overlay(record) do
-                {:ok, content} -> Map.put(acc, record["path"], {content, "overlay"})
-                _ -> acc
-              end
-          end
-        end)
-
-      {:ok, Enum.map(files, fn {path, {content, source}} -> {path, content, source} end)}
-    end
-  end
-
-  defp list_base_tree_recursive(ctx, root) do
-    case TreeDx.Git.list_tree_recursive(
-           TreeDx.RepositoryStorage.path!(ctx.repo),
-           ctx.workspace["baseCommitSha"],
-           empty_to_nil(root)
-         ) do
-      {:ok, entries} -> {:ok, entries}
-      {:error, %{"code" => "not_found"}} -> {:ok, []}
-      {:error, %{code: "not_found"}} -> {:ok, []}
-      other -> other
-    end
-  end
-
-  defp put_overlay(ctx, path, content, expected_sha, base_sha) do
-    TreeDx.Store.put_workspace_file(%{
-      workspaceId: ctx.workspace["id"],
-      path: path,
-      op: "put",
-      encoding: "utf8",
-      contentBase64: Base.encode64(content),
-      expectedSha: expected_sha,
-      baseSha: base_sha
-    })
-  end
-
   defp expected_sha_value(_actual, nil), do: :ok
   defp expected_sha_value(_actual, ""), do: :ok
   defp expected_sha_value(actual, actual), do: :ok
@@ -489,48 +298,8 @@ defmodule TreeDx.Files do
   defp expected_sha_value(_actual, _expected),
     do: {:error, %{code: "conflict", message: "expectedSha does not match."}}
 
-  defp merge_tree_entries(entries, overlays, path, include_deleted) do
-    base =
-      Map.new(entries, fn entry ->
-        {entry["path"],
-         %{
-           path: entry["path"],
-           name: entry["name"],
-           kind: entry["kind"],
-           status: "base",
-           source: "base",
-           objectId: entry["objectId"],
-           contentHash: nil
-         }}
-      end)
-
-    overlays
-    |> Enum.filter(&direct_child?(&1["path"], path))
-    |> Enum.reduce(base, fn record, acc ->
-      if record["op"] == "delete" and !include_deleted do
-        Map.delete(acc, record["path"])
-      else
-        Map.put(acc, record["path"], %{
-          path: record["path"],
-          name: Path.basename(record["path"]),
-          kind: "blob",
-          status:
-            if(record["op"] == "delete",
-              do: "deleted",
-              else: if(Map.has_key?(base, record["path"]), do: "modified", else: "added")
-            ),
-          source: "overlay",
-          objectId: Map.get(base[record["path"]] || %{}, :objectId),
-          contentHash: record["contentHash"]
-        })
-      end
-    end)
-    |> Map.values()
-    |> Enum.sort_by(& &1.path)
-  end
-
   defp status_entry(ctx, record) do
-    base = base_file(ctx, record["path"])
+    base = WorkspaceFiles.base(ctx, record["path"])
     binary = record["encoding"] == "base64"
 
     status =
@@ -557,7 +326,7 @@ defmodule TreeDx.Files do
   end
 
   defp diff_entry(ctx, %{"encoding" => "base64"} = record) do
-    base = base_file(ctx, record["path"])
+    base = WorkspaceFiles.base(ctx, record["path"])
 
     status =
       cond do
@@ -571,7 +340,7 @@ defmodule TreeDx.Files do
 
   defp diff_entry(ctx, %{"op" => "delete"} = record) do
     old =
-      case base_file(ctx, record["path"]) do
+      case WorkspaceFiles.base(ctx, record["path"]) do
         {:ok, file} -> file.content
         _ -> ""
       end
@@ -581,7 +350,7 @@ defmodule TreeDx.Files do
 
   defp diff_entry(ctx, record) do
     old =
-      case base_file(ctx, record["path"]) do
+      case WorkspaceFiles.base(ctx, record["path"]) do
         {:ok, file} -> file.content
         _ -> ""
       end
@@ -673,17 +442,6 @@ defmodule TreeDx.Files do
 
   defp require_changes(_), do: :ok
 
-  defp direct_child?(child, ""), do: !String.contains?(child, "/")
-
-  defp direct_child?(child, parent),
-    do:
-      String.starts_with?(child, parent <> "/") and
-        !String.contains?(String.replace_prefix(child, parent <> "/", ""), "/")
-
-  defp under_path?(_path, ""), do: true
-  defp under_path?(path, root), do: path == root or String.starts_with?(path, root <> "/")
-  defp empty_to_nil(""), do: nil
-  defp empty_to_nil(value), do: value
   defp coerce_int(value, _default) when is_integer(value), do: value
 
   defp coerce_int(value, default) when is_binary(value) do

@@ -1,112 +1,14 @@
 defmodule TreeDxProfiler.RequestGenerator do
   @moduledoc false
 
-  alias TreeDxProfiler.{
-    DataGenerator,
-    GitFixture,
-    Hash,
-    PortfolioState,
-    ProfileRequest,
-    SemanticExpectation
-  }
-
-  @read_ops [
-    :read_repository_file,
-    :list_repository_paths,
-    :search_repository_files,
-    :query_repository,
-    :workspace_status
-  ]
-  @write_ops [:create_workspace, :write_workspace_file, :patch_workspace_file]
-  @graph_ops [:refresh_graph, :query_graph, :build_context]
-  @artifact_ops [:build_snapshot, :export_artifact]
+  alias TreeDxProfiler.{DataGenerator, GitFixture, PortfolioState, RequestFactory}
 
   def next(portfolio_pid, opts) do
-    operation =
-      portfolio_pid
-      |> candidates(opts)
-      |> weighted_pick()
-
-    build(operation, portfolio_pid, opts)
+    build(TreeDxProfiler.RequestSelection.pick(portfolio_pid, opts), portfolio_pid, opts)
   end
 
-  def candidates(portfolio_pid, opts) do
-    snapshot = PortfolioState.snapshot(portfolio_pid)
-    workspace? = snapshot.active_workspaces != []
-    active_workspace_count = length(snapshot.active_workspaces)
-
-    target_workspace_count =
-      min(max_active_workspaces(opts), max(Map.get(opts, :concurrency, 1), 1))
-
-    ramping_workspaces? = active_workspace_count < target_workspace_count
-
-    can_create_workspace? =
-      snapshot.repos != [] and length(snapshot.active_workspaces) < max_active_workspaces(opts)
-
-    artifact? = snapshot.artifacts != []
-    create_repo? = PortfolioState.can_create_repo?(portfolio_pid)
-
-    base =
-      []
-      |> maybe_add(
-        :create_repository,
-        weight(opts, :create_repository, opts.portfolio_create_weight),
-        create_repo?
-      )
-      |> maybe_add(
-        :create_workspace,
-        if(ramping_workspaces?, do: 24, else: weight(opts, :create_workspace, 1)),
-        can_create_workspace?
-      )
-      |> maybe_add(
-        :write_workspace_file,
-        weight(opts, :write_workspace_file, 12),
-        workspace? and not ramping_workspaces?
-      )
-      |> maybe_add(
-        :patch_workspace_file,
-        weight(opts, :patch_workspace_file, 8),
-        workspace? and not ramping_workspaces?
-      )
-      |> maybe_add(
-        :delete_workspace_file,
-        weight(opts, :delete_workspace_file, 2),
-        workspace? and opts.include_destructive and not ramping_workspaces?
-      )
-      |> maybe_add(
-        :read_repository_file,
-        weight(opts, :read_repository_file, 20),
-        snapshot.repos != []
-      )
-      |> maybe_add(
-        :list_repository_paths,
-        weight(opts, :list_repository_paths, 8),
-        snapshot.repos != []
-      )
-      |> maybe_add(
-        :search_repository_files,
-        weight(opts, :search_repository_files, 12),
-        snapshot.repos != []
-      )
-      |> maybe_add(:query_repository, weight(opts, :query_repository, 8), snapshot.repos != [])
-      |> maybe_add(:refresh_graph, weight(opts, :refresh_graph, 4), snapshot.repos != [])
-      |> maybe_add(:query_graph, weight(opts, :query_graph, 6), snapshot.repos != [])
-      |> maybe_add(:build_context, weight(opts, :build_context, 6), snapshot.repos != [])
-      |> maybe_add(:build_snapshot, weight(opts, :build_snapshot, 2), snapshot.repos != [])
-      |> maybe_add(:export_artifact, weight(opts, :export_artifact, 1), snapshot.snapshots != [])
-      |> maybe_add(:get_artifact, weight(opts, :get_artifact, 1), artifact?)
-
-    maybe_add(
-      base,
-      :delete_repository,
-      weight(opts, :delete_repository, opts.portfolio_delete_weight),
-      deletion_supported?() and opts.include_destructive
-    )
-  end
-
-  defp max_active_workspaces(%{portfolio_growth_target: "sparse"}), do: 16
-  defp max_active_workspaces(%{portfolio_growth_target: "aggressive"}), do: 64
-  defp max_active_workspaces(_opts), do: 32
+  def candidates(portfolio_pid, opts),
+    do: TreeDxProfiler.RequestSelection.candidates(portfolio_pid, opts)
 
   def build(:create_repository, portfolio_pid, opts) do
     index = PortfolioState.next_counter(portfolio_pid, :repo)
@@ -123,7 +25,7 @@ defmodule TreeDxProfiler.RequestGenerator do
       "repository",
       %{
         "repositoryName" => repo.name,
-        "sourceRelativePath" => source_relative_path(repo.path, opts)
+        "sourceRelativePath" => RequestFactory.source_relative_path(repo.path, opts)
       },
       seed: opts.profile_id,
       target: %{repo_name: repo.name},
@@ -184,7 +86,7 @@ defmodule TreeDxProfiler.RequestGenerator do
         expected: [200, 404, 409],
         seed: opts.profile_id,
         target: %{workspace_id: workspace.workspace_id, repo_id: workspace.repo_id, path: path},
-        expectation: semantic_content(content, path),
+        expectation: RequestFactory.semantic_content(content, path),
         probes: [
           %{kind: :workspace_file_content_equals},
           %{kind: :workspace_status_mentions_path},
@@ -209,8 +111,8 @@ defmodule TreeDxProfiler.RequestGenerator do
       {workspace, file} ->
         counter = PortfolioState.next_counter(portfolio_pid, :file)
         path = file.path
-        content = patch_content(file.content, counter)
-        patch = replace_first_line_patch(path, file.content, content)
+        content = RequestFactory.patch_content(file.content, counter)
+        patch = RequestFactory.replace_first_line_patch(path, file.content, content)
 
         effect = %{
           kind: :file_written,
@@ -229,7 +131,7 @@ defmodule TreeDxProfiler.RequestGenerator do
           expected: [200, 404, 409],
           seed: opts.profile_id,
           target: %{workspace_id: workspace.workspace_id, repo_id: workspace.repo_id, path: path},
-          expectation: semantic_content(content, path),
+          expectation: RequestFactory.semantic_content(content, path),
           probes: [
             %{kind: :workspace_file_content_equals},
             %{kind: :workspace_status_mentions_path},
@@ -371,7 +273,7 @@ defmodule TreeDxProfiler.RequestGenerator do
 
   def build(:search_repository_files, portfolio_pid, opts) do
     repo = PortfolioState.choose_repo(portfolio_pid)
-    expected = expected_search(repo)
+    expected = RequestFactory.expected_search(repo)
     term = expected[:term] || "release"
 
     request(
@@ -389,7 +291,7 @@ defmodule TreeDxProfiler.RequestGenerator do
 
   def build(:query_repository, portfolio_pid, opts) do
     repo = PortfolioState.choose_repo(portfolio_pid)
-    expected = expected_search(repo)
+    expected = RequestFactory.expected_search(repo)
     term = expected[:term] || "release"
 
     request(
@@ -412,18 +314,7 @@ defmodule TreeDxProfiler.RequestGenerator do
   end
 
   def build(:workspace_status, portfolio_pid, opts) do
-    with_workspace(portfolio_pid, opts, fn workspace ->
-      request(
-        "getWorkspaceStatus",
-        :read,
-        :get,
-        "/api/v1/workspaces/#{workspace.workspace_id}/status",
-        "workspace",
-        nil,
-        expected: [200, 404, 409],
-        seed: opts.profile_id
-      )
-    end)
+    with_workspace(portfolio_pid, opts, &RequestFactory.workspace_status(&1, opts))
   end
 
   def build(:refresh_graph, portfolio_pid, opts) do
@@ -575,194 +466,9 @@ defmodule TreeDxProfiler.RequestGenerator do
     end
   end
 
-  def build(:delete_repository, _portfolio_pid, opts) do
-    request(
-      "deleteRepository",
-      :delete,
-      :delete,
-      "/api/v1/repos/not-supported",
-      "repository",
-      nil,
-      expected: [404, 405],
-      seed: opts.profile_id,
-      effect: nil
-    )
-  end
+  def build(:delete_repository, _portfolio_pid, opts), do: RequestFactory.unsupported_delete(opts)
 
-  def operation_groups do
-    %{
-      read: @read_ops,
-      write: @write_ops,
-      graph: @graph_ops,
-      artifact: @artifact_ops
-    }
-  end
-
-  defp request(operation_id, type, method, path, category, body, opts) do
-    effect = Keyword.get(opts, :effect)
-
-    ProfileRequest.new(%{
-      id: "req_#{System.unique_integer([:positive])}",
-      operation_id: operation_id,
-      operation_type: type,
-      method: method,
-      path_template: template(path),
-      path: path,
-      category: category,
-      body: body,
-      headers: Keyword.get(opts, :headers, []),
-      expected_status: List.wrap(Keyword.get(opts, :expected, 200)),
-      validation_rule: validation_rule(operation_id),
-      target: Keyword.get(opts, :target, %{}),
-      expectation: Keyword.get(opts, :expectation, %{}),
-      postconditions: Keyword.get(opts, :postconditions, []),
-      race_context: Keyword.get(opts, :race, %{}),
-      validation_probes: Keyword.get(opts, :probes, []),
-      state_effect_on_status:
-        Keyword.get(opts, :effect_on_status, if(effect, do: %{200 => effect}, else: %{})),
-      state_effect: effect,
-      failure_effect: Keyword.get(opts, :failure_effect),
-      seed: Keyword.fetch!(opts, :seed)
-    })
-  end
-
-  defp semantic_content(content, path) do
-    content
-    |> SemanticExpectation.content_expectation(%{path: path, byte_length: byte_size(content)})
-    |> Map.put(:sha256, Hash.sha256(content))
-  end
-
-  defp patch_content(content, counter) do
-    case String.split(content || "", "\n", parts: 2) do
-      [first, rest] -> first <> " patched-#{counter}\n" <> rest
-      [first] -> first <> " patched-#{counter}"
-      [] -> "patched-#{counter}"
-    end
-  end
-
-  defp replace_first_line_patch(path, old_content, new_content) do
-    old_first = old_content |> to_string() |> String.split("\n", parts: 2) |> List.first()
-    new_first = new_content |> to_string() |> String.split("\n", parts: 2) |> List.first()
-
-    [
-      "--- a/#{path}",
-      "+++ b/#{path}",
-      "@@ -1,1 +1,1 @@",
-      "-#{old_first}",
-      "+#{new_first}"
-    ]
-    |> Enum.join("\n")
-  end
-
-  defp expected_search(repo) do
-    file =
-      repo.readable_paths
-      |> Enum.find(&is_binary(Map.get(&1, :content)))
-
-    if file do
-      %{
-        term: file.content |> SemanticExpectation.preferred_term(),
-        expected_path: file.path,
-        content: file.content,
-        sha256: file.sha256
-      }
-    else
-      %{term: "release"}
-    end
-  end
-
-  defp source_relative_path(path, opts) do
-    data_dir = System.get_env("TREEDX_DATA_DIR") || Map.get(opts, :data_dir) || "/var/lib/treedx"
-
-    path
-    |> Path.expand()
-    |> Path.relative_to(Path.expand(data_dir))
-  end
-
-  defp maybe_add(values, _operation, _weight, false), do: values
-  defp maybe_add(values, _operation, weight, true) when weight <= 0, do: values
-  defp maybe_add(values, operation, weight, true), do: [{operation, weight} | values]
-
-  defp weighted_pick([]), do: :read_repository_file
-
-  defp weighted_pick(weighted) do
-    total = Enum.sum(Enum.map(weighted, &elem(&1, 1)))
-    pick = :rand.uniform(max(total, 1))
-
-    weighted
-    |> Enum.reduce_while(0, fn {operation, weight}, acc ->
-      next = acc + weight
-      if pick <= next, do: {:halt, operation}, else: {:cont, next}
-    end)
-  end
-
-  defp weight(%{profile_purpose: "performance"} = opts, operation, base) do
-    opts
-    |> performance_mix()
-    |> Map.get(operation, base)
-    |> round_weight()
-  end
-
-  defp weight(%{portfolio_growth_target: "sparse"}, _operation, base), do: max(div(base, 2), 1)
-  defp weight(%{portfolio_growth_target: "aggressive"}, _operation, base), do: base * 2
-  defp weight(_opts, _operation, base), do: base
-
-  defp performance_mix(%{performance_workload: "read_mostly"}) do
-    %{
-      read_repository_file: 30,
-      search_repository_files: 20,
-      query_repository: 15,
-      list_repository_paths: 15,
-      query_graph: 8,
-      build_context: 5,
-      write_workspace_file: 4,
-      patch_workspace_file: 2,
-      build_snapshot: 1,
-      create_repository: 0.2,
-      refresh_graph: 1,
-      export_artifact: 0.2,
-      get_artifact: 1
-    }
-  end
-
-  defp performance_mix(%{performance_workload: "write_mixed"}) do
-    %{
-      write_workspace_file: 18,
-      patch_workspace_file: 14,
-      delete_workspace_file: 5,
-      workspace_status: 10,
-      read_repository_file: 12,
-      search_repository_files: 8,
-      query_repository: 8,
-      build_snapshot: 2,
-      refresh_graph: 2,
-      create_repository: 1
-    }
-  end
-
-  defp performance_mix(_opts) do
-    %{
-      read_repository_file: 20,
-      search_repository_files: 14,
-      query_repository: 12,
-      list_repository_paths: 10,
-      write_workspace_file: 10,
-      patch_workspace_file: 8,
-      delete_workspace_file: 3,
-      workspace_status: 6,
-      query_graph: 5,
-      build_context: 4,
-      refresh_graph: 2,
-      build_snapshot: 1,
-      export_artifact: 0.5,
-      create_repository: 0.5
-    }
-  end
-
-  defp round_weight(value) when is_float(value), do: trunc(value * 10)
-  defp round_weight(value), do: value
-
-  defp deletion_supported?, do: false
+  def operation_groups, do: TreeDxProfiler.RequestSelection.operation_groups()
 
   defp with_workspace(portfolio_pid, opts, fun) do
     case PortfolioState.choose_workspace(portfolio_pid) do
@@ -785,17 +491,6 @@ defmodule TreeDxProfiler.RequestGenerator do
     end
   end
 
-  defp validation_rule(operation_id) do
-    get_in(TreeDxProfiler.EndpointMatrix.operation_map(), [operation_id, "validation", "rule"]) ||
-      "ok_envelope"
-  end
-
-  defp template(path) do
-    path
-    |> String.replace(~r/repo_[A-Za-z0-9_-]+/, "{repo_id}")
-    |> String.replace(~r/ws_[A-Za-z0-9_-]+/, "{workspace_id}")
-    |> String.replace(~r/snap_[A-Za-z0-9_-]+/, "{snapshot_id}")
-    |> String.replace(~r/artifact_[A-Za-z0-9_-]+/, "{artifact_id}")
-    |> String.replace(~r/\?.*$/, "")
-  end
+  defp request(operation_id, type, method, path, category, body, opts),
+    do: RequestFactory.request(operation_id, type, method, path, category, body, opts)
 end

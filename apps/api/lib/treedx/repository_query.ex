@@ -2,7 +2,18 @@ defmodule TreeDx.RepositoryQuery do
   @moduledoc false
 
   alias TreeDx.Files.PathPolicy
-  alias TreeDx.RepositoryQuery.{Filters, Links, Pagination, PathMatch, Sections, Sort}
+
+  alias TreeDx.RepositoryQuery.{
+    Context,
+    Filters,
+    Links,
+    Pagination,
+    PathMatch,
+    SearchResults,
+    Sections,
+    Sort
+  }
+
   alias TreeDx.Runtime.Pool
   alias TreeDx.Search.Ranking
 
@@ -10,7 +21,6 @@ defmodule TreeDx.RepositoryQuery do
   @max_query_limit 50
   @default_path_limit 100
   @max_path_limit 500
-  @snippet 160
 
   def read(repo_id, params, principal) do
     Pool.run(:repository_query, fn -> do_read(repo_id, params, principal) end)
@@ -90,7 +100,7 @@ defmodule TreeDx.RepositoryQuery do
         base_response(ctx)
         |> Map.merge(%{
           query: params["query"],
-          results: Enum.map(page_results, &project_search_result(&1, params)),
+          results: Enum.map(page_results, &SearchResults.project(&1, params)),
           page: page
         })
         |> Ranking.maybe_put_diagnostics(
@@ -277,57 +287,8 @@ defmodule TreeDx.RepositoryQuery do
     end
   end
 
-  def context(_repo_id, %{"__ctx" => ctx}, _principal, _capability), do: {:ok, ctx}
-
-  def context(repo_id, params, principal, capability) do
-    with {:ok, scope} <- TreeDx.Capabilities.require_capability(principal, capability, repo_id),
-         {:ok, repo} when is_map(repo) <- repository_for_context(repo_id),
-         ref <- params["ref"] || repo["defaultRef"] || "refs/heads/main",
-         :ok <- TreeDx.Capabilities.require_ref(scope, ref),
-         {:ok, resolved} <- TreeDx.Git.resolve_ref(TreeDx.RepositoryStorage.path!(repo), ref) do
-      {:ok,
-       %{
-         repo: repo,
-         ref: ref,
-         resolved_ref: resolved["target"],
-         scope: scope,
-         principal: principal
-       }}
-    else
-      {:ok, nil} -> {:error, %{code: "not_found", message: "Repository not found."}}
-      other -> other
-    end
-  end
-
-  defp repository_for_context(repo_id) do
-    case TreeDx.Store.get_repository(repo_id) do
-      {:ok, repo} when is_map(repo) ->
-        {:ok, repo}
-
-      _ ->
-        mirror_repository_for_context(repo_id)
-    end
-  end
-
-  defp mirror_repository_for_context(repo_id) do
-    local_node = TreeDx.Federation.NodeIdentity.node_id()
-
-    with {:ok, route} when is_map(route) <- TreeDx.Store.get_federation_route(repo_id),
-         true <- local_node in (route["mirrorNodeIds"] || []),
-         repository_name when is_binary(repository_name) and repository_name != "" <-
-           route["repositoryName"] do
-      {:ok,
-       %{
-         "id" => repo_id,
-         "repositoryName" => repository_name,
-         "defaultRef" => route["defaultRef"] || "refs/heads/main",
-         "storageKind" => "mirror",
-         "storageRelativePath" => TreeDx.RepositoryStorage.mirror_relative_path(repository_name)
-       }}
-    else
-      _ -> {:ok, nil}
-    end
-  end
+  def context(repo_id, params, principal, capability),
+    do: Context.resolve(repo_id, params, principal, capability)
 
   defp query_capability("text"), do: "files:search"
   defp query_capability("combined"), do: "files:search"
@@ -417,78 +378,7 @@ defmodule TreeDx.RepositoryQuery do
   end
 
   defp text_results(documents, params) do
-    query = params["query"] || ""
-    case_sensitive = truthy?(params["caseSensitive"])
-
-    documents
-    |> Enum.map(&score_document(&1, query, case_sensitive))
-    |> Enum.reject(&is_nil/1)
-  end
-
-  defp score_document(document, "", _case_sensitive), do: Map.put(document, "score", 0)
-
-  defp score_document(document, query, case_sensitive) do
-    body = document["body"] || document["content"] || ""
-    haystack = if case_sensitive, do: body, else: String.downcase(body)
-    needle = if case_sensitive, do: query, else: String.downcase(query)
-
-    case :binary.match(haystack, needle) do
-      {offset, _len} ->
-        {line, column, snippet} = locate(body, offset)
-        score = count_matches(haystack, needle) + title_boost(document, needle, case_sensitive)
-
-        document
-        |> Map.put("score", score)
-        |> Map.put("line", line)
-        |> Map.put("column", column)
-        |> Map.put("snippet", snippet)
-
-      :nomatch ->
-        nil
-    end
-  end
-
-  defp count_matches(_haystack, ""), do: 0
-
-  defp count_matches(haystack, needle) do
-    haystack
-    |> String.split(needle)
-    |> length()
-    |> Kernel.-(1)
-  end
-
-  defp title_boost(document, needle, case_sensitive) do
-    title = Filters.read_field(document, "title") || document["path"]
-
-    comparable =
-      if case_sensitive, do: to_string(title), else: title |> to_string() |> String.downcase()
-
-    if String.contains?(comparable, needle), do: 2, else: 0
-  end
-
-  defp locate(body, offset) do
-    before = binary_part(body, 0, offset)
-    line = before |> String.split("\n") |> length()
-    column = offset - (before |> String.split("\n") |> List.last() |> byte_size()) + 1
-    line_text = body |> String.split("\n") |> Enum.at(line - 1, "")
-    start = max(column - div(@snippet, 2), 0)
-    {line, column, line_text |> String.slice(start, @snippet) |> String.trim()}
-  end
-
-  defp project_search_result(result, params) do
-    %{
-      path: result["path"],
-      name: result["name"],
-      extension: result["extension"],
-      objectId: result["objectId"],
-      score: result["score"],
-      line: result["line"],
-      column: result["column"],
-      snippet: result["snippet"],
-      frontmatter:
-        if(params["includeFrontmatter"] == false, do: nil, else: result["frontmatter"]),
-      body: if(truthy?(params["includeBody"]), do: result["body"], else: nil)
-    }
+    SearchResults.score(documents, params)
   end
 
   defp filter_kinds(entries, nil), do: {:ok, entries}

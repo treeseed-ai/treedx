@@ -2,65 +2,15 @@ import Ajv from "ajv/dist/2020.js";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import YAML from "yaml";
+import { fail, loadSpecDocuments, readJson, readYaml } from "./spec-loader.ts";
 
 const root = path.resolve(import.meta.dirname, "..");
 const specDir = path.join(root, "spec");
 const schemaDir = path.join(root, "schemas");
 const conformanceScenarioDir = path.join(root, "conformance", "scenarios");
 
-const schemaBySpec = new Map([
-  ["architecture.yaml", "architecture.schema.json"],
-  ["auth.yaml", "auth.schema.json"],
-  ["binary.yaml", "binary.schema.json"],
-  ["capabilities.yaml", "capability.schema.json"],
-  ["endpoints.yaml", "endpoint.schema.json"],
-  ["errors.yaml", "error.schema.json"],
-  ["pagination.yaml", "pagination.schema.json"],
-  ["testing.yaml", "testing.schema.json"],
-  ["conformance.yaml", "scenario.schema.json"]
-]);
-
-function readYaml(filePath) {
-  const source = fs.readFileSync(filePath, "utf8");
-  return YAML.parse(source);
-}
-
-function readJson(filePath) {
-  return JSON.parse(fs.readFileSync(filePath, "utf8"));
-}
-
-function fail(message) {
-  console.error(`sdk-spec validation failed: ${message}`);
-  process.exitCode = 1;
-}
-
 const ajv = new Ajv({ allErrors: true, strict: false });
-const parsedSpecs = new Map();
-
-for (const fileName of fs.readdirSync(specDir).filter((name) => name.endsWith(".yaml")).sort()) {
-  const specPath = path.join(specDir, fileName);
-  let data;
-
-  try {
-    data = readYaml(specPath);
-    parsedSpecs.set(fileName, data);
-  } catch (error) {
-    fail(`${fileName} does not parse as YAML: ${error.message}`);
-    continue;
-  }
-
-  const schemaName = schemaBySpec.get(fileName);
-  if (!schemaName) {
-    continue;
-  }
-
-  const schema = readJson(path.join(schemaDir, schemaName));
-  const validate = ajv.compile(schema);
-  if (!validate(data)) {
-    fail(`${fileName} does not match ${schemaName}: ${ajv.errorsText(validate.errors, { separator: "\n" })}`);
-  }
-}
+const parsedSpecs = loadSpecDocuments(specDir, schemaDir);
 
 const architecture = parsedSpecs.get("architecture.yaml");
 const auth = parsedSpecs.get("auth.yaml");
