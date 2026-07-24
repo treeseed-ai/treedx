@@ -76,7 +76,7 @@ scripts/release/bump-release-version.ts "$version"
 git add \
   apps/api/lib/treedx/version.ex \
   apps/api/mix.exs \
-  apps/api/test/treedx_web/health_controller_test.exs \
+  apps/api/test/treedx_web/runtime/health_controller_test.exs \
   packages/ts-sdk/package.json \
   packages/ts-sdk/package-lock.json \
   packages/ts-sdk/sdk-manifest.yaml \

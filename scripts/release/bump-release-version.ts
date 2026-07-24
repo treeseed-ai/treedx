@@ -81,7 +81,7 @@ replaceInFile(
 );
 
 replaceInFile(
-  "apps/api/test/treedx_web/health_controller_test.exs",
+  "apps/api/test/treedx_web/runtime/health_controller_test.exs",
   /assert json_response\(conn, 200\)\["version"\] == "[^"]+"/,
   `assert json_response(conn, 200)["version"] == "${version}"`
 );
