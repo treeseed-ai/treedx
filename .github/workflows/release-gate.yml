@@ -22,18 +22,18 @@ on:
       - "native/**"
       - "profiles/**"
       - "tools/treedx_profiler/**"
-      - "scripts/release-gate.sh"
-      - "scripts/test-all.sh"
-      - "scripts/test-treedx-fast.sh"
-      - "scripts/check-file-lengths.sh"
-      - "scripts/openapi-check.sh"
-      - "scripts/storage-recovery-check.sh"
-      - "scripts/security-check.sh"
-      - "scripts/mvp-smoke.sh"
-      - "scripts/federation-live-check.sh"
-      - "scripts/profile-compose.sh"
-      - "scripts/profile-treedx.sh"
-      - "scripts/profile-treedx-smoke.sh"
+      - "scripts/release/release-gate.sh"
+      - "scripts/verification/test-all.sh"
+      - "scripts/verification/test-treedx-fast.sh"
+      - "scripts/verification/check-file-lengths.sh"
+      - "scripts/verification/openapi-check.sh"
+      - "scripts/verification/storage-recovery-check.sh"
+      - "scripts/verification/security-check.sh"
+      - "scripts/acceptance/mvp-smoke.sh"
+      - "scripts/acceptance/federation-live-check.sh"
+      - "scripts/profiling/profile-compose.sh"
+      - "scripts/profiling/profile-treedx.sh"
+      - "scripts/profiling/profile-treedx-smoke.sh"
       - "Dockerfile"
       - "Dockerfile.profiler"
       - "docker-healthcheck.c"
@@ -55,9 +55,9 @@ on:
       - "packages/python-sdk/**"
       - "packages/rust-sdk/**"
       - "packages/elixir-sdk/**"
-      - "scripts/check-sdk-docs.sh"
-      - "scripts/test-sdk-packages.sh"
-      - "scripts/test-sdk-live-conformance.sh"
+      - "scripts/verification/check-sdk-docs.sh"
+      - "scripts/verification/test-sdk-packages.sh"
+      - "scripts/verification/test-sdk-live-conformance.sh"
       - ".github/workflows/release-gate.yml"
   push:
     branches:
@@ -74,18 +74,18 @@ on:
       - "native/**"
       - "profiles/**"
       - "tools/treedx_profiler/**"
-      - "scripts/release-gate.sh"
-      - "scripts/test-all.sh"
-      - "scripts/test-treedx-fast.sh"
-      - "scripts/check-file-lengths.sh"
-      - "scripts/openapi-check.sh"
-      - "scripts/storage-recovery-check.sh"
-      - "scripts/security-check.sh"
-      - "scripts/mvp-smoke.sh"
-      - "scripts/federation-live-check.sh"
-      - "scripts/profile-compose.sh"
-      - "scripts/profile-treedx.sh"
-      - "scripts/profile-treedx-smoke.sh"
+      - "scripts/release/release-gate.sh"
+      - "scripts/verification/test-all.sh"
+      - "scripts/verification/test-treedx-fast.sh"
+      - "scripts/verification/check-file-lengths.sh"
+      - "scripts/verification/openapi-check.sh"
+      - "scripts/verification/storage-recovery-check.sh"
+      - "scripts/verification/security-check.sh"
+      - "scripts/acceptance/mvp-smoke.sh"
+      - "scripts/acceptance/federation-live-check.sh"
+      - "scripts/profiling/profile-compose.sh"
+      - "scripts/profiling/profile-treedx.sh"
+      - "scripts/profiling/profile-treedx-smoke.sh"
       - "Dockerfile"
       - "Dockerfile.profiler"
       - "docker-healthcheck.c"
@@ -107,9 +107,9 @@ on:
       - "packages/python-sdk/**"
       - "packages/rust-sdk/**"
       - "packages/elixir-sdk/**"
-      - "scripts/check-sdk-docs.sh"
-      - "scripts/test-sdk-packages.sh"
-      - "scripts/test-sdk-live-conformance.sh"
+      - "scripts/verification/check-sdk-docs.sh"
+      - "scripts/verification/test-sdk-packages.sh"
+      - "scripts/verification/test-sdk-live-conformance.sh"
       - ".github/workflows/release-gate.yml"
 
 env:
@@ -213,7 +213,7 @@ jobs:
           retry bash -c 'curl --http1.1 -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin'
 
       - name: Run release gate
-        run: ./scripts/release-gate.sh
+        run: ./scripts/release/release-gate.sh
 
   sdk-spec:
     runs-on: ubuntu-24.04
@@ -255,7 +255,7 @@ jobs:
         working-directory: packages/sdk-spec
 
       - name: Check SDK documentation
-        run: ./scripts/check-sdk-docs.sh
+        run: ./scripts/verification/check-sdk-docs.sh
 
   test-typescript-sdk:
     needs: sdk-spec
@@ -551,7 +551,7 @@ jobs:
           export TREEDX_PROFILE_FAILURE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
           export TREEDX_PROFILE_REPORT_FORMAT="both"
 
-          ./scripts/profile-compose.sh "${mode}"
+          ./scripts/profiling/profile-compose.sh "${mode}"
 
       - name: Capture compose logs
         if: failure()
@@ -640,7 +640,7 @@ jobs:
           export TREEDX_PROFILE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
           export TREEDX_PROFILE_FAILURE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
 
-          ./scripts/profile-compose.sh "${mode}"
+          ./scripts/profiling/profile-compose.sh "${mode}"
 
       - name: Capture compose logs
         if: failure()
@@ -748,7 +748,7 @@ jobs:
           export TREEDX_PROFILE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
           export TREEDX_PROFILE_FAILURE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
 
-          ./scripts/profile-compose.sh "${mode}"
+          ./scripts/profiling/profile-compose.sh "${mode}"
 
       - name: Capture compose logs
         if: failure()

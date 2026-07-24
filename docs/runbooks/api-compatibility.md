@@ -10,7 +10,7 @@ Use this runbook when changing TreeDX public routes or payload types.
    repository when public payloads change.
 4. Record breaking or compatibility-sensitive changes in
    `docs/api/compatibility-notes.md`.
-5. Run `./scripts/test-treedx-fast.sh`.
+5. Run `./scripts/verification/test-treedx-fast.sh`.
 
 ## Additive Changes
 

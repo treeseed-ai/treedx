@@ -13,35 +13,35 @@ mod unit_pagination;
 #[path = "unit/transport.rs"]
 mod unit_transport;
 
-#[path = "adapters/artifacts.rs"]
+#[path = "adapters/storage/artifacts.rs"]
 mod adapters_artifacts;
-#[path = "adapters/blobs.rs"]
+#[path = "adapters/storage/blobs.rs"]
 mod adapters_blobs;
 #[path = "adapters/context.rs"]
 mod adapters_context;
 #[path = "adapters/exec.rs"]
 mod adapters_exec;
-#[path = "adapters/federation.rs"]
+#[path = "adapters/federation/federation.rs"]
 mod adapters_federation;
-#[path = "adapters/files.rs"]
+#[path = "adapters/storage/files.rs"]
 mod adapters_files;
 #[path = "adapters/graph.rs"]
 mod adapters_graph;
-#[path = "adapters/migrations.rs"]
+#[path = "adapters/storage/migrations.rs"]
 mod adapters_migrations;
-#[path = "adapters/mirrors.rs"]
+#[path = "adapters/federation/mirrors.rs"]
 mod adapters_mirrors;
 #[path = "adapters/observability.rs"]
 mod adapters_observability;
 #[path = "adapters/query.rs"]
 mod adapters_query;
-#[path = "adapters/registry.rs"]
+#[path = "adapters/federation/registry.rs"]
 mod adapters_registry;
-#[path = "adapters/repositories.rs"]
+#[path = "adapters/federation/repositories.rs"]
 mod adapters_repositories;
-#[path = "adapters/snapshots.rs"]
+#[path = "adapters/storage/snapshots.rs"]
 mod adapters_snapshots;
-#[path = "adapters/workspaces.rs"]
+#[path = "adapters/federation/workspaces.rs"]
 mod adapters_workspaces;
 
 #[path = "generated/exports.rs"]

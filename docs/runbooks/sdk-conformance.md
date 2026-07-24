@@ -63,7 +63,7 @@ mix test test/conformance
 Run the documentation gate after conformance documentation changes:
 
 ```bash
-./scripts/check-sdk-docs.sh
+./scripts/verification/check-sdk-docs.sh
 ```
 
 ## Adding A Scenario
@@ -90,7 +90,7 @@ Conformance adapters must return or report `not_configured` when no live TreeDX 
 Live conformance uses the local TreeDX harness script:
 
 ```bash
-./scripts/test-sdk-live-conformance.sh
+./scripts/verification/test-sdk-live-conformance.sh
 ```
 
 The harness owns temporary repositories, credentials, storage paths, and destructive admin safety flags. It defines:

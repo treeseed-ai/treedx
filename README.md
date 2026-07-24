@@ -281,7 +281,7 @@ docker compose down
 Run a full local performance profile:
 
 ```bash
-scripts/profile-compose.sh portfolio
+scripts/profiling/profile-compose.sh portfolio
 ```
 
 This starts a local TreeDX API service and a separate profiler service. The
@@ -317,20 +317,20 @@ grep -E "totalErrors: 0|failed: 0|unaccounted: 0" target/profiles/portfolio-*.ya
 Repeatable profile modes:
 
 ```bash
-scripts/profile-compose.sh smoke
-scripts/profile-compose.sh fixed
-scripts/profile-compose.sh portfolio
-scripts/profile-compose.sh read-heavy
-scripts/profile-compose.sh write-heavy
-scripts/profile-compose.sh graph
-scripts/profile-compose.sh binary
-scripts/profile-compose.sh admin
-scripts/profile-compose.sh soak
-scripts/profile-compose.sh mirror-federation
-scripts/profile-compose.sh connected-library
-scripts/profile-compose.sh federation-soak
-scripts/profile-compose.sh performance
-scripts/profile-compose.sh federation-performance
+scripts/profiling/profile-compose.sh smoke
+scripts/profiling/profile-compose.sh fixed
+scripts/profiling/profile-compose.sh portfolio
+scripts/profiling/profile-compose.sh read-heavy
+scripts/profiling/profile-compose.sh write-heavy
+scripts/profiling/profile-compose.sh graph
+scripts/profiling/profile-compose.sh binary
+scripts/profiling/profile-compose.sh admin
+scripts/profiling/profile-compose.sh soak
+scripts/profiling/profile-compose.sh mirror-federation
+scripts/profiling/profile-compose.sh connected-library
+scripts/profiling/profile-compose.sh federation-soak
+scripts/profiling/profile-compose.sh performance
+scripts/profiling/profile-compose.sh federation-performance
 ```
 
 Each mode writes timestamped reports under `target/profiles/` unless
@@ -338,7 +338,7 @@ Each mode writes timestamped reports under `target/profiles/` unless
 `TREEDX_PROFILE_REPLAY_LOG`, and `TREEDX_PROFILE_FAILURE_REPLAY_LOG` are set.
 
 Duration-based profile modes default to no iteration cap. For example,
-`scripts/profile-compose.sh portfolio` runs ten minutes of measured load after
+`scripts/profiling/profile-compose.sh portfolio` runs ten minutes of measured load after
 fixture setup completes. If `TREEDX_PROFILE_ITERATIONS` is explicitly set along
 with a duration, the profiler stops at whichever limit comes first and reports
 whether the measured duration was satisfied.
@@ -348,7 +348,7 @@ keeping dev auth enabled for local token setup. Use `--dev-api` to run the API
 through `mix phx.server` for development debugging:
 
 ```bash
-scripts/profile-compose.sh portfolio --dev-api
+scripts/profiling/profile-compose.sh portfolio --dev-api
 ```
 
 Federation profile modes start three production-image TreeDX API nodes plus the
@@ -358,7 +358,7 @@ lineage, and live catalog sync is verified without service restart. The
 `connected-library` mode checks remote-owner authorization and confirms writes
 are denied by default.
 
-Use `scripts/profile-compose.sh performance` for RPS tuning. It is separate
+Use `scripts/profiling/profile-compose.sh performance` for RPS tuning. It is separate
 from the reliability verifier profiles and defaults to a read-mostly portfolio
 workload, 150 concurrent workers, 10 minutes of measured load, sampled
 validation probes, and a 100 primary RPS target. Reports include both primary
@@ -375,7 +375,7 @@ TREEDX_PROFILE_CONCURRENCY=100 \
 TREEDX_PROFILE_DURATION=30m \
 TREEDX_PROFILE_OUTPUT=target/profiles/medium-c100.yaml \
 TREEDX_PROFILE_MARKDOWN_OUTPUT=target/profiles/medium-c100.md \
-scripts/profile-compose.sh portfolio
+scripts/profiling/profile-compose.sh portfolio
 ```
 
 Clean up generated profiling data with:
@@ -1016,7 +1016,7 @@ apps/api/test/treedx_web/end_to_end_mvp_test.exs
 The optional Docker black-box smoke script runs the same style of loop through HTTP only:
 
 ```bash
-scripts/mvp-smoke.sh
+scripts/acceptance/mvp-smoke.sh
 ```
 
 It starts `treedx-api`, waits for readiness, creates a fixture repository inside the container data volume, registers the repo, updates and commits a file, refreshes graph data, builds a snapshot, exports artifact metadata, reads audit events, and prints a concise summary. Set `TREEDX_KEEP_RUNNING=1` to leave the service up after the script exits.
@@ -1137,7 +1137,7 @@ Security model:
 - Production identity must not come from request JSON.
 - Repository/file/search/graph operations authorize before querying, ranking, traversing, expanding, counting, or serializing results.
 - Shell execution is workspace-scoped, capability-gated, audited, timeout-bounded, and environment-scrubbed. Production should use container or worker-backed backends.
-- Release readiness is gated by `scripts/release-gate.sh`, which combines TreeDX tests, OpenAPI checks, storage recovery checks, dependency scans, SBOM generation, container scanning, container smoke checks, and optional live federation checks.
+- Release readiness is gated by `scripts/release/release-gate.sh`, which combines TreeDX tests, OpenAPI checks, storage recovery checks, dependency scans, SBOM generation, container scanning, container smoke checks, and optional live federation checks.
 
 Do not use dev tokens as a production authentication mechanism. If you find a vulnerability, use GitHub's private vulnerability reporting or Security Advisories if enabled for the repository. If those are not enabled yet, open a GitHub issue with a minimal non-sensitive description and avoid posting exploitable secrets or private repository details.
 

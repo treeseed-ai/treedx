@@ -31,7 +31,7 @@ binary payloads.
 2. Rotate the operator-managed credential behind the affected credential ID.
 3. Review `git.push.*`, `git.fetch.*`, and mirror audit events.
 4. Confirm audit payloads contain sanitized remote URL and refspec counts only.
-5. Re-enable transport only after `scripts/security-check.sh` succeeds.
+5. Re-enable transport only after `scripts/verification/security-check.sh` succeeds.
 
 ## Path Traversal Or Hidden Data Report
 
@@ -67,7 +67,7 @@ binary payloads.
 
 ## Dependency Disclosure
 
-1. Run `scripts/security-check.sh`.
+1. Run `scripts/verification/security-check.sh`.
 2. Patch vulnerable dependencies where possible.
 3. If temporary acceptance is required, document it in `docs/security/accepted-vulnerabilities.md` with owner and expiration.
 4. Rerun the release gate before deploying.

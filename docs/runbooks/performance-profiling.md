@@ -13,7 +13,7 @@ Use `profiles/compose.profile.yaml` to start TreeDX and run the profiler in one 
 run:
 
 ```bash
-scripts/profile-compose.sh portfolio
+scripts/profiling/profile-compose.sh portfolio
 ```
 
 The manifest starts:
@@ -70,7 +70,7 @@ TREEDX_PROFILE_CONCURRENCY=100 \
 TREEDX_PROFILE_DURATION=30m \
 TREEDX_PROFILE_OUTPUT=target/profiles/medium-c100.yaml \
 TREEDX_PROFILE_MARKDOWN_OUTPUT=target/profiles/medium-c100.md \
-scripts/profile-compose.sh portfolio
+scripts/profiling/profile-compose.sh portfolio
 ```
 
 Safety notes:
@@ -92,20 +92,20 @@ Safety notes:
 Use the gateway script for repeatable profile configurations:
 
 ```bash
-scripts/profile-compose.sh smoke
-scripts/profile-compose.sh fixed
-scripts/profile-compose.sh portfolio
-scripts/profile-compose.sh read-heavy
-scripts/profile-compose.sh write-heavy
-scripts/profile-compose.sh graph
-scripts/profile-compose.sh binary
-scripts/profile-compose.sh admin
-scripts/profile-compose.sh soak
-scripts/profile-compose.sh mirror-federation
-scripts/profile-compose.sh connected-library
-scripts/profile-compose.sh federation-soak
-scripts/profile-compose.sh performance
-scripts/profile-compose.sh federation-performance
+scripts/profiling/profile-compose.sh smoke
+scripts/profiling/profile-compose.sh fixed
+scripts/profiling/profile-compose.sh portfolio
+scripts/profiling/profile-compose.sh read-heavy
+scripts/profiling/profile-compose.sh write-heavy
+scripts/profiling/profile-compose.sh graph
+scripts/profiling/profile-compose.sh binary
+scripts/profiling/profile-compose.sh admin
+scripts/profiling/profile-compose.sh soak
+scripts/profiling/profile-compose.sh mirror-federation
+scripts/profiling/profile-compose.sh connected-library
+scripts/profiling/profile-compose.sh federation-soak
+scripts/profiling/profile-compose.sh performance
+scripts/profiling/profile-compose.sh federation-performance
 ```
 
 Modes:
@@ -148,10 +148,10 @@ Debian-based and convenient for profiling utilities.
 Options:
 
 ```bash
-scripts/profile-compose.sh portfolio --no-clean
-scripts/profile-compose.sh read-heavy --no-build
-scripts/profile-compose.sh graph --config
-scripts/profile-compose.sh portfolio --dev-api
+scripts/profiling/profile-compose.sh portfolio --no-clean
+scripts/profiling/profile-compose.sh read-heavy --no-build
+scripts/profiling/profile-compose.sh graph --config
+scripts/profiling/profile-compose.sh portfolio --dev-api
 ```
 
 Use `--dev-api` only when you want the API service to run through `mix
@@ -205,7 +205,7 @@ Use performance mode when the question is “how fast can this workload go?”
 rather than “did every verifier check run exhaustively?”:
 
 ```bash
-scripts/profile-compose.sh performance
+scripts/profiling/profile-compose.sh performance
 ```
 
 Default benchmark settings:
@@ -242,7 +242,7 @@ TREEDX_WORKSPACE_WORKER_POOL_SIZE=16 \
 TREEDX_GRAPH_WORKER_POOL_SIZE=8 \
 TREEDX_REPOSITORY_QUERY_MAX_QUEUE=2000 \
 TREEDX_GRAPH_MAX_QUEUE=500 \
-scripts/profile-compose.sh performance
+scripts/profiling/profile-compose.sh performance
 ```
 
 `TREEDX_RUNTIME_MEMORY_BUDGET_MB` and `TREEDX_CACHE_MEMORY_FRACTION` define the
@@ -265,7 +265,7 @@ state has an explicit replication path.
 Start TreeDX, then run:
 
 ```bash
-./scripts/profile-treedx.sh \
+./scripts/profiling/profile-treedx.sh \
   --base-url http://localhost:4000 \
   --auth-mode dev \
   --fixture small-docs \
@@ -344,7 +344,7 @@ versions.
 Portfolio mode is for long-running reliability and production-shape behavior:
 
 ```bash
-./scripts/profile-treedx.sh \
+./scripts/profiling/profile-treedx.sh \
   --base-url http://localhost:4000 \
   --auth-mode dev \
   --load-mode portfolio \
@@ -378,7 +378,7 @@ Use the same TreeDX image, fixture, scenario, iteration count, and concurrency
 on each machine:
 
 ```bash
-./scripts/profile-treedx.sh \
+./scripts/profiling/profile-treedx.sh \
   --fixture medium-mixed \
   --size medium \
   --scenario full_api \
@@ -438,25 +438,25 @@ does not execute it by default.
 Fast smoke:
 
 ```bash
-./scripts/profile-treedx.sh --fixture small-docs --size small --scenario full_api --iterations 1
+./scripts/profiling/profile-treedx.sh --fixture small-docs --size small --scenario full_api --iterations 1
 ```
 
 Read-heavy comparison:
 
 ```bash
-./scripts/profile-treedx.sh --fixture medium-mixed --size medium --scenario read_heavy --iterations 100 --concurrency 8
+./scripts/profiling/profile-treedx.sh --fixture medium-mixed --size medium --scenario read_heavy --iterations 100 --concurrency 8
 ```
 
 Graph/context benchmark:
 
 ```bash
-./scripts/profile-treedx.sh --fixture graph-rich --size medium --scenario graph_context --iterations 50 --concurrency 4
+./scripts/profiling/profile-treedx.sh --fixture graph-rich --size medium --scenario graph_context --iterations 50 --concurrency 4
 ```
 
 Binary/artifact benchmark:
 
 ```bash
-./scripts/profile-treedx.sh --fixture binary-assets --size large --scenario blob_artifact --iterations 25 --concurrency 4
+./scripts/profiling/profile-treedx.sh --fixture binary-assets --size large --scenario blob_artifact --iterations 25 --concurrency 4
 ```
 
 10-minute local portfolio profile:

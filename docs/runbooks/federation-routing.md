@@ -195,8 +195,8 @@ response bodies.
 Use the federation profiler profiles before release-path changes:
 
 ```bash
-scripts/profile-compose.sh mirror-federation
-scripts/profile-compose.sh connected-library
+scripts/profiling/profile-compose.sh mirror-federation
+scripts/profiling/profile-compose.sh connected-library
 ```
 
 Both profiles start three production-image TreeDX nodes and a profiler service.

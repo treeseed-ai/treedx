@@ -53,12 +53,12 @@ not require a single global repository id.
 Run generic SDK gates:
 
 ```bash
-./scripts/test-sdk-packages.sh
-./scripts/check-sdk-docs.sh
+./scripts/verification/test-sdk-packages.sh
+./scripts/verification/check-sdk-docs.sh
 ```
 
 Run the root OpenAPI gate:
 
 ```bash
-./scripts/openapi-check.sh
+./scripts/verification/openapi-check.sh
 ```

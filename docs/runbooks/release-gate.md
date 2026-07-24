@@ -3,7 +3,7 @@
 Run the release gate from the repository root:
 
 ```bash
-./scripts/release-gate.sh
+./scripts/release/release-gate.sh
 ```
 
 The gate is complete only when the command exits successfully.
@@ -149,7 +149,7 @@ For release-path pushes, package jobs also run after profile gates:
 Local SDK package verification is:
 
 ```bash
-./scripts/test-sdk-packages.sh
+./scripts/verification/test-sdk-packages.sh
 ```
 
 The integrated release gate builds and uploads SDK package artifacts on

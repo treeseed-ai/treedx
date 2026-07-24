@@ -26,5 +26,5 @@ TREEDX_LIVE_NODE_B_REPO_ID
 Then run:
 
 ```bash
-./scripts/federation-live-check.sh
+./scripts/acceptance/federation-live-check.sh
 ```

@@ -44,9 +44,9 @@ requiredSecrets:
   - CARGO_REGISTRY_TOKEN
   - HEX_API_KEY
 verify:
-  fast: scripts/test-treedx-fast.sh
-  local: scripts/test-all.sh
-  release: scripts/release-gate.sh
+  fast: scripts/verification/test-treedx-fast.sh
+  local: scripts/verification/test-all.sh
+  release: scripts/release/release-gate.sh
 projectArchitecture:
   topology: single_repository_site
   rootPath: .
