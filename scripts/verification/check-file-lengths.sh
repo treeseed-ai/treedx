@@ -66,6 +66,13 @@ done < <(
     -print0
 )
 
+for script in scripts/profiling/profile-compose.sh scripts/profiling/profile-treedx.sh; do
+  if ! grep -Fq '$(dirname "${BASH_SOURCE[0]}")/../..' "$script"; then
+    printf 'ERROR %s must resolve the repository root from its functional subdirectory\n' "$script"
+    failures=$((failures + 1))
+  fi
+done
+
 printf 'Checked %d handwritten code files; %d warning(s); %d error(s).\n' \
   "$checked" "$warnings" "$failures"
 
