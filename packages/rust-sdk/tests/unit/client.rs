@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-#[path = "../adapters/common.rs"]
-mod common;
+#[path = "../adapters/mock_transport.rs"]
+mod mock_transport;
 
-use common::{MockTransport, client_with_mock};
+use mock_transport::{MockTransport, client_with_mock};
 use treedx::{TreeDxClient, TreeDxConfig};
 
 #[tokio::test]
