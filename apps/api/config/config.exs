@@ -9,7 +9,7 @@ config :treedx, TreeDx.Native,
   mode: if(config_env() == :prod, do: :release, else: :debug)
 
 config :treedx, TreeDxWeb.Endpoint,
-  adapter: Phoenix.Endpoint.Cowboy2Adapter,
+  adapter: Bandit.PhoenixAdapter,
   url: [host: "localhost"],
   render_errors: [
     formats: [json: TreeDxWeb.ErrorJSON],
