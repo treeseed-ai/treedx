@@ -11,7 +11,7 @@ class TreeDxOpenApiOperation(TypedDict):
     path: str
 
 
-TREEDX_OPENAPI_OPERATION_COUNT: Final[int] = 113
+TREEDX_OPENAPI_OPERATION_COUNT: Final[int] = 118
 
 TREEDX_OPENAPI_OPERATIONS: Final[tuple[TreeDxOpenApiOperation, ...]] = (
     {"method": "DELETE", "path": "/api/v1/repos/{repo_id}/artifacts/{artifact_id}"},
@@ -110,12 +110,16 @@ TREEDX_OPENAPI_OPERATIONS: Final[tuple[TreeDxOpenApiOperation, ...]] = (
     {"method": "POST", "path": "/api/v1/repos/{repo_id}/paths/list"},
     {"method": "POST", "path": "/api/v1/repos/{repo_id}/push"},
     {"method": "POST", "path": "/api/v1/repos/{repo_id}/query"},
+    {"method": "POST", "path": "/api/v1/repos/{repo_id}/refs/discard-orphan"},
+    {"method": "POST", "path": "/api/v1/repos/{repo_id}/refs/promote"},
+    {"method": "POST", "path": "/api/v1/repos/{repo_id}/refs/retire"},
     {"method": "POST", "path": "/api/v1/repos/{repo_id}/search/index/compact"},
     {"method": "POST", "path": "/api/v1/repos/{repo_id}/search/index/refresh"},
     {"method": "POST", "path": "/api/v1/repos/{repo_id}/snapshots/build"},
     {"method": "POST", "path": "/api/v1/repos/{repo_id}/sync"},
     {"method": "POST", "path": "/api/v1/repos/{repo_id}/workspaces"},
     {"method": "POST", "path": "/api/v1/search"},
+    {"method": "POST", "path": "/api/v1/workspaces/{workspace_id}/abandon"},
     {"method": "POST", "path": "/api/v1/workspaces/{workspace_id}/blobs/delete"},
     {"method": "POST", "path": "/api/v1/workspaces/{workspace_id}/blobs/uploads"},
     {"method": "POST", "path": "/api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/complete"},
@@ -126,5 +130,6 @@ TREEDX_OPENAPI_OPERATIONS: Final[tuple[TreeDxOpenApiOperation, ...]] = (
     {"method": "POST", "path": "/api/v1/workspaces/{workspace_id}/search"},
     {"method": "PUT", "path": "/api/v1/workspaces/{workspace_id}/blobs/upload"},
     {"method": "PUT", "path": "/api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/parts/{part_number}"},
-    {"method": "PUT", "path": "/api/v1/workspaces/{workspace_id}/files"}
+    {"method": "PUT", "path": "/api/v1/workspaces/{workspace_id}/files"},
+    {"method": "PUT", "path": "/api/v1/workspaces/{workspace_id}/files/batch"}
 )

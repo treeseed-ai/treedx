@@ -10,7 +10,7 @@ export interface TreeDxOpenApiOperation {
 export type TreeDxOpenApiPath = typeof TREEDX_OPENAPI_OPERATIONS[number]["path"];
 export type TreeDxOpenApiOperationKey = `${TreeDxOpenApiMethod} ${TreeDxOpenApiPath}`;
 
-export const TREEDX_OPENAPI_OPERATION_COUNT = 113 as const;
+export const TREEDX_OPENAPI_OPERATION_COUNT = 118 as const;
 
 export const TREEDX_OPENAPI_OPERATIONS = [
   { method: "DELETE", path: "/api/v1/repos/{repo_id}/artifacts/{artifact_id}" },
@@ -108,6 +108,9 @@ export const TREEDX_OPENAPI_OPERATIONS = [
   { method: "POST", path: "/api/v1/repos/{repo_id}/paths/list" },
   { method: "POST", path: "/api/v1/repos/{repo_id}/push" },
   { method: "POST", path: "/api/v1/repos/{repo_id}/query" },
+  { method: "POST", path: "/api/v1/repos/{repo_id}/refs/discard-orphan" },
+  { method: "POST", path: "/api/v1/repos/{repo_id}/refs/promote" },
+  { method: "POST", path: "/api/v1/repos/{repo_id}/refs/retire" },
   { method: "POST", path: "/api/v1/repos/{repo_id}/search/index/compact" },
   { method: "POST", path: "/api/v1/repos/{repo_id}/search/index/refresh" },
   { method: "POST", path: "/api/v1/repos/{repo_id}/snapshots/build" },
@@ -115,6 +118,7 @@ export const TREEDX_OPENAPI_OPERATIONS = [
   { method: "POST", path: "/api/v1/repos/{repo_id}/workspaces" },
   { method: "POST", path: "/api/v1/repos/register" },
   { method: "POST", path: "/api/v1/search" },
+  { method: "POST", path: "/api/v1/workspaces/{workspace_id}/abandon" },
   { method: "POST", path: "/api/v1/workspaces/{workspace_id}/blobs/delete" },
   { method: "POST", path: "/api/v1/workspaces/{workspace_id}/blobs/uploads" },
   { method: "POST", path: "/api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/complete" },
@@ -125,5 +129,6 @@ export const TREEDX_OPENAPI_OPERATIONS = [
   { method: "POST", path: "/api/v1/workspaces/{workspace_id}/search" },
   { method: "PUT", path: "/api/v1/workspaces/{workspace_id}/blobs/upload" },
   { method: "PUT", path: "/api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/parts/{part_number}" },
-  { method: "PUT", path: "/api/v1/workspaces/{workspace_id}/files" }
+  { method: "PUT", path: "/api/v1/workspaces/{workspace_id}/files" },
+  { method: "PUT", path: "/api/v1/workspaces/{workspace_id}/files/batch" }
 ] as const satisfies readonly TreeDxOpenApiOperation[];
