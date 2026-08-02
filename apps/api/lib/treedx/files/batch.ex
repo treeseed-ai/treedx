@@ -23,7 +23,9 @@ defmodule TreeDx.Files.Batch do
   end
 
   def write(_workspace_id, _params, _principal),
-    do: {:error, %{code: "validation_error", message: "files must contain between 1 and 500 entries."}}
+    do:
+      {:error,
+       %{code: "validation_error", message: "files must contain between 1 and 500 entries."}}
 
   defp prepare(files, ctx) do
     Enum.reduce_while(files, {:ok, []}, fn file, {:ok, acc} ->
@@ -58,15 +60,30 @@ defmodule TreeDx.Files.Batch do
   end
 
   defp prepare_file(_file, _ctx),
-    do: {:error, %{code: "validation_error", message: "Each file requires a valid path and UTF-8 content up to 1 MiB."}}
+    do:
+      {:error,
+       %{
+         code: "validation_error",
+         message: "Each file requires a valid path and UTF-8 content up to 1 MiB."
+       }}
 
   defp expected_sha(_actual, nil), do: :ok
   defp expected_sha(actual, actual), do: :ok
-  defp expected_sha(_actual, _expected), do: {:error, %{code: "conflict", message: "expectedSha does not match."}}
+
+  defp expected_sha(_actual, _expected),
+    do: {:error, %{code: "conflict", message: "expectedSha does not match."}}
 
   defp public_record(record),
-    do: %{path: record["path"], sha: record["contentHash"], size: record["size"], source: "overlay"}
+    do: %{
+      path: record["path"],
+      sha: record["contentHash"],
+      size: record["size"],
+      source: "overlay"
+    }
 
-  defp actor_id(principal), do: principal["actorId"] || principal[:actorId] || principal[:actor_id]
-  defp tenant_id(principal), do: principal["tenantId"] || principal[:tenantId] || principal[:tenant_id]
+  defp actor_id(principal),
+    do: principal["actorId"] || principal[:actorId] || principal[:actor_id]
+
+  defp tenant_id(principal),
+    do: principal["tenantId"] || principal[:tenantId] || principal[:tenant_id]
 end

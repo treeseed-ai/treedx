@@ -36,7 +36,10 @@ defmodule TreeDx.Files do
   end
 
   def write_batch(workspace_id, params, principal),
-    do: Pool.run(:workspace_mutation, fn -> TreeDx.Files.Batch.write(workspace_id, params, principal) end)
+    do:
+      Pool.run(:workspace_mutation, fn ->
+        TreeDx.Files.Batch.write(workspace_id, params, principal)
+      end)
 
   defp do_write(workspace_id, params, principal) do
     with {:ok, ctx} <- writable_context(workspace_id, principal, "files:write"),

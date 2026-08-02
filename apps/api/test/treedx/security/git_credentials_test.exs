@@ -103,9 +103,29 @@ defmodule TreeDx.GitCredentialsTest do
     pseudorandom_key = :crypto.mac(:hmac, :sha256, request["deliveryId"], shared)
     key = :crypto.mac(:hmac, :sha256, pseudorandom_key, "treedx-credential-delivery-v1" <> <<1>>)
     nonce = :crypto.strong_rand_bytes(12)
-    aad = Enum.join([request["deliveryId"], request["operation"] || "", request["allowedHost"] || "", request["refspecDigest"] || "", "node-1"], "\n")
-    plaintext = Jason.encode!(%{type: "token", username: "x-access-token", token: "ghs_treedx_transient_token", expiresAt: "2026-06-17T22:30:00.000Z"})
-    {ciphertext, tag} = :crypto.crypto_one_time_aead(:chacha20_poly1305, key, nonce, plaintext, aad, true)
+
+    aad =
+      Enum.join(
+        [
+          request["deliveryId"],
+          request["operation"] || "",
+          request["allowedHost"] || "",
+          request["refspecDigest"] || "",
+          "node-1"
+        ],
+        "\n"
+      )
+
+    plaintext =
+      Jason.encode!(%{
+        type: "token",
+        username: "x-access-token",
+        token: "ghs_treedx_transient_token",
+        expiresAt: "2026-06-17T22:30:00.000Z"
+      })
+
+    {ciphertext, tag} =
+      :crypto.crypto_one_time_aead(:chacha20_poly1305, key, nonce, plaintext, aad, true)
 
     %{
       algorithm: "x25519-hkdf-sha256-chacha20-poly1305/v1",
