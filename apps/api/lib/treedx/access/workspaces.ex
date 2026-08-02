@@ -77,7 +77,12 @@ defmodule TreeDx.Workspaces do
   def close(workspace_id, principal) do
     with {:ok, workspace} when is_map(workspace) <- TreeDx.Store.get_workspace(workspace_id),
          :ok <- workspace_actor_allowed(workspace, principal),
-         {:ok, _workspace, _scope} <- ensure_policy_current(workspace, principal, "files:read"),
+         {:ok, _scope} <-
+           TreeDx.Capabilities.require_capability(
+             principal,
+             "files:read",
+             workspace["repositoryId"]
+           ),
          {:ok, closed} when is_map(closed) <- TreeDx.Store.close_workspace(workspace_id) do
       put_workspace_route(closed, principal, "closed")
 
@@ -92,6 +97,74 @@ defmodule TreeDx.Workspaces do
     else
       {:ok, nil} -> {:error, %{code: "not_found", message: "Workspace not found."}}
       other -> other
+    end
+  end
+
+  def abandon(workspace_id, params, principal) do
+    with {:ok, workspace} when is_map(workspace) <- TreeDx.Store.get_workspace(workspace_id),
+         :ok <- workspace_actor_allowed(workspace, principal),
+         {:ok, _scope} <-
+           TreeDx.Capabilities.require_capability(
+             principal,
+             "files:read",
+             workspace["repositoryId"]
+           ),
+         {:ok, repo} when is_map(repo) <- TreeDx.Store.get_repository(workspace["repositoryId"]),
+         {:ok, discarded} <- discard_workspace_ref(repo, workspace, params["expectedHead"]),
+         {:ok, closed} when is_map(closed) <- TreeDx.Store.close_workspace(workspace_id) do
+      put_workspace_route(closed, principal, "closed")
+
+      TreeDx.Audit.append("workspace.abandoned", %{
+        actor_id: actor_id(principal),
+        tenant_id: tenant_id(principal),
+        repo_id: closed["repositoryId"],
+        data: %{
+          workspaceId: workspace_id,
+          ref: discarded["ref"],
+          head: discarded["head"],
+          status: discarded["status"]
+        }
+      })
+
+      {:ok, %{workspace: public_workspace(closed), discardedRef: discarded}}
+    else
+      {:ok, nil} -> {:error, %{code: "not_found", message: "Workspace not found."}}
+      other -> other
+    end
+  end
+
+  defp discard_workspace_ref(_repo, %{"mode" => mode}, _expected) when mode != "writable",
+    do:
+      {:error,
+       %{code: "validation_error", message: "Only writable workspaces have a branch to abandon."}}
+
+  defp discard_workspace_ref(repo, workspace, expected_head) do
+    branch_name = workspace["branchName"]
+    commit_sha = workspace["commitSha"]
+
+    cond do
+      not is_binary(branch_name) or not String.starts_with?(branch_name, "refs/heads/") ->
+        {:error, %{code: "validation_error", message: "The workspace has no managed branch."}}
+
+      branch_name == (repo["defaultRef"] || "refs/heads/main") ->
+        {:error, %{code: "conflict", message: "The repository default ref cannot be abandoned."}}
+
+      not is_binary(commit_sha) or commit_sha == "" ->
+        {:error,
+         %{
+           code: "conflict",
+           message: "The workspace must be committed before its branch can be abandoned."
+         }}
+
+      expected_head != commit_sha ->
+        {:error,
+         %{
+           code: "conflict",
+           message: "The expected workspace head does not match its recorded commit."
+         }}
+
+      true ->
+        TreeDx.Git.discard_ref(TreeDx.RepositoryStorage.path!(repo), branch_name, commit_sha)
     end
   end
 
@@ -352,6 +425,7 @@ defmodule TreeDx.Workspaces do
       branchName: workspace["branchName"],
       mode: workspace["mode"],
       status: workspace["status"],
+      allowedPaths: workspace["allowedPaths"] || [],
       expiresAt: workspace["expiresAt"],
       commitSha: workspace["commitSha"],
       policyVersion: workspace["policyVersion"],

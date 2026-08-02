@@ -30,6 +30,7 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
     let mut nodes = Vec::new();
     let mut edges = Vec::new();
     let mut file_by_path = BTreeMap::new();
+    let mut diagnostics = GraphDiagnostics::default();
     let commit_node = GraphNode {
         id: commit_id(&input.commit_sha),
         node_type: "Reference".to_string(),
@@ -81,6 +82,15 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
 
     for doc_input in &input.documents {
         let parsed = parse_document(&doc_input.content);
+        if let Some(error) = &parsed.frontmatter_error {
+            diagnostics
+                .invalid_frontmatter_paths
+                .push(doc_input.path.clone());
+            diagnostics.warnings.push(format!(
+                "Invalid frontmatter in {}: {error}",
+                doc_input.path
+            ));
+        }
         let body = parsed.body;
         let frontmatter = parsed.frontmatter;
         let file_id = file_id(&doc_input.path);
@@ -346,7 +356,7 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
         nodes,
         edges,
         metrics,
-        diagnostics: GraphDiagnostics::default(),
+        diagnostics,
     })
 }
 

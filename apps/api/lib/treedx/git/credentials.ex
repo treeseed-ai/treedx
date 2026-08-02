@@ -1,45 +1,45 @@
 defmodule TreeDx.Git.Credentials do
   @moduledoc false
 
-  def resolve(nil), do: {:ok, nil}
-  def resolve(""), do: {:ok, nil}
+  def resolve(delivery_id, context \\ %{})
+  def resolve(nil, _context), do: {:ok, nil}
+  def resolve("", _context), do: {:ok, nil}
 
-  def resolve(credential_id) when is_binary(credential_id) do
+  def resolve(delivery_id, context) when is_binary(delivery_id) do
     case provider() do
       "none" ->
         {:error,
          %{code: "credential_not_configured", message: "Git credential provider is disabled."}}
 
       "env_file" ->
-        resolve_env_file(credential_id)
+        resolve_env_file(delivery_id)
 
       "external_command" ->
-        resolve_external_command(credential_id)
+        resolve_external_command(delivery_id)
 
-      "treeseed_bridge" ->
-        resolve_treeseed_bridge(credential_id)
+      "http_broker" ->
+        resolve_http_broker(delivery_id, context)
 
       other ->
         {:error, %{code: "validation_error", message: "Unknown credential provider #{other}."}}
     end
   end
 
-  def resolve(_credential_id),
-    do: {:error, %{code: "validation_error", message: "credentialId must be a string."}}
+  def resolve(_delivery_id, _context),
+    do:
+      {:error,
+       %{code: "validation_error", message: "credentialId must be an opaque delivery identifier."}}
 
   defp provider, do: System.get_env("TREEDX_REMOTE_CREDENTIAL_PROVIDER") || "none"
 
-  defp resolve_env_file(credential_id) do
+  defp resolve_env_file(delivery_id) do
     with path when is_binary(path) and path != "" <-
            System.get_env("TREEDX_REMOTE_CREDENTIALS_FILE"),
          {:ok, body} <- File.read(path),
          {:ok, parsed} <- Jason.decode(body),
-         %{} = credential <- Map.get(parsed, credential_id) do
-      {:ok, sanitize_shape(Map.put(credential, "id", credential_id))}
+         %{} = credential <- Map.get(parsed, delivery_id) do
+      {:ok, sanitize_shape(Map.put(credential, "id", delivery_id))}
     else
-      nil ->
-        {:error, %{code: "credential_not_configured", message: "credentialId was not found."}}
-
       "" ->
         {:error,
          %{
@@ -47,132 +47,140 @@ defmodule TreeDx.Git.Credentials do
            message: "TREEDX_REMOTE_CREDENTIALS_FILE is not configured."
          }}
 
-      {:error, _reason} ->
-        {:error, %{code: "credential_not_configured", message: "Unable to read credential file."}}
-
       _ ->
         {:error, %{code: "credential_not_configured", message: "credentialId was not found."}}
     end
   end
 
-  defp resolve_external_command(credential_id) do
+  defp resolve_external_command(delivery_id) do
     with command when is_binary(command) and command != "" <-
            System.get_env("TREEDX_REMOTE_CREDENTIAL_COMMAND"),
-         {body, 0} <- System.cmd(command, [credential_id], stderr_to_stdout: false),
+         {body, 0} <- System.cmd(command, [delivery_id], stderr_to_stdout: false),
          {:ok, credential} <- Jason.decode(body) do
-      {:ok, sanitize_shape(Map.put(credential, "id", credential_id))}
+      {:ok, sanitize_shape(Map.put(credential, "id", delivery_id))}
     else
-      _ ->
-        {:error, %{code: "credential_not_configured", message: "Credential command failed."}}
+      _ -> {:error, %{code: "credential_not_configured", message: "Credential command failed."}}
     end
   end
 
-  defp resolve_treeseed_bridge(credential_id) do
-    with {:ok, endpoint} <- treeseed_bridge_endpoint(),
-         {:ok, body} <- treeseed_bridge_body(credential_id),
-         {:ok, response} <- post_treeseed_bridge(endpoint, body),
-         %{} = credential <- response["payload"] do
-      {:ok, sanitize_shape(Map.put(credential, "id", credential_id))}
+  defp resolve_http_broker(delivery_id, context) do
+    {node_public_key, node_private_key} = :crypto.generate_key(:ecdh, :x25519)
+
+    with {:ok, endpoint} <- required_env("TREEDX_REMOTE_CREDENTIAL_BROKER_URL"),
+         {:ok, service_id} <- required_env("TREEDX_REMOTE_CREDENTIAL_BROKER_SERVICE_ID"),
+         {:ok, service_assertion} <- required_env("TREEDX_REMOTE_CREDENTIAL_BROKER_ASSERTION"),
+         {:ok, response} <-
+           post_broker(
+             endpoint,
+             service_id,
+             service_assertion,
+             delivery_id,
+             Base.encode64(node_public_key),
+             context
+           ),
+         %{} = envelope <- response["payload"],
+         {:ok, credential} <-
+           decrypt_delivery(envelope, node_private_key, delivery_id, service_id, context) do
+      {:ok, sanitize_shape(Map.put(credential, "id", delivery_id))}
     else
       {:error, error} ->
         {:error, error}
 
       _ ->
         {:error,
-         %{code: "credential_not_configured", message: "TreeSeed credential bridge failed."}}
+         %{
+           code: "credential_not_configured",
+           message: "Credential broker returned an invalid delivery."
+         }}
     end
   end
 
-  defp treeseed_bridge_endpoint do
-    base =
-      System.get_env("TREEDX_TREESEED_API_BASE_URL") || System.get_env("TREESEED_API_BASE_URL")
+  defp post_broker(endpoint, service_id, assertion, delivery_id, node_public_key, context) do
+    :inets.start()
+    :ssl.start()
 
-    if is_binary(base) and String.trim(base) != "" do
-      endpoint =
-        base
-        |> String.trim()
-        |> String.trim_trailing("/")
-        |> Kernel.<>("/v1/internal/treedx/credentials/github-app")
+    body =
+      Jason.encode!(%{
+        deliveryId: delivery_id,
+        nodePublicKey: node_public_key,
+        operation: context[:operation],
+        allowedHost: context[:allowedHost],
+        refspecDigest: context[:refspecDigest]
+      })
 
-      {:ok, endpoint}
+    headers = [
+      {~c"content-type", ~c"application/json"},
+      {~c"x-treedx-node-id", String.to_charlist(service_id)},
+      {~c"authorization", String.to_charlist("Bearer #{assertion}")}
+    ]
+
+    request = {String.to_charlist(endpoint), headers, ~c"application/json", body}
+
+    case :httpc.request(:post, request, [timeout: 10_000], body_format: :binary) do
+      {:ok, {{_, status, _}, _headers, response_body}} when status in 200..299 ->
+        Jason.decode(response_body)
+
+      {:ok, {{_, status, _}, _headers, _response_body}} ->
+        {:error,
+         %{
+           code: "credential_not_configured",
+           message: "Credential broker returned HTTP #{status}."
+         }}
+
+      {:error, _reason} ->
+        {:error,
+         %{code: "credential_not_configured", message: "Credential broker is unavailable."}}
+    end
+  end
+
+  defp decrypt_delivery(envelope, private_key, delivery_id, service_id, context) do
+    with "x25519-hkdf-sha256-chacha20-poly1305/v1" <- envelope["algorithm"],
+         {:ok, ephemeral_public} <- Base.decode64(envelope["ephemeralPublicKey"] || ""),
+         true <- byte_size(ephemeral_public) == 32,
+         {:ok, nonce} <- Base.decode64(envelope["nonce"] || ""),
+         true <- byte_size(nonce) == 12,
+         {:ok, ciphertext} <- Base.decode64(envelope["ciphertext"] || ""),
+         {:ok, tag} <- Base.decode64(envelope["tag"] || ""),
+         true <- byte_size(tag) == 16,
+         shared <- :crypto.compute_key(:ecdh, ephemeral_public, private_key, :x25519),
+         key <- hkdf_sha256(shared, delivery_id, "treedx-credential-delivery-v1"),
+         aad <-
+           Enum.join(
+             [
+               delivery_id,
+               context[:operation] || "",
+               context[:allowedHost] || "",
+               context[:refspecDigest] || "",
+               service_id
+             ],
+             "\n"
+           ),
+         plaintext when is_binary(plaintext) <-
+           :crypto.crypto_one_time_aead(
+             :chacha20_poly1305,
+             key,
+             nonce,
+             ciphertext,
+             aad,
+             tag,
+             false
+           ),
+         {:ok, credential} <- Jason.decode(plaintext),
+         true <- is_map(credential) do
+      {:ok, credential}
     else
-      {:error,
-       %{
-         code: "credential_not_configured",
-         message: "TREEDX_TREESEED_API_BASE_URL is required for TreeSeed credential bridge."
-       }}
+      _ ->
+        {:error,
+         %{
+           code: "credential_not_configured",
+           message: "Credential delivery decryption failed."
+         }}
     end
   end
 
-  defp treeseed_bridge_body(credential_id) do
-    with {:ok, team_id} <- required_env("TREEDX_TREESEED_TEAM_ID"),
-         {:ok, project_id} <- required_env("TREEDX_TREESEED_PROJECT_ID"),
-         {:ok, repository} <- required_env("TREEDX_TREESEED_REPOSITORY"),
-         {:ok, installation_id} <- required_env("TREEDX_TREESEED_GITHUB_INSTALLATION_ID") do
-      operation = System.get_env("TREEDX_TREESEED_CREDENTIAL_OPERATION") || "fetch"
-
-      body =
-        %{
-          teamId: team_id,
-          projectId: project_id,
-          repository: repository,
-          installationId: installation_id,
-          operation: operation,
-          credentialId: credential_id,
-          ref: env_optional("TREEDX_TREESEED_REF"),
-          assignmentId: env_optional("TREEDX_TREESEED_ASSIGNMENT_ID"),
-          providerId: env_optional("TREEDX_TREESEED_PROVIDER_ID"),
-          workdayId: env_optional("TREEDX_TREESEED_WORKDAY_ID"),
-          paths: env_csv("TREEDX_TREESEED_PATHS"),
-          actor: %{
-            type: "treedx",
-            serviceId:
-              System.get_env("TREEDX_TREESEED_SERVICE_ID") ||
-                System.get_env("TREESEED_WEB_SERVICE_ID")
-          }
-        }
-        |> Enum.reject(fn {_key, value} -> is_nil(value) or value == [] end)
-        |> Map.new()
-
-      {:ok, Jason.encode!(body)}
-    end
-  end
-
-  defp post_treeseed_bridge(endpoint, body) do
-    with {:ok, service_id} <-
-           service_env("TREEDX_TREESEED_SERVICE_ID", "TREESEED_WEB_SERVICE_ID"),
-         {:ok, service_secret} <-
-           service_env("TREEDX_TREESEED_SERVICE_SECRET", "TREESEED_WEB_SERVICE_SECRET") do
-      :inets.start()
-      :ssl.start()
-
-      headers = [
-        {~c"content-type", ~c"application/json"},
-        {~c"x-treeseed-service-id", String.to_charlist(service_id)},
-        {~c"x-treeseed-service-secret", String.to_charlist(service_secret)}
-      ]
-
-      request = {String.to_charlist(endpoint), headers, ~c"application/json", body}
-
-      case :httpc.request(:post, request, [timeout: 10_000], body_format: :binary) do
-        {:ok, {{_, status, _}, _headers, response_body}} when status in 200..299 ->
-          Jason.decode(response_body)
-
-        {:ok, {{_, status, _}, _headers, _response_body}} ->
-          {:error,
-           %{
-             code: "credential_not_configured",
-             message: "TreeSeed credential bridge returned HTTP #{status}."
-           }}
-
-        {:error, _reason} ->
-          {:error,
-           %{
-             code: "credential_not_configured",
-             message: "TreeSeed credential bridge unavailable."
-           }}
-      end
-    end
+  defp hkdf_sha256(input_key_material, salt, info) do
+    pseudorandom_key = :crypto.mac(:hmac, :sha256, salt, input_key_material)
+    :crypto.mac(:hmac, :sha256, pseudorandom_key, info <> <<1>>)
   end
 
   defp required_env(name) do
@@ -182,36 +190,9 @@ defmodule TreeDx.Git.Credentials do
     end
   end
 
-  defp service_env(primary, fallback) do
-    case System.get_env(primary) || System.get_env(fallback) do
-      value when is_binary(value) and value != "" -> {:ok, value}
-      _ -> {:error, %{code: "credential_not_configured", message: "#{primary} is required."}}
-    end
-  end
-
-  defp env_optional(name) do
-    case System.get_env(name) do
-      value when is_binary(value) and value != "" -> value
-      _ -> nil
-    end
-  end
-
-  defp env_csv(name) do
-    case System.get_env(name) do
-      value when is_binary(value) and value != "" ->
-        value
-        |> String.split(",", trim: true)
-        |> Enum.map(&String.trim/1)
-        |> Enum.reject(&(&1 == ""))
-
-      _ ->
-        []
-    end
-  end
-
   defp sanitize_shape(credential) do
     credential
-    |> Map.take(["id", "type", "username", "password", "token", "keyPath"])
+    |> Map.take(["id", "type", "username", "password", "token"])
     |> Map.put_new("type", "token")
   end
 end

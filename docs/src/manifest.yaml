@@ -12,7 +12,6 @@ content:
   agents: ./src/content/agents
   books: ./src/content/books
   templates: ./src/content/templates
-  knowledge_packs: ./src/content/knowledge-packs
   workdays: ./src/content/workdays
 features:
   docs: true
@@ -26,8 +25,6 @@ features:
   forms: false
 site:
   models:
-    knowledge_packs:
-      rendered: false
     workdays:
       rendered: false
 providers:

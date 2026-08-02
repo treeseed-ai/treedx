@@ -163,7 +163,15 @@ defmodule TreeDx.Capabilities do
 
   defp maybe_intersect(scope, key, values) do
     existing = scope[key] || []
-    Map.put(scope, key, Enum.filter(existing, &(&1 in values or "*" in values or "**" in values)))
+
+    reduced =
+      cond do
+        Enum.any?(existing, &(&1 in ["*", "**"])) -> values
+        Enum.any?(values, &(&1 in ["*", "**"])) -> existing
+        true -> Enum.filter(existing, &(&1 in values))
+      end
+
+    Map.put(scope, key, Enum.uniq(reduced))
   end
 
   defp maybe_intersect_paths(scope, []), do: scope

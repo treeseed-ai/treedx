@@ -52,5 +52,6 @@ pub use workspace::{
     mark_workspace_committed, put_workspace, quarantine_workspace, update_workspace_policy,
 };
 pub use workspace_files::{
-    get_workspace_file, list_workspace_files, put_workspace_file, read_workspace_file_content,
+    get_workspace_file, list_workspace_files, put_workspace_file, put_workspace_files,
+    read_workspace_file_content,
 };

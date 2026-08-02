@@ -19,6 +19,8 @@ groups:
   - GET /api/v1/repos/{repo_id}/refs
   - GET /api/v1/repos/{repo_id}/remotes
   - POST /api/v1/repos/{repo_id}/push
+  - POST /api/v1/repos/{repo_id}/refs/promote
+  - POST /api/v1/repos/{repo_id}/refs/retire
   - POST /api/v1/repos/{repo_id}/sync
   Workspaces:
   - POST /api/v1/repos/{repo_id}/workspaces

@@ -38,6 +38,40 @@ fn local_bare_repo_push_updates_explicit_ref() {
 }
 
 #[test]
+fn repeated_local_push_is_convergent_after_the_destination_already_matches() {
+    let local = tempdir().unwrap();
+    let remote = tempdir().unwrap();
+    git(local.path(), &["init", "-b", "main"]);
+    git(local.path(), &["config", "user.name", "TreeDX Test"]);
+    git(
+        local.path(),
+        &["config", "user.email", "test@example.invalid"],
+    );
+    std::fs::write(local.path().join("README.md"), "repeatable\n").unwrap();
+    git(local.path(), &["add", "README.md"]);
+    git(local.path(), &["commit", "-m", "repeatable"]);
+    git(remote.path(), &["init", "--bare"]);
+    let request = || PushRemoteInput {
+        repo_path: local.path().display().to_string(),
+        remote_url: Some(format!("file://{}", remote.path().display())),
+        remote_name: Some("origin".to_string()),
+        refspecs: vec!["refs/heads/main:refs/heads/main".to_string()],
+        plan: false,
+        expected_remote_head: Some("0".repeat(40)),
+    };
+
+    let first = push_remote(PushRemoteInput {
+        expected_remote_head: None,
+        ..request()
+    })
+    .unwrap();
+    assert_eq!(first.status, "pushed");
+    let repeated = push_remote(request()).unwrap();
+    assert_eq!(repeated.status, "already_current");
+    assert!(repeated.updated_refs.is_empty());
+}
+
+#[test]
 fn plan_validates_without_remote_mutation() {
     let local = tempdir().unwrap();
     let remote = tempdir().unwrap();

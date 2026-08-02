@@ -108,16 +108,22 @@ pub fn push_remote(input: PushRemoteInput) -> Result<PushRemoteResult, GitError>
         .transpose()?
         .unwrap_or_default();
     let before_head = remote_path.as_deref().and_then(current_head);
+    let already_applied = updates
+        .iter()
+        .all(|(_source, destination, target)| before_refs.get(destination) == Some(target));
 
     if let Some(expected) = input.expected_remote_head.as_deref() {
-        if before_head.as_deref() != Some(expected) {
+        let destinations_match_expected = updates.iter().all(|(_source, destination, _target)| {
+            before_refs.get(destination).map(String::as_str) == Some(expected)
+        });
+        if !destinations_match_expected && !already_applied {
             return Err(GitError::Conflict(
-                "expectedRemoteHead does not match remote HEAD".to_string(),
+                "expectedRemoteHead does not match the remote destination ref".to_string(),
             ));
         }
     }
 
-    if !input.plan {
+    if !input.plan && !already_applied {
         let remote_path = remote_path
             .as_ref()
             .ok_or_else(|| GitError::UnsupportedTransport(remote_url.clone()))?;
@@ -155,7 +161,14 @@ pub fn push_remote(input: PushRemoteInput) -> Result<PushRemoteResult, GitError>
         rejected_refs: Vec::new(),
         before_head,
         after_head,
-        status: if input.plan { "plan" } else { "pushed" }.to_string(),
+        status: if input.plan {
+            "plan"
+        } else if already_applied {
+            "already_current"
+        } else {
+            "pushed"
+        }
+        .to_string(),
         backend: "gix".to_string(),
     })
 }

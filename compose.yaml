@@ -26,7 +26,17 @@ services:
       TREEDX_BOOTSTRAP_TRUST_PATHS: "**"
       TREEDX_REGISTRY_MODE: local
       TREEDX_DEV_HOT_RELOAD: "true"
+      TREEDX_SOURCE_CLOSURE_DIGEST: ${TREESEED_TREEDX_SOURCE_CLOSURE_DIGEST:-unknown}
       TREEDX_NODE_ID: node_local
+      TREEDX_GIT_EXTERNAL_TRANSPORT_ENABLED: "true"
+      TREEDX_GIT_SSH_ENABLED: "false"
+      TREEDX_GIT_ALLOWED_HOSTS: ${TREESEED_TREEDX_GIT_ALLOWED_HOSTS:-github.com}
+      TREEDX_REMOTE_CREDENTIAL_PROVIDER: http_broker
+      TREEDX_REMOTE_CREDENTIAL_BROKER_URL: ${TREESEED_API_INTERNAL_URL:-http://host.docker.internal:3000}/v1/internal/credential-deliveries/consume
+      TREEDX_REMOTE_CREDENTIAL_BROKER_SERVICE_ID: node_local
+      TREEDX_REMOTE_CREDENTIAL_BROKER_ASSERTION: ${TREESEED_TREEDX_CREDENTIAL_BROKER_ASSERTION:-treeseed-local-credential-broker-assertion}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "4000:4000"
     volumes:

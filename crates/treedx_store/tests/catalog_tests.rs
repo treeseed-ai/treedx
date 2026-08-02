@@ -148,7 +148,11 @@ fn workspaces_persist_and_writable_lease_conflicts() {
         },
     )
     .unwrap();
-    let input = workspace_input("ws_one", "refs/heads/agent/demo", 60);
+    let mut input = workspace_input("ws_one", "refs/heads/agent/demo", 60);
+    let materialized = dir.path().join("workspaces/active/ws_one");
+    std::fs::create_dir_all(&materialized).unwrap();
+    std::fs::write(materialized.join("draft.md"), "draft").unwrap();
+    input.materialized_path = materialized.to_string_lossy().into_owned();
     let first = put_workspace(dir.path(), input.clone()).unwrap();
     assert_eq!(first.status, "ready");
     assert!(first.lease_id.is_some());
@@ -174,6 +178,12 @@ fn workspaces_persist_and_writable_lease_conflicts() {
 
     let closed = close_workspace(dir.path(), "ws_one").unwrap().unwrap();
     assert_eq!(closed.status, "closed");
+    assert!(!materialized.exists());
+
+    // Reconciliation also retires materialization left by older versions.
+    std::fs::create_dir_all(&materialized).unwrap();
+    cleanup_expired_workspaces(dir.path()).unwrap();
+    assert!(!materialized.exists());
 
     let mut after_close = workspace_input("ws_three", "refs/heads/agent/demo", 60);
     after_close.materialized_path = "/tmp/ws_three".to_string();
@@ -190,11 +200,11 @@ fn expired_workspace_cleanup_marks_workspace_and_releases_lease() {
         },
     )
     .unwrap();
-    put_workspace(
-        dir.path(),
-        workspace_input("ws_expired", "refs/heads/agent/expired", 1),
-    )
-    .unwrap();
+    let mut input = workspace_input("ws_expired", "refs/heads/agent/expired", 1);
+    let materialized = dir.path().join("workspaces/active/ws_expired");
+    std::fs::create_dir_all(&materialized).unwrap();
+    input.materialized_path = materialized.to_string_lossy().into_owned();
+    put_workspace(dir.path(), input).unwrap();
     std::thread::sleep(std::time::Duration::from_millis(1200));
     let report = cleanup_expired_workspaces(dir.path()).unwrap();
     assert_eq!(report.expired_workspace_ids, vec!["ws_expired".to_string()]);
@@ -205,6 +215,7 @@ fn expired_workspace_cleanup_marks_workspace_and_releases_lease() {
             .status,
         "expired"
     );
+    assert!(!materialized.exists());
 }
 
 fn workspace_input(id: &str, branch_name: &str, ttl_seconds: i64) -> WorkspaceInput {

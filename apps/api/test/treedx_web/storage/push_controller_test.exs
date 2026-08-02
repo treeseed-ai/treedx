@@ -98,6 +98,156 @@ defmodule TreeDxWeb.PushControllerTest do
     assert wrong_ref["error"]["code"] == "permission_denied"
   end
 
+  test "managed ref promotion can resume after the reviewed commit was already promoted" do
+    repo_path = Path.join(TreeDx.Store.data_dir(), "repos/bare/promote-repeat")
+    create_git_repo!(repo_path)
+    base = String.trim(git!(repo_path, ["rev-parse", "refs/heads/main"]))
+    git!(repo_path, ["checkout", "-b", "authoring/repeat"])
+    File.write!(Path.join(repo_path, "resume.md"), "resume safely\n")
+    git!(repo_path, ["add", "resume.md"])
+    git!(repo_path, ["commit", "-m", "resume publication"])
+
+    assert {:ok, %{"status" => "promoted", "beforeHead" => ^base}} =
+             TreeDx.Git.promote_ref(
+               repo_path,
+               "refs/heads/authoring/repeat",
+               "refs/heads/main",
+               base
+             )
+
+    assert {:ok, %{"status" => "already_current", "afterHead" => target}} =
+             TreeDx.Git.promote_ref(
+               repo_path,
+               "refs/heads/authoring/repeat",
+               "refs/heads/main",
+               base
+             )
+
+    assert target == String.trim(git!(repo_path, ["rev-parse", "refs/heads/main"]))
+  end
+
+  test "merged ref retirement is exact, safe, and idempotent" do
+    repo_path = Path.join(TreeDx.Store.data_dir(), "repos/bare/retire-repeat")
+    create_git_repo!(repo_path)
+    git!(repo_path, ["checkout", "-b", "authoring/retire"])
+    File.write!(Path.join(repo_path, "retire.md"), "retire safely\n")
+    git!(repo_path, ["add", "retire.md"])
+    git!(repo_path, ["commit", "-m", "retire publication"])
+    head = String.trim(git!(repo_path, ["rev-parse", "refs/heads/authoring/retire"]))
+    git!(repo_path, ["checkout", "main"])
+    git!(repo_path, ["merge", "--ff-only", "authoring/retire"])
+
+    assert {:ok, %{"status" => "retired", "head" => ^head}} =
+             TreeDx.Git.retire_ref(
+               repo_path,
+               "refs/heads/authoring/retire",
+               "refs/heads/main",
+               head,
+               head
+             )
+
+    assert {:ok, %{"status" => "already_retired"}} =
+             TreeDx.Git.retire_ref(
+               repo_path,
+               "refs/heads/authoring/retire",
+               "refs/heads/main",
+               head,
+               head
+             )
+
+    git!(repo_path, ["checkout", "-b", "authoring/unmerged"])
+    File.write!(Path.join(repo_path, "unmerged.md"), "do not retire\n")
+    git!(repo_path, ["add", "unmerged.md"])
+    git!(repo_path, ["commit", "-m", "unmerged publication"])
+    unmerged = String.trim(git!(repo_path, ["rev-parse", "refs/heads/authoring/unmerged"]))
+
+    assert {:error, %{code: "conflict"}} =
+             TreeDx.Git.retire_ref(
+               repo_path,
+               "refs/heads/authoring/unmerged",
+               "refs/heads/main",
+               unmerged,
+               head
+             )
+  end
+
+  test "orphan ref discard requires policy authority, an exact head, and a reason", %{
+    token: token
+  } do
+    repo_path = Path.join(TreeDx.Store.data_dir(), "repos/bare/orphan-discard")
+    create_git_repo!(repo_path)
+
+    repo =
+      register_repo!(build_conn(), token, %{
+        "name" => "orphan-discard",
+        "localPath" => repo_path
+      })["repo"]
+
+    repo_id = repo["repoId"]
+    git!(repo_path, ["checkout", "-b", "authoring/orphan"])
+    File.write!(Path.join(repo_path, "orphan.md"), "abandoned work\n")
+    git!(repo_path, ["add", "orphan.md"])
+    git!(repo_path, ["commit", "-m", "orphan work"])
+    head = String.trim(git!(repo_path, ["rev-parse", "refs/heads/authoring/orphan"]))
+
+    ordinary =
+      actor_token!("actor_orphan_ordinary", repo_id, ["git:push"], ["refs/heads/authoring/orphan"])
+
+    denied =
+      build_conn()
+      |> auth_conn(ordinary)
+      |> post("/api/v1/repos/#{repo_id}/refs/discard-orphan", %{
+        "ref" => "refs/heads/authoring/orphan",
+        "expectedHead" => head,
+        "reason" => "Operator-confirmed orphan"
+      })
+      |> json!(403)
+
+    assert denied["error"]["code"] == "permission_denied"
+
+    maintainer =
+      actor_token!("actor_orphan_maintainer", repo_id, ["git:push", "policy:write"], [
+        "refs/heads/authoring/orphan"
+      ])
+
+    stale =
+      build_conn()
+      |> auth_conn(maintainer)
+      |> post("/api/v1/repos/#{repo_id}/refs/discard-orphan", %{
+        "ref" => "refs/heads/authoring/orphan",
+        "expectedHead" => String.duplicate("0", 40),
+        "reason" => "Operator-confirmed orphan"
+      })
+      |> json!(409)
+
+    assert stale["error"]["code"] == "conflict"
+
+    discarded =
+      build_conn()
+      |> auth_conn(maintainer)
+      |> post("/api/v1/repos/#{repo_id}/refs/discard-orphan", %{
+        "ref" => "refs/heads/authoring/orphan",
+        "expectedHead" => head,
+        "reason" => "Operator-confirmed orphan"
+      })
+      |> json!(200)
+
+    assert discarded["discard"]["status"] == "discarded"
+    assert discarded["discard"]["head"] == head
+
+    replay =
+      build_conn()
+      |> auth_conn(maintainer)
+      |> post("/api/v1/repos/#{repo_id}/refs/discard-orphan", %{
+        "ref" => "refs/heads/authoring/orphan",
+        "expectedHead" => head,
+        "reason" => "Idempotent cleanup retry"
+      })
+      |> json!(200)
+
+    assert replay["discard"]["status"] == "already_discarded"
+  end
+
   test "mirror health and promotion plan are audited and protected", %{
     token: token,
     repo_id: repo_id

@@ -706,6 +706,100 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TreeDxPushRequest'
+  /api/v1/repos/{repo_id}/refs/promote:
+    post:
+      operationId: promoteRepositoryRef
+      summary: Atomically fast-forward one managed repository branch ref to another reviewed ref.
+      x-treedx-required-capabilities:
+      - git:push
+      parameters:
+      - $ref: '#/components/parameters/RepoId'
+      responses:
+        '200':
+          description: The destination branch was atomically promoted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreeDxPromoteRepositoryRefResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TreeDxRefPromotionRequest'
+  /api/v1/repos/{repo_id}/refs/retire:
+    post:
+      operationId: retireRepositoryRef
+      summary: Retire an exact managed branch only after proving it is merged into an exact destination head.
+      x-treedx-required-capabilities:
+      - git:push
+      parameters:
+      - $ref: '#/components/parameters/RepoId'
+      responses:
+        '200':
+          description: The merged source branch was retired or was already absent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreeDxRetireRepositoryRefResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TreeDxRefRetirementRequest'
+  /api/v1/repos/{repo_id}/refs/discard-orphan:
+    post:
+      operationId: discardOrphanRepositoryRef
+      summary: Discard an exact unmerged orphan ref through an explicit privileged maintenance ceremony.
+      x-treedx-required-capabilities:
+      - git:push
+      - policy:write
+      parameters:
+      - $ref: '#/components/parameters/RepoId'
+      responses:
+        '200':
+          description: The exact orphan ref was discarded or was already absent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreeDxDiscardOrphanRepositoryRefResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TreeDxOrphanRefDiscardRequest'
   /api/v1/repos/{repo_id}/workspaces:
     post:
       operationId: createWorkspace
@@ -1738,6 +1832,42 @@ paths:
           $ref: '#/components/responses/Error'
       security:
       - bearerAuth: []
+  /api/v1/workspaces/{workspace_id}/abandon:
+    post:
+      operationId: abandonWorkspace
+      summary: Close a workspace and compare-and-delete its exact unmerged branch
+      x-treedx-required-capabilities:
+      - workspace:same_actor
+      - files:read
+      parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TreeDxAbandonWorkspaceRequest'
+      responses:
+        '200':
+          description: Workspace abandoned with exact branch retirement evidence.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreeDxAbandonWorkspaceResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      security:
+      - bearerAuth: []
   /api/v1/workspaces/{workspace_id}/tree:
     get:
       operationId: listWorkspaceTree
@@ -1886,6 +2016,39 @@ paths:
           $ref: '#/components/responses/Error'
       security:
       - bearerAuth: []
+  /api/v1/workspaces/{workspace_id}/files/batch:
+    put:
+      operationId: writeWorkspaceFiles
+      summary: Write a bounded batch of workspace files atomically to the overlay log
+      x-treedx-required-capabilities:
+      - files:write
+      parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      responses:
+        '200':
+          description: Workspace file batch response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreeDxWriteWorkspaceFilesResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TreeDxWriteFilesRequest'
   /api/v1/workspaces/{workspace_id}/blobs/write:
     post:
       operationId: writeWorkspaceBlob
@@ -3501,6 +3664,8 @@ components:
       type: object
       required: []
       properties:
+        workspaceId:
+          type: string
         repoId:
           type: string
       additionalProperties: false
@@ -3866,6 +4031,114 @@ components:
     TreeDxPushResult:
       type: object
       additionalProperties: true
+    TreeDxRefPromotionRequest:
+      type: object
+      required:
+      - sourceRef
+      - destinationRef
+      - expectedDestinationHead
+      properties:
+        sourceRef:
+          type: string
+        destinationRef:
+          type: string
+        expectedDestinationHead:
+          type: string
+      additionalProperties: false
+    TreeDxRefPromotionResult:
+      type: object
+      required:
+      - repoId
+      - sourceRef
+      - destinationRef
+      - beforeHead
+      - afterHead
+      - status
+      properties:
+        repoId:
+          type: string
+        sourceRef:
+          type: string
+        destinationRef:
+          type: string
+        beforeHead:
+          type: string
+        afterHead:
+          type: string
+        status:
+          type: string
+    TreeDxRefRetirementRequest:
+      type: object
+      required:
+      - ref
+      - mergedIntoRef
+      - expectedHead
+      - expectedMergedIntoHead
+      properties:
+        ref:
+          type: string
+        mergedIntoRef:
+          type: string
+        expectedHead:
+          type: string
+        expectedMergedIntoHead:
+          type: string
+      additionalProperties: false
+    TreeDxRefRetirementResult:
+      type: object
+      required:
+      - repoId
+      - ref
+      - mergedIntoRef
+      - head
+      - mergedIntoHead
+      - status
+      properties:
+        repoId:
+          type: string
+        ref:
+          type: string
+        mergedIntoRef:
+          type: string
+        head:
+          type: string
+        mergedIntoHead:
+          type: string
+        status:
+          type: string
+      additionalProperties: false
+    TreeDxOrphanRefDiscardRequest:
+      type: object
+      required:
+      - ref
+      - expectedHead
+      - reason
+      properties:
+        ref:
+          type: string
+        expectedHead:
+          type: string
+        reason:
+          type: string
+          maxLength: 500
+      additionalProperties: false
+    TreeDxOrphanRefDiscardResult:
+      type: object
+      required:
+      - repoId
+      - ref
+      - head
+      - status
+      properties:
+        repoId:
+          type: string
+        ref:
+          type: string
+        head:
+          type: string
+        status:
+          type: string
+      additionalProperties: false
     TreeDxCreateWorkspaceRequest:
       type: object
       required: []
@@ -4005,6 +4278,18 @@ components:
           type: string
         allowProtected:
           type: boolean
+      additionalProperties: false
+    TreeDxWriteFilesRequest:
+      type: object
+      required:
+      - files
+      properties:
+        files:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/TreeDxWriteFileRequest'
       additionalProperties: false
     TreeDxPatchFileRequest:
       type: object
@@ -4632,6 +4917,23 @@ components:
     TreeDxArtifactCleanupResult:
       type: object
       additionalProperties: true
+      properties:
+        deletedCount:
+          type: integer
+        retentionDays:
+          type: integer
+        workspaces:
+          type: object
+          additionalProperties: false
+          properties:
+            expiredWorkspaceIds:
+              type: array
+              items:
+                type: string
+            releasedLeaseIds:
+              type: array
+              items:
+                type: string
     TreeDxArtifactListRequest:
       type: object
       required: []
@@ -5215,6 +5517,39 @@ components:
         push:
           $ref: '#/components/schemas/TreeDxPushResult'
       additionalProperties: true
+    TreeDxPromoteRepositoryRefResponse:
+      type: object
+      required:
+      - ok
+      - promotion
+      properties:
+        ok:
+          const: true
+        promotion:
+          $ref: '#/components/schemas/TreeDxRefPromotionResult'
+      additionalProperties: false
+    TreeDxRetireRepositoryRefResponse:
+      type: object
+      required:
+      - ok
+      - retirement
+      properties:
+        ok:
+          const: true
+        retirement:
+          $ref: '#/components/schemas/TreeDxRefRetirementResult'
+      additionalProperties: false
+    TreeDxDiscardOrphanRepositoryRefResponse:
+      type: object
+      required:
+      - ok
+      - discard
+      properties:
+        ok:
+          const: true
+        discard:
+          $ref: '#/components/schemas/TreeDxOrphanRefDiscardResult'
+      additionalProperties: false
     TreeDxCreateWorkspaceResponse:
       type: object
       required:
@@ -5587,6 +5922,43 @@ components:
         workspace:
           $ref: '#/components/schemas/TreeDxWorkspace'
       additionalProperties: true
+    TreeDxAbandonWorkspaceRequest:
+      type: object
+      required:
+      - expectedHead
+      properties:
+        expectedHead:
+          type: string
+          pattern: '^[0-9a-f]{40,64}$'
+      additionalProperties: false
+    TreeDxAbandonWorkspaceResponse:
+      type: object
+      required:
+      - ok
+      - workspace
+      - discardedRef
+      properties:
+        ok:
+          const: true
+        workspace:
+          $ref: '#/components/schemas/TreeDxWorkspace'
+        discardedRef:
+          type: object
+          required:
+          - ref
+          - head
+          - status
+          properties:
+            ref:
+              type: string
+            head:
+              type: string
+            status:
+              enum:
+              - discarded
+              - already_discarded
+          additionalProperties: false
+      additionalProperties: false
     TreeDxListWorkspaceTreeResponse:
       type: object
       required:
@@ -5618,6 +5990,18 @@ components:
           const: true
         file:
           $ref: '#/components/schemas/TreeDxFileMutationResult'
+      additionalProperties: true
+    TreeDxWriteWorkspaceFilesResponse:
+      type: object
+      required:
+      - ok
+      properties:
+        ok:
+          const: true
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/TreeDxFileMutationResult'
       additionalProperties: true
     TreeDxPatchWorkspaceFileResponse:
       type: object

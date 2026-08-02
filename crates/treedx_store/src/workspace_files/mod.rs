@@ -1,12 +1,49 @@
 use crate::catalog::{get_record, list_records, put_record};
 use crate::error::StoreError;
 use crate::ids::workspace_file_id;
+use crate::log::append_records;
 use crate::types::{WorkspaceFileInput, WorkspaceFileRecord};
 use base64::Engine;
 use chrono::Utc;
 use std::path::Path;
 
 pub fn put_workspace_file(
+    data_dir: &Path,
+    input: WorkspaceFileInput,
+) -> Result<WorkspaceFileRecord, StoreError> {
+    let record = prepare_workspace_file(data_dir, input)?;
+    put_record(
+        data_dir,
+        "workspaces/files.tdb",
+        "workspace_file",
+        &record.id,
+        &record,
+    )?;
+    Ok(record)
+}
+
+pub fn put_workspace_files(
+    data_dir: &Path,
+    inputs: Vec<WorkspaceFileInput>,
+) -> Result<Vec<WorkspaceFileRecord>, StoreError> {
+    if inputs.is_empty() || inputs.len() > 500 {
+        return Err(StoreError::Validation(
+            "workspace file batch must contain between 1 and 500 entries".to_string(),
+        ));
+    }
+    let records = inputs
+        .into_iter()
+        .map(|input| prepare_workspace_file(data_dir, input))
+        .collect::<Result<Vec<_>, _>>()?;
+    append_records(
+        &data_dir.join("workspaces/files.tdb"),
+        "workspace_file",
+        records.iter().map(|record| (record.id.clone(), record.clone())).collect(),
+    )?;
+    Ok(records)
+}
+
+fn prepare_workspace_file(
     data_dir: &Path,
     input: WorkspaceFileInput,
 ) -> Result<WorkspaceFileRecord, StoreError> {
@@ -80,13 +117,6 @@ pub fn put_workspace_file(
         updated_at: now,
     };
 
-    put_record(
-        data_dir,
-        "workspaces/files.tdb",
-        "workspace_file",
-        &id,
-        &record,
-    )?;
     Ok(record)
 }
 

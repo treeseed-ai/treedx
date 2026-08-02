@@ -24,6 +24,158 @@ defmodule TreeDx.Git do
   def fetch_remote(input), do: call(&TreeDx.Native.fetch_remote/1, [Jason.encode!(input)])
   def push_remote(input), do: call(&TreeDx.Native.push_remote/1, [Jason.encode!(input)])
 
+  def promote_ref(repo_path, source_ref, destination_ref, expected_destination) do
+    with {:ok, %{"target" => source_sha}} <- resolve_ref(repo_path, source_ref),
+         {:ok, %{"target" => destination_sha}} <- resolve_ref(repo_path, destination_ref),
+         :ok <- require_expected_or_applied(destination_sha, expected_destination, source_sha),
+         :ok <- require_fast_forward(repo_path, destination_sha, source_sha),
+         :ok <- update_ref_if_needed(repo_path, destination_ref, destination_sha, source_sha) do
+      {:ok,
+       %{
+         "sourceRef" => source_ref,
+         "destinationRef" => destination_ref,
+         "beforeHead" => destination_sha,
+         "afterHead" => source_sha,
+         "status" => if(destination_sha == source_sha, do: "already_current", else: "promoted")
+       }}
+    else
+      other ->
+        other
+    end
+  end
+
+  def retire_ref(repo_path, ref_name, merged_into_ref, expected_head, expected_merged_head) do
+    with {:ok, %{"target" => merged_head}} <- resolve_ref(repo_path, merged_into_ref),
+         :ok <- require_exact_head(merged_head, expected_merged_head, "merged destination"),
+         {:ok, result} <-
+           retire_existing_ref(repo_path, ref_name, merged_into_ref, expected_head, merged_head) do
+      {:ok, result}
+    end
+  end
+
+  def discard_ref(repo_path, ref_name, expected_head) do
+    case resolve_ref(repo_path, ref_name) do
+      {:ok, %{"target" => head}} ->
+        with :ok <- require_exact_head(head, expected_head, "discarded ref"),
+             :ok <- delete_ref(repo_path, ref_name, head) do
+          {:ok, %{"ref" => ref_name, "head" => head, "status" => "discarded"}}
+        end
+
+      {:error, %{code: "not_found"}} ->
+        {:ok, %{"ref" => ref_name, "head" => expected_head, "status" => "already_discarded"}}
+
+      {:error, %{"code" => "not_found"}} ->
+        {:ok, %{"ref" => ref_name, "head" => expected_head, "status" => "already_discarded"}}
+
+      other ->
+        other
+    end
+  end
+
+  defp retire_existing_ref(repo_path, ref_name, merged_into_ref, expected_head, merged_head) do
+    case resolve_ref(repo_path, ref_name) do
+      {:ok, %{"target" => head}} ->
+        with :ok <- require_exact_head(head, expected_head, "retired ref"),
+             :ok <- require_fast_forward(repo_path, head, merged_head),
+             :ok <- delete_ref(repo_path, ref_name, head) do
+          {:ok,
+           %{
+             "ref" => ref_name,
+             "mergedIntoRef" => merged_into_ref,
+             "head" => head,
+             "mergedIntoHead" => merged_head,
+             "status" => "retired"
+           }}
+        end
+
+      {:error, %{code: "not_found"}} ->
+        {:ok,
+         %{
+           "ref" => ref_name,
+           "mergedIntoRef" => merged_into_ref,
+           "head" => expected_head,
+           "mergedIntoHead" => merged_head,
+           "status" => "already_retired"
+         }}
+
+      {:error, %{"code" => "not_found"}} ->
+        {:ok,
+         %{
+           "ref" => ref_name,
+           "mergedIntoRef" => merged_into_ref,
+           "head" => expected_head,
+           "mergedIntoHead" => merged_head,
+           "status" => "already_retired"
+         }}
+
+      other ->
+        other
+    end
+  end
+
+  defp require_exact_head(actual, expected, label) when is_binary(expected) and expected != "" do
+    if actual == expected,
+      do: :ok,
+      else: {:error, %{code: "conflict", message: "The #{label} head changed before retirement."}}
+  end
+
+  defp require_exact_head(_actual, _expected, label),
+    do: {:error, %{code: "validation_error", message: "The expected #{label} head is required."}}
+
+  defp delete_ref(repo_path, ref_name, expected_head) do
+    case System.cmd("git", ["update-ref", "-d", ref_name, expected_head],
+           cd: repo_path,
+           stderr_to_stdout: true
+         ) do
+      {_output, 0} -> :ok
+      _ -> {:error, %{code: "conflict", message: "The retired ref changed during deletion."}}
+    end
+  end
+
+  defp update_ref_if_needed(_repo_path, _destination_ref, sha, sha), do: :ok
+
+  defp update_ref_if_needed(repo_path, destination_ref, destination_sha, source_sha) do
+    case System.cmd("git", ["update-ref", destination_ref, source_sha, destination_sha],
+           cd: repo_path,
+           stderr_to_stdout: true
+         ) do
+      {_output, 0} ->
+        :ok
+
+      {_output, _status} ->
+        {:error, %{code: "conflict", message: "The destination ref changed during promotion."}}
+    end
+  end
+
+  defp require_expected_or_applied(destination_sha, _expected, source_sha)
+       when destination_sha == source_sha,
+       do: :ok
+
+  defp require_expected_or_applied(destination_sha, expected, _source_sha),
+    do: require_expected_destination(destination_sha, expected)
+
+  defp require_expected_destination(destination_sha, expected)
+       when is_binary(expected) and expected != "" do
+    if destination_sha == expected,
+      do: :ok,
+      else:
+        {:error,
+         %{code: "conflict", message: "The destination ref no longer matches the reviewed base."}}
+  end
+
+  defp require_expected_destination(_destination_sha, _expected),
+    do: {:error, %{code: "validation_error", message: "expectedDestinationHead is required."}}
+
+  defp require_fast_forward(repo_path, destination_sha, source_sha) do
+    case System.cmd("git", ["merge-base", "--is-ancestor", destination_sha, source_sha],
+           cd: repo_path,
+           stderr_to_stdout: true
+         ) do
+      {_output, 0} -> :ok
+      _ -> {:error, %{code: "conflict", message: "Ref promotion must be a fast-forward."}}
+    end
+  end
+
   def commit_overlay(input) do
     input_json = Jason.encode!(input)
 

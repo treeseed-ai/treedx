@@ -242,6 +242,9 @@ defmodule TreeDx.Store do
   def put_workspace_file(input),
     do: call_json(&TreeDx.Native.put_workspace_file/2, data_dir(), Jason.encode!(input))
 
+  def put_workspace_files(inputs),
+    do: call_json(&TreeDx.Native.put_workspace_files/2, data_dir(), Jason.encode!(inputs))
+
   def get_workspace_file(workspace_id, path),
     do: call_json(&TreeDx.Native.get_workspace_file/3, data_dir(), workspace_id, path)
 

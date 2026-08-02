@@ -182,37 +182,25 @@ defmodule TreeDx.ConfigValidation do
       end
 
     errors =
-      if provider == "treeseed_bridge" do
+      if provider == "http_broker" do
         errors
         |> require_keys(env, [
-          {"TREEDX_TREESEED_TEAM_ID", "missing_treeseed_team_id"},
-          {"TREEDX_TREESEED_PROJECT_ID", "missing_treeseed_project_id"},
-          {"TREEDX_TREESEED_REPOSITORY", "missing_treeseed_repository"},
-          {"TREEDX_TREESEED_GITHUB_INSTALLATION_ID", "missing_treeseed_github_installation_id"}
+          {"TREEDX_REMOTE_CREDENTIAL_BROKER_URL", "missing_credential_broker_url"},
+          {"TREEDX_REMOTE_CREDENTIAL_BROKER_SERVICE_ID", "missing_credential_broker_service_id"},
+          {"TREEDX_REMOTE_CREDENTIAL_BROKER_ASSERTION", "missing_credential_broker_assertion"},
+          {"TREEDX_GIT_ALLOWED_HOSTS", "missing_git_allowed_hosts"}
         ])
-        |> require_one(
-          env,
-          ["TREEDX_TREESEED_API_BASE_URL", "TREESEED_API_BASE_URL"],
-          "missing_treeseed_api_base_url"
-        )
-        |> require_one(
-          env,
-          ["TREEDX_TREESEED_SERVICE_ID", "TREESEED_WEB_SERVICE_ID"],
-          "missing_treeseed_service_id"
-        )
-        |> require_one(
-          env,
-          ["TREEDX_TREESEED_SERVICE_SECRET", "TREESEED_WEB_SERVICE_SECRET"],
-          "missing_treeseed_service_secret"
-        )
       else
         errors
       end
 
     if truthy?(env["TREEDX_GIT_SSH_ENABLED"]) do
-      errors
-      |> require_keys(env, [{"TREEDX_GIT_SSH_KNOWN_HOSTS", "missing_ssh_known_hosts"}])
-      |> require_credential_provider(provider)
+      add(
+        errors,
+        "ssh_git_transport_disabled",
+        "SSH Git transport is disabled; configure an allowlisted HTTPS remote.",
+        "TREEDX_GIT_SSH_ENABLED"
+      )
     else
       errors
     end
@@ -283,17 +271,6 @@ defmodule TreeDx.ConfigValidation do
       add(errors, code, "#{Enum.join(keys, " or ")} is required.", Enum.join(keys, "|"))
     end
   end
-
-  defp require_credential_provider(errors, "none"),
-    do:
-      add(
-        errors,
-        "missing_remote_credential_provider",
-        "SSH requires a credential provider.",
-        "TREEDX_REMOTE_CREDENTIAL_PROVIDER"
-      )
-
-  defp require_credential_provider(errors, _provider), do: errors
 
   defp writable_dir?(path) do
     File.mkdir_p(path)

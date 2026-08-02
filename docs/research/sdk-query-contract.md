@@ -69,9 +69,9 @@ and contains a closing delimiter:
 \n---\n
 ```
 
-The text between delimiters is YAML. The body is the remaining text after the closing delimiter. TreeDX follows the same delimiter convention and exposes parsed YAML as generic `frontmatter`.
+The text between delimiters is YAML. The body is the remaining text after the closing delimiter. TreeDX accepts LF or CRLF delimiters and an optional UTF-8 byte-order mark. Repository queries and the native graph index use the same complete YAML contract, including nested mappings, block and inline arrays, typed scalars, and multiline values, and expose the normalized JSON-compatible value as generic `frontmatter`.
 
-Invalid YAML does not make a repository file unreadable in TreeDX. The response keeps file content available, returns empty frontmatter, and includes `frontmatterError`.
+Invalid, unterminated, or non-mapping YAML does not make a repository file unreadable in TreeDX. Repository reads keep file content available, return empty frontmatter, and include `frontmatterError`; graph refreshes keep the file readable and add its authorized logical path to `invalidFrontmatterPaths`. TreeDX must never construct partial metadata from invalid YAML.
 
 ## Body And Content Fields
 

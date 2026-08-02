@@ -72,6 +72,8 @@ capabilities:
   summary: Push and sync repository content through TreeDX repository operations.
   endpoints:
   - POST /api/v1/repos/{repo_id}/push
+  - POST /api/v1/repos/{repo_id}/refs/promote
+  - POST /api/v1/repos/{repo_id}/refs/retire
   - POST /api/v1/repos/{repo_id}/sync
   conformanceScenarios:
   - repositories.push_sync

@@ -6,7 +6,21 @@ use crate::types::{
     WorkspacePolicyUpdateInput, WorkspaceQuarantineInput, WorkspaceRecord,
 };
 use chrono::{Duration, Utc};
-use std::path::Path;
+use std::{fs, path::Path};
+
+fn retire_materialized_workspace(data_dir: &Path, workspace: &WorkspaceRecord) -> Result<(), StoreError> {
+    let expected = data_dir.join("workspaces").join("active").join(&workspace.id);
+    let recorded = Path::new(&workspace.materialized_path);
+    // Materialized paths are destructive cleanup targets. Refuse to follow a
+    // persisted path outside the canonical workspace root.
+    if recorded != expected {
+        return Ok(());
+    }
+    if recorded.exists() {
+        fs::remove_dir_all(recorded)?;
+    }
+    Ok(())
+}
 
 pub fn put_workspace(
     data_dir: &Path,
@@ -220,6 +234,7 @@ pub fn close_workspace(
         return Ok(None);
     };
     if record.status != "closed" {
+        retire_materialized_workspace(data_dir, &record)?;
         record.status = "closed".to_string();
         record.closed_at = Some(Utc::now());
         if let Some(lease_id) = record.lease_id.as_deref() {
@@ -245,6 +260,7 @@ pub fn cleanup_expired_workspaces(data_dir: &Path) -> Result<CleanupReport, Stor
         list_records::<WorkspaceRecord>(data_dir, "workspaces/sessions.tdb", "workspace")?
     {
         if workspace.status == "ready" && workspace.expires_at <= now {
+            retire_materialized_workspace(data_dir, &workspace)?;
             workspace.status = "expired".to_string();
             workspace.closed_at = Some(now);
             if let Some(lease_id) = workspace.lease_id.as_deref() {
@@ -259,6 +275,13 @@ pub fn cleanup_expired_workspaces(data_dir: &Path) -> Result<CleanupReport, Stor
                 &workspace.id,
                 &workspace,
             )?;
+        } else if matches!(
+            workspace.status.as_str(),
+            "closed" | "expired" | "quarantined" | "revoked"
+        ) {
+            // Older releases retained materialized directories after recording
+            // a terminal workspace state. Reconciliation retires those safely.
+            retire_materialized_workspace(data_dir, &workspace)?;
         }
     }
 

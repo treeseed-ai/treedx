@@ -81,21 +81,18 @@ defmodule TreeDxWeb.SecurityReleaseConfigTest do
         "TREEDX_GIT_SSH_ENABLED" => "true",
         "TREEDX_REMOTE_CREDENTIAL_PROVIDER" => "none"
       }),
-      ["missing_ssh_known_hosts", "missing_remote_credential_provider"]
+      ["ssh_git_transport_disabled"]
     )
 
     assert_codes(
       Map.merge(base_env(dir), %{
-        "TREEDX_REMOTE_CREDENTIAL_PROVIDER" => "treeseed_bridge"
+        "TREEDX_REMOTE_CREDENTIAL_PROVIDER" => "http_broker"
       }),
       [
-        "missing_treeseed_team_id",
-        "missing_treeseed_project_id",
-        "missing_treeseed_repository",
-        "missing_treeseed_github_installation_id",
-        "missing_treeseed_api_base_url",
-        "missing_treeseed_service_id",
-        "missing_treeseed_service_secret"
+        "missing_credential_broker_url",
+        "missing_credential_broker_service_id",
+        "missing_credential_broker_assertion",
+        "missing_git_allowed_hosts"
       ]
     )
   end

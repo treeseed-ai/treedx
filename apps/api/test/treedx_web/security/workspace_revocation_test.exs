@@ -105,5 +105,24 @@ defmodule TreeDxWeb.WorkspaceRevocationTest do
       |> json!(200)
 
     assert Enum.any?(audit["events"], &(&1["workspaceId"] == workspace_id))
+
+    {:ok, _cleanup_grant} =
+      TreeDx.Capabilities.put_grant(%{
+        "actorId" => "actor_limited",
+        "tenantId" => "tenant_demo",
+        "repoIds" => [repo_id],
+        "capabilities" => ["files:read"],
+        "refs" => ["refs/heads/*"],
+        "paths" => ["docs/**"]
+      })
+
+    closed =
+      build_conn()
+      |> auth_conn(limited_token)
+      |> post("/api/v1/workspaces/#{workspace_id}/close", %{})
+      |> json!(200)
+
+    assert closed["status"] == "closed"
+    refute File.exists?(Path.join([data_dir, "workspaces", "active", workspace_id]))
   end
 end

@@ -35,6 +35,9 @@ defmodule TreeDx.Files do
     Pool.run(:workspace_mutation, fn -> do_write(workspace_id, params, principal) end)
   end
 
+  def write_batch(workspace_id, params, principal),
+    do: Pool.run(:workspace_mutation, fn -> TreeDx.Files.Batch.write(workspace_id, params, principal) end)
+
   defp do_write(workspace_id, params, principal) do
     with {:ok, ctx} <- writable_context(workspace_id, principal, "files:write"),
          {:ok, path} <- PathPolicy.normalize(params["path"]),
@@ -154,7 +157,15 @@ defmodule TreeDx.Files do
          {:ok, overlays} <- TreeDx.Store.list_workspace_files(workspace_id) do
       changes = Enum.map(overlays, &status_entry(ctx, &1))
       audit("workspace.status_viewed", ctx, %{workspaceId: workspace_id})
-      {:ok, %{workspaceId: workspace_id, status: ctx.workspace["status"], changes: changes}}
+
+      {:ok,
+       %{
+         workspaceId: workspace_id,
+         status: ctx.workspace["status"],
+         branchName: ctx.workspace["branchName"],
+         commitSha: ctx.workspace["commitSha"],
+         changes: changes
+       }}
     end
   end
 
@@ -244,7 +255,7 @@ defmodule TreeDx.Files do
     end
   end
 
-  defp writable_context(workspace_id, principal, capability) do
+  def writable_context(workspace_id, principal, capability) do
     with {:ok, ctx} <- context(workspace_id, principal, capability),
          :ok <- workspace_writable(ctx.workspace) do
       {:ok, ctx}

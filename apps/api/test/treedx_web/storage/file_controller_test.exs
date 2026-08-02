@@ -151,6 +151,16 @@ defmodule TreeDxWeb.FileControllerTest do
     assert committed["status"] == "committed"
     assert committed["commitSha"] =~ ~r/^[0-9a-f]{40}$/
 
+    status =
+      build_conn()
+      |> auth(token)
+      |> get("/api/v1/workspaces/#{workspace_id}/status")
+      |> json_response(200)
+
+    assert status["status"] == "committed"
+    assert status["commitSha"] == committed["commitSha"]
+    assert status["branchName"] == committed["branchName"]
+
     read_workspace_id =
       create_workspace(token, repo_id, "refs/heads/agent/file-api-read", ["docs/**"], %{
         "baseRef" => "refs/heads/agent/file-api",
@@ -163,6 +173,31 @@ defmodule TreeDxWeb.FileControllerTest do
       |> get("/api/v1/workspaces/#{read_workspace_id}/files?path=docs/new.md")
 
     assert json_response(conn, 200)["content"] == "TreeDX overlay content"
+  end
+
+  test "writes a bounded file batch into one workspace overlay", %{token: token, repo_id: repo_id} do
+    workspace_id = create_workspace(token, repo_id, "refs/heads/agent/file-batch", ["docs/**"])
+
+    response =
+      build_conn()
+      |> auth(token)
+      |> put("/api/v1/workspaces/#{workspace_id}/files/batch", %{
+        "files" => [
+          %{"path" => "docs/first.md", "content" => "first"},
+          %{"path" => "docs/second.md", "content" => "second"}
+        ]
+      })
+      |> json_response(200)
+
+    assert Enum.map(response["files"], & &1["path"]) == ["docs/first.md", "docs/second.md"]
+
+    first =
+      build_conn()
+      |> auth(token)
+      |> get("/api/v1/workspaces/#{workspace_id}/files?path=docs/first.md")
+      |> json_response(200)
+
+    assert first["content"] == "first"
   end
 
   test "path traversal, protected paths, and missing token are rejected", %{

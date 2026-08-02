@@ -36,6 +36,8 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
     file = json_response(conn, 200)["file"]
     assert file["frontmatter"]["title"] == "Read Me"
     assert file["frontmatter"]["status"] == "published"
+    assert file["frontmatter"]["tags"] == ["release", "documentation"]
+    assert file["frontmatter"]["metadata"]["nested"] == true
     assert file["body"] =~ "release provenance"
     refute Map.has_key?(json_response(conn, 200), "localPath")
 
@@ -102,6 +104,39 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
     changes = json_response(conn, 200)["results"]
     assert Enum.any?(changes, &(&1["path"] == "docs/readme.md" and &1["status"] == "modified"))
     assert Enum.any?(changes, &(&1["path"] == "docs/new.md" and &1["status"] == "added"))
+  end
+
+  test "parses structured CRLF frontmatter and reports malformed frontmatter", %{
+    token: token,
+    repo_id: repo_id
+  } do
+    structured =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{
+        "path" => "docs/structured.md",
+        "parseFrontmatter" => true
+      })
+      |> json_response(200)
+      |> Map.fetch!("file")
+
+    assert structured["frontmatter"]["relations"] == [%{"id" => "page.child", "weight" => 2}]
+    assert structured["frontmatter"]["tags"] == ["security", "teams"]
+    assert structured["body"] == "# Structured\r\n"
+    assert structured["frontmatterError"] == nil
+
+    malformed =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{
+        "path" => "docs/malformed.md",
+        "parseFrontmatter" => true
+      })
+      |> json_response(200)
+      |> Map.fetch!("file")
+
+    assert malformed["frontmatter"] == %{}
+    assert malformed["frontmatterError"]["code"] == "invalid_frontmatter"
   end
 
   test "enforces auth, path policy, protected paths, and binary handling", %{
@@ -240,7 +275,9 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
     updated_at: 2026-06-01T00:00:00Z
     tags:
       - release
-      - provenance
+      - documentation
+    metadata:
+      nested: true
     ---
     # Overview
 
@@ -256,6 +293,13 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
 
     # Page
     """)
+
+    File.write!(
+      Path.join(path, "docs/structured.md"),
+      "\uFEFF---\r\ntitle: Structured\r\ntags: [security, teams]\r\nrelations:\r\n  - id: page.child\r\n    weight: 2\r\n---\r\n# Structured\r\n"
+    )
+
+    File.write!(Path.join(path, "docs/malformed.md"), "---\ntags: [broken\n---\nBody\n")
 
     File.write!(Path.join(path, ".env"), "SECRET=true\n")
     File.write!(Path.join(path, "outside.md"), "outside docs scope\n")

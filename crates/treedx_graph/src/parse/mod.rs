@@ -6,6 +6,7 @@ use serde_json::{Map, Value};
 pub struct ParsedDocument {
     pub frontmatter: Value,
     pub body: String,
+    pub frontmatter_error: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -25,24 +26,66 @@ pub struct Link {
 }
 
 pub fn parse_document(content: &str) -> ParsedDocument {
-    if !content.starts_with("---\n") {
+    let source = content.strip_prefix('\u{feff}').unwrap_or(content);
+    let opening_length = if source.starts_with("---\r\n") {
+        5
+    } else if source.starts_with("---\n") {
+        4
+    } else {
         return ParsedDocument {
             frontmatter: Value::Object(Map::new()),
             body: content.to_string(),
-        };
-    }
-    let Some(index) = content[4..].find("\n---\n").map(|idx| idx + 4) else {
-        return ParsedDocument {
-            frontmatter: Value::Object(Map::new()),
-            body: content.to_string(),
+            frontmatter_error: None,
         };
     };
-    let yaml = &content[4..index];
-    let body = content[index + 5..].to_string();
-    ParsedDocument {
-        frontmatter: parse_simple_yaml(yaml),
-        body,
+    let remainder = &source[opening_length..];
+    let Some((yaml_end, body_start)) = frontmatter_boundary(remainder) else {
+        return ParsedDocument {
+            frontmatter: Value::Object(Map::new()),
+            body: content.to_string(),
+            frontmatter_error: Some(
+                "Frontmatter opening delimiter has no closing delimiter.".to_string(),
+            ),
+        };
+    };
+    let yaml = &remainder[..yaml_end];
+    match parse_yaml(yaml) {
+        Ok(frontmatter) => ParsedDocument {
+            frontmatter,
+            body: remainder[body_start..].to_string(),
+            frontmatter_error: None,
+        },
+        Err(error) => ParsedDocument {
+            frontmatter: Value::Object(Map::new()),
+            body: content.to_string(),
+            frontmatter_error: Some(error),
+        },
     }
+}
+
+fn frontmatter_boundary(source: &str) -> Option<(usize, usize)> {
+    let mut offset = 0usize;
+    for line in source.split_inclusive('\n') {
+        let value = line.trim_end_matches(['\r', '\n']);
+        if value == "---" {
+            return Some((offset, offset + line.len()));
+        }
+        offset += line.len();
+    }
+    (source[offset..].trim_end_matches('\r') == "---").then_some((offset, source.len()))
+}
+
+fn parse_yaml(source: &str) -> Result<Value, String> {
+    let yaml = serde_yaml::from_str::<serde_yaml::Value>(source)
+        .map_err(|error| format!("Invalid YAML frontmatter: {error}"))?;
+    if yaml.is_null() {
+        return Ok(Value::Object(Map::new()));
+    }
+    if !yaml.is_mapping() {
+        return Err("YAML frontmatter must contain a top-level mapping.".to_string());
+    }
+    serde_json::to_value(yaml)
+        .map_err(|error| format!("YAML frontmatter is not JSON-compatible: {error}"))
 }
 
 pub fn extract_headings(body: &str) -> Vec<Heading> {
@@ -134,44 +177,4 @@ pub fn string_array(frontmatter: &Value, key: &str) -> Vec<String> {
         Value::String(value) if !value.trim().is_empty() => vec![value.trim().to_string()],
         _ => Vec::new(),
     }
-}
-
-fn parse_simple_yaml(source: &str) -> Value {
-    let mut object = Map::new();
-    let mut current_array: Option<String> = None;
-    for raw in source.lines() {
-        let line = raw.trim_end();
-        if line.trim().is_empty() {
-            continue;
-        }
-        if let Some(key) = current_array.clone() {
-            if let Some(item) = line.trim_start().strip_prefix("- ") {
-                if let Some(Value::Array(values)) = object.get_mut(&key) {
-                    values.push(Value::String(unquote(item.trim())));
-                }
-                continue;
-            }
-            current_array = None;
-        }
-        let Some((key, value)) = line.split_once(':') else {
-            continue;
-        };
-        let key = key.trim().to_string();
-        let value = value.trim();
-        if value.is_empty() {
-            object.insert(key.clone(), Value::Array(Vec::new()));
-            current_array = Some(key);
-        } else if value.eq_ignore_ascii_case("true") || value.eq_ignore_ascii_case("false") {
-            object.insert(key, Value::Bool(value.eq_ignore_ascii_case("true")));
-        } else if let Ok(number) = value.parse::<i64>() {
-            object.insert(key, Value::Number(number.into()));
-        } else {
-            object.insert(key, Value::String(unquote(value)));
-        }
-    }
-    Value::Object(object)
-}
-
-fn unquote(value: &str) -> String {
-    value.trim_matches('"').trim_matches('\'').to_string()
 }

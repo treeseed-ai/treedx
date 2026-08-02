@@ -14,6 +14,36 @@ defmodule TreeDx.ReposTest do
     assert "repos:write" in scope["capabilities"]
   end
 
+  test "connected tokens narrow wildcard grants without losing repository and ref access" do
+    {:ok, _grant} =
+      TreeDx.Capabilities.put_grant(%{
+        "actorId" => "gateway",
+        "tenantId" => "control-plane",
+        "repoIds" => ["*"],
+        "refs" => ["*"],
+        "paths" => ["**"],
+        "capabilities" => ["repos:read", "files:read"]
+      })
+
+    principal = %{
+      "actorId" => "gateway",
+      "tenantId" => "control-plane",
+      "authMode" => "connected",
+      "tokenScope" => %{
+        "repoIds" => ["repo_one"],
+        "refs" => ["refs/heads/main"],
+        "paths" => ["docs/src/content/**"],
+        "capabilities" => ["files:read"]
+      }
+    }
+
+    assert {:ok, scope} = TreeDx.Capabilities.effective_scope(principal, "repo_one")
+    assert scope["repoIds"] == ["repo_one"]
+    assert scope["refs"] == ["refs/heads/main"]
+    assert scope["paths"] == ["docs/src/content/**"]
+    assert scope["capabilities"] == ["files:read"]
+  end
+
   test "repository registration validates required fields", %{principal: principal} do
     assert {:error, %{code: "validation_error"}} = TreeDx.Repos.register(%{}, principal)
   end

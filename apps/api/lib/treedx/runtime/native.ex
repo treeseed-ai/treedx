@@ -77,6 +77,7 @@ defmodule TreeDx.Native do
   def update_workspace_policy(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
   def list_quarantined_workspaces(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
   def put_workspace_file(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
+  def put_workspace_files(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
   def get_workspace_file(_data_dir, _workspace_id, _path), do: :erlang.nif_error(:nif_not_loaded)
   def list_workspace_files(_data_dir, _workspace_id), do: :erlang.nif_error(:nif_not_loaded)
   def read_workspace_file_content(_data_dir, _record), do: :erlang.nif_error(:nif_not_loaded)

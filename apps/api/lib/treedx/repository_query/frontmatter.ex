@@ -2,19 +2,26 @@ defmodule TreeDx.RepositoryQuery.Frontmatter do
   @moduledoc false
 
   def parse(source) when is_binary(source) do
-    if String.starts_with?(source, "---\n") do
-      parse_delimited(source)
-    else
-      %{frontmatter: %{}, body: source, frontmatterError: nil}
+    normalized = String.trim_leading(source, "\uFEFF")
+
+    cond do
+      String.starts_with?(normalized, "---\r\n") ->
+        parse_delimited(source, binary_part(normalized, 5, byte_size(normalized) - 5))
+
+      String.starts_with?(normalized, "---\n") ->
+        parse_delimited(source, binary_part(normalized, 4, byte_size(normalized) - 4))
+
+      true ->
+        %{frontmatter: %{}, body: source, frontmatterError: nil}
     end
   end
 
-  defp parse_delimited(source) do
-    case :binary.match(source, "\n---\n", scope: {4, byte_size(source) - 4}) do
-      {index, 5} ->
-        yaml = binary_part(source, 4, index - 4)
-        body_start = index + 5
-        body = binary_part(source, body_start, byte_size(source) - body_start)
+  defp parse_delimited(original, remainder) do
+    case Regex.run(~r/(?:\A|\r?\n)---(?:\r?\n|\z)/, remainder, return: :index) do
+      [{index, length}] ->
+        yaml = binary_part(remainder, 0, index)
+        body_start = index + length
+        body = binary_part(remainder, body_start, byte_size(remainder) - body_start)
 
         case parse_yaml(yaml) do
           {:ok, frontmatter} ->
@@ -23,26 +30,30 @@ defmodule TreeDx.RepositoryQuery.Frontmatter do
           {:error, error} ->
             %{
               frontmatter: %{},
-              body: source,
+              body: original,
               frontmatterError: %{code: "invalid_frontmatter", message: error}
             }
         end
 
       _ ->
-        %{frontmatter: %{}, body: source, frontmatterError: nil}
+        %{
+          frontmatter: %{},
+          body: original,
+          frontmatterError: %{
+            code: "invalid_frontmatter",
+            message: "Frontmatter opening delimiter has no closing delimiter."
+          }
+        }
     end
   end
 
   defp parse_yaml(yaml) do
     case :yamerl_constr.string(String.to_charlist(yaml)) do
-      [doc] when is_list(doc) ->
-        {:ok, normalize_yaml(doc)}
-
-      [doc] when is_map(doc) ->
-        {:ok, normalize_yaml(doc)}
-
-      [_] ->
-        {:ok, %{}}
+      [doc] ->
+        case normalize_yaml(doc) do
+          value when is_map(value) -> {:ok, value}
+          _ -> {:error, "YAML frontmatter must contain a top-level mapping."}
+        end
 
       [] ->
         {:ok, %{}}
@@ -71,6 +82,8 @@ defmodule TreeDx.RepositoryQuery.Frontmatter do
     Map.new(value, fn {key, val} -> {to_string_key(key), normalize_yaml(val)} end)
   end
 
+  defp normalize_yaml(value) when is_boolean(value), do: value
+  defp normalize_yaml(nil), do: nil
   defp normalize_yaml(value) when is_binary(value), do: value
   defp normalize_yaml(value) when is_atom(value), do: Atom.to_string(value)
   defp normalize_yaml(value), do: value

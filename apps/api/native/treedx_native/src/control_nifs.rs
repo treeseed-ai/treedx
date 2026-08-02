@@ -351,6 +351,17 @@ fn put_workspace_file<'a>(env: Env<'a>, data_dir: String, input_json: String) ->
 }
 
 #[rustler::nif(schedule = "DirtyIo")]
+fn put_workspace_files<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
+    match parse_json::<Vec<WorkspaceFileInput>>(input_json) {
+        Ok(inputs) => match treedx_store::put_workspace_files(Path::new(&data_dir), inputs) {
+            Ok(records) => ok_json(env, records),
+            Err(error) => err_json(env, error.code(), error),
+        },
+        Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
 fn get_workspace_file<'a>(
     env: Env<'a>,
     data_dir: String,

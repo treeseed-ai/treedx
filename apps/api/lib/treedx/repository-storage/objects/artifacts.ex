@@ -57,6 +57,8 @@ defmodule TreeDx.Artifacts do
     retention_days = params["retentionDays"] || env_int("TREEDX_ARTIFACT_RETENTION_DAYS", 30)
     cutoff = DateTime.utc_now() |> DateTime.add(-retention_days * 86_400, :second)
 
+    {:ok, workspace_cleanup} = TreeDx.Workspaces.cleanup_expired()
+
     expired =
       read_jsonl("snapshots/artifacts.tdb")
       |> Enum.reject(&deleted_by_index?/1)
@@ -90,7 +92,14 @@ defmodule TreeDx.Artifacts do
       data: %{deletedCount: length(expired), retentionDays: retention_days}
     })
 
-    {:ok, %{cleanup: %{deletedCount: length(expired), retentionDays: retention_days}}}
+    {:ok,
+     %{
+       cleanup: %{
+         deletedCount: length(expired),
+         retentionDays: retention_days,
+         workspaces: workspace_cleanup
+       }
+     }}
   end
 
   defp public_artifact(artifact) do
