@@ -2,12 +2,7 @@ use crate::ids::{edge_id, normalize_id_value};
 use crate::types::{GraphEdge, GraphNode};
 use serde_json::json;
 
-pub(super) fn edge(
-    source: &str,
-    edge_type: &str,
-    target: &str,
-    owner: Option<&str>,
-) -> GraphEdge {
+pub(super) fn edge(source: &str, edge_type: &str, target: &str, owner: Option<&str>) -> GraphEdge {
     GraphEdge {
         id: edge_id(source, edge_type, target, owner),
         edge_type: edge_type.to_string(),

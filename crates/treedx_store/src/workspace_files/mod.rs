@@ -38,7 +38,10 @@ pub fn put_workspace_files(
     append_records(
         &data_dir.join("workspaces/files.tdb"),
         "workspace_file",
-        records.iter().map(|record| (record.id.clone(), record.clone())).collect(),
+        records
+            .iter()
+            .map(|record| (record.id.clone(), record.clone()))
+            .collect(),
     )?;
     Ok(records)
 }

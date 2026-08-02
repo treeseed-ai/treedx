@@ -8,8 +8,14 @@ use crate::types::{
 use chrono::{Duration, Utc};
 use std::{fs, path::Path};
 
-fn retire_materialized_workspace(data_dir: &Path, workspace: &WorkspaceRecord) -> Result<(), StoreError> {
-    let expected = data_dir.join("workspaces").join("active").join(&workspace.id);
+fn retire_materialized_workspace(
+    data_dir: &Path,
+    workspace: &WorkspaceRecord,
+) -> Result<(), StoreError> {
+    let expected = data_dir
+        .join("workspaces")
+        .join("active")
+        .join(&workspace.id);
     let recorded = Path::new(&workspace.materialized_path);
     // Materialized paths are destructive cleanup targets. Refuse to follow a
     // persisted path outside the canonical workspace root.

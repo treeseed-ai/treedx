@@ -6,10 +6,10 @@ use crate::parse::{
 };
 use crate::types::*;
 use chrono::Utc;
+use nodes::{edge, metadata_node, section_node, SectionSpec};
 use serde_json::json;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
-use nodes::{edge, metadata_node, section_node, SectionSpec};
 
 pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::GraphError> {
     let paths_hash = short_hash(
