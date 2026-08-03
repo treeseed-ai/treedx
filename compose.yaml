@@ -3,11 +3,15 @@ services:
     build:
       context: .
       target: dev
-    working_dir: /workspace/treedx/apps/api
-    command: sh -lc "mix deps.get && mix phx.server"
+    working_dir: /source/treedx/apps/api
+    command: >-
+      sh -lc "mkdir -p /workspace/treedx &&
+      tar -C /source/treedx --exclude=.git --exclude=target --exclude=apps/api/deps --exclude=apps/api/_build -cf - . |
+      tar -C /workspace/treedx -xf - &&
+      cd /workspace/treedx/apps/api && mix deps.get && mix phx.server"
     environment:
       MIX_ENV: dev
-      MIX_BUILD_PATH: /tmp/treedx-mix-build
+      MIX_BUILD_PATH: /workspace/treedx/apps/api/_build
       CARGO_TARGET_DIR: /tmp/treedx-cargo-target
       PHX_SERVER: "true"
       PHX_HOST: 0.0.0.0
@@ -40,9 +44,11 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - .:/workspace/treedx
-      - treedx-data:/var/lib/treedx
+      - .:/source/treedx:ro
+      - "${TREESEED_TREEDX_HOST_DATA_DIR:-../../.treeseed/local-treedx/data}:/var/lib/treedx"
       - treedx-cargo-target:/tmp/treedx-cargo-target
+    tmpfs:
+      - /workspace/treedx:exec,mode=1777
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:4000/api/v1/health"]
       interval: 10s
@@ -51,5 +57,4 @@ services:
       start_period: 20s
 
 volumes:
-  treedx-data:
   treedx-cargo-target:
