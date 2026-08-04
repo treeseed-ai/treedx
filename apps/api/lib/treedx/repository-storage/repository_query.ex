@@ -332,14 +332,23 @@ defmodule TreeDx.RepositoryQuery do
   end
 
   defp read_files(ctx, paths, params) do
-    paths
-    |> Enum.map(fn path ->
-      TreeDx.RepositoryCache.document(ctx, path,
-        encoding: params["encoding"] || "utf8",
-        parse_frontmatter: params["parseFrontmatter"] != false
-      )
-    end)
-    |> collect_ok()
+    with {:ok, bounds} <- read_bounds(paths, params) do
+      paths
+      |> Enum.map(fn path ->
+        with {:ok, document} <-
+               TreeDx.RepositoryCache.document(ctx, path,
+                 encoding: params["encoding"] || "utf8",
+                 parse_frontmatter: params["parseFrontmatter"] != false
+               ) do
+          TreeDx.RepositoryQuery.BoundedRead.project(document, bounds)
+        end
+      end)
+      |> collect_ok()
+    end
+  end
+
+  defp read_bounds(paths, params) do
+    TreeDx.RepositoryQuery.BoundedRead.normalize(paths, params)
   end
 
   defp filtered_entries(ctx, patterns, params) do

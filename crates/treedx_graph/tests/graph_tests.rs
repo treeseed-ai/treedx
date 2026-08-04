@@ -1,9 +1,10 @@
 use std::fs;
 
 use treedx_graph::{
-    build_graph_index, parse_ctx_dsl, query_graph, read_graph_segments, read_latest_graph_manifest,
-    search_graph, write_graph_segments, GraphDocumentInput, GraphIndexInput, GraphQueryOptions,
-    GraphQueryRequest, GraphSearchRequest,
+    build_context_pack, build_graph_index, parse_ctx_dsl, query_graph, read_graph_segments,
+    read_latest_graph_manifest, search_graph, write_graph_segments, ContextBudget,
+    ContextPackRequest, GraphDocumentInput, GraphIndexInput, GraphQueryOptions, GraphQueryRequest,
+    GraphSearchRequest,
 };
 
 fn sample_index() -> treedx_graph::GraphIndex {
@@ -122,6 +123,46 @@ fn ranks_and_queries_deterministically() {
         .nodes
         .iter()
         .any(|entry| entry.node.path.as_deref() == Some("docs/guide.md")));
+}
+
+#[test]
+fn context_budget_truncates_an_oversized_first_node() {
+    let mut index = sample_index();
+    let oversized = "evidence ".repeat(10_000);
+    let node = index
+        .nodes
+        .iter_mut()
+        .find(|node| node.node_type == "File")
+        .expect("file node");
+    node.text = Some(oversized);
+    let seed_id = node.id.clone();
+    let pack = build_context_pack(
+        index,
+        ContextPackRequest {
+            graph_query: GraphQueryRequest {
+                seed_ids: vec![seed_id],
+                options: GraphQueryOptions {
+                    max_nodes: Some(1),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            budget: ContextBudget {
+                max_nodes: Some(1),
+                max_tokens: Some(100),
+                include_mode: None,
+            },
+        },
+    )
+    .expect("context pack");
+
+    assert_eq!(pack.nodes.len(), 1);
+    assert!(pack.total_token_estimate <= 100);
+    assert!(pack.nodes[0].text.chars().count() <= 400);
+    assert_eq!(
+        pack.nodes[0].node.text.as_deref(),
+        Some(pack.nodes[0].text.as_str())
+    );
 }
 
 #[test]

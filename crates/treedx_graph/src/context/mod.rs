@@ -27,17 +27,24 @@ pub fn build_context_pack(
         if include_mode == "mixed" && !matches!(entry.node.node_type.as_str(), "File" | "Section") {
             continue;
         }
-        let text = entry.node.text.clone().unwrap_or_default();
-        let estimate = token_estimate(&text);
-        if total + estimate > max_tokens && !nodes.is_empty() {
+        let original_text = entry.node.text.clone().unwrap_or_default();
+        let remaining_tokens = max_tokens.saturating_sub(total);
+        if remaining_tokens == 0 {
+            continue;
+        }
+        let text = truncate_to_token_budget(&original_text, remaining_tokens);
+        let estimate = token_estimate(&text).min(remaining_tokens);
+        if text.is_empty() || total + estimate > max_tokens {
             continue;
         }
         total += estimate;
         if let Some(path) = &entry.node.path {
             paths.insert(path.clone());
         }
+        let mut node = entry.node.clone();
+        node.text = Some(text.clone());
         nodes.push(ContextPackNode {
-            node: entry.node.clone(),
+			node,
             score: entry.score,
             depth: entry.depth,
             text,
@@ -65,4 +72,12 @@ pub fn build_context_pack(
 
 fn token_estimate(text: &str) -> u32 {
     std::cmp::max(1, ((text.trim().len() as f64) / 4.0).ceil() as u32)
+}
+
+fn truncate_to_token_budget(text: &str, max_tokens: u32) -> String {
+    let max_chars = max_tokens.saturating_mul(4) as usize;
+    if text.chars().count() <= max_chars {
+        return text.to_string();
+    }
+    text.chars().take(max_chars).collect()
 }

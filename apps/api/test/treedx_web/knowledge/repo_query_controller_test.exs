@@ -139,6 +139,53 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
     assert malformed["frontmatterError"]["code"] == "invalid_frontmatter"
   end
 
+  test "pages bounded repository reads without splitting UTF-8", %{
+    token: token,
+    repo_id: repo_id
+  } do
+    first =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{
+        "path" => "docs/readme.md",
+        "maxBytes" => 24
+      })
+      |> json_response(200)
+      |> Map.fetch!("file")
+
+    assert first["offsetBytes"] == 0
+    assert first["returnedBytes"] <= 24
+    assert first["contentBytes"] == first["size"]
+    assert first["truncated"] == true
+    assert is_integer(first["nextOffsetBytes"])
+    assert first["body"] == nil
+
+    second =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{
+        "path" => "docs/readme.md",
+        "maxBytes" => 24,
+        "offsetBytes" => first["nextOffsetBytes"]
+      })
+      |> json_response(200)
+      |> Map.fetch!("file")
+
+    assert second["offsetBytes"] == first["nextOffsetBytes"]
+    assert String.valid?(second["content"])
+    refute second["content"] == first["content"]
+
+    invalid =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{
+        "paths" => ["docs/readme.md", "docs/page.mdx"],
+        "maxBytes" => 24
+      })
+
+    assert json_response(invalid, 422)["error"]["code"] == "validation_error"
+  end
+
   test "enforces auth, path policy, protected paths, and binary handling", %{
     token: token,
     repo_id: repo_id

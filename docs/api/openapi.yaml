@@ -4578,6 +4578,15 @@ components:
           type: array
           items:
             type: string
+        maxBytes:
+          type: integer
+          minimum: 1
+          maximum: 196608
+          description: Maximum encoded content bytes returned for a bounded single-path read.
+        offsetBytes:
+          type: integer
+          minimum: 0
+          description: UTF-8 byte boundary at which a bounded single-path read resumes.
       additionalProperties: true
     TreeDxRepositorySearchRequest:
       type: object
