@@ -41,6 +41,7 @@ defmodule TreeDx.Application do
       TreeDx.Artifacts.Index,
       TreeDx.Audit.Writer,
       TreeDx.Federation.CatalogSync,
+      TreeDx.Auth.TokenCache,
       TreeDx.Auth.JwksCache,
       TreeDxWeb.Endpoint
     ]

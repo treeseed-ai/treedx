@@ -61,7 +61,10 @@ defmodule TreeDx.Capabilities do
   def effective_scope(principal, repo_id, _opts) do
     actor_id = principal["actorId"] || principal[:actorId] || principal[:actor_id]
 
-    with {:ok, catalog_scope} <- TreeDx.Store.resolve_effective_scope(actor_id, repo_id) do
+    with {:ok, catalog_scope} <-
+           TreeDx.RepositoryCache.authorization_scope(actor_id, repo_id, fn ->
+             TreeDx.Store.resolve_effective_scope(actor_id, repo_id)
+           end) do
       {:ok, intersect_token_scope(catalog_scope, principal)}
     end
   end
@@ -140,7 +143,10 @@ defmodule TreeDx.Capabilities do
       |> Map.put_new("paths", ["**"])
       |> Map.put_new("capabilities", [])
 
-    TreeDx.Store.put_capability_grant(input)
+    with {:ok, grant} <- TreeDx.Store.put_capability_grant(input) do
+      TreeDx.RepositoryCache.reset!()
+      {:ok, grant}
+    end
   end
 
   def list_grants(filters \\ %{}), do: TreeDx.Store.list_capability_grants(filters)

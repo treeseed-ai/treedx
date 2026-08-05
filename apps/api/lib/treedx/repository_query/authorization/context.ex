@@ -5,15 +5,13 @@ defmodule TreeDx.RepositoryQuery.Context do
 
   def resolve(repo_id, params, principal, capability) do
     with {:ok, scope} <- TreeDx.Capabilities.require_capability(principal, capability, repo_id),
-         {:ok, repo} when is_map(repo) <- repository(repo_id),
-         ref <- params["ref"] || repo["defaultRef"] || "refs/heads/main",
-         :ok <- TreeDx.Capabilities.require_ref(scope, ref),
-         {:ok, resolved} <- TreeDx.Git.resolve_ref(TreeDx.RepositoryStorage.path!(repo), ref) do
+         {:ok, context} <- cached_context(repo_id, params["ref"]),
+         :ok <- TreeDx.Capabilities.require_ref(scope, context.ref) do
       {:ok,
        %{
-         repo: repo,
-         ref: ref,
-         resolved_ref: resolved["target"],
+         repo: context.repo,
+         ref: context.ref,
+         resolved_ref: context.resolved_ref,
          scope: scope,
          principal: principal
        }}
@@ -21,6 +19,20 @@ defmodule TreeDx.RepositoryQuery.Context do
       {:ok, nil} -> {:error, %{code: "not_found", message: "Repository not found."}}
       other -> other
     end
+  end
+
+  defp cached_context(repo_id, requested_ref) do
+    TreeDx.RepositoryCache.context(repo_id, requested_ref, fn ->
+      with {:ok, repo} when is_map(repo) <- repository(repo_id),
+           ref <- requested_ref || repo["defaultRef"] || "refs/heads/main",
+           {:ok, resolved} <-
+             TreeDx.Git.resolve_ref(TreeDx.RepositoryStorage.path!(repo), ref) do
+        {:ok, %{repo: repo, ref: ref, resolved_ref: resolved["target"]}}
+      else
+        {:ok, nil} -> {:error, %{code: "not_found", message: "Repository not found."}}
+        other -> other
+      end
+    end)
   end
 
   defp repository(repo_id) do

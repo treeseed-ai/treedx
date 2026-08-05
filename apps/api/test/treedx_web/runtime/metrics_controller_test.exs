@@ -13,6 +13,10 @@ defmodule TreeDxWeb.MetricsControllerTest do
   test "returns prometheus and JSON metrics without sensitive labels", %{conn: conn} do
     get(conn, "/api/v1/health") |> json_response(200)
 
+    build_conn()
+    |> post("/api/v1/repos/repo_sensitive/files/read", %{"path" => "README.md"})
+    |> json_response(401)
+
     prometheus =
       build_conn()
       |> get("/metrics")
@@ -20,6 +24,8 @@ defmodule TreeDxWeb.MetricsControllerTest do
 
     assert prometheus =~ "treedx_http_requests_total"
     assert prometheus =~ "route=\"/api/v1/health\""
+    assert prometheus =~ "route=\"/api/v1/repos/{repo_id}/files/read\""
+    refute prometheus =~ "repo_sensitive"
     refute prometheus =~ "actor_"
     refute prometheus =~ TreeDx.Store.data_dir()
 

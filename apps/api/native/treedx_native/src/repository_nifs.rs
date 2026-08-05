@@ -1,7 +1,21 @@
 use crate::support::{err_json, ok_json, parse_json};
 use base64::Engine;
-use rustler::{Env, Term};
+use rustler::{Env, Resource, ResourceArc, Term};
 use std::path::Path;
+
+#[derive(Debug)]
+struct GraphResource {
+    index: treedx_graph::GraphIndex,
+}
+
+#[rustler::resource_impl]
+impl Resource for GraphResource {}
+
+#[rustler::nif(schedule = "DirtyCpu")]
+fn load_graph_resource(index_json: String) -> Result<ResourceArc<GraphResource>, rustler::Error> {
+    let index = serde_json::from_str(&index_json).map_err(|_| rustler::Error::BadArg)?;
+    Ok(ResourceArc::new(GraphResource { index }))
+}
 
 #[rustler::nif(schedule = "DirtyIo")]
 fn inspect_repository<'a>(env: Env<'a>, path: String) -> Term<'a> {
@@ -157,13 +171,14 @@ fn read_latest_graph_manifest<'a>(
     }
 }
 
-#[rustler::nif(schedule = "DirtyIo")]
-fn search_graph<'a>(env: Env<'a>, index_json: String, request_json: String) -> Term<'a> {
-    match (
-        parse_json::<treedx_graph::GraphIndex>(index_json),
-        parse_json::<treedx_graph::GraphSearchRequest>(request_json),
-    ) {
-        (Ok(index), Ok(request)) => match treedx_graph::search_graph(index, request) {
+#[rustler::nif(schedule = "DirtyCpu")]
+fn search_graph<'a>(
+    env: Env<'a>,
+    resource: ResourceArc<GraphResource>,
+    request_json: String,
+) -> Term<'a> {
+    match parse_json::<treedx_graph::GraphSearchRequest>(request_json) {
+        Ok(request) => match treedx_graph::search_graph(&resource.index, request) {
             Ok(results) => ok_json(env, results),
             Err(error) => err_json(env, error.code(), error),
         },
@@ -171,13 +186,14 @@ fn search_graph<'a>(env: Env<'a>, index_json: String, request_json: String) -> T
     }
 }
 
-#[rustler::nif(schedule = "DirtyIo")]
-fn query_graph<'a>(env: Env<'a>, index_json: String, request_json: String) -> Term<'a> {
-    match (
-        parse_json::<treedx_graph::GraphIndex>(index_json),
-        parse_json::<treedx_graph::GraphQueryRequest>(request_json),
-    ) {
-        (Ok(index), Ok(request)) => match treedx_graph::query_graph(index, request) {
+#[rustler::nif(schedule = "DirtyCpu")]
+fn query_graph<'a>(
+    env: Env<'a>,
+    resource: ResourceArc<GraphResource>,
+    request_json: String,
+) -> Term<'a> {
+    match parse_json::<treedx_graph::GraphQueryRequest>(request_json) {
+        Ok(request) => match treedx_graph::query_graph(&resource.index, request) {
             Ok(result) => ok_json(env, result),
             Err(error) => err_json(env, error.code(), error),
         },
@@ -185,18 +201,15 @@ fn query_graph<'a>(env: Env<'a>, index_json: String, request_json: String) -> Te
     }
 }
 
-#[rustler::nif(schedule = "DirtyIo")]
+#[rustler::nif(schedule = "DirtyCpu")]
 fn related_nodes<'a>(
     env: Env<'a>,
-    index_json: String,
+    resource: ResourceArc<GraphResource>,
     seed_id: String,
     request_json: String,
 ) -> Term<'a> {
-    match (
-        parse_json::<treedx_graph::GraphIndex>(index_json),
-        parse_json::<treedx_graph::GraphQueryRequest>(request_json),
-    ) {
-        (Ok(index), Ok(request)) => match treedx_graph::related_nodes(index, &seed_id, request) {
+    match parse_json::<treedx_graph::GraphQueryRequest>(request_json) {
+        Ok(request) => match treedx_graph::related_nodes(&resource.index, &seed_id, request) {
             Ok(result) => ok_json(env, result),
             Err(error) => err_json(env, error.code(), error),
         },
@@ -204,20 +217,19 @@ fn related_nodes<'a>(
     }
 }
 
-#[rustler::nif(schedule = "DirtyIo")]
+#[rustler::nif(schedule = "DirtyCpu")]
 fn subgraph<'a>(
     env: Env<'a>,
-    index_json: String,
+    resource: ResourceArc<GraphResource>,
     seed_ids_json: String,
     request_json: String,
 ) -> Term<'a> {
     match (
-        parse_json::<treedx_graph::GraphIndex>(index_json),
         parse_json::<Vec<String>>(seed_ids_json),
         parse_json::<treedx_graph::GraphQueryRequest>(request_json),
     ) {
-        (Ok(index), Ok(seed_ids), Ok(request)) => {
-            match treedx_graph::subgraph(index, seed_ids, request) {
+        (Ok(seed_ids), Ok(request)) => {
+            match treedx_graph::subgraph(&resource.index, seed_ids, request) {
                 Ok(result) => ok_json(env, result),
                 Err(error) => err_json(env, error.code(), error),
             }
@@ -226,13 +238,14 @@ fn subgraph<'a>(
     }
 }
 
-#[rustler::nif(schedule = "DirtyIo")]
-fn build_context_pack<'a>(env: Env<'a>, index_json: String, request_json: String) -> Term<'a> {
-    match (
-        parse_json::<treedx_graph::GraphIndex>(index_json),
-        parse_json::<treedx_graph::ContextPackRequest>(request_json),
-    ) {
-        (Ok(index), Ok(request)) => match treedx_graph::build_context_pack(index, request) {
+#[rustler::nif(schedule = "DirtyCpu")]
+fn build_context_pack<'a>(
+    env: Env<'a>,
+    resource: ResourceArc<GraphResource>,
+    request_json: String,
+) -> Term<'a> {
+    match parse_json::<treedx_graph::ContextPackRequest>(request_json) {
+        Ok(request) => match treedx_graph::build_context_pack(&resource.index, request) {
             Ok(result) => ok_json(env, result),
             Err(error) => err_json(env, error.code(), error),
         },

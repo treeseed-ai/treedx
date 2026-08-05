@@ -85,6 +85,28 @@ defmodule TreeDxProfiler.ReliabilityBudgetTest do
              ReliabilityBudget.evaluate(report, %{reliability_budget: budget_path})
   end
 
+  test "fails repository reads that escape the millisecond latency budget" do
+    measured = %{
+      "durationMs" => 60_000,
+      "requestedDurationMs" => 60_000,
+      "durationSatisfied" => true
+    }
+
+    result =
+      report(measured)
+      |> Map.put("operations", [
+        %{
+          "operationId" => "readRepositoryFile",
+          "category" => "repository_read",
+          "latencyMs" => %{"p99" => 101}
+        }
+      ])
+      |> ReliabilityBudget.evaluate(%{reliability_budget: nil})
+
+    refute result["passed"]
+    assert Enum.any?(result["violations"], &(&1["key"] == "category_p99"))
+  end
+
   defp report(measured) do
     %{
       "summary" => %{"totalErrors" => 0, "totalCalls" => 1},

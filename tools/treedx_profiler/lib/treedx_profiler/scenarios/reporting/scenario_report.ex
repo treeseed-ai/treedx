@@ -25,12 +25,13 @@ defmodule TreeDxProfiler.ScenarioReport do
     operations = Stats.aggregate(state.samples)
     assertions = assertion_summary(state.assertions)
     http_samples = measured_http_samples(state)
+    primary_samples = measured_primary_samples(state)
 
     coverage =
       EndpointMatrix.coverage(state.samples, state.opts, state[:covered_operation_ids] || [])
 
     summary = Stats.summary(state.samples, operations)
-    throughput = Stats.throughput_breakdown(state.samples, http_samples, state.opts)
+    throughput = Stats.throughput_breakdown(primary_samples, http_samples, state.opts)
     model = ModelState.from_state(state)
     openapi_validation = OpenApiResponseValidator.report(state.assertions)
 
@@ -61,6 +62,7 @@ defmodule TreeDxProfiler.ScenarioReport do
         "durationIsControlling" => state.opts.duration_is_controlling,
         "minimumMeasuredDurationMs" => state.opts.minimum_measured_duration,
         "concurrency" => state.opts.concurrency,
+        "httpPoolSize" => state.opts.http_pool_size,
         "warmupIterations" => state.opts.warmup_iterations,
         "reportFormat" => state.opts.report_format,
         "includeRequests" => state.opts.include_requests,
@@ -183,6 +185,17 @@ defmodule TreeDxProfiler.ScenarioReport do
       Map.get(sample, :counts_toward_total_http_rps, true) == true and
         Map.get(sample, :measured_window, :measured) == :measured and
         sample_in_measured_window?(sample, started_at, ended_at)
+    end)
+  end
+
+  defp measured_primary_samples(state) do
+    measured = get_in(state, [:timing, "measured"]) || %{}
+
+    Enum.filter(state.samples, fn sample ->
+      Map.get(sample, :counts_toward_primary_rps, true) == true and
+        Map.get(sample, :sample_kind, :primary) == :primary and
+        Map.get(sample, :measured_window, :measured) == :measured and
+        sample_in_measured_window?(sample, measured["startedAt"], measured["endedAt"])
     end)
   end
 

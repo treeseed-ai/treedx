@@ -39,6 +39,13 @@ defmodule TreeDx.AuditWriterTest do
     assert Enum.any?(events, &(&1["eventType"] == "repo.files_read"))
   end
 
+  test "audit persistence runs below request-handler scheduler priority" do
+    assert {:priority, :low} =
+             TreeDx.Audit.Writer
+             |> Process.whereis()
+             |> Process.info(:priority)
+  end
+
   defp restore_env(_key, nil), do: System.delete_env("TREEDX_AUDIT_ASYNC")
   defp restore_env(key, value), do: System.put_env(key, value)
 end

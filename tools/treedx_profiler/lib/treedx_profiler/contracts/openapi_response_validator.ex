@@ -4,7 +4,7 @@ defmodule TreeDxProfiler.OpenApiResponseValidator do
   def validate_response(operation_id, status, body, opts \\ []) do
     if Keyword.get(opts, :enabled, true) do
       with {:ok, spec} <- load_spec(),
-           {:ok, operation} <- find_operation(spec, operation_id),
+           {:ok, operation} <- TreeDxProfiler.OpenApiSpec.operation(operation_id),
            {:ok, response_spec} <- find_response(operation, status),
            :ok <- validate_body(spec, response_spec, body) do
         :ok
@@ -39,21 +39,6 @@ defmodule TreeDxProfiler.OpenApiResponseValidator do
 
   defp load_spec do
     TreeDxProfiler.OpenApiSpec.load()
-  end
-
-  defp find_operation(%{"paths" => paths}, operation_id) do
-    paths
-    |> Enum.flat_map(fn {_path, methods} ->
-      methods
-      |> Enum.filter(fn {_method, operation} ->
-        is_map(operation) and operation["operationId"] == operation_id
-      end)
-      |> Enum.map(fn {_method, operation} -> operation end)
-    end)
-    |> case do
-      [operation | _] -> {:ok, operation}
-      [] -> {:error, "operation #{operation_id} not found in OpenAPI"}
-    end
   end
 
   defp find_response(%{"responses" => responses}, status) do

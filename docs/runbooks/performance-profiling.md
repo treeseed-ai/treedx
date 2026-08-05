@@ -124,7 +124,7 @@ Modes:
 - `connected-library`: three-node connected-library profile with remote-owner
   authorization, scoped federation reads, and default write-denial checks.
 - `federation-soak`: longer three-node federation reliability profile.
-- `performance`: single-node read-mostly benchmark with a 100 primary RPS
+- `performance`: single-node read-mostly benchmark with a 500 primary RPS
   target, sampled validation probes, and runtime resource tuning defaults.
 - `federation-performance`: three-node federation benchmark using the same
   primary/total throughput reporting and resource tuning defaults.
@@ -195,9 +195,14 @@ Performance profiles enable these server-side optimization defaults unless
 overridden:
 
 - `TREEDX_REPO_DOC_CACHE_ENABLED=true`
+- `TREEDX_REPO_CONTEXT_CACHE_TTL_MS=5000`
+- `TREEDX_AUTHORIZATION_CACHE_TTL_MS=5000`
+- `TREEDX_AUTH_TOKEN_CACHE_TTL_MS=5000`
 - `TREEDX_GRAPH_INDEX_CACHE_ENABLED=true`
 - `TREEDX_ARTIFACT_INDEX_ENABLED=true`
 - `TREEDX_AUDIT_ASYNC=true`
+- audit group commit: 5,000 events or 5 seconds
+- profiler HTTP pool: 50 connections (reported as `workload.httpPoolSize`)
 
 ## Performance Benchmark Mode
 
@@ -212,17 +217,19 @@ Default benchmark settings:
 
 - purpose: `performance`
 - workload: `read_mostly`
-- target primary RPS: `100`
-- concurrency: `150`
+- target primary RPS: `500`
+- minimum delivered primary RPS: `475` (95% of offered load)
+- concurrency: `300`
 - duration: `10m`
 - validation probe mode: `sampled`
 - probe sampling rate: `0.10`
+- full OpenAPI response validation: disabled (covered by reliability profiles)
 
 The YAML and Markdown reports separate primary workload throughput from total
 server load:
 
 - `throughput.primary.requestsPerSecond` excludes validation probes and is the
-  number compared with the 100 RPS target.
+  number compared with the 500 RPS target.
 - `throughput.validationProbes.requestsPerSecond` reports follow-up semantic
   probe traffic.
 - `throughput.totalHttp.requestsPerSecond` includes primary requests, probes,
@@ -231,13 +238,22 @@ server load:
 This distinction matters because probes legitimately consume server capacity,
 but counting them as primary workload would overstate business throughput.
 
+The saturated-load release ceiling is 900 ms p99 for repository reads and
+queries, with zero request errors. This is a hard subsecond capacity boundary,
+not the operational target. Prometheus warns at 100 ms p99 for repository reads
+and 250 ms p99 for repository queries so operators can scale out or investigate
+regressions before the release ceiling is approached. Run load generation on a
+separate host when comparing absolute latency; a colocated profiler consumes
+roughly one CPU at 500 RPS and contends with the service on small machines.
+
 Performance mode also passes resource tuning knobs to the API container:
 
 ```bash
 TREEDX_RUNTIME_CPU_BUDGET=8 \
 TREEDX_RUNTIME_MEMORY_BUDGET_MB=8192 \
 TREEDX_CACHE_MEMORY_FRACTION=0.35 \
-TREEDX_REPOSITORY_QUERY_POOL_SIZE=16 \
+TREEDX_REPO_CONTEXT_CACHE_TTL_MS=5000 \
+TREEDX_REPOSITORY_QUERY_POOL_SIZE=32 \
 TREEDX_WORKSPACE_WORKER_POOL_SIZE=16 \
 TREEDX_GRAPH_WORKER_POOL_SIZE=8 \
 TREEDX_REPOSITORY_QUERY_MAX_QUEUE=2000 \

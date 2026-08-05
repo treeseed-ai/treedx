@@ -59,6 +59,26 @@ defmodule TreeDxProfiler.RequestGeneratorTest do
     assert :read_repository_file in candidates
   end
 
+  test "read-mostly performance candidates exclude fixture-generating mutations", %{
+    pid: pid,
+    opts: opts
+  } do
+    performance_opts =
+      Map.merge(opts, %{
+        concurrency: 300,
+        profile_purpose: "performance",
+        performance_workload: "read_mostly"
+      })
+
+    candidates = RequestGenerator.candidates(pid, performance_opts) |> Map.new()
+
+    assert candidates[:read_repository_file] == 40
+    assert candidates[:query_repository] == 20
+    refute Map.has_key?(candidates, :create_repository)
+    refute Map.has_key?(candidates, :create_workspace)
+    refute Map.has_key?(candidates, :write_workspace_file)
+  end
+
   test "workspace write request is generated after workspace setup", %{pid: pid, opts: opts} do
     PortfolioState.apply_effect(pid, %{
       kind: :workspace_created,

@@ -3,6 +3,8 @@ defmodule TreeDx.Cache do
 
   alias TreeDx.Observability.Metrics
 
+  @loads_table TreeDx.Cache.Loads
+
   def enabled?(name, default \\ true) do
     case System.get_env(name) do
       nil -> default
@@ -30,10 +32,78 @@ defmodule TreeDx.Cache do
 
       :miss ->
         Metrics.incr("treedx_cache_misses_total", %{cache: cache_name(table)})
+        load_once(table, key, ttl_ms, max_entries, max_bytes, loader)
+    end
+  end
 
-        with {:ok, value} <- loader.() do
-          put(table, key, value, now, max_entries, max_bytes)
-          {:ok, value}
+  defp load_once(table, key, ttl_ms, max_entries, max_bytes, loader) do
+    started_at = System.monotonic_time(:millisecond)
+    ensure_loads_table()
+    lock_key = {table, key}
+
+    result =
+      if :ets.insert_new(@loads_table, {lock_key, self()}) do
+        try do
+          now = System.monotonic_time(:millisecond)
+
+          with :miss <- lookup(table, key, now, ttl_ms),
+               {:ok, value} <- loader.() do
+            put(table, key, value, System.monotonic_time(:millisecond), max_entries, max_bytes)
+            {:ok, value}
+          else
+            {:ok, value} -> {:ok, value}
+            other -> other
+          end
+        after
+          :ets.delete(@loads_table, lock_key)
+        end
+      else
+        await_load(
+          table,
+          key,
+          lock_key,
+          ttl_ms,
+          max_entries,
+          max_bytes,
+          loader,
+          System.monotonic_time(:millisecond) + int_env("TREEDX_CACHE_LOAD_TIMEOUT_MS", 5_000)
+        )
+      end
+
+    Metrics.observe(
+      "treedx_cache_load_wait_ms",
+      System.monotonic_time(:millisecond) - started_at,
+      %{cache: cache_name(table)}
+    )
+
+    result
+  end
+
+  defp await_load(table, key, lock_key, ttl_ms, max_entries, max_bytes, loader, deadline) do
+    now = System.monotonic_time(:millisecond)
+
+    case lookup(table, key, now, ttl_ms) do
+      {:ok, value} ->
+        Metrics.incr("treedx_cache_coalesced_total", %{cache: cache_name(table)})
+        {:ok, value}
+
+      :miss when now >= deadline ->
+        {:error,
+         %{code: "cache_load_timeout", message: "Timed out waiting for a shared cache load."}}
+
+      :miss ->
+        case :ets.lookup(@loads_table, lock_key) do
+          [{^lock_key, owner}] ->
+            if Process.alive?(owner) do
+              Process.sleep(2)
+              await_load(table, key, lock_key, ttl_ms, max_entries, max_bytes, loader, deadline)
+            else
+              :ets.delete_object(@loads_table, {lock_key, owner})
+              load_once(table, key, ttl_ms, max_entries, max_bytes, loader)
+            end
+
+          [] ->
+            load_once(table, key, ttl_ms, max_entries, max_bytes, loader)
         end
     end
   end
@@ -84,7 +154,31 @@ defmodule TreeDx.Cache do
 
   def ensure_table(table) do
     if :ets.whereis(table) == :undefined do
-      :ets.new(table, [:named_table, :public, read_concurrency: true])
+      :ets.new(table, [
+        :named_table,
+        :public,
+        read_concurrency: true,
+        write_concurrency: true
+      ])
+    end
+
+    ensure_loads_table()
+
+    :ok
+  end
+
+  defp ensure_loads_table do
+    if :ets.whereis(@loads_table) == :undefined do
+      try do
+        :ets.new(@loads_table, [
+          :named_table,
+          :public,
+          read_concurrency: true,
+          write_concurrency: true
+        ])
+      rescue
+        ArgumentError -> :ok
+      end
     end
 
     :ok
@@ -93,9 +187,8 @@ defmodule TreeDx.Cache do
   defp lookup(table, key, now, ttl_ms) do
     if table_exists?(table) do
       case :ets.lookup(table, key) do
-        [{^key, inserted_at, _last_accessed_at, approx_bytes, value}]
+        [{^key, inserted_at, _last_accessed_at, _approx_bytes, value}]
         when now - inserted_at <= ttl_ms ->
-          :ets.insert(table, {key, inserted_at, now, approx_bytes, value})
           {:ok, value}
 
         [{^key, inserted_at, value}] when now - inserted_at <= ttl_ms ->

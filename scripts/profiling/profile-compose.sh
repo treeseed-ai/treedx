@@ -21,7 +21,7 @@ Modes:
   mirror-federation      three-node mirror cluster profile
   connected-library      three-node connected-library profile
   federation-soak        long three-node federation soak profile
-  performance            100 primary RPS target single-node benchmark
+  performance            500 primary RPS target single-node benchmark
   federation-performance three-node federation performance benchmark
 
 Environment overrides:

@@ -4,6 +4,7 @@ defmodule TreeDx.RepositoryCache do
 
   alias TreeDx.Cache
   alias TreeDx.RepositoryQuery.Document
+  alias TreeDx.Runtime.Pool
 
   @table __MODULE__
   @extensions ~w(.md .mdx .markdown .txt .json)
@@ -17,34 +18,60 @@ defmodule TreeDx.RepositoryCache do
 
   def reset!, do: Cache.reset(@table)
 
+  def context(repo_id, requested_ref, loader) do
+    Cache.get_or_load(
+      @table,
+      {:repository_context, repo_id, requested_ref || :default},
+      Cache.int_env("TREEDX_REPO_CONTEXT_CACHE_TTL_MS", 250),
+      Cache.int_env("TREEDX_REPO_CONTEXT_CACHE_MAX_ENTRIES", 1024),
+      cache_max_bytes(),
+      fn -> bounded_load(loader) end
+    )
+  end
+
+  def authorization_scope(actor_id, repo_id, loader) do
+    Cache.get_or_load(
+      @table,
+      {:authorization_scope, actor_id, repo_id || :global},
+      Cache.int_env("TREEDX_AUTHORIZATION_CACHE_TTL_MS", 250),
+      Cache.int_env("TREEDX_AUTHORIZATION_CACHE_MAX_ENTRIES", 4096),
+      cache_max_bytes(),
+      fn -> bounded_load(loader) end
+    )
+  end
+
   def tree_entries(ctx) do
     get_or_load(ctx, :tree, fn ->
-      TreeDx.Git.list_tree_recursive(TreeDx.RepositoryStorage.path!(ctx.repo), ctx.ref, nil)
+      bounded_load(fn ->
+        TreeDx.Git.list_tree_recursive(TreeDx.RepositoryStorage.path!(ctx.repo), ctx.ref, nil)
+      end)
     end)
   end
 
   def searchable_documents(ctx) do
     get_or_load(ctx, :documents, fn ->
-      with {:ok, entries} <- tree_entries(ctx) do
-        entries
-        |> Enum.filter(&(&1["kind"] == "blob"))
-        |> Enum.filter(&(Path.extname(&1["path"]) in @extensions))
-        |> Enum.map(fn entry ->
-          case Document.from_entry(ctx.repo, ctx.ref, entry,
-                 encoding: "utf8",
-                 parse_frontmatter: true
-               ) do
-            {:ok, doc} -> {:ok, doc}
-            {:error, %{code: "unsupported_media_type"}} -> {:ok, nil}
+      bounded_load(fn ->
+        with {:ok, entries} <- tree_entries(ctx) do
+          entries
+          |> Enum.filter(&(&1["kind"] == "blob"))
+          |> Enum.filter(&(Path.extname(&1["path"]) in @extensions))
+          |> Enum.map(fn entry ->
+            case Document.from_entry(ctx.repo, ctx.ref, entry,
+                   encoding: "utf8",
+                   parse_frontmatter: true
+                 ) do
+              {:ok, doc} -> {:ok, doc}
+              {:error, %{code: "unsupported_media_type"}} -> {:ok, nil}
+              other -> other
+            end
+          end)
+          |> collect_ok()
+          |> case do
+            {:ok, docs} -> {:ok, Enum.reject(docs, &is_nil/1)}
             other -> other
           end
-        end)
-        |> collect_ok()
-        |> case do
-          {:ok, docs} -> {:ok, Enum.reject(docs, &is_nil/1)}
-          other -> other
         end
-      end
+      end)
     end)
   end
 
@@ -52,26 +79,12 @@ defmodule TreeDx.RepositoryCache do
     encoding = Keyword.get(opts, :encoding, "utf8")
     parse_frontmatter = Keyword.get(opts, :parse_frontmatter, true)
 
-    if encoding == "utf8" and parse_frontmatter do
-      with {:ok, docs} <- document_lookup(ctx),
-           doc when is_map(doc) <- Map.get(docs, path) do
-        {:ok, doc}
-      else
-        nil -> Document.from_path(ctx.repo, ctx.ref, path, opts)
-        other -> other
-      end
-    else
-      Document.from_path(ctx.repo, ctx.ref, path, opts)
-    end
-  end
-
-  def document_lookup(ctx) do
-    get_or_load(ctx, :document_lookup, fn ->
-      with {:ok, docs} <- searchable_documents(ctx) do
-        {:ok, Map.new(docs, &{&1["path"], &1})}
-      end
+    get_or_load(ctx, {:document, path, encoding, parse_frontmatter}, fn ->
+      bounded_load(fn -> Document.from_path(ctx.repo, ctx.ref, path, opts) end)
     end)
   end
+
+  defp bounded_load(loader), do: Pool.run(:repository_query, loader)
 
   defp get_or_load(ctx, kind, loader) do
     if Cache.enabled?("TREEDX_REPO_DOC_CACHE_ENABLED", true) and Process.whereis(__MODULE__) do

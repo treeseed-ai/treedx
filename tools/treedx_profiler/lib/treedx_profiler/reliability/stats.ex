@@ -103,15 +103,17 @@ defmodule TreeDxProfiler.Stats do
         Map.get(sample, :sample_kind, :primary) in [:primary, :validation_probe, :reconciliation]
       end)
 
-    primary = throughput_group(primary_samples)
-    validation = throughput_group(validation_probe_samples)
-    reconciliation = throughput_group(reconciliation_samples)
-    auxiliary = throughput_group(auxiliary_samples)
-    total_http = throughput_group(http_samples)
+    window_ms = Map.get(opts, :duration_ms)
+    primary = throughput_group(primary_samples, window_ms)
+    validation = throughput_group(validation_probe_samples, window_ms)
+    reconciliation = throughput_group(reconciliation_samples, window_ms)
+    auxiliary = throughput_group(auxiliary_samples, window_ms)
+    total_http = throughput_group(http_samples, window_ms)
     target = target_report(primary["requestsPerSecond"], opts)
 
     %{
       "targetPrimaryRps" => opts.target_primary_rps,
+      "minimumPrimaryRps" => Map.get(opts, :fail_below_primary_rps),
       "primary" =>
         Map.merge(primary, %{
           "successRate" => success_rate(primary_samples),
@@ -322,26 +324,32 @@ defmodule TreeDxProfiler.Stats do
     end
   end
 
-  defp throughput_group(samples) do
+  defp throughput_group(samples, window_ms) do
     %{
       "calls" => length(samples),
-      "requestsPerSecond" => throughput(samples)
+      "requestsPerSecond" => throughput(samples, window_ms)
     }
   end
 
-  defp target_report(_primary_rps, %{target_primary_rps: nil}) do
-    %{
-      "primaryRps" => nil,
-      "primaryRpsMet" => nil,
-      "primaryRpsRatio" => nil
-    }
-  end
+  defp throughput(samples, window_ms) when is_number(window_ms) and window_ms > 0,
+    do: Float.round(length(samples) / (window_ms / 1000), 3)
 
-  defp target_report(primary_rps, %{target_primary_rps: target}) do
+  defp throughput(samples, _window_ms), do: throughput(samples)
+
+  defp target_report(primary_rps, opts) do
+    target = Map.get(opts, :target_primary_rps)
+    minimum = Map.get(opts, :fail_below_primary_rps)
+
     %{
       "primaryRps" => target,
-      "primaryRpsMet" => primary_rps >= target,
-      "primaryRpsRatio" => if(target > 0, do: Float.round(primary_rps / target, 4), else: nil)
+      "primaryRpsMet" => if(target, do: primary_rps >= target),
+      "primaryRpsRatio" =>
+        if(is_number(target) and target > 0,
+          do: Float.round(primary_rps / target, 4),
+          else: nil
+        ),
+      "minimumPrimaryRps" => minimum,
+      "minimumPrimaryRpsMet" => if(minimum, do: primary_rps >= minimum)
     }
   end
 

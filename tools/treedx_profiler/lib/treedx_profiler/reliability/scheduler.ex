@@ -9,6 +9,7 @@ defmodule TreeDxProfiler.Scheduler do
     deadline = if opts.duration_ms, do: started_at_ms + opts.duration_ms
     iterations = effective_iterations(opts)
     counter = :counters.new(1, [:atomics])
+    pacer = :atomics.new(1, [])
 
     initial = %{
       samples: [],
@@ -34,8 +35,10 @@ defmodule TreeDxProfiler.Scheduler do
             opts,
             execute_fun,
             counter,
+            pacer,
             iterations,
-            deadline
+            deadline,
+            started_at_ms
           )
         end,
         max_concurrency: opts.concurrency,
@@ -71,8 +74,10 @@ defmodule TreeDxProfiler.Scheduler do
          opts,
          execute_fun,
          counter,
+         pacer,
          iterations,
-         deadline
+         deadline,
+         started_at_ms
        ) do
     do_worker_loop(%{
       worker_id: worker_id,
@@ -81,8 +86,10 @@ defmodule TreeDxProfiler.Scheduler do
       opts: opts,
       execute_fun: execute_fun,
       counter: counter,
+      pacer: pacer,
       iterations: iterations,
       deadline: deadline,
+      started_at_ms: started_at_ms,
       samples: [],
       http_samples: [],
       assertions: [],
@@ -99,24 +106,65 @@ defmodule TreeDxProfiler.Scheduler do
         Map.take(ctx, [:samples, :http_samples, :assertions, :sampler])
 
       true ->
-        request =
-          ctx.portfolio_pid
-          |> RequestGenerator.next(ctx.opts)
-          |> attach_runtime_context(ctx.portfolio_pid, ctx.worker_id)
-
-        {sample, response, assertion} = ctx.execute_fun.(ctx.state, request)
-
-        {sample, assertion} =
-          classify_and_apply(ctx.portfolio_pid, request, response, sample, assertion, ctx)
-
-        do_worker_loop(%{
-          ctx
-          | samples: [sample | ctx.samples],
-            http_samples: http_samples_for(sample, assertion) ++ ctx.http_samples,
-            assertions: [assertion | ctx.assertions],
-            sampler: Sampler.add(ctx.sampler, sample)
-        })
+        run_claimed_request(ctx)
     end
+  end
+
+  defp run_claimed_request(ctx) do
+    if pace(ctx) == :stop do
+      Map.take(ctx, [:samples, :http_samples, :assertions, :sampler])
+    else
+      request =
+        ctx.portfolio_pid
+        |> RequestGenerator.next(ctx.opts)
+        |> attach_runtime_context(ctx.portfolio_pid, ctx.worker_id)
+
+      {sample, response, assertion} = ctx.execute_fun.(ctx.state, request)
+
+      {sample, assertion} =
+        classify_and_apply(ctx.portfolio_pid, request, response, sample, assertion, ctx)
+
+      do_worker_loop(%{
+        ctx
+        | samples: [sample | ctx.samples],
+          http_samples: http_samples_for(sample, assertion) ++ ctx.http_samples,
+          assertions: [assertion | ctx.assertions],
+          sampler: Sampler.add(ctx.sampler, sample)
+      })
+    end
+  end
+
+  defp pace(%{opts: %{target_primary_rps: target}} = ctx)
+       when is_number(target) and target > 0 do
+    slot = claim_current_slot(ctx.pacer, ctx.started_at_ms, target)
+    due_at = ctx.started_at_ms + floor(slot * 1000 / target)
+
+    if not is_nil(ctx.deadline) and due_at >= ctx.deadline do
+      wait_until(ctx.deadline)
+      :stop
+    else
+      wait_until(due_at)
+      if stop_for_duration?(ctx.deadline), do: :stop, else: :ready
+    end
+  end
+
+  defp pace(_ctx), do: :ready
+
+  defp claim_current_slot(pacer, started_at_ms, target) do
+    elapsed_ms = max(System.monotonic_time(:millisecond) - started_at_ms, 0)
+    elapsed_slot = floor(elapsed_ms * target / 1000)
+    current = :atomics.get(pacer, 1)
+    slot = max(current, elapsed_slot)
+
+    case :atomics.compare_exchange(pacer, 1, current, slot + 1) do
+      :ok -> slot
+      _changed -> claim_current_slot(pacer, started_at_ms, target)
+    end
+  end
+
+  defp wait_until(monotonic_ms) do
+    wait_ms = monotonic_ms - System.monotonic_time(:millisecond)
+    if wait_ms > 0, do: Process.sleep(wait_ms)
   end
 
   defp stop_for_duration?(nil), do: false
@@ -148,21 +196,27 @@ defmodule TreeDxProfiler.Scheduler do
   end
 
   defp attach_runtime_context(%ProfileRequest{} = request, portfolio_pid, worker_id) do
-    precondition = PortfolioState.snapshot_for_request(portfolio_pid, request.target)
+    request = Map.put(request, :worker_id, worker_id)
 
-    %{request | precondition: precondition}
-    |> Map.put(:worker_id, worker_id)
+    if stateful_request?(request) do
+      %{
+        request
+        | precondition: PortfolioState.snapshot_for_request(portfolio_pid, request.target)
+      }
+    else
+      request
+    end
   rescue
     _ -> request
   end
 
   defp classify_and_apply(portfolio_pid, request, response, sample, assertion, ctx) do
-    current_state = PortfolioState.snapshot_for_request(portfolio_pid, request.target)
-
     classification =
       if assertion.passed do
         {:ok, :not_race}
       else
+        current_state = PortfolioState.snapshot_for_request(portfolio_pid, request.target)
+
         RaceClassifier.classify(%{
           request: request,
           sample: sample,
@@ -238,9 +292,17 @@ defmodule TreeDxProfiler.Scheduler do
       Map.get(request.state_effect_on_status || %{}, sample.status) ||
         if(sample.status in 200..299, do: request.state_effect)
 
-    effect
-    |> enrich_effect(response)
-    |> then(&PortfolioState.apply_effect(portfolio_pid, &1, request.id, sample.status))
+    if effect do
+      effect
+      |> enrich_effect(response)
+      |> then(&PortfolioState.apply_effect(portfolio_pid, &1, request.id, sample.status))
+    end
+  end
+
+  defp stateful_request?(request) do
+    request.state_effect != nil or request.failure_effect != nil or
+      map_size(request.state_effect_on_status || %{}) > 0 or
+      map_size(request.race_context || %{}) > 0
   end
 
   defp race_assertion(assertion, race) do

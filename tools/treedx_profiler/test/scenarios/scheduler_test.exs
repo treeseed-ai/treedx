@@ -126,6 +126,7 @@ defmodule TreeDxProfiler.SchedulerTest do
       iterations_explicit: false,
       duration_ms: 40,
       minimum_measured_duration: 20,
+      target_primary_rps: 50.0,
       concurrency: 2,
       request_sample_limit: 2,
       portfolio_max_repos: 10,
@@ -181,7 +182,7 @@ defmodule TreeDxProfiler.SchedulerTest do
         {sample, %{"ok" => true}, assertion}
       end)
 
-    assert length(result.samples) > 1
+    assert length(result.samples) in 1..2
     assert result.stop_reason == "duration_limit"
     assert result.duration_satisfied
     File.rm_rf!(root)

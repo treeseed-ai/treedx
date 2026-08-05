@@ -47,10 +47,11 @@ The profiler has three purposes:
   monitoring.
 
 Performance mode is part of the release profile gate on `main`, `staging`, and
-release tags, but its release-blocking budget is error-focused. Throughput
-targets are reported for comparison and tuning; missing the RPS target does not
-fail the release unless it is accompanied by request, assertion, validation, or
-other reliability-budget errors.
+release tags. The default gate offers 500 primary RPS, requires 475 delivered
+RPS without catch-up bursts, and fails when a category exceeds its saturated
+p99 latency ceiling, in addition to the correctness and reliability checks.
+Full OpenAPI validation stays in the reliability profiles rather than consuming
+load-generator CPU on every performance request.
 
 ## Canonical Fixtures
 
@@ -233,3 +234,7 @@ unverified races, validation-probe failures, negative-test failures,
 metamorphic failures, endpoint-consistency failures, or delayed-consistency
 failures. It also requires the measured duration to satisfy at least 99% of the
 requested window.
+
+Performance overlays select `tools/treedx_profiler/performance_budget.yaml`,
+which preserves those correctness requirements and defines the saturated-load
+latency ceiling separately from the tighter unloaded reliability target.

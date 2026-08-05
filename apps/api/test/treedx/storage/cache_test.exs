@@ -30,4 +30,22 @@ defmodule TreeDx.CacheTest do
     assert {:ok, "value"} =
              Cache.get_or_load(@table, :key, 1_000, 10, 10_000, fn -> {:ok, "other"} end)
   end
+
+  test "coalesces concurrent loaders for the same cache key" do
+    counter = :counters.new(1, [])
+
+    tasks =
+      for _ <- 1..12 do
+        Task.async(fn ->
+          Cache.get_or_load(@table, :shared, 1_000, 10, 10_000, fn ->
+            :counters.add(counter, 1, 1)
+            Process.sleep(25)
+            {:ok, "shared-value"}
+          end)
+        end)
+      end
+
+    assert Enum.map(tasks, &Task.await/1) == List.duplicate({:ok, "shared-value"}, 12)
+    assert :counters.get(counter, 1) == 1
+  end
 end

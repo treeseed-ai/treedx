@@ -12,6 +12,7 @@ if [[ "${1:-}" == -* || "$#" -eq 0 ]]; then
     --size "${TREEDX_PROFILE_SIZE:-small}"
     --scenario "${TREEDX_PROFILE_SCENARIO:-all}"
     --concurrency "${TREEDX_PROFILE_CONCURRENCY:-100}"
+    --http-pool-size "${TREEDX_PROFILE_HTTP_POOL_SIZE:-${TREEDX_PROFILE_CONCURRENCY:-100}}"
     --timeout-ms "${TREEDX_PROFILE_TIMEOUT_MS:-120000}"
     --fixture-root "${TREEDX_PROFILE_FIXTURE_ROOT:-/var/lib/treedx/profiler}"
     --repo-prefix "${TREEDX_PROFILE_REPO_PREFIX:-profile-}"

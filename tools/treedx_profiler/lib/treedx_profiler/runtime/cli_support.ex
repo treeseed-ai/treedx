@@ -70,6 +70,7 @@ defmodule TreeDxProfiler.CLISupport do
       --iterations N
       --duration 10m
       --concurrency N
+      --http-pool-size N
       --warmup-iterations N
       --timeout-ms N
       --repo-prefix PREFIX

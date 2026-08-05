@@ -14,7 +14,6 @@ defmodule TreeDx.RepositoryQuery do
     Sort
   }
 
-  alias TreeDx.Runtime.Pool
   alias TreeDx.Search.Ranking
 
   @default_query_limit 20
@@ -23,7 +22,7 @@ defmodule TreeDx.RepositoryQuery do
   @max_path_limit 500
 
   def read(repo_id, params, principal) do
-    Pool.run(:repository_query, fn -> do_read(repo_id, params, principal) end)
+    do_read(repo_id, params, principal)
   end
 
   defp do_read(repo_id, params, principal) do
@@ -45,7 +44,7 @@ defmodule TreeDx.RepositoryQuery do
   end
 
   def paths(repo_id, params, principal) do
-    Pool.run(:repository_query, fn -> do_paths(repo_id, params, principal) end)
+    do_paths(repo_id, params, principal)
   end
 
   defp do_paths(repo_id, params, principal) do
@@ -74,7 +73,7 @@ defmodule TreeDx.RepositoryQuery do
   end
 
   def search(repo_id, params, principal) do
-    Pool.run(:repository_query, fn -> do_search(repo_id, params, principal) end)
+    do_search(repo_id, params, principal)
   end
 
   defp do_search(repo_id, params, principal) do
@@ -116,7 +115,7 @@ defmodule TreeDx.RepositoryQuery do
   end
 
   def query(repo_id, params, principal) do
-    Pool.run(:repository_query, fn -> do_query(repo_id, params, principal) end)
+    do_query(repo_id, params, principal)
   end
 
   defp do_query(repo_id, params, principal) do

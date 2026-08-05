@@ -50,7 +50,18 @@ defmodule TreeDx.Observability.Telemetry do
   defp normalized_route(nil), do: "unknown"
 
   defp normalized_route(conn) do
-    conn.private[:phoenix_route] || conn.request_path || "unknown"
+    router = conn.private[:phoenix_router]
+
+    case router && Phoenix.Router.route_info(router, conn.method, conn.path_info, conn.host) do
+      %{route: route} when is_binary(route) -> normalize_parameters(route)
+      _ -> "unmatched"
+    end
+  rescue
+    _ -> "unmatched"
+  end
+
+  defp normalize_parameters(route) do
+    Regex.replace(~r|:([^/]+)|, route, "{\\1}")
   end
 
   defp status_class(status) when is_integer(status) and status >= 100 do

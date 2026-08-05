@@ -102,6 +102,7 @@ defmodule TreeDx.Native do
   def read_latest_graph_manifest(_data_dir, _repo_id, _ref_name),
     do: :erlang.nif_error(:nif_not_loaded)
 
+  def load_graph_resource(_index), do: :erlang.nif_error(:nif_not_loaded)
   def search_graph(_index, _request), do: :erlang.nif_error(:nif_not_loaded)
   def query_graph(_index, _request), do: :erlang.nif_error(:nif_not_loaded)
   def related_nodes(_index, _seed_id, _request), do: :erlang.nif_error(:nif_not_loaded)

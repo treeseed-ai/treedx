@@ -4209,6 +4209,61 @@
           "weight": 1
         }
       }
+    },
+    {
+      "expectedStatus": [200],
+      "method": "POST",
+      "operationId": "promoteRepositoryRef",
+      "path": "/api/v1/repos/{repo_id}/refs/promote",
+      "requestTemplate": {},
+      "scenarios": {"full_api": {"weight": 1}},
+      "setup": {"fixtureFamilies": ["small-docs", "medium-mixed", "large-history"], "requires": ["registered_repo", "reviewed_ref"]},
+      "tags": ["repository", "write"],
+      "validation": {"rule": "ok_envelope", "semanticLevel": "exact_state_transition"}
+    },
+    {
+      "expectedStatus": [200],
+      "method": "POST",
+      "operationId": "retireRepositoryRef",
+      "path": "/api/v1/repos/{repo_id}/refs/retire",
+      "requestTemplate": {},
+      "scenarios": {"full_api": {"weight": 1}},
+      "setup": {"fixtureFamilies": ["small-docs", "medium-mixed", "large-history"], "requires": ["registered_repo", "merged_ref"]},
+      "tags": ["destructive", "repository", "write"],
+      "validation": {"rule": "ok_envelope", "semanticLevel": "exact_state_transition"}
+    },
+    {
+      "expectedStatus": [200],
+      "method": "POST",
+      "operationId": "discardOrphanRepositoryRef",
+      "path": "/api/v1/repos/{repo_id}/refs/discard-orphan",
+      "requestTemplate": {},
+      "scenarios": {"full_api": {"weight": 1}},
+      "setup": {"fixtureFamilies": ["small-docs", "medium-mixed", "large-history"], "requires": ["registered_repo", "orphan_ref", "maintenance_ceremony"]},
+      "tags": ["admin", "destructive", "repository", "write"],
+      "validation": {"rule": "ok_envelope", "semanticLevel": "exact_state_transition"}
+    },
+    {
+      "expectedStatus": [200],
+      "method": "POST",
+      "operationId": "abandonWorkspace",
+      "path": "/api/v1/workspaces/{workspace_id}/abandon",
+      "requestTemplate": {},
+      "scenarios": {"full_api": {"weight": 1}},
+      "setup": {"fixtureFamilies": ["small-docs", "medium-mixed", "workspace-heavy"], "requires": ["registered_repo", "workspace", "unmerged_workspace_ref"]},
+      "tags": ["destructive", "workspace", "write"],
+      "validation": {"rule": "ok_envelope", "semanticLevel": "exact_state_transition"}
+    },
+    {
+      "expectedStatus": [200],
+      "method": "PUT",
+      "operationId": "writeWorkspaceFiles",
+      "path": "/api/v1/workspaces/{workspace_id}/files/batch",
+      "requestTemplate": {},
+      "scenarios": {"full_api": {"weight": 1}},
+      "setup": {"fixtureFamilies": ["small-docs", "medium-mixed", "workspace-heavy"], "requires": ["registered_repo", "workspace"]},
+      "tags": ["workspace", "write"],
+      "validation": {"rule": "ok_envelope", "semanticLevel": "exact_state_transition"}
     }
   ]
 }

@@ -19,14 +19,42 @@ defmodule TreeDxProfiler.EndpointMatrix do
   ]
 
   def load do
-    path()
-    |> File.read!()
-    |> Jason.decode!()
-    |> Map.fetch!("operations")
-    |> Enum.map(&with_runtime_defaults/1)
+    matrix_path = path()
+    stat = File.stat!(matrix_path)
+    key = {__MODULE__, matrix_path, stat.mtime, stat.size}
+
+    case :persistent_term.get(key, :missing) do
+      :missing ->
+        operations =
+          matrix_path
+          |> File.read!()
+          |> Jason.decode!()
+          |> Map.fetch!("operations")
+          |> Enum.map(&with_runtime_defaults/1)
+
+        :persistent_term.put(key, operations)
+        operations
+
+      operations ->
+        operations
+    end
   end
 
-  def operation_map, do: load() |> Map.new(&{&1["operationId"], &1})
+  def operation_map do
+    matrix_path = path()
+    stat = File.stat!(matrix_path)
+    key = {__MODULE__, :operation_map, matrix_path, stat.mtime, stat.size}
+
+    case :persistent_term.get(key, :missing) do
+      :missing ->
+        indexed = load() |> Map.new(&{&1["operationId"], &1})
+        :persistent_term.put(key, indexed)
+        indexed
+
+      indexed ->
+        indexed
+    end
+  end
 
   def validate! do
     operations = load()

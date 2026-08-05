@@ -57,6 +57,8 @@ defmodule TreeDxProfiler.MarkdownReport do
     - Validation probe throughput: #{probes["requestsPerSecond"] || 0.0} requests/second
     - Target primary RPS: #{target["primaryRps"] || "not set"}
     - Target primary RPS met: #{target["primaryRpsMet"]}
+    - Minimum primary RPS: #{target["minimumPrimaryRps"] || "not set"}
+    - Minimum primary RPS met: #{target["minimumPrimaryRpsMet"]}
     - Total errors: #{summary["totalErrors"] || 0}
     - Assertion failures: #{summary["assertionFailures"] || 0}
     - Race interference: #{summary["raceInterference"] || 0}

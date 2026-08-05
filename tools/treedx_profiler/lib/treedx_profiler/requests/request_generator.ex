@@ -226,13 +226,9 @@ defmodule TreeDxProfiler.RequestGenerator do
   end
 
   def build(:read_repository_file, portfolio_pid, opts) do
-    repo = PortfolioState.choose_repo(portfolio_pid)
+    repo = PortfolioState.choose_read_repo(portfolio_pid)
 
-    path =
-      PortfolioState.choose_readable_path(portfolio_pid, repo.repo_id) ||
-        %{
-          path: "docs/topic-01/doc-000001.md"
-        }
+    path = List.first(repo.readable_paths) || %{path: "docs/topic-01/doc-000001.md"}
 
     request(
       "readRepositoryFile",
@@ -248,7 +244,7 @@ defmodule TreeDxProfiler.RequestGenerator do
   end
 
   def build(:list_repository_paths, portfolio_pid, opts) do
-    repo = PortfolioState.choose_repo(portfolio_pid)
+    repo = PortfolioState.choose_read_repo(portfolio_pid)
 
     expected =
       repo.readable_paths
@@ -272,7 +268,7 @@ defmodule TreeDxProfiler.RequestGenerator do
   end
 
   def build(:search_repository_files, portfolio_pid, opts) do
-    repo = PortfolioState.choose_repo(portfolio_pid)
+    repo = PortfolioState.choose_read_repo(portfolio_pid)
     expected = RequestFactory.expected_search(repo)
     term = expected[:term] || "release"
 
@@ -290,7 +286,7 @@ defmodule TreeDxProfiler.RequestGenerator do
   end
 
   def build(:query_repository, portfolio_pid, opts) do
-    repo = PortfolioState.choose_repo(portfolio_pid)
+    repo = PortfolioState.choose_read_repo(portfolio_pid)
     expected = RequestFactory.expected_search(repo)
     term = expected[:term] || "release"
 

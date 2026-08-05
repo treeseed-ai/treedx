@@ -88,6 +88,24 @@ defmodule TreeDxProfiler.StatsTest do
     assert report["target"]["primaryRpsMet"] == true
   end
 
+  test "duration-controlled throughput uses the requested measured window" do
+    primary = sample("readRepositoryFile", :primary, "2026-06-03T12:00:00Z")
+
+    report =
+      Stats.throughput_breakdown([primary], [primary], %{
+        duration_ms: 2_000,
+        target_primary_rps: 1.0,
+        fail_below_primary_rps: 0.4,
+        validation_probe_mode: "sampled",
+        probe_sampling_rate: 0.1
+      })
+
+    assert report["primary"]["requestsPerSecond"] == 0.5
+    assert report["target"]["primaryRpsMet"] == false
+    assert report["target"]["minimumPrimaryRps"] == 0.4
+    assert report["target"]["minimumPrimaryRpsMet"] == true
+  end
+
   defp sample(operation_id, kind, started_at) do
     %{
       operation_id: operation_id,

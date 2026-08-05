@@ -262,8 +262,8 @@ fn append_audit_event<'a>(env: Env<'a>, data_dir: String, input_json: String) ->
 #[rustler::nif(schedule = "DirtyIo")]
 fn append_audit_events<'a>(env: Env<'a>, data_dir: String, input_json: String) -> Term<'a> {
     match parse_json::<Vec<AuditEventInput>>(input_json) {
-        Ok(input) => match treedx_store::append_audit_events(Path::new(&data_dir), input) {
-            Ok(record) => ok_json(env, record),
+        Ok(input) => match treedx_store::append_audit_events_count(Path::new(&data_dir), input) {
+            Ok(count) => ok_json(env, serde_json::json!({"count": count})),
             Err(error) => err_json(env, error.code(), error),
         },
         Err(error) => err_json(env, "invalid_json", format!("{error:?}")),

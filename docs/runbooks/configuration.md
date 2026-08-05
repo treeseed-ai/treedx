@@ -51,6 +51,16 @@ Runtime resource and performance tuning settings:
 - `TREEDX_REPO_DOC_CACHE_ENABLED=true`
 - `TREEDX_REPO_DOC_CACHE_MAX_ENTRIES=256`
 - `TREEDX_REPO_DOC_CACHE_MAX_BYTES`
+- `TREEDX_REPO_CONTEXT_CACHE_TTL_MS=250`
+- `TREEDX_REPO_CONTEXT_CACHE_MAX_ENTRIES=1024`
+- `TREEDX_AUTHORIZATION_CACHE_TTL_MS=250`
+- `TREEDX_AUTHORIZATION_CACHE_MAX_ENTRIES=4096`
+- `TREEDX_AUTH_TOKEN_CACHE_TTL_MS=5000`
+- `TREEDX_AUTH_TOKEN_CACHE_MAX_ENTRIES=4096`
+- `TREEDX_AUDIT_ASYNC=true`
+- `TREEDX_AUDIT_BATCH_SIZE=100`
+- `TREEDX_AUDIT_FLUSH_INTERVAL_MS=100`
+- `TREEDX_AUDIT_QUEUE_MAX=10000`
 - `TREEDX_GRAPH_INDEX_CACHE_ENABLED=true`
 - `TREEDX_GRAPH_INDEX_CACHE_MAX_ENTRIES=128`
 - `TREEDX_GRAPH_INDEX_CACHE_MAX_BYTES`
@@ -70,11 +80,37 @@ Runtime resource and performance tuning settings:
 - `TREEDX_SNAPSHOT_QUEUE_TIMEOUT_MS=60000`
 - `TREEDX_IMPORT_QUEUE_TIMEOUT_MS=60000`
 - `TREEDX_HEAVY_OPERATION_EXECUTION_TIMEOUT_MS=0`
+- `TREEDX_POOL_METRICS_INTERVAL_MS=1000`
 
 If `TREEDX_RUNTIME_MEMORY_BUDGET_MB` is set, TreeDX computes an approximate
 cache byte budget from `TREEDX_CACHE_MEMORY_FRACTION` and evicts cache entries
-by TTL, entry count, and approximate serialized byte size. If no memory budget
-is set, caches retain the entry-count behavior.
+by TTL, insertion age, entry count, and approximate serialized byte size.
+Cache hits are read-only so concurrent readers do not contend on recency
+writes. If no memory budget is set, caches retain the entry-count behavior.
+
+The repository-context cache coalesces repeated durable-catalog reads and Git
+ref resolution only after request authorization succeeds. Its short default
+TTL bounds staleness to 250 ms while removing those two storage lookups from
+the hot reader path. Immutable commit refs and public publication reads obtain
+the largest benefit; reduce the TTL if an installation requires tighter
+branch-head visibility.
+
+The authorization cache reuses only the persisted actor/repository policy
+scope. Token-scope intersection and ref/path checks still run for every
+request. Grant writes synchronously invalidate the cache, while the short TTL
+bounds changes made outside the capability service.
+
+The authentication cache is keyed by a SHA-256 credential digest, never the
+bearer token. It caches the complete persisted BLAKE3 lookup bridge so cache
+hits do not cross the Rust/JSON boundary. Expiration is checked on every
+request; the TTL only bounds persisted token-record lookup staleness.
+
+Audit writes use bounded asynchronous group commit. The general defaults cap
+the durability window at 100 ms. The production and performance Compose
+profiles use 5,000-event or 5-second batches on durable volumes to avoid an
+`fsync` for every small read batch. Explicit audit reads, graceful shutdown,
+and queue pressure flush pending events. Monitor queue depth, flush duration,
+and append failures before increasing either production value.
 
 Worker pool sizes cap expensive repository, workspace, graph, snapshot, and
 import work. When all workers are active, requests enter bounded per-pool
@@ -83,6 +119,10 @@ queues instead of being rejected immediately. TreeDX returns sanitized
 past its timeout, or an optional execution timeout is reached. Performance
 profiles report queue depth, wait time, and `server_busy` saturation separately
 from ordinary internal failures.
+
+Pool gauges publish on a bounded interval so Prometheus collection cannot
+serialize the request path. Pool snapshots, completion counters, timeout
+counters, and latency histograms remain event-driven and exact.
 
 Use `/api/v1/ready` to verify traffic readiness and
 `/api/v1/admin/health/deep` with a `policy:read` token for protected

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM elixir:1.17.3-otp-27-slim AS base
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -40,7 +41,10 @@ ENV MIX_ENV=prod \
     TREEDX_DATA_DIR=/var/lib/treedx
 COPY . .
 WORKDIR /workspace/treedx/apps/api
-RUN mix deps.get --only prod \
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+  --mount=type=cache,target=/usr/local/cargo/git \
+  --mount=type=cache,target=/workspace/treedx/target \
+  mix deps.get --only prod \
   && mix compile \
   && cargo build --release -p treedx_git --bin treedx_git_worker \
   && mix release \

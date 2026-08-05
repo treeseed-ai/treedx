@@ -21,9 +21,9 @@ defmodule TreeDxProfiler.RequestSelection do
   end
 
   def candidates(portfolio_pid, opts) do
-    snapshot = PortfolioState.snapshot(portfolio_pid)
-    workspace? = snapshot.active_workspaces != []
-    active_workspace_count = length(snapshot.active_workspaces)
+    selection = PortfolioState.selection_state(portfolio_pid)
+    workspace? = selection.active_workspace_count > 0
+    active_workspace_count = selection.active_workspace_count
 
     target_workspace_count =
       min(max_active_workspaces(opts), max(Map.get(opts, :concurrency, 1), 1))
@@ -31,18 +31,18 @@ defmodule TreeDxProfiler.RequestSelection do
     ramping_workspaces? = active_workspace_count < target_workspace_count
 
     can_create_workspace? =
-      snapshot.repos != [] and length(snapshot.active_workspaces) < max_active_workspaces(opts)
+      selection.has_repos? and active_workspace_count < max_active_workspaces(opts)
 
     base =
       []
       |> maybe_add(
         :create_repository,
         weight(opts, :create_repository, opts.portfolio_create_weight),
-        PortfolioState.can_create_repo?(portfolio_pid)
+        selection.can_create_repo?
       )
       |> maybe_add(
         :create_workspace,
-        if(ramping_workspaces?, do: 24, else: weight(opts, :create_workspace, 1)),
+        workspace_creation_weight(opts, ramping_workspaces?),
         can_create_workspace?
       )
       |> maybe_add(
@@ -63,25 +63,25 @@ defmodule TreeDxProfiler.RequestSelection do
       |> maybe_add(
         :read_repository_file,
         weight(opts, :read_repository_file, 20),
-        snapshot.repos != []
+        selection.has_repos?
       )
       |> maybe_add(
         :list_repository_paths,
         weight(opts, :list_repository_paths, 8),
-        snapshot.repos != []
+        selection.has_repos?
       )
       |> maybe_add(
         :search_repository_files,
         weight(opts, :search_repository_files, 12),
-        snapshot.repos != []
+        selection.has_repos?
       )
-      |> maybe_add(:query_repository, weight(opts, :query_repository, 8), snapshot.repos != [])
-      |> maybe_add(:refresh_graph, weight(opts, :refresh_graph, 4), snapshot.repos != [])
-      |> maybe_add(:query_graph, weight(opts, :query_graph, 6), snapshot.repos != [])
-      |> maybe_add(:build_context, weight(opts, :build_context, 6), snapshot.repos != [])
-      |> maybe_add(:build_snapshot, weight(opts, :build_snapshot, 2), snapshot.repos != [])
-      |> maybe_add(:export_artifact, weight(opts, :export_artifact, 1), snapshot.snapshots != [])
-      |> maybe_add(:get_artifact, weight(opts, :get_artifact, 1), snapshot.artifacts != [])
+      |> maybe_add(:query_repository, weight(opts, :query_repository, 8), selection.has_repos?)
+      |> maybe_add(:refresh_graph, weight(opts, :refresh_graph, 4), selection.has_repos?)
+      |> maybe_add(:query_graph, weight(opts, :query_graph, 6), selection.has_repos?)
+      |> maybe_add(:build_context, weight(opts, :build_context, 6), selection.has_repos?)
+      |> maybe_add(:build_snapshot, weight(opts, :build_snapshot, 2), selection.has_repos?)
+      |> maybe_add(:export_artifact, weight(opts, :export_artifact, 1), selection.has_snapshots?)
+      |> maybe_add(:get_artifact, weight(opts, :get_artifact, 1), selection.has_artifacts?)
 
     maybe_add(
       base,
@@ -122,21 +122,31 @@ defmodule TreeDxProfiler.RequestSelection do
   defp weight(%{portfolio_growth_target: "aggressive"}, _operation, base), do: base * 2
   defp weight(_opts, _operation, base), do: base
 
+  defp workspace_creation_weight(
+         %{profile_purpose: "performance", performance_workload: "read_mostly"},
+         _ramping?
+       ),
+       do: 0
+
+  defp workspace_creation_weight(opts, true), do: max(weight(opts, :create_workspace, 1), 24)
+  defp workspace_creation_weight(opts, false), do: weight(opts, :create_workspace, 1)
+
   defp performance_mix(%{performance_workload: "read_mostly"}) do
     %{
-      read_repository_file: 30,
-      search_repository_files: 20,
-      query_repository: 15,
+      read_repository_file: 40,
+      search_repository_files: 25,
+      query_repository: 20,
       list_repository_paths: 15,
-      query_graph: 8,
-      build_context: 5,
-      write_workspace_file: 4,
-      patch_workspace_file: 2,
-      build_snapshot: 1,
-      create_repository: 0.2,
-      refresh_graph: 1,
-      export_artifact: 0.2,
-      get_artifact: 1
+      query_graph: 0,
+      build_context: 0,
+      create_workspace: 0,
+      write_workspace_file: 0,
+      patch_workspace_file: 0,
+      build_snapshot: 0,
+      create_repository: 0,
+      refresh_graph: 0,
+      export_artifact: 0,
+      get_artifact: 0
     }
   end
 

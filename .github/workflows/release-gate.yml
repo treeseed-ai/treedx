@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       performance_profile:
-        description: Run optional 100 RPS performance profile
+        description: Run the 500 primary RPS production performance gate
         required: false
         default: "false"
         type: choice
@@ -701,6 +701,7 @@ jobs:
           TREEDX_PROFILE_DURATION: ${{ vars.TREEDX_CI_PERFORMANCE_PROFILE_DURATION }}
           TREEDX_PROFILE_CONCURRENCY: ${{ vars.TREEDX_CI_PERFORMANCE_PROFILE_CONCURRENCY }}
           TREEDX_PROFILE_TARGET_PRIMARY_RPS: ${{ vars.TREEDX_CI_PERFORMANCE_TARGET_PRIMARY_RPS }}
+          TREEDX_CI_PERFORMANCE_MIN_PRIMARY_RPS: ${{ vars.TREEDX_CI_PERFORMANCE_MIN_PRIMARY_RPS }}
           TREEDX_PROFILE_PROBE_SAMPLING_RATE: ${{ vars.TREEDX_CI_PERFORMANCE_PROBE_SAMPLING_RATE }}
           TREEDX_RUNTIME_CPU_BUDGET: ${{ vars.TREEDX_CI_PERFORMANCE_CPU_BUDGET }}
           TREEDX_RUNTIME_MEMORY_BUDGET_MB: ${{ vars.TREEDX_CI_PERFORMANCE_MEMORY_BUDGET_MB }}
@@ -708,40 +709,21 @@ jobs:
           set -euo pipefail
 
           mkdir -p target/profiles
-          cat > target/profiles/performance-errors-only-budget.json <<'JSON'
-          {
-            "maxTotalErrors": 0,
-            "maxAssertionFailures": 0,
-            "maxOpenApiFailures": 0,
-            "maxReconciliationDrift": 0,
-            "maxUnverifiedRaces": 0,
-            "maxValidationProbeFailures": 0,
-            "maxNegativeTestFailures": 0,
-            "maxMetamorphicFailures": 0,
-            "maxEndpointConsistencyFailures": 0,
-            "maxDelayedConsistencyFailures": 0,
-            "maxPermissionMatrixFailures": 0,
-            "minMeasuredDurationRatio": 0,
-            "maxRaceInterferenceRate": 1000000,
-            "maxP99MsByCategory": {}
-          }
-          JSON
-
           mode="performance"
           export TREEDX_PROFILE_PROFILE_PURPOSE="performance"
           export TREEDX_PROFILE_DURATION="${TREEDX_PROFILE_DURATION:-10m}"
           export TREEDX_PROFILE_MINIMUM_MEASURED_DURATION="${TREEDX_PROFILE_DURATION}"
           export TREEDX_PROFILE_DURATION_IS_CONTROLLING="true"
           export TREEDX_PROFILE_ITERATIONS=""
-          export TREEDX_PROFILE_CONCURRENCY="${TREEDX_PROFILE_CONCURRENCY:-150}"
-          export TREEDX_PROFILE_TARGET_PRIMARY_RPS="${TREEDX_PROFILE_TARGET_PRIMARY_RPS:-100}"
+          export TREEDX_PROFILE_CONCURRENCY="${TREEDX_PROFILE_CONCURRENCY:-300}"
+          export TREEDX_PROFILE_TARGET_PRIMARY_RPS="${TREEDX_PROFILE_TARGET_PRIMARY_RPS:-500}"
           export TREEDX_PROFILE_VALIDATION_PROBE_MODE="sampled"
           export TREEDX_PROFILE_PROBE_SAMPLING_RATE="${TREEDX_PROFILE_PROBE_SAMPLING_RATE:-0.10}"
           export TREEDX_RUNTIME_CPU_BUDGET="${TREEDX_RUNTIME_CPU_BUDGET:-4}"
           export TREEDX_RUNTIME_MEMORY_BUDGET_MB="${TREEDX_RUNTIME_MEMORY_BUDGET_MB:-4096}"
-          export TREEDX_PROFILE_FAIL_BELOW_PRIMARY_RPS=""
+          export TREEDX_PROFILE_FAIL_BELOW_PRIMARY_RPS="${TREEDX_CI_PERFORMANCE_MIN_PRIMARY_RPS:-475}"
           export TREEDX_PROFILE_INCLUDE_EXEC="false"
-          export TREEDX_PROFILE_RELIABILITY_BUDGET="target/profiles/performance-errors-only-budget.json"
+          export TREEDX_PROFILE_RELIABILITY_BUDGET="tools/treedx_profiler/performance_budget.yaml"
           export TREEDX_PROFILE_REPORT_FORMAT="both"
           export TREEDX_PROFILE_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
           export TREEDX_PROFILE_MARKDOWN_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"

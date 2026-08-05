@@ -105,10 +105,13 @@ separate benchmark profile for RPS tuning:
 scripts/profiling/profile-compose.sh performance
 ```
 
-It defaults to a read-mostly portfolio workload, 150 concurrent workers, 10
-minutes of measured load, sampled validation probes, and a target of 100 primary
-workload requests per second. The target is reported, not enforced, unless
-`--fail-below-primary-rps` or `TREEDX_PROFILE_FAIL_BELOW_PRIMARY_RPS` is set.
+It defaults to a read-mostly portfolio workload, 300 concurrent workers, 10
+minutes of measured load, sampled validation probes, and a target of 500 primary
+workload requests per second. Release CI requires at least 475 primary requests
+per second (95% of the offered rate), zero errors, and the category p99 latency
+budget. The tolerance prevents the open-loop scheduler from issuing artificial
+catch-up bursts for late slots. Local exploratory runs can still choose whether
+to set `--fail-below-primary-rps`.
 
 Reports distinguish:
 
@@ -118,8 +121,12 @@ Reports distinguish:
   profiler HTTP traffic during the measured window.
 
 Validation probes are real server load, so they are included in total HTTP RPS,
-but they are not counted as primary business throughput. This keeps the 100 RPS
+but they are not counted as primary business throughput. This keeps the 500 RPS
 target honest while still showing the full pressure the profiler applied.
+Performance mode disables full OpenAPI response validation in the load path so
+the colocated profiler models production clients instead of spending a CPU core
+validating every response. The reliability and contract profiles retain full
+schema validation.
 
 Tune server resources for the performance profile with:
 
@@ -127,7 +134,7 @@ Tune server resources for the performance profile with:
 TREEDX_RUNTIME_CPU_BUDGET=8 \
 TREEDX_RUNTIME_MEMORY_BUDGET_MB=8192 \
 TREEDX_CACHE_MEMORY_FRACTION=0.35 \
-TREEDX_REPOSITORY_QUERY_POOL_SIZE=16 \
+TREEDX_REPOSITORY_QUERY_POOL_SIZE=32 \
 TREEDX_WORKSPACE_WORKER_POOL_SIZE=16 \
 TREEDX_REPOSITORY_QUERY_MAX_QUEUE=2000 \
 scripts/profiling/profile-compose.sh performance
@@ -221,6 +228,11 @@ The profiler exits non-zero when the reliability budget is violated. The
 default budget is `tools/treedx_profiler/reliability_budget.yaml` and requires
 zero server errors, semantic failures, OpenAPI failures, reconciliation drift,
 unverified races, and short measured-duration runs.
+
+Saturated production-load profiles use
+`tools/treedx_profiler/performance_budget.yaml`. It retains the zero-error and
+correctness guarantees while applying explicit subsecond p99 capacity ceilings;
+the default reliability budget keeps tighter latency targets for unloaded runs.
 
 ## Load Modes
 

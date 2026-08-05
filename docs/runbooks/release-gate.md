@@ -85,10 +85,9 @@ profile Compose setup. Federation profiler jobs run both three-node
 mirror-cluster and connected-library profiles. Performance profiles run by
 default on `main`, `staging`, and tag pushes; Docker publishing waits for the
 performance profile on publish-path pushes. The performance profile records the
-target-RPS result in its reports, but missing the target RPS is not a release
-failure by itself. The performance profile blocks release only for profiler
-execution errors, service errors, assertion failures, or response validation
-failures.
+offered target and measured RPS in its reports and fails below the separately
+configured minimum (475 RPS by default for a 500 RPS target). It also blocks release for reliability-budget,
+profiler, service, assertion, and response-validation failures.
 
 Profile Compose starts API nodes from the stripped `treeseed/treedx` production
 image target and runs profiling from the separate Debian-based

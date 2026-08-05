@@ -13,6 +13,7 @@ defmodule TreeDxProfiler.CLI do
     iterations: :integer,
     duration: :string,
     concurrency: :integer,
+    http_pool_size: :integer,
     warmup_iterations: :integer,
     timeout_ms: :integer,
     output: :string,
@@ -176,6 +177,7 @@ defmodule TreeDxProfiler.CLI do
     profile_purpose = Keyword.get(opts, :profile_purpose, "reliability")
     default_probe_mode = if profile_purpose == "performance", do: "sampled", else: "all"
     default_probe_sampling = if profile_purpose == "performance", do: 0.10, else: 1.0
+    concurrency = Keyword.get(opts, :concurrency, 1)
 
     normalized = %{
       base_url: Keyword.get(opts, :base_url, "http://localhost:4000"),
@@ -188,7 +190,8 @@ defmodule TreeDxProfiler.CLI do
       iterations_explicit: iterations_explicit?,
       duration: duration,
       duration_ms: duration_ms,
-      concurrency: Keyword.get(opts, :concurrency, 1),
+      concurrency: concurrency,
+      http_pool_size: Keyword.get(opts, :http_pool_size, max(concurrency, 50)),
       warmup_iterations: Keyword.get(opts, :warmup_iterations, 0),
       timeout_ms: Keyword.get(opts, :timeout_ms, 30_000),
       output: output,
@@ -373,6 +376,7 @@ defmodule TreeDxProfiler.CLI do
            ),
          :ok <- validate_optional_positive(normalized.iterations, "iterations"),
          :ok <- validate_positive(normalized.concurrency, "concurrency"),
+         :ok <- validate_positive(normalized.http_pool_size, "http-pool-size"),
          :ok <- validate_non_negative(normalized.warmup_iterations, "warmup-iterations"),
          :ok <- validate_positive(normalized.portfolio_initial_repos, "portfolio-initial-repos"),
          :ok <- validate_positive(normalized.portfolio_max_repos, "portfolio-max-repos"),

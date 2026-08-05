@@ -1,0 +1,71 @@
+groups:
+  - name: treedx-performance-recording
+    interval: 30s
+    rules:
+      - record: treedx:http_requests:rate5m
+        expr: sum by (route, method) (rate(treedx_http_requests_total[5m]))
+      - record: treedx:http_request_duration_ms:p95_5m
+        expr: histogram_quantile(0.95, sum by (le, route, method) (rate(treedx_http_request_duration_ms_bucket[5m])))
+      - record: treedx:http_request_duration_ms:p99_5m
+        expr: histogram_quantile(0.99, sum by (le, route, method) (rate(treedx_http_request_duration_ms_bucket[5m])))
+      - record: treedx:http_error_ratio:rate5m
+        expr: sum(rate(treedx_http_errors_total[5m])) / clamp_min(sum(rate(treedx_http_requests_total[5m])), 1)
+      - record: treedx:cache_hit_ratio:rate5m
+        expr: sum by (cache) (rate(treedx_cache_hits_total[5m])) / clamp_min(sum by (cache) (rate(treedx_cache_hits_total[5m]) + rate(treedx_cache_misses_total[5m])), 1)
+
+  - name: treedx-performance-alerts
+    rules:
+      - alert: TreeDxRepositoryReaderP99High
+        expr: treedx:http_request_duration_ms:p99_5m{route=~"/api/v1/repos/\\{repo_id\\}/(files/read|files/search|paths/list)"} > 100
+        for: 10m
+        labels:
+          severity: warning
+          service: treedx
+        annotations:
+          summary: TreeDX repository reader p99 exceeds 100 ms
+          runbook: docs/runbooks/performance-profiling.md
+      - alert: TreeDxRepositoryQueryP99High
+        expr: treedx:http_request_duration_ms:p99_5m{route="/api/v1/repos/{repo_id}/query"} > 250
+        for: 10m
+        labels:
+          severity: warning
+          service: treedx
+        annotations:
+          summary: TreeDX repository query p99 exceeds 250 ms
+          runbook: docs/runbooks/performance-profiling.md
+      - alert: TreeDxHttpErrorRatioHigh
+        expr: treedx:http_error_ratio:rate5m > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          service: treedx
+        annotations:
+          summary: TreeDX HTTP error ratio exceeds one percent
+          runbook: docs/runbooks/metrics.md
+      - alert: TreeDxWorkerPoolRejecting
+        expr: sum by (pool) (increase(treedx_pool_rejections_total[5m]) + increase(treedx_pool_queue_timeouts_total[5m])) > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: treedx
+        annotations:
+          summary: TreeDX worker pool is rejecting or timing out queued work
+          runbook: docs/runbooks/performance-profiling.md
+      - alert: TreeDxRepositoryCacheHitRatioLow
+        expr: treedx:cache_hit_ratio:rate5m{cache="repository"} < 0.80 and sum(treedx:http_requests:rate5m) > 50
+        for: 15m
+        labels:
+          severity: warning
+          service: treedx
+        annotations:
+          summary: TreeDX repository cache hit ratio is below 80 percent under load
+          runbook: docs/runbooks/metrics.md
+      - alert: TreeDxAuditPersistenceFailing
+        expr: increase(treedx_audit_append_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: treedx
+        annotations:
+          summary: TreeDX audit persistence is failing
+          runbook: docs/runbooks/metrics.md

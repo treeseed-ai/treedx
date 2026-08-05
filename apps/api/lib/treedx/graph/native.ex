@@ -30,11 +30,16 @@ defmodule TreeDx.Graph.Native do
         ref_name
       )
 
+  def load_graph_resource(index), do: TreeDx.Native.load_graph_resource(Jason.encode!(index))
+
+  defp resource(%{native_resource: resource}), do: resource
+  defp resource(index), do: load_graph_resource(index)
+
   def search_graph(index, request),
     do:
       TreeDx.Store.call_json(
         &TreeDx.Native.search_graph/2,
-        Jason.encode!(index),
+        resource(index),
         Jason.encode!(request)
       )
 
@@ -42,7 +47,7 @@ defmodule TreeDx.Graph.Native do
     do:
       TreeDx.Store.call_json(
         &TreeDx.Native.query_graph/2,
-        Jason.encode!(index),
+        resource(index),
         Jason.encode!(request)
       )
 
@@ -50,7 +55,7 @@ defmodule TreeDx.Graph.Native do
     do:
       TreeDx.Store.call_json(
         &TreeDx.Native.related_nodes/3,
-        Jason.encode!(index),
+        resource(index),
         seed_id,
         Jason.encode!(request)
       )
@@ -59,7 +64,7 @@ defmodule TreeDx.Graph.Native do
     do:
       TreeDx.Store.call_json(
         &TreeDx.Native.subgraph/3,
-        Jason.encode!(index),
+        resource(index),
         Jason.encode!(seed_ids),
         Jason.encode!(request)
       )
@@ -68,7 +73,7 @@ defmodule TreeDx.Graph.Native do
     do:
       TreeDx.Store.call_json(
         &TreeDx.Native.build_context_pack/2,
-        Jason.encode!(index),
+        resource(index),
         Jason.encode!(request)
       )
 

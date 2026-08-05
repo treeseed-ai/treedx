@@ -1,6 +1,6 @@
 use crate::error::StoreError;
 use crate::ids::{capability_id, repository_id_from_name};
-use crate::log::{append_record, ensure_log, replay_latest};
+use crate::log::{append_record, replay_latest, replay_record, warm_log};
 use crate::types::*;
 use chrono::Utc;
 use serde::{de::DeserializeOwned, Serialize};
@@ -332,12 +332,12 @@ pub(crate) fn get_record<T: DeserializeOwned + Serialize + Clone>(
     kind: &str,
     record_id: &str,
 ) -> Result<Option<T>, StoreError> {
-    Ok(replay_latest(&data_dir.join(relative_path), kind)?.remove(record_id))
+    replay_record(&data_dir.join(relative_path), kind, record_id)
 }
 
 fn ensure_all_logs(data_dir: &Path) -> Result<(), StoreError> {
     for (path, kind) in log_files() {
-        ensure_log(&data_dir.join(path), kind)?;
+        warm_log(&data_dir.join(path), kind)?;
     }
     Ok(())
 }

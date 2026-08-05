@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM elixir:1.17.3-otp-27-slim AS profiler-build
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -18,7 +19,9 @@ COPY tools/treedx_profiler tools/treedx_profiler
 COPY docs/api/openapi.yaml docs/api/openapi.yaml
 
 WORKDIR /workspace/treedx/tools/treedx_profiler
-RUN mix deps.get \
+RUN --mount=type=cache,target=/root/.hex \
+  --mount=type=cache,target=/root/.cache/rebar3 \
+  mix deps.get \
   && mix escript.build \
   && mkdir -p /out \
   && cp treedx_profiler /out/treedx_profiler
@@ -53,6 +56,7 @@ COPY tools/treedx_profiler/endpoint_matrix.yaml tools/treedx_profiler/endpoint_m
 COPY tools/treedx_profiler/fixtures tools/treedx_profiler/fixtures
 COPY tools/treedx_profiler/scenarios tools/treedx_profiler/scenarios
 COPY tools/treedx_profiler/reliability_budget.yaml tools/treedx_profiler/reliability_budget.yaml
+COPY tools/treedx_profiler/performance_budget.yaml tools/treedx_profiler/performance_budget.yaml
 COPY docs/api/openapi.yaml docs/api/openapi.yaml
 
 RUN chmod 0755 /usr/local/bin/treedx_profiler /usr/local/bin/treedx-profiler-entrypoint \

@@ -25,6 +25,8 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
     token: token,
     repo_id: repo_id
   } do
+    TreeDx.RepositoryCache.reset!()
+
     conn =
       build_conn()
       |> auth(token)
@@ -40,6 +42,12 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
     assert file["frontmatter"]["metadata"]["nested"] == true
     assert file["body"] =~ "release provenance"
     refute Map.has_key?(json_response(conn, 200), "localPath")
+
+    cache_keys = :ets.tab2list(TreeDx.RepositoryCache) |> Enum.map(&elem(&1, 0))
+    assert {:repository_context, repo_id, :default} in cache_keys
+    assert {:authorization_scope, "actor_demo", repo_id} in cache_keys
+    assert Enum.any?(cache_keys, &match?({{:document, "docs/readme.md", _, _}, _, _, _, _}, &1))
+    refute Enum.any?(cache_keys, &match?({kind, _, _, _, _} when kind in [:tree, :documents], &1))
 
     conn =
       build_conn()

@@ -5,7 +5,7 @@ use serde_json::json;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 pub fn search_graph(
-    index: GraphIndex,
+    index: &GraphIndex,
     request: GraphSearchRequest,
 ) -> Result<Vec<GraphSearchResult>, GraphError> {
     let limit = limit(request.options.limit);
@@ -37,26 +37,26 @@ pub fn get_node(index: &GraphIndex, node_id: &str) -> Option<GraphNode> {
 }
 
 pub fn query_graph(
-    index: GraphIndex,
+    index: &GraphIndex,
     request: GraphQueryRequest,
 ) -> Result<GraphQueryResult, GraphError> {
     let depth = depth(request.options.depth);
     let limit = limit(request.options.max_nodes.or(request.options.limit));
-    let node_map = node_map(&index);
+    let node_map = node_map(index);
     let mut scores: BTreeMap<String, (f64, u32, Vec<String>)> = BTreeMap::new();
     let mut seed_ids = Vec::new();
 
-    for seed in seed_node_ids(&index, &request) {
+    for seed in seed_node_ids(index, &request) {
         if node_map.contains_key(&seed) {
             seed_ids.push(seed.clone());
             scores.insert(seed.clone(), (100.0, 0, vec!["seed".to_string()]));
-            expand(&index, &seed, depth, &request, &mut scores);
+            expand(index, &seed, depth, &request, &mut scores);
         }
     }
 
     if let Some(query) = &request.query {
         let search = search_graph(
-            index.clone(),
+            index,
             GraphSearchRequest {
                 query: query.clone(),
                 scope: request.scope.clone().unwrap_or_else(|| "all".to_string()),
@@ -98,12 +98,13 @@ pub fn query_graph(
     let included: BTreeSet<String> = nodes.iter().map(|entry| entry.node.id.clone()).collect();
     let edges = index
         .edges
-        .into_iter()
+        .iter()
         .filter(|edge| included.contains(&edge.source_id) && included.contains(&edge.target_id))
         .filter(|edge| {
             request.options.edge_types.is_empty()
                 || request.options.edge_types.contains(&edge.edge_type)
         })
+        .cloned()
         .collect::<Vec<_>>();
     Ok(GraphQueryResult {
         seed_ids,
@@ -115,7 +116,7 @@ pub fn query_graph(
 }
 
 pub fn related_nodes(
-    index: GraphIndex,
+    index: &GraphIndex,
     seed_id: &str,
     mut request: GraphQueryRequest,
 ) -> Result<GraphQueryResult, GraphError> {
@@ -125,7 +126,7 @@ pub fn related_nodes(
 }
 
 pub fn subgraph(
-    index: GraphIndex,
+    index: &GraphIndex,
     seed_ids: Vec<String>,
     mut request: GraphQueryRequest,
 ) -> Result<GraphQueryResult, GraphError> {

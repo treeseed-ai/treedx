@@ -13,6 +13,7 @@ defmodule TreeDx.Runtime.Pool do
   def init(_opts) do
     state = Map.new(@pools, &{&1, new_pool(&1)})
     publish(state)
+    schedule_publish()
     {:ok, state}
   end
 
@@ -44,12 +45,12 @@ defmodule TreeDx.Runtime.Pool do
     cond do
       map_size(info.active) < info.size ->
         {info, _job} = start_job(info, job)
-        state = put_and_publish(state, pool, info)
+        state = put_pool(state, pool, info)
         {:noreply, state}
 
       info.queue_depth < info.queue_max ->
         info = enqueue(info, job)
-        state = put_and_publish(state, pool, info)
+        state = put_pool(state, pool, info)
         {:noreply, state}
 
       true ->
@@ -60,7 +61,7 @@ defmodule TreeDx.Runtime.Pool do
           reason: "queue_full"
         })
 
-        state = put_and_publish(state, pool, info)
+        state = put_pool(state, pool, info)
         {:reply, busy(pool, "queue_full"), state}
     end
   end
@@ -71,7 +72,7 @@ defmodule TreeDx.Runtime.Pool do
 
     case dequeue_job(info, job_id) do
       {nil, info} ->
-        {:noreply, put_and_publish(state, pool, info)}
+        {:noreply, put_pool(state, pool, info)}
 
       {job, info} ->
         cancel_timer(job.timeout_ref)
@@ -79,8 +80,14 @@ defmodule TreeDx.Runtime.Pool do
         GenServer.reply(job.from, busy(pool, "queue_timeout"))
         info = %{info | queue_timeouts: info.queue_timeouts + 1}
         Metrics.incr("treedx_pool_queue_timeouts_total", %{pool: to_string(pool)})
-        {:noreply, put_and_publish(state, pool, info)}
+        {:noreply, put_pool(state, pool, info)}
     end
+  end
+
+  def handle_info(:publish_metrics, state) do
+    publish(state)
+    schedule_publish()
+    {:noreply, state}
   end
 
   def handle_info({:execution_timeout, pool, task_ref}, state) do
@@ -103,7 +110,7 @@ defmodule TreeDx.Runtime.Pool do
           |> maybe_start_next()
 
         Metrics.incr("treedx_pool_execution_timeouts_total", %{pool: to_string(pool)})
-        {:noreply, put_and_publish(state, pool, info)}
+        {:noreply, put_pool(state, pool, info)}
     end
   end
 
@@ -131,7 +138,7 @@ defmodule TreeDx.Runtime.Pool do
           |> maybe_start_next()
 
         Metrics.incr("treedx_pool_completed_total", %{pool: to_string(pool)})
-        {:noreply, put_and_publish(state, pool, info)}
+        {:noreply, put_pool(state, pool, info)}
     end
   end
 
@@ -146,7 +153,7 @@ defmodule TreeDx.Runtime.Pool do
           |> Map.update!(:cancelled, &(&1 + 1))
 
         Metrics.incr("treedx_pool_cancelled_total", %{pool: to_string(pool), state: "queued"})
-        {:noreply, put_and_publish(state, pool, info)}
+        {:noreply, put_pool(state, pool, info)}
 
       {:active, pool, info, job, task_ref} ->
         if job.task_pid,
@@ -163,7 +170,7 @@ defmodule TreeDx.Runtime.Pool do
           |> maybe_start_next()
 
         Metrics.incr("treedx_pool_cancelled_total", %{pool: to_string(pool), state: "active"})
-        {:noreply, put_and_publish(state, pool, info)}
+        {:noreply, put_pool(state, pool, info)}
 
       nil ->
         case find_active(state, ref) do
@@ -184,7 +191,7 @@ defmodule TreeDx.Runtime.Pool do
               |> maybe_start_next()
 
             Metrics.incr("treedx_pool_completed_total", %{pool: to_string(pool), status: "crash"})
-            {:noreply, put_and_publish(state, pool, info)}
+            {:noreply, put_pool(state, pool, info)}
         end
     end
   end
@@ -411,9 +418,14 @@ defmodule TreeDx.Runtime.Pool do
      }}
   end
 
-  defp put_and_publish(state, pool, info) do
-    publish_pool(pool, info)
-    Map.put(state, pool, info)
+  defp put_pool(state, pool, info), do: Map.put(state, pool, info)
+
+  defp schedule_publish do
+    Process.send_after(
+      self(),
+      :publish_metrics,
+      Resources.int_env("TREEDX_POOL_METRICS_INTERVAL_MS", 1_000)
+    )
   end
 
   defp publish(state), do: Enum.each(state, fn {pool, info} -> publish_pool(pool, info) end)

@@ -5,21 +5,54 @@ defmodule TreeDx.Observability.Metrics do
   alias TreeDx.Observability.Scrubber
 
   @buckets [5, 10, 25, 50, 100, 250, 500, 1_000, 2_500, 5_000, 10_000, :infinity]
+  @counter_table TreeDx.Observability.CounterMetrics
+  @histogram_table TreeDx.Observability.HistogramMetrics
+  @gauge_table TreeDx.Observability.GaugeMetrics
+  @scale 1_000
 
   def start_link(_opts), do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
 
   def init(_opts) do
-    {:ok, %{counters: %{}, histograms: %{}, gauges: %{}}}
+    for table <- tables() do
+      :ets.new(table, [
+        :named_table,
+        :set,
+        :public,
+        read_concurrency: true,
+        write_concurrency: true
+      ])
+    end
+
+    {:ok, %{}}
   end
 
-  def incr(name, labels \\ %{}, value \\ 1),
-    do: call_or_ignore({:incr, to_string(name), Scrubber.scrub_labels(labels), value})
+  def incr(name, labels \\ %{}, value \\ 1) do
+    if table_exists?(@counter_table) do
+      key = {to_string(name), Scrubber.scrub_labels(labels)}
+      :ets.update_counter(@counter_table, key, {2, value}, {key, 0})
+    end
 
-  def observe(name, value, labels \\ %{}),
-    do: call_or_ignore({:observe, to_string(name), value, Scrubber.scrub_labels(labels)})
+    :ok
+  end
 
-  def put_gauge(name, value, labels \\ %{}),
-    do: call_or_ignore({:put_gauge, to_string(name), value, Scrubber.scrub_labels(labels)})
+  def observe(name, value, labels \\ %{}) do
+    if table_exists?(@histogram_table) do
+      key = {to_string(name), Scrubber.scrub_labels(labels)}
+      :ets.insert_new(@histogram_table, empty_histogram(key))
+      :ets.update_counter(@histogram_table, key, histogram_updates(value))
+    end
+
+    :ok
+  end
+
+  def put_gauge(name, value, labels \\ %{}) do
+    if table_exists?(@gauge_table) do
+      key = {to_string(name), Scrubber.scrub_labels(labels)}
+      :ets.insert(@gauge_table, {key, value})
+    end
+
+    :ok
+  end
 
   def record_audit_event(event_type, attrs \\ %{}) do
     status = safe_status(attrs)
@@ -38,9 +71,19 @@ defmodule TreeDx.Observability.Metrics do
     maybe_record_partial_failure(event_type, data)
   end
 
-  def snapshot, do: call_or_default(:snapshot, empty_snapshot())
+  def snapshot do
+    if Enum.all?(tables(), &table_exists?/1), do: materialize(), else: empty_snapshot()
+  end
+
   def prometheus, do: snapshot() |> render_prometheus()
-  def reset!, do: call_or_ignore(:reset)
+
+  def reset! do
+    Enum.each(tables(), fn table ->
+      if table_exists?(table), do: :ets.delete_all_objects(table)
+    end)
+
+    :ok
+  end
 
   defp metric_for_event("repo." <> rest),
     do: {"treedx_repo_operations_total", %{operation: event_operation(rest)}}
@@ -127,96 +170,65 @@ defmodule TreeDx.Observability.Metrics do
   defp safe_status(attrs), do: to_string(attrs[:status] || attrs["status"] || "ok")
   defp event_operation(event), do: event |> to_string() |> String.split(".") |> List.last()
 
-  def handle_call({:incr, name, labels, value}, _from, state) do
-    key = {name, labels}
-    counters = Map.update(state.counters, key, value, &(&1 + value))
-    {:reply, :ok, %{state | counters: counters}}
-  end
-
-  def handle_call({:observe, name, value, labels}, _from, state) do
-    key = {name, labels}
-
-    histograms =
-      Map.update(state.histograms, key, new_histogram(value), fn histogram ->
-        update_histogram(histogram, value)
-      end)
-
-    {:reply, :ok, %{state | histograms: histograms}}
-  end
-
-  def handle_call({:put_gauge, name, value, labels}, _from, state) do
-    {:reply, :ok, %{state | gauges: Map.put(state.gauges, {name, labels}, value)}}
-  end
-
-  def handle_call(:snapshot, _from, state), do: {:reply, materialize(state), state}
-
-  def handle_call(:reset, _from, _state),
-    do: {:reply, :ok, %{counters: %{}, histograms: %{}, gauges: %{}}}
-
-  defp call_or_ignore(message) do
-    call_or_default(message, :ok)
-  end
-
-  defp call_or_default(message, default) do
-    if Process.whereis(__MODULE__) do
-      GenServer.call(__MODULE__, message)
-    else
-      default
-    end
-  end
-
-  defp new_histogram(value),
-    do: update_histogram(%{buckets: initial_buckets(), sum: 0, count: 0}, value)
-
-  defp update_histogram(histogram, value) do
-    buckets =
-      Enum.reduce(@buckets, histogram.buckets, fn bucket, acc ->
-        if bucket == :infinity or value <= bucket do
-          Map.update!(acc, bucket, &(&1 + 1))
-        else
-          acc
-        end
-      end)
-
-    %{histogram | buckets: buckets, sum: histogram.sum + value, count: histogram.count + 1}
-  end
-
-  defp initial_buckets, do: Map.new(@buckets, &{&1, 0})
-
-  defp materialize(state) do
+  defp materialize do
     %{
       counters:
-        entries(state.counters, fn {name, labels}, value ->
+        table_entries(@counter_table, fn {{name, labels}, value} ->
           %{name: name, labels: labels, value: value}
         end),
       histograms:
-        entries(state.histograms, fn {name, labels}, histogram ->
+        table_entries(@histogram_table, fn histogram ->
+          [key, sum, count | bucket_counts] = Tuple.to_list(histogram)
+          {name, labels} = key
+
           %{
             name: name,
             labels: labels,
             buckets:
-              Enum.map(@buckets, fn bucket ->
+              Enum.zip_with(@buckets, bucket_counts, fn bucket, bucket_count ->
                 %{
                   le: if(bucket == :infinity, do: "+Inf", else: bucket),
-                  value: histogram.buckets[bucket]
+                  value: bucket_count
                 }
               end),
-            sum: histogram.sum,
-            count: histogram.count
+            sum: unscale(sum),
+            count: count
           }
         end),
       gauges:
-        entries(state.gauges, fn {name, labels}, value ->
+        table_entries(@gauge_table, fn {{name, labels}, value} ->
           %{name: name, labels: labels, value: value}
         end)
     }
   end
 
-  defp entries(map, mapper) do
-    map
-    |> Enum.map(fn {key, value} -> mapper.(key, value) end)
+  defp table_entries(table, mapper) do
+    table
+    |> :ets.tab2list()
+    |> Enum.map(mapper)
     |> Enum.sort_by(&{&1.name, inspect(&1.labels)})
   end
+
+  defp empty_histogram(key) do
+    List.to_tuple([key, 0, 0 | List.duplicate(0, length(@buckets))])
+  end
+
+  defp histogram_updates(value) do
+    bucket_updates =
+      @buckets
+      |> Enum.with_index(4)
+      |> Enum.flat_map(fn {bucket, position} ->
+        if bucket == :infinity or value <= bucket, do: [{position, 1}], else: []
+      end)
+
+    [{2, round(value * @scale)}, {3, 1} | bucket_updates]
+  end
+
+  defp tables, do: [@counter_table, @histogram_table, @gauge_table]
+  defp table_exists?(table), do: :ets.whereis(table) != :undefined
+
+  defp unscale(value) when rem(value, @scale) == 0, do: div(value, @scale)
+  defp unscale(value), do: value / @scale
 
   defp empty_snapshot, do: %{counters: [], histograms: [], gauges: []}
 

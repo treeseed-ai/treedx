@@ -81,7 +81,7 @@ fn builds_generic_graph_nodes_and_edges() {
 fn ranks_and_queries_deterministically() {
     let index = sample_index();
     let results = search_graph(
-        index.clone(),
+        &index,
         GraphSearchRequest {
             query: "release overview".to_string(),
             scope: "sections".to_string(),
@@ -104,7 +104,7 @@ fn ranks_and_queries_deterministically() {
         .id
         .clone();
     let query = query_graph(
-        index,
+        &index,
         GraphQueryRequest {
             seed_ids: vec![seed],
             relations: vec!["references".to_string()],
@@ -137,7 +137,7 @@ fn context_budget_truncates_an_oversized_first_node() {
     node.text = Some(oversized);
     let seed_id = node.id.clone();
     let pack = build_context_pack(
-        index,
+        &index,
         ContextPackRequest {
             graph_query: GraphQueryRequest {
                 seed_ids: vec![seed_id],

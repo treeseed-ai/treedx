@@ -1,7 +1,7 @@
-use crate::catalog::{list_records, put_record};
+use crate::catalog::put_record;
 use crate::error::StoreError;
 use crate::ids::audit_event_id;
-use crate::log::append_records;
+use crate::log::{append_records, append_records_unindexed, replay_all};
 use crate::types::{AuditEventInput, AuditEventRecord, AuditQuery};
 use chrono::Utc;
 use std::cmp::Reverse;
@@ -41,7 +41,29 @@ pub fn append_audit_events(
     data_dir: &Path,
     inputs: Vec<AuditEventInput>,
 ) -> Result<Vec<AuditEventRecord>, StoreError> {
-    let mut records = Vec::new();
+    let records = build_records(inputs);
+
+    append_records(
+        &data_dir.join("audit/events.tdb"),
+        "audit_event",
+        records.clone(),
+    )?;
+
+    Ok(records.into_iter().map(|(_id, record)| record).collect())
+}
+
+pub fn append_audit_events_count(
+    data_dir: &Path,
+    inputs: Vec<AuditEventInput>,
+) -> Result<usize, StoreError> {
+    let records = build_records(inputs);
+    let count = records.len();
+    append_records_unindexed(&data_dir.join("audit/events.tdb"), "audit_event", records)?;
+    Ok(count)
+}
+
+fn build_records(inputs: Vec<AuditEventInput>) -> Vec<(String, AuditEventRecord)> {
+    let mut records = Vec::with_capacity(inputs.len());
 
     for input in inputs {
         let recorded_at = Utc::now();
@@ -69,13 +91,7 @@ pub fn append_audit_events(
         records.push((id, record));
     }
 
-    append_records(
-        &data_dir.join("audit/events.tdb"),
-        "audit_event",
-        records.clone(),
-    )?;
-
-    Ok(records.into_iter().map(|(_id, record)| record).collect())
+    records
 }
 
 pub fn list_audit_events(
@@ -84,7 +100,7 @@ pub fn list_audit_events(
 ) -> Result<Vec<AuditEventRecord>, StoreError> {
     let limit = query.limit.unwrap_or(100).min(500) as usize;
     let mut records =
-        list_records::<AuditEventRecord>(data_dir, "audit/events.tdb", "audit_event")?;
+        replay_all::<AuditEventRecord>(&data_dir.join("audit/events.tdb"), "audit_event")?;
     records.sort_by_key(|event| Reverse(event.recorded_at));
     Ok(records
         .into_iter()

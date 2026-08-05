@@ -3,12 +3,16 @@ defmodule TreeDxProfiler.HTTP do
 
   alias TreeDxProfiler.Timer
 
-  defstruct [:base_url, :token, timeout_ms: 30_000]
+  defstruct [:base_url, :token, :finch, :http_pool_size, timeout_ms: 30_000]
 
   def new(opts) do
+    pool_size = Map.get(opts, :http_pool_size, max(opts.concurrency, 50))
+
     %__MODULE__{
       base_url: String.trim_trailing(opts.base_url, "/"),
       token: opts[:token],
+      finch: ensure_finch(pool_size),
+      http_pool_size: pool_size,
       timeout_ms: opts.timeout_ms
     }
   end
@@ -30,6 +34,7 @@ defmodule TreeDxProfiler.HTTP do
           headers: headers,
           json: json,
           body: body,
+          finch: client.finch,
           pool_timeout: client.timeout_ms,
           receive_timeout: client.timeout_ms,
           retry: false
@@ -109,4 +114,20 @@ defmodule TreeDxProfiler.HTTP do
   defp error_code(_), do: nil
   defp error_details(%{"error" => %{"details" => details}}) when is_map(details), do: details
   defp error_details(_), do: %{}
+
+  defp ensure_finch(pool_size) do
+    case Process.whereis(TreeDxProfiler.Finch) do
+      nil ->
+        {:ok, _pid} =
+          Finch.start_link(
+            name: TreeDxProfiler.Finch,
+            pools: %{default: [size: pool_size, count: 1]}
+          )
+
+        TreeDxProfiler.Finch
+
+      _pid ->
+        TreeDxProfiler.Finch
+    end
+  end
 end

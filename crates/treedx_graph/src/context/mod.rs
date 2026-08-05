@@ -4,7 +4,7 @@ use serde_json::json;
 use std::collections::BTreeSet;
 
 pub fn build_context_pack(
-    index: GraphIndex,
+    index: &GraphIndex,
     request: ContextPackRequest,
 ) -> Result<ContextPack, crate::GraphError> {
     let max_nodes = request.budget.max_nodes.unwrap_or(8).clamp(1, 50) as usize;

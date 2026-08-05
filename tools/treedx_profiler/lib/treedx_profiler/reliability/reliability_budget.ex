@@ -16,13 +16,13 @@ defmodule TreeDxProfiler.ReliabilityBudget do
     "minMeasuredDurationRatio" => 0.99,
     "maxRaceInterferenceRate" => 5.0,
     "maxP99MsByCategory" => %{
-      "operations" => 5000,
-      "repository_read" => 30_000,
-      "repository_query" => 30_000,
-      "workspace" => 30_000,
-      "graph" => 30_000,
-      "snapshot" => 30_000,
-      "artifact" => 30_000
+      "operations" => 1_000,
+      "repository_read" => 100,
+      "repository_query" => 250,
+      "workspace" => 1_000,
+      "graph" => 500,
+      "snapshot" => 2_000,
+      "artifact" => 1_000
     }
   }
 

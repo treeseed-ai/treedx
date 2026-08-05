@@ -80,8 +80,14 @@ defmodule TreeDx.Auth do
   end
 
   defp authenticate_dev_token(token) do
-    with {:ok, token_hash} <- TreeDx.Store.hash_token(token),
-         {:ok, record} when is_map(record) <- TreeDx.Store.get_dev_token_by_hash(token_hash),
+    credential_digest = :crypto.hash(:sha256, token)
+
+    with {:ok, record} when is_map(record) <-
+           TreeDx.Auth.TokenCache.get_dev_record(credential_digest, fn ->
+             with {:ok, token_hash} <- TreeDx.Store.hash_token(token) do
+               TreeDx.Store.get_dev_token_by_hash(token_hash)
+             end
+           end),
          {:ok, expires_at, _} <- DateTime.from_iso8601(record["expiresAt"]) do
       if DateTime.compare(expires_at, DateTime.utc_now()) == :gt do
         {:ok, principal(record["actorId"], record["tenantId"])}

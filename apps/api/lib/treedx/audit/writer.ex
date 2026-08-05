@@ -5,25 +5,31 @@ defmodule TreeDx.Audit.Writer do
   def start_link(_opts), do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
 
   def init(_opts) do
-    {:ok, %{queue: []}, flush_interval()}
+    Process.flag(:priority, :low)
+    {:ok, %{queue: [], size: 0}, flush_interval()}
   end
 
   def append(event) do
     writer = Process.whereis(__MODULE__)
 
     if async_enabled?() and writer do
+      normalized = normalize_event(event)
       GenServer.cast(writer, {:append, event})
-      {:ok, normalize_event(event)}
+      {:ok, normalized}
     else
       TreeDx.Store.append_audit_event(event)
     end
   end
 
-  defp normalize_event(event) do
-    event
-    |> Jason.encode!()
-    |> Jason.decode!()
+  defp normalize_event(value) when is_map(value) do
+    Map.new(value, fn {key, item} -> {normalize_key(key), normalize_event(item)} end)
   end
+
+  defp normalize_event(value) when is_list(value), do: Enum.map(value, &normalize_event/1)
+  defp normalize_event(value), do: value
+
+  defp normalize_key(key) when is_atom(key), do: Atom.to_string(key)
+  defp normalize_key(key), do: key
 
   def flush do
     if Process.whereis(__MODULE__) do
@@ -34,16 +40,17 @@ defmodule TreeDx.Audit.Writer do
   end
 
   def handle_cast({:append, event}, state) do
-    if length(state.queue) >= queue_max() do
+    if state.size >= queue_max() do
       TreeDx.Observability.Metrics.incr("treedx_audit_sync_fallback_total")
       _ = TreeDx.Store.append_audit_event(event)
       {:noreply, state, flush_interval()}
     else
       queue = [event | state.queue]
-      state = %{state | queue: queue}
-      TreeDx.Observability.Metrics.put_gauge("treedx_audit_queue_depth", length(queue))
+      size = state.size + 1
+      state = %{state | queue: queue, size: size}
+      TreeDx.Observability.Metrics.put_gauge("treedx_audit_queue_depth", size)
 
-      if length(queue) >= batch_size() do
+      if size >= batch_size() do
         {:noreply, flush_state(state), flush_interval()}
       else
         {:noreply, state, flush_interval()}
@@ -85,7 +92,7 @@ defmodule TreeDx.Audit.Writer do
     end
 
     TreeDx.Observability.Metrics.put_gauge("treedx_audit_queue_depth", 0)
-    %{state | queue: []}
+    %{state | queue: [], size: 0}
   end
 
   defp async_enabled? do

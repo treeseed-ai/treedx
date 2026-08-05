@@ -8,8 +8,10 @@ defmodule TreeDxProfiler.PortfolioState do
   end
 
   def snapshot(pid), do: GenServer.call(pid, :snapshot)
+  def selection_state(pid), do: GenServer.call(pid, :selection_state)
   def next_counter(pid, key), do: GenServer.call(pid, {:next_counter, key})
   def choose_repo(pid), do: GenServer.call(pid, :choose_repo)
+  def choose_read_repo(pid), do: GenServer.call(pid, :choose_read_repo)
   def choose_mutable_repo(pid), do: GenServer.call(pid, :choose_mutable_repo)
   def reserve_workspace_repo(pid), do: GenServer.call(pid, :reserve_workspace_repo)
   def choose_workspace(pid), do: GenServer.call(pid, :choose_workspace)
@@ -99,6 +101,19 @@ defmodule TreeDxProfiler.PortfolioState do
   @impl true
   def handle_call(:snapshot, _from, state), do: {:reply, public_snapshot(state), state}
 
+  def handle_call(:selection_state, _from, state) do
+    active_repos = active_repos(state)
+
+    {:reply,
+     %{
+       active_workspace_count: map_size(state.active_workspaces),
+       can_create_repo?: length(active_repos) < state.opts.portfolio_max_repos,
+       has_artifacts?: state.artifacts != [],
+       has_repos?: active_repos != [],
+       has_snapshots?: state.snapshots != []
+     }, state}
+  end
+
   def handle_call({:next_counter, key}, _from, state) do
     next = Map.get(state.counters, key, 0) + 1
     {:reply, next, put_in(state, [:counters, key], next)}
@@ -106,6 +121,21 @@ defmodule TreeDxProfiler.PortfolioState do
 
   def handle_call(:choose_repo, _from, state),
     do: {:reply, Enum.random(active_repos(state)), state}
+
+  def handle_call(:choose_read_repo, _from, state) do
+    repo = Enum.random(active_repos(state))
+    readable_path =
+      repo.readable_paths
+      |> Enum.filter(&String.starts_with?(&1.path, ["docs/", "workspace/"]))
+      |> random_or_nil()
+
+    {:reply,
+     %{
+       default_ref: repo.default_ref,
+       readable_paths: if(readable_path, do: [readable_path], else: []),
+       repo_id: repo.repo_id
+     }, state}
+  end
 
   def handle_call(:choose_mutable_repo, _from, state) do
     repo =
