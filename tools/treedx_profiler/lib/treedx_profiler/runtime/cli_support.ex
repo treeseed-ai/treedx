@@ -15,9 +15,8 @@ defmodule TreeDxProfiler.CLISupport do
       nil ->
         __ENV__.file
         |> Path.dirname()
-        |> Path.join("..")
+        |> Path.join("../../..")
         |> Path.expand()
-        |> Path.dirname()
 
       root ->
         Path.expand(root)

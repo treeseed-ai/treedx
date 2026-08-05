@@ -36,9 +36,7 @@ defmodule TreeDxProfiler.Scenario do
   end
 
   defp path!(id) do
-    case System.get_env("TREEDX_PROFILER_ROOT") do
-      nil -> Path.expand("../../scenarios/#{id}.yaml", __DIR__)
-      root -> Path.expand("scenarios/#{id}.yaml", root)
-    end
+    TreeDxProfiler.CLISupport.profiler_root()
+    |> Path.join("scenarios/#{id}.yaml")
   end
 end

@@ -23,7 +23,7 @@ defmodule TreeDxProfiler.MixProject do
       {:jason, "~> 1.4"},
       {:req, "~> 0.6.2"},
       {:yamerl, "~> 0.10"},
-      {:ymlr, "~> 5.0"}
+      {:ymlr, "~> 5.1.6"}
     ]
   end
 end

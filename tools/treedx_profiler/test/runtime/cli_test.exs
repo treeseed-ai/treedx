@@ -1,7 +1,22 @@
 defmodule TreeDxProfiler.CLITest do
   use ExUnit.Case, async: true
 
-  alias TreeDxProfiler.CLI
+  alias TreeDxProfiler.{CLI, CLISupport}
+
+  test "resolves packaged profiler resources from the project root" do
+    root = CLISupport.profiler_root()
+
+    for relative_path <- [
+          "endpoint_matrix.yaml",
+          "performance_budget.yaml",
+          "reliability_budget.yaml",
+          "fixtures/small-docs.yaml",
+          "scenarios/full_api.yaml"
+        ] do
+      assert File.regular?(Path.join(root, relative_path)),
+             "expected profiler resource #{relative_path} beneath #{root}"
+    end
+  end
 
   test "parses defaults" do
     assert {:ok, opts} = CLI.parse([])

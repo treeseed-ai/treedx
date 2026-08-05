@@ -276,9 +276,7 @@ defmodule TreeDxProfiler.EndpointMatrix do
   defp infer_state_effects(_operation_id), do: []
 
   defp path do
-    case System.get_env("TREEDX_PROFILER_ROOT") do
-      nil -> Path.expand("../../endpoint_matrix.yaml", __DIR__)
-      root -> Path.expand("endpoint_matrix.yaml", root)
-    end
+    TreeDxProfiler.CLISupport.profiler_root()
+    |> Path.join("endpoint_matrix.yaml")
   end
 end

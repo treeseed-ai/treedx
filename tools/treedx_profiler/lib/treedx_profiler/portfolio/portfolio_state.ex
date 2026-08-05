@@ -124,6 +124,7 @@ defmodule TreeDxProfiler.PortfolioState do
 
   def handle_call(:choose_read_repo, _from, state) do
     repo = Enum.random(active_repos(state))
+
     readable_path =
       repo.readable_paths
       |> Enum.filter(&String.starts_with?(&1.path, ["docs/", "workspace/"]))
