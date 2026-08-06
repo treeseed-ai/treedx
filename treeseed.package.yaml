@@ -6,6 +6,7 @@ repository: treeseed-ai/treedx
 versionSource: apps/api/mix.exs
 image: treeseed/treedx
 workflowTemplateVersion: custom
+workflowDependencies: ["@treeseed/sdk"]
 deploymentSource:
   staging: git
   prod: image

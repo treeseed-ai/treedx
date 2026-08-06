@@ -1,0 +1,79 @@
+name: Content
+
+on:
+  push:
+    paths:
+      - 'docs/src/content/**'
+  pull_request:
+    paths:
+      - 'docs/src/content/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'pull_request' && 'preview' || (github.ref_name == 'main' && 'production' || (github.ref_name == 'staging' && 'staging' || 'preview')) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Checkout canonical content publisher
+        uses: actions/checkout@v4
+        with:
+          repository: treeseed-ai/sdk
+          ref: ${{ github.event_name == 'pull_request' && github.base_ref || (github.ref_name == 'main' && 'main' || 'staging') }}
+          path: .treeseed/content-publisher
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: .treeseed/content-publisher/package-lock.json
+
+      - name: Build canonical content publisher
+        working-directory: .treeseed/content-publisher
+        run: npm ci --ignore-scripts && npm run build:dist
+
+      - name: Validate and publish exact content commit
+        env:
+          TREESEED_TEAM_ID: treeseed
+          TREESEED_PROJECT_ID: treedx
+          TREESEED_CLOUDFLARE_ACCOUNT_ID: ${{ vars.TREESEED_CLOUDFLARE_ACCOUNT_ID }}
+          TREESEED_CONTENT_BUCKET_NAME: ${{ vars.TREESEED_CONTENT_BUCKET_NAME }}
+          TREESEED_R2_ACCESS_KEY_ID: ${{ secrets.TREESEED_R2_ACCESS_KEY_ID }}
+          TREESEED_R2_SECRET_ACCESS_KEY: ${{ secrets.TREESEED_R2_SECRET_ACCESS_KEY }}
+        run: |
+          set -euo pipefail
+          SOURCE_COMMIT="$(git rev-parse HEAD)"
+          test "${SOURCE_COMMIT}" = "${{ github.event.pull_request.head.sha || github.sha }}"
+          CHANNEL=preview
+          if test "${GITHUB_REF_NAME}" = main; then CHANNEL=production; fi
+          if test "${GITHUB_REF_NAME}" = staging; then CHANNEL=staging; fi
+          VALIDATE=()
+          if test "${{ github.event_name }}" = pull_request; then VALIDATE+=(--validate-only); fi
+          if test "${{ github.event_name }}" != pull_request; then
+            node ./.treeseed/content-publisher/dist/scripts/content/publish-content.js --acceptance --team-id "${TREESEED_TEAM_ID}" > r2-acceptance-receipt.json
+          fi
+          node ./.treeseed/content-publisher/dist/scripts/content/publish-content.js \
+            --root . \
+            --content-path docs/src/content \
+            --source-commit "${SOURCE_COMMIT}" \
+            --ref "${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}" \
+            --channel "${CHANNEL}" \
+            "${VALIDATE[@]}" > content-publication-receipt.json
+
+      - name: Upload publication receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: content-publication-${{ github.sha }}
+          path: content-publication-receipt.json

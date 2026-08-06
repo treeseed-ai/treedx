@@ -6,7 +6,7 @@ pub struct TreeDxOpenApiOperation {
     pub path: &'static str,
 }
 
-pub const TREEDX_OPENAPI_OPERATION_COUNT: usize = 118;
+pub const TREEDX_OPENAPI_OPERATION_COUNT: usize = 119;
 
 pub const TREEDX_OPENAPI_OPERATIONS: &[TreeDxOpenApiOperation] = &[
     TreeDxOpenApiOperation {
@@ -448,6 +448,10 @@ pub const TREEDX_OPENAPI_OPERATIONS: &[TreeDxOpenApiOperation] = &[
     TreeDxOpenApiOperation {
         method: "POST",
         path: "/api/v1/workspaces/{workspace_id}/blobs/write",
+    },
+    TreeDxOpenApiOperation {
+        method: "POST",
+        path: "/api/v1/workspaces/{workspace_id}/changesets",
     },
     TreeDxOpenApiOperation {
         method: "POST",
