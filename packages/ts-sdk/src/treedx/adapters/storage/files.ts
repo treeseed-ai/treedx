@@ -5,6 +5,7 @@ export class FilesAdapter {
   tree(workspaceId: string, query?: Record<string, string | number | boolean | undefined>): Promise<unknown> { return jsonRequest(this.context.transport, 'GET', `/api/v1/workspaces/${segment(workspaceId)}/tree`, undefined, query); }
   read(workspaceId: string, query?: Record<string, string | number | boolean | undefined>): Promise<unknown> { return jsonRequest(this.context.transport, 'GET', `/api/v1/workspaces/${segment(workspaceId)}/files`, undefined, query); }
   write(workspaceId: string, input: unknown): Promise<unknown> { return jsonRequest(this.context.transport, 'PUT', `/api/v1/workspaces/${segment(workspaceId)}/files`, input); }
+  changeset(workspaceId: string, input: unknown): Promise<unknown> { return jsonRequest(this.context.transport, 'POST', `/api/v1/workspaces/${segment(workspaceId)}/changesets`, input); }
   patch(workspaceId: string, input: unknown): Promise<unknown> { return jsonRequest(this.context.transport, 'PATCH', `/api/v1/workspaces/${segment(workspaceId)}/files`, input); }
   delete(workspaceId: string, query?: Record<string, string | number | boolean | undefined>): Promise<unknown> { return jsonRequest(this.context.transport, 'DELETE', `/api/v1/workspaces/${segment(workspaceId)}/files`, undefined, query); }
   search(workspaceId: string, input: unknown): Promise<unknown> { return jsonRequest(this.context.transport, 'POST', `/api/v1/workspaces/${segment(workspaceId)}/search`, input); }

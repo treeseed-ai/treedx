@@ -116,6 +116,7 @@ defmodule TreeDxWeb.Router do
     get("/workspaces/:workspace_id/files", FileController, :read)
     put("/workspaces/:workspace_id/files", FileController, :write)
     put("/workspaces/:workspace_id/files/batch", FileController, :write_batch)
+    post("/workspaces/:workspace_id/changesets", FileController, :apply_changeset)
     patch("/workspaces/:workspace_id/files", FileController, :patch)
     delete("/workspaces/:workspace_id/files", FileController, :delete)
     post("/workspaces/:workspace_id/blobs/write", BlobController, :write)

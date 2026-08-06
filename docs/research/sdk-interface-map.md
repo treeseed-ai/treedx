@@ -177,7 +177,7 @@ Current SDK auth and capability concepts are string-based and product/platform o
 - `src/remote.ts`: `ApiPrincipal` has `id`, `scopes`, `roles`, `permissions`, and optional metadata.
 - `src/api/http.ts`: `requireScope`, `requireAuthentication`, `requireActorType`, and `requirePermission` enforce coarse API access.
 - `src/api/types.ts`: `ApiAuthProvider` is the auth boundary and defines access token, service credential, trusted assertion, and session APIs.
-- `src/platform-operations.ts`: platform scopes include `platform:repository:write`, `platform:runners:claim`, and operation management scopes.
+- `src/platform-operations.ts`: platform scopes cover runner claim/update and operation management; repository mutation belongs to TreeDX changesets, not platform operations.
 - `src/dispatch.ts`: dispatch capabilities define execution class and allowed targets.
 
 TreeDX implication:

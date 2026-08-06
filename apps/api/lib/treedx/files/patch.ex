@@ -66,7 +66,10 @@ defmodule TreeDx.Files.Patch do
   defp apply_hunks(original, [], _line_no, acc), do: {:ok, Enum.reverse(acc) ++ original}
 
   defp apply_hunks(original, [%{old_start: old_start, body: body} | rest], line_no, acc) do
-    unchanged_count = old_start - line_no
+    # Git uses an old start of zero for a newly-created file. Internally the
+    # applicator indexes lines from one, so both zero and one mean "before the
+    # first line" here.
+    unchanged_count = max(old_start, 1) - line_no
 
     if unchanged_count < 0 or length(original) < unchanged_count do
       {:error, %{code: "conflict", message: "patch hunk does not apply."}}
@@ -95,6 +98,7 @@ defmodule TreeDx.Files.Patch do
       " " <> expected -> consume_expected(original, expected, rest, [expected | additions], 1)
       "-" <> expected -> consume_expected(original, expected, rest, additions, 1)
       "+" <> added -> add_line(original, rest, [added | additions])
+      "\\ No newline at end of file" -> apply_hunk_body(original, rest, additions)
       "" -> apply_hunk_body(original, rest, ["" | additions])
       _ -> {:error, %{code: "validation_error", message: "malformed patch hunk."}}
     end

@@ -27,6 +27,12 @@ defmodule TreeDxWeb.FileController do
         with_principal(conn, &TreeDx.Files.write_batch(workspace_id, params, &1))
       end)
 
+  def apply_changeset(conn, %{"workspace_id" => workspace_id} = params),
+    do:
+      maybe_proxy_workspace(conn, workspace_id, params, fn conn ->
+        with_principal(conn, &TreeDx.Files.Changeset.apply(workspace_id, params, &1))
+      end)
+
   def patch(conn, %{"workspace_id" => workspace_id} = params),
     do:
       maybe_proxy_workspace(conn, workspace_id, params, fn conn ->

@@ -10,7 +10,7 @@ export interface TreeDxOpenApiOperation {
 export type TreeDxOpenApiPath = typeof TREEDX_OPENAPI_OPERATIONS[number]["path"];
 export type TreeDxOpenApiOperationKey = `${TreeDxOpenApiMethod} ${TreeDxOpenApiPath}`;
 
-export const TREEDX_OPENAPI_OPERATION_COUNT = 118 as const;
+export const TREEDX_OPENAPI_OPERATION_COUNT = 119 as const;
 
 export const TREEDX_OPENAPI_OPERATIONS = [
   { method: "DELETE", path: "/api/v1/repos/{repo_id}/artifacts/{artifact_id}" },
@@ -123,6 +123,7 @@ export const TREEDX_OPENAPI_OPERATIONS = [
   { method: "POST", path: "/api/v1/workspaces/{workspace_id}/blobs/uploads" },
   { method: "POST", path: "/api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}/complete" },
   { method: "POST", path: "/api/v1/workspaces/{workspace_id}/blobs/write" },
+  { method: "POST", path: "/api/v1/workspaces/{workspace_id}/changesets" },
   { method: "POST", path: "/api/v1/workspaces/{workspace_id}/close" },
   { method: "POST", path: "/api/v1/workspaces/{workspace_id}/commit" },
   { method: "POST", path: "/api/v1/workspaces/{workspace_id}/exec" },
