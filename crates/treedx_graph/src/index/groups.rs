@@ -13,7 +13,7 @@ pub(super) struct GroupRelationship {
 }
 
 pub(super) fn apply_group_hierarchy(
-    nodes: &mut Vec<GraphNode>,
+    nodes: &mut [GraphNode],
     edges: &mut Vec<GraphEdge>,
     relationships: &[GroupRelationship],
     diagnostics: &mut GraphDiagnostics,
