@@ -48,33 +48,33 @@ models:
     defaults:
       author: TreeDX Team
       draft: false
-      tags: []
+      groupIds: []
   questions:
     defaults:
       draft: false
-      tags: []
+      groupIds: []
   objectives:
     defaults:
       draft: false
-      tags: []
+      groupIds: []
   proposals:
     defaults:
       draft: false
-      tags: []
+      groupIds: []
   decisions:
     defaults:
       draft: false
-      tags: []
+      groupIds: []
   people:
     defaults:
       status: live
-      tags: []
+      groupIds: []
   agents:
     defaults:
-      tags: []
+      groupIds: []
   books:
     defaults:
-      tags: []
+      groupIds: []
   docs:
     defaults:
-      tags: []
+      groupIds: []

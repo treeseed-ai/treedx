@@ -19,8 +19,13 @@ pub fn section_id(file_id: &str, heading_slug: &str, ordinal: usize) -> String {
     format!("section:{file_id}:{heading_slug}:{ordinal}")
 }
 
-pub fn tag_id(tag: &str) -> String {
-    format!("tag:{}", normalize_id_value(tag))
+pub fn group_id(group: &str) -> String {
+    let normalized = group.trim();
+    if normalized.starts_with("group:") {
+        normalized.to_string()
+    } else {
+        format!("group:{}", normalize_id_value(normalized))
+    }
 }
 
 pub fn reference_id(value: &str) -> String {

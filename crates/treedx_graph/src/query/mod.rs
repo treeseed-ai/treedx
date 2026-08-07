@@ -145,14 +145,14 @@ fn seed_node_ids(index: &GraphIndex, request: &GraphQueryRequest) -> Vec<String>
                     .filter(|node| node.path.as_deref() == Some(seed.value.trim_start_matches('/')))
                     .map(|node| node.id.clone()),
             ),
-            "tag" => ids.extend(
+            "group" => ids.extend(
                 index
                     .nodes
                     .iter()
                     .filter(|node| {
-                        node.tags
+                        node.effective_group_ids
                             .iter()
-                            .any(|tag| tag.eq_ignore_ascii_case(&seed.value))
+                            .any(|group| group.eq_ignore_ascii_case(&seed.value))
                     })
                     .map(|node| node.id.clone()),
             ),
@@ -231,7 +231,7 @@ fn relation_allowed(edge_type: &str, relations: &[String]) -> bool {
     relations.iter().any(|relation| match relation.as_str() {
         "related" => matches!(
             edge_type,
-            "LINKS_TO" | "HAS_TAG" | "IN_SERIES" | "SAME_DIRECTORY"
+            "LINKS_TO" | "HAS_GROUP" | "EFFECTIVE_GROUP" | "IN_SERIES" | "SAME_DIRECTORY"
         ),
         "references" => matches!(edge_type, "LINKS_TO" | "REFERENCES"),
         "parent" => edge_type == "PARENT_SECTION",
@@ -270,7 +270,16 @@ fn where_matches(node: &GraphNode, filters: &[GraphWhereFilter]) -> bool {
                 .iter()
                 .map(|value| value.to_lowercase())
                 .collect(),
-            "tag" => node.tags.iter().map(|value| value.to_lowercase()).collect(),
+            "groupId" | "directGroupId" => node
+                .group_ids
+                .iter()
+                .map(|value| value.to_lowercase())
+                .collect(),
+            "effectiveGroupId" => node
+                .effective_group_ids
+                .iter()
+                .map(|value| value.to_lowercase())
+                .collect(),
             "domain" => vec![node.domain.clone().unwrap_or_default().to_lowercase()],
             _ => Vec::new(),
         };

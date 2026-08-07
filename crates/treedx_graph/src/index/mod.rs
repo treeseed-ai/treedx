@@ -1,3 +1,4 @@
+mod groups;
 mod nodes;
 
 use crate::ids::*;
@@ -6,6 +7,7 @@ use crate::parse::{
 };
 use crate::types::*;
 use chrono::Utc;
+use groups::{apply_group_hierarchy, GroupRelationship};
 use nodes::{edge, metadata_node, section_node, SectionSpec};
 use serde_json::json;
 use std::collections::{BTreeMap, BTreeSet};
@@ -34,6 +36,7 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
     let mut edges = Vec::new();
     let mut file_by_path = BTreeMap::new();
     let mut diagnostics = GraphDiagnostics::default();
+    let mut group_relationships = Vec::new();
     let commit_node = GraphNode {
         id: commit_id(&input.commit_sha),
         node_type: "Reference".to_string(),
@@ -46,7 +49,8 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
         heading_path: None,
         level: None,
         text: None,
-        tags: Vec::new(),
+        group_ids: Vec::new(),
+        effective_group_ids: Vec::new(),
         series: None,
         file_id: None,
         status: None,
@@ -69,7 +73,8 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
         heading_path: None,
         level: None,
         text: None,
-        tags: Vec::new(),
+        group_ids: Vec::new(),
+        effective_group_ids: Vec::new(),
         series: None,
         file_id: None,
         status: None,
@@ -101,7 +106,36 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
         file_by_path.insert(doc_input.path.clone(), file_id.clone());
         let title = string_field(&frontmatter, &["title", "name"])
             .unwrap_or_else(|| fallback_title(&doc_input.path));
-        let tags = string_array(&frontmatter, "tags");
+        let group_ids = string_array(&frontmatter, "groupIds");
+        if let Some(identifier) =
+            string_field(&frontmatter, &["id"]).filter(|value| value.starts_with("group:"))
+        {
+            nodes.push(metadata_node(&group_id(&identifier), "Group", &title));
+        }
+        let from_group_id = string_field(&frontmatter, &["fromGroupId", "from_group_id"]);
+        let to_group_id = string_field(&frontmatter, &["toGroupId", "to_group_id"]);
+        if let (Some(from), Some(to)) = (from_group_id, to_group_id) {
+            let predicate =
+                string_field(&frontmatter, &["predicate"]).unwrap_or_else(|| "related".to_string());
+            let propagates_membership = frontmatter
+                .as_object()
+                .and_then(|value| {
+                    value
+                        .get("propagatesMembership")
+                        .or_else(|| value.get("propagates_membership"))
+                })
+                .and_then(|value| value.as_bool())
+                .unwrap_or(false);
+            nodes.push(metadata_node(&group_id(&from), "Group", &from));
+            nodes.push(metadata_node(&group_id(&to), "Group", &to));
+            group_relationships.push(GroupRelationship {
+                from,
+                to,
+                predicate,
+                propagates_membership,
+                owner_file_id: file_id.clone(),
+            });
+        }
         let audience = string_array(&frontmatter, "audience");
         let series = string_field(&frontmatter, &["series"]);
         let status = string_field(&frontmatter, &["status"]);
@@ -124,7 +158,8 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
             heading_path: None,
             level: None,
             text: Some(body.clone()),
-            tags: tags.clone(),
+            group_ids: group_ids.clone(),
+            effective_group_ids: group_ids.clone(),
             series: series.clone(),
             file_id: Some(file_id.clone()),
             status,
@@ -167,7 +202,8 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
             heading_path: None,
             level: None,
             text: None,
-            tags: Vec::new(),
+            group_ids: Vec::new(),
+            effective_group_ids: Vec::new(),
             series: None,
             file_id: None,
             status: None,
@@ -179,10 +215,10 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
             data: json!({"path": dir}),
         });
         edges.push(edge(&file_id, "BELONGS_TO", &dir_id, Some(&file_id)));
-        for tag in &tags {
-            let id = tag_id(tag);
-            nodes.push(metadata_node(&id, "Tag", tag));
-            edges.push(edge(&file_id, "HAS_TAG", &id, Some(&file_id)));
+        for group in &group_ids {
+            let id = group_id(group);
+            nodes.push(metadata_node(&id, "Group", group));
+            edges.push(edge(&file_id, "HAS_GROUP", &id, Some(&file_id)));
         }
         if let Some(series) = &series {
             let id = reference_id(&format!("series:{series}"));
@@ -274,6 +310,13 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
         });
     }
 
+    apply_group_hierarchy(
+        &mut nodes,
+        &mut edges,
+        &group_relationships,
+        &mut diagnostics,
+    );
+
     let path_to_file = file_by_path;
     for doc in &documents {
         let file_id = file_id(&doc.path);
@@ -301,7 +344,8 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
                     heading_path: None,
                     level: None,
                     text: None,
-                    tags: Vec::new(),
+                    group_ids: Vec::new(),
+                    effective_group_ids: Vec::new(),
                     series: None,
                     file_id: None,
                     status: None,
