@@ -2,6 +2,10 @@ defmodule TreeDx.Federation.RouteTable do
   @moduledoc false
 
   def resolve(repo_id) do
+    TreeDx.Federation.RouteCache.get(repo_id, fn -> resolve_uncached(repo_id) end)
+  end
+
+  defp resolve_uncached(repo_id) do
     local_node = TreeDx.Federation.NodeIdentity.node_id()
 
     with {:ok, placement} when is_map(placement) <- TreeDx.Store.get_repository_placement(repo_id) do

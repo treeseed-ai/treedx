@@ -200,6 +200,8 @@ defmodule TreeDxProfiler.ScenarioRepositorySetup do
 
     state
     |> Map.put(:workspace_id, response["workspaceId"])
+    |> Map.put(:workspace_base_ref, response["baseRef"])
+    |> Map.put(:workspace_base_commit_sha, response["baseCommitSha"])
     |> call!(
       :get,
       "/api/v1/workspaces/#{response["workspaceId"]}",

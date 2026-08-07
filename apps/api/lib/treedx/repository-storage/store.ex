@@ -73,8 +73,10 @@ defmodule TreeDx.Store do
   def get_repository_placement(repo_id),
     do: call_json(&TreeDx.Native.get_repository_placement/2, data_dir(), repo_id)
 
-  def put_repository_placement(input),
-    do: call_json(&TreeDx.Native.put_repository_placement/2, data_dir(), Jason.encode!(input))
+  def put_repository_placement(input) do
+    call_json(&TreeDx.Native.put_repository_placement/2, data_dir(), Jason.encode!(input))
+    |> invalidate_route(input)
+  end
 
   def list_nodes, do: call_json(&TreeDx.Native.list_nodes/1, data_dir())
   def get_node(node_id), do: call_json(&TreeDx.Native.get_node/2, data_dir(), node_id)
@@ -83,8 +85,10 @@ defmodule TreeDx.Store do
   def put_mirror(input),
     do: call_json(&TreeDx.Native.put_mirror/2, data_dir(), Jason.encode!(input))
 
-  def put_federation_peer(input),
-    do: call_json(&TreeDx.Native.put_federation_peer/2, data_dir(), Jason.encode!(input))
+  def put_federation_peer(input) do
+    call_json(&TreeDx.Native.put_federation_peer/2, data_dir(), Jason.encode!(input))
+    |> reset_routes()
+  end
 
   def list_federation_peers, do: call_json(&TreeDx.Native.list_federation_peers/1, data_dir())
 
@@ -97,8 +101,10 @@ defmodule TreeDx.Store do
   def list_repository_advertisements,
     do: call_json(&TreeDx.Native.list_repository_advertisements/1, data_dir())
 
-  def put_federation_route(input),
-    do: call_json(&TreeDx.Native.put_federation_route/2, data_dir(), Jason.encode!(input))
+  def put_federation_route(input) do
+    call_json(&TreeDx.Native.put_federation_route/2, data_dir(), Jason.encode!(input))
+    |> invalidate_route(input)
+  end
 
   def list_federation_routes,
     do: call_json(&TreeDx.Native.list_federation_routes/1, data_dir())
@@ -270,6 +276,20 @@ defmodule TreeDx.Store do
   def call_json(fun, arg1, arg2, arg3), do: decode(apply_fun(fun, [arg1, arg2, arg3]))
 
   defp apply_fun(fun, args), do: apply(:erlang, :apply, [fun, args])
+
+  defp invalidate_route({:ok, _value} = result, input) do
+    TreeDx.Federation.RouteCache.invalidate(input[:repositoryId] || input["repositoryId"])
+    result
+  end
+
+  defp invalidate_route(result, _input), do: result
+
+  defp reset_routes({:ok, _value} = result) do
+    TreeDx.Federation.RouteCache.reset()
+    result
+  end
+
+  defp reset_routes(result), do: result
 
   defp decode({:ok, json}), do: {:ok, Jason.decode!(json)}
   defp decode({:error, json}), do: {:error, Jason.decode!(json)}

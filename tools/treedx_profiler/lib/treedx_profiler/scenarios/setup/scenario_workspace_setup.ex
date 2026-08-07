@@ -1,6 +1,8 @@
 defmodule TreeDxProfiler.ScenarioWorkspaceSetup do
   @moduledoc false
 
+  alias TreeDxProfiler.Hash
+
   import TreeDxProfiler.ScenarioHttp,
     only: [
       assert_binary_or_ok: 1,
@@ -49,6 +51,7 @@ defmodule TreeDxProfiler.ScenarioWorkspaceSetup do
       &assert_ok_or_not_found/1,
       expected: [200, 404]
     )
+    |> apply_changeset()
     |> maybe_delete_workspace_file()
     |> call!(
       :get,
@@ -141,6 +144,34 @@ defmodule TreeDxProfiler.ScenarioWorkspaceSetup do
   end
 
   defp maybe_delete_workspace_file(state), do: state
+
+  defp apply_changeset(state) do
+    path = "docs/profiler-changeset.md"
+    content = "changeset profiler payload #{state.opts.profile_id}"
+
+    patch =
+      "diff --git a/#{path} b/#{path}\nnew file mode 100644\n--- /dev/null\n+++ b/#{path}\n@@ -0,0 +1,1 @@\n+#{content}"
+
+    call!(
+      state,
+      :post,
+      "/api/v1/workspaces/#{state.workspace_id}/changesets",
+      "applyWorkspaceChangeset",
+      "workspace",
+      %{
+        "contract" => "treedx.changeset/v1",
+        "baseCommitSha" => state.workspace_base_commit_sha,
+        "baseRef" => state.workspace_base_ref,
+        "expectedDestinationRefHead" => state.workspace_base_commit_sha,
+        "idempotencyKey" => "profiler-changeset-#{state.opts.profile_id}",
+        "patch" => patch,
+        "patchSha256" => Hash.sha256(patch)
+      },
+      fn payload ->
+        assert_truthy(payload["workspaceVersion"], "changeset workspace version")
+      end
+    )
+  end
 
   defp maybe_exec_workspace(%{opts: %{include_exec: true}} = state) do
     call!(

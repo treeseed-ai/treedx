@@ -2444,6 +2444,42 @@
       "expectedStatus": [
         200
       ],
+      "method": "POST",
+      "operationId": "applyWorkspaceChangeset",
+      "path": "/api/v1/workspaces/{workspace_id}/changesets",
+      "requestTemplate": {},
+      "scenarios": {
+        "full_api": {
+          "weight": 1
+        }
+      },
+      "setup": {
+        "fixtureFamilies": [
+          "small-docs",
+          "medium-mixed",
+          "binary-assets",
+          "large-history",
+          "graph-rich",
+          "workspace-heavy"
+        ],
+        "requires": [
+          "registered_repo",
+          "workspace"
+        ]
+      },
+      "tags": [
+        "workspace",
+        "write"
+      ],
+      "validation": {
+        "rule": "ok_envelope",
+        "semanticLevel": "exact_state_transition"
+      }
+    },
+    {
+      "expectedStatus": [
+        200
+      ],
       "method": "PATCH",
       "operationId": "patchWorkspaceFile",
       "path": "/api/v1/workspaces/{workspace_id}/files",

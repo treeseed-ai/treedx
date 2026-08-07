@@ -3,6 +3,7 @@ defmodule TreeDx.Runtime.Pool do
   use GenServer
 
   alias TreeDx.Observability.Metrics
+  alias TreeDx.Runtime.Pool.Snapshot
   alias TreeDx.Runtime.Resources
 
   @pools [:repository_query, :workspace_mutation, :graph, :snapshot, :import]
@@ -12,6 +13,8 @@ defmodule TreeDx.Runtime.Pool do
 
   def init(_opts) do
     state = Map.new(@pools, &{&1, new_pool(&1)})
+    Snapshot.create!()
+    Snapshot.replace(state)
     publish(state)
     schedule_publish()
     {:ok, state}
@@ -21,21 +24,20 @@ defmodule TreeDx.Runtime.Pool do
     GenServer.call(__MODULE__, {:run, pool, fun, opts}, :infinity)
   end
 
-  def snapshot, do: GenServer.call(__MODULE__, :snapshot)
+  def snapshot, do: Snapshot.all()
 
-  def pool_snapshot(pool), do: Map.get(snapshot(), pool) || Map.get(snapshot(), to_string(pool))
+  def pool_snapshot(pool), do: Snapshot.get(pool)
 
   def pressure(pool) do
     case pool_snapshot(pool) do
       nil -> :unknown
-      info -> pressure_for(info)
+      %{pressure: pressure} when is_binary(pressure) -> String.to_existing_atom(pressure)
+      info -> Snapshot.pressure_for(info)
     end
   end
 
   def saturated?(pool), do: pressure(pool) == :saturated
   def available?(pool), do: pressure(pool) in [:low, :moderate]
-
-  def handle_call(:snapshot, _from, state), do: {:reply, materialize(state), state}
 
   def handle_call({:run, pool, fun, opts}, from, state) do
     pool = normalize_pool(pool)
@@ -418,7 +420,10 @@ defmodule TreeDx.Runtime.Pool do
      }}
   end
 
-  defp put_pool(state, pool, info), do: Map.put(state, pool, info)
+  defp put_pool(state, pool, info) do
+    Snapshot.put(pool, info)
+    Map.put(state, pool, info)
+  end
 
   defp schedule_publish do
     Process.send_after(
@@ -438,50 +443,18 @@ defmodule TreeDx.Runtime.Pool do
     Metrics.put_gauge("treedx_pool_queue_depth", info.queue_depth, labels)
     Metrics.put_gauge("treedx_pool_queue_depth_max", info.queue_depth_max, labels)
     Metrics.put_gauge("treedx_pool_queue_max", info.queue_max, labels)
-    Metrics.put_gauge("treedx_pool_pressure", pressure_value(pressure_for(info)), labels)
+
+    Metrics.put_gauge(
+      "treedx_pool_pressure",
+      pressure_value(Snapshot.pressure_for(info)),
+      labels
+    )
+
     Metrics.put_gauge("treedx_pool_rejections_total", info.rejected, labels)
     Metrics.put_gauge("treedx_pool_queue_timeouts_total", info.queue_timeouts, labels)
     Metrics.put_gauge("treedx_pool_execution_timeouts_total", info.execution_timeouts, labels)
   end
 
-  defp materialize(state), do: Map.new(state, fn {pool, info} -> {pool, public_info(info)} end)
-
-  defp public_info(info) do
-    %{
-      size: info.size,
-      active: map_size(info.active),
-      queueDepth: info.queue_depth,
-      queueMax: info.queue_max,
-      activeMax: info.active_max,
-      queueDepthMax: info.queue_depth_max,
-      enqueued: info.enqueued,
-      started: info.started,
-      completed: info.completed,
-      rejected: info.rejected,
-      queueTimeouts: info.queue_timeouts,
-      executionTimeouts: info.execution_timeouts,
-      cancelled: info.cancelled,
-      availableSlots: max(info.size - map_size(info.active), 0),
-      pressure: to_string(pressure_for(info)),
-      totalWaitMs: info.total_wait_ms,
-      totalExecutionMs: info.total_execution_ms
-    }
-  end
-
-  defp pressure_for(%{active: active, size: size, queue_depth: queue_depth, queue_max: queue_max}) do
-    active_ratio = safe_ratio(map_size(active), size)
-    queue_ratio = safe_ratio(queue_depth, queue_max)
-
-    cond do
-      queue_ratio >= 0.9 -> :saturated
-      active_ratio >= 0.9 or queue_ratio >= 0.6 -> :high
-      active_ratio >= 0.7 or queue_ratio >= 0.25 -> :moderate
-      true -> :low
-    end
-  end
-
-  defp safe_ratio(_value, max) when max in [nil, 0], do: 0.0
-  defp safe_ratio(value, max), do: value / max
   defp pressure_value(:low), do: 0
   defp pressure_value(:moderate), do: 1
   defp pressure_value(:high), do: 2

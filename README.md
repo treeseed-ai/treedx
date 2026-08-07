@@ -360,8 +360,8 @@ are denied by default.
 
 Use `scripts/profiling/profile-compose.sh performance` for RPS tuning. It is separate
 from the reliability verifier profiles and defaults to a read-mostly portfolio
-workload, 150 concurrent workers, 10 minutes of measured load, sampled
-validation probes, and a 100 primary RPS target. Reports include both primary
+workload, 300 concurrent workers, a 50-connection profiler pool, 10 minutes of
+measured load, sampled validation probes, and a 500 primary RPS target. Reports include both primary
 workload RPS and total HTTP RPS; total HTTP includes validation probes and other
 measured profiler traffic that affects server load. Tune the benchmark with
 `TREEDX_RUNTIME_CPU_BUDGET`, `TREEDX_RUNTIME_MEMORY_BUDGET_MB`,

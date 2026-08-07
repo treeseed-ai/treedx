@@ -34,6 +34,7 @@ defmodule TreeDx.Application do
       TreeDx.Observability.Telemetry,
       {Task.Supervisor, name: TreeDx.Runtime.Pool.TaskSupervisor},
       TreeDx.Runtime.Pool,
+      TreeDx.Federation.RouteCache,
       TreeDx.RepositoryCache,
       TreeDx.Graph.IndexCache,
       TreeDx.Cache.Manager,
