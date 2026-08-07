@@ -69,7 +69,7 @@ defmodule TreeDxWeb.GraphControllerTest do
       |> post("/api/v1/repos/#{repo_id}/graph/search-entities", %{"query" => "release"})
       |> json_response(200)
 
-    assert Enum.any?(entities["results"], &(&1["node"]["nodeType"] == "Tag"))
+    assert Enum.any?(entities["results"], &(&1["node"]["nodeType"] == "Group"))
 
     node =
       build_conn()
@@ -149,8 +149,8 @@ defmodule TreeDxWeb.GraphControllerTest do
     ---
     title: Release Notes
     status: published
-    tags:
-      - release
+    groupIds:
+      - group:topic/release
     series: Handbook
     ---
     # Overview
