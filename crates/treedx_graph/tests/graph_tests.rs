@@ -22,8 +22,8 @@ fn sample_index() -> treedx_graph::GraphIndex {
                 content: r#"---
 title: Release Notes
 status: published
-tags:
-  - release
+groupIds:
+  - group:topic/release
 series: Handbook
 ---
 # Overview
@@ -64,7 +64,7 @@ fn builds_generic_graph_nodes_and_edges() {
     assert!(index
         .nodes
         .iter()
-        .any(|node| node.node_type == "Tag" && node.title.as_deref() == Some("release")));
+        .any(|node| node.node_type == "Group" && node.id == "group:topic/release"));
     assert!(index
         .edges
         .iter()
@@ -75,6 +75,63 @@ fn builds_generic_graph_nodes_and_edges() {
         .edges
         .iter()
         .any(|edge| edge.edge_type == "DEFINED_BY"));
+}
+
+#[test]
+fn indexes_direct_and_inherited_group_membership_at_the_commit() {
+    let index = build_graph_index(GraphIndexInput {
+        repo_id: "repo_groups".to_string(),
+        ref_name: "refs/heads/main".to_string(),
+        commit_sha: "1123456789012345678901234567890123456789".to_string(),
+        graph_version: None,
+        previous_manifest: None,
+        documents: vec![
+            GraphDocumentInput {
+                path: "groups/engineering.mdx".to_string(), object_id: "g1".to_string(), size: 0,
+                content: "---\nid: group:team/engineering\nname: Engineering\nclassification: {kind: team}\n---\n".to_string(),
+            },
+            GraphDocumentInput {
+                path: "groups/platform.mdx".to_string(), object_id: "g2".to_string(), size: 0,
+                content: "---\nid: group:topic/platform\nname: Platform\nclassification: {kind: topic}\n---\n".to_string(),
+            },
+            GraphDocumentInput {
+                path: "group-edges/engineering-platform.mdx".to_string(), object_id: "e1".to_string(), size: 0,
+                content: "---\nfromGroupId: group:team/engineering\ntoGroupId: group:topic/platform\npredicate: specializes\npropagatesMembership: true\n---\n".to_string(),
+            },
+            GraphDocumentInput {
+                path: "proposals/runtime.mdx".to_string(), object_id: "p1".to_string(), size: 0,
+                content: "---\ntitle: Runtime\ngroupIds: [group:team/engineering]\n---\nProposal".to_string(),
+            },
+        ],
+    }).expect("group graph builds");
+    let proposal = index
+        .nodes
+        .iter()
+        .find(|node| {
+            node.path.as_deref() == Some("proposals/runtime.mdx") && node.node_type == "File"
+        })
+        .unwrap();
+    assert_eq!(proposal.group_ids, vec!["group:team/engineering"]);
+    assert_eq!(
+        proposal.effective_group_ids,
+        vec!["group:team/engineering", "group:topic/platform"]
+    );
+    assert!(index
+        .edges
+        .iter()
+        .any(|edge| edge.edge_type == "GROUP_RELATION"
+            && edge.source_id == "group:team/engineering"
+            && edge.target_id == "group:topic/platform"));
+    assert!(index
+        .edges
+        .iter()
+        .any(|edge| edge.edge_type == "EFFECTIVE_GROUP"
+            && edge.source_id == proposal.id
+            && edge.target_id == "group:topic/platform"));
+    assert_eq!(
+        index.manifest.commit_sha,
+        "1123456789012345678901234567890123456789"
+    );
 }
 
 #[test]

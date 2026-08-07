@@ -108,7 +108,9 @@ pub struct GraphNode {
     pub level: Option<u32>,
     pub text: Option<String>,
     #[serde(default)]
-    pub tags: Vec<String>,
+    pub group_ids: Vec<String>,
+    #[serde(default)]
+    pub effective_group_ids: Vec<String>,
     pub series: Option<String>,
     pub file_id: Option<String>,
     pub status: Option<String>,

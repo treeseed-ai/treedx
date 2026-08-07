@@ -31,9 +31,9 @@ fn score_term(node: &GraphNode, term: &str) -> f64 {
         score += 3.0;
     }
     if node
-        .tags
+        .effective_group_ids
         .iter()
-        .any(|tag| tag.to_lowercase().contains(term))
+        .any(|group| group.to_lowercase().contains(term))
     {
         score += 4.0;
     }
