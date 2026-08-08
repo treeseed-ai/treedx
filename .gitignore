@@ -1,5 +1,10 @@
 /packages/trsd-sdk
 /target
+**/node_modules/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/dist/
 **/_build
 **/deps
 **/priv/native
