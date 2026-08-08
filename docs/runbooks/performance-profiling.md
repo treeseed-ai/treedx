@@ -197,6 +197,7 @@ overridden:
 - `TREEDX_REPO_DOC_CACHE_ENABLED=true`
 - `TREEDX_REPO_CONTEXT_CACHE_TTL_MS=5000`
 - `TREEDX_AUTHORIZATION_CACHE_TTL_MS=5000`
+- `TREEDX_QUERY_RESULT_CACHE_TTL_MS=300000`
 - `TREEDX_AUTH_TOKEN_CACHE_TTL_MS=5000`
 - `TREEDX_GRAPH_INDEX_CACHE_ENABLED=true`
 - `TREEDX_ARTIFACT_INDEX_ENABLED=true`
@@ -238,13 +239,13 @@ server load:
 This distinction matters because probes legitimately consume server capacity,
 but counting them as primary workload would overstate business throughput.
 
-The saturated-load release ceiling is 900 ms p99 for repository reads and
-queries, with zero request errors. This is a hard subsecond capacity boundary,
-not the operational target. Prometheus warns at 100 ms p99 for repository reads
-and 250 ms p99 for repository queries so operators can scale out or investigate
-regressions before the release ceiling is approached. Run load generation on a
-separate host when comparing absolute latency; a colocated profiler consumes
-roughly one CPU at 500 RPS and contends with the service on small machines.
+The read-heavy reliability gate requires 200 ms p99 for repository reads and
+250 ms p99 for repository queries. The saturated mixed-load release ceiling is
+900 ms p99 for both categories, with zero request errors. Prometheus retains a
+more sensitive 100 ms repository-read warning so operators can scale out or
+investigate before either gate is approached. Run load generation on a separate
+host when comparing absolute latency; a colocated profiler consumes roughly one
+CPU at 500 RPS and contends with the service on small machines.
 
 Performance mode also passes resource tuning knobs to the API container:
 

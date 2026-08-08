@@ -1,6 +1,8 @@
 defmodule TreeDxProfiler.EndpointMatrix do
   @moduledoc false
 
+  alias TreeDxProfiler.Scenario
+
   @required_fields [
     "operationId",
     "method",
@@ -98,19 +100,13 @@ defmodule TreeDxProfiler.EndpointMatrix do
   end
 
   def select(scenario, opts) do
-    scenarios = scenario_ids(scenario)
+    weights = scenario_weights(scenario)
 
     load()
-    |> Enum.filter(fn operation ->
-      Enum.any?(scenarios, &Map.has_key?(operation["scenarios"] || %{}, &1))
-    end)
+    |> Enum.filter(&selected_by_scenario?(&1, scenario, weights))
     |> Enum.filter(&enabled?(&1, opts))
     |> Enum.flat_map(fn operation ->
-      weight =
-        scenarios
-        |> Enum.map(&(get_in(operation, ["scenarios", &1, "weight"]) || 0))
-        |> Enum.max()
-        |> max(1)
+      weight = weights[operation["operationId"]] || matrix_weight(operation, scenario)
 
       List.duplicate(operation, weight)
     end)
@@ -177,8 +173,7 @@ defmodule TreeDxProfiler.EndpointMatrix do
     tags = MapSet.new(operation["tags"] || [])
     id = operation["operationId"]
 
-    selected? =
-      Enum.any?(scenario_ids(opts.scenario), &Map.has_key?(operation["scenarios"] || %{}, &1))
+    selected? = selected_by_scenario?(operation, opts.scenario, scenario_weights(opts.scenario))
 
     cond do
       MapSet.member?(sample_ids, id) ->
@@ -214,6 +209,23 @@ defmodule TreeDxProfiler.EndpointMatrix do
 
   defp coverage_reason("not_selected_by_scenario", opts), do: "not selected by #{opts.scenario}"
   defp coverage_reason(_, _), do: nil
+
+  defp scenario_weights(scenario) when scenario in ["all", "full_api"], do: %{}
+  defp scenario_weights(scenario), do: Scenario.load(scenario)["weights"] || %{}
+
+  defp selected_by_scenario?(operation, _scenario, weights) when map_size(weights) > 0,
+    do: Map.has_key?(weights, operation["operationId"])
+
+  defp selected_by_scenario?(operation, scenario, _weights),
+    do: Enum.any?(scenario_ids(scenario), &Map.has_key?(operation["scenarios"] || %{}, &1))
+
+  defp matrix_weight(operation, scenario) do
+    scenario
+    |> scenario_ids()
+    |> Enum.map(&(get_in(operation, ["scenarios", &1, "weight"]) || 0))
+    |> Enum.max()
+    |> max(1)
+  end
 
   defp validation_errors(operation) do
     scenarios = operation["scenarios"] || %{}

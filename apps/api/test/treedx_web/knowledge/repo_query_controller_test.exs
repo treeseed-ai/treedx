@@ -77,6 +77,25 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
     assert Enum.any?(results, &(&1["path"] == "docs/readme.md"))
     assert Enum.all?(results, &String.starts_with?(&1["path"], "docs/"))
 
+    cached_search =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/files/search", %{
+        "paths" => ["docs/**"],
+        "query" => "release provenance",
+        "filters" => [%{"field" => "status", "op" => "eq", "value" => "published"}],
+        "sort" => [%{"field" => "path", "direction" => "asc"}],
+        "limit" => 20
+      })
+
+    assert json_response(cached_search, 200)["results"] == results
+
+    assert TreeDx.Observability.Metrics.snapshot().counters
+           |> Enum.any?(fn metric ->
+             metric.name == "treedx_cache_hits_total" and
+               metric.labels == %{"cache" => "repository_cache"}
+           end)
+
     conn =
       build_conn()
       |> auth(token)

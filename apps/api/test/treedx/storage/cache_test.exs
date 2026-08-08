@@ -23,6 +23,18 @@ defmodule TreeDx.CacheTest do
     assert Cache.stats(@table).entries == 0
   end
 
+  test "uses byte-budget eviction unless an entry limit is explicitly configured" do
+    name = "TREEDX_TEST_CACHE_MAX_ENTRIES"
+    System.delete_env(name)
+    on_exit(fn -> System.delete_env(name) end)
+
+    assert Cache.entry_limit(name, 256, nil) == 256
+    assert Cache.entry_limit(name, 256, 1_000_000) == nil
+
+    System.put_env(name, "512")
+    assert Cache.entry_limit(name, 256, 1_000_000) == 512
+  end
+
   test "get_or_load returns cached value and refreshes last accessed metadata" do
     assert {:ok, "value"} =
              Cache.get_or_load(@table, :key, 1_000, 10, 10_000, fn -> {:ok, "value"} end)

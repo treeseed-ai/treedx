@@ -56,6 +56,7 @@ COPY tools/treedx_profiler/endpoint_matrix.yaml tools/treedx_profiler/endpoint_m
 COPY tools/treedx_profiler/fixtures tools/treedx_profiler/fixtures
 COPY tools/treedx_profiler/scenarios tools/treedx_profiler/scenarios
 COPY tools/treedx_profiler/reliability_budget.yaml tools/treedx_profiler/reliability_budget.yaml
+COPY tools/treedx_profiler/mixed_workload_budget.yaml tools/treedx_profiler/mixed_workload_budget.yaml
 COPY tools/treedx_profiler/performance_budget.yaml tools/treedx_profiler/performance_budget.yaml
 COPY docs/api/openapi.yaml docs/api/openapi.yaml
 

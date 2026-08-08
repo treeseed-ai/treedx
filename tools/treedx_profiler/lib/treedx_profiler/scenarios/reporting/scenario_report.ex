@@ -22,10 +22,10 @@ defmodule TreeDxProfiler.ScenarioReport do
   }
 
   def build(state, started) do
-    operations = Stats.aggregate(state.samples)
     assertions = assertion_summary(state.assertions)
     http_samples = measured_http_samples(state)
     primary_samples = measured_primary_samples(state)
+    operations = Stats.aggregate(primary_samples)
 
     coverage =
       EndpointMatrix.coverage(state.samples, state.opts, state[:covered_operation_ids] || [])

@@ -19,6 +19,14 @@ defmodule TreeDx.Cache do
     end
   end
 
+  def entry_limit(name, legacy_default, max_bytes) do
+    case System.get_env(name) do
+      nil -> default_entry_limit(legacy_default, max_bytes)
+      "" -> default_entry_limit(legacy_default, max_bytes)
+      value -> parse_positive_int(value) || default_entry_limit(legacy_default, max_bytes)
+    end
+  end
+
   def get_or_load(table, key, ttl_ms, max_entries, loader),
     do: get_or_load(table, key, ttl_ms, max_entries, nil, loader)
 
@@ -281,6 +289,19 @@ defmodule TreeDx.Cache do
   end
 
   defp approx_bytes(value), do: :erlang.external_size(value)
+
+  defp default_entry_limit(_legacy_default, max_bytes)
+       when is_integer(max_bytes) and max_bytes > 0,
+       do: nil
+
+  defp default_entry_limit(legacy_default, _max_bytes), do: legacy_default
+
+  defp parse_positive_int(value) do
+    case Integer.parse(value) do
+      {int, _} when int > 0 -> int
+      _ -> nil
+    end
+  end
 
   defp entry_bytes({_key, _inserted_at, _last_accessed_at, approx_bytes, _value}),
     do: approx_bytes

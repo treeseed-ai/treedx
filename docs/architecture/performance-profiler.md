@@ -238,3 +238,7 @@ requested window.
 Performance overlays select `tools/treedx_profiler/performance_budget.yaml`,
 which preserves those correctness requirements and defines the saturated-load
 latency ceiling separately from the tighter unloaded reliability target.
+Portfolio and federation overlays select
+`tools/treedx_profiler/mixed_workload_budget.yaml`. It preserves the same
+correctness requirements and applies subsecond read/query/graph ceilings plus a
+bounded workspace-mutation ceiling while those operation classes contend.

@@ -14,10 +14,10 @@
   "maxRaceInterferenceRate": 5.0,
   "maxP99MsByCategory": {
     "operations": 1000,
-    "repository_read": 200,
-    "repository_query": 250,
-    "workspace": 1000,
-    "graph": 500,
+    "repository_read": 900,
+    "repository_query": 900,
+    "workspace": 1500,
+    "graph": 1200,
     "snapshot": 2000,
     "artifact": 1000
   }

@@ -233,6 +233,11 @@ Saturated production-load profiles use
 `tools/treedx_profiler/performance_budget.yaml`. It retains the zero-error and
 correctness guarantees while applying explicit subsecond p99 capacity ceilings;
 the default reliability budget keeps tighter latency targets for unloaded runs.
+Growing portfolio and federation profiles use
+`tools/treedx_profiler/mixed_workload_budget.yaml`. That contract keeps zero-error
+correctness checks while allowing bounded storage contention from concurrent
+imports, workspace mutations, snapshots, and graph refreshes. Read-heavy and
+unloaded profiles continue to use the tighter default reliability budget.
 
 ## Load Modes
 

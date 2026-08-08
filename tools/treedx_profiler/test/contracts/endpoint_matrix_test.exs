@@ -41,4 +41,25 @@ defmodule TreeDxProfiler.EndpointMatrixTest do
 
     assert EndpointMatrix.coverage([], opts)["unaccounted"] == 0
   end
+
+  test "named scenarios select their weighted operations" do
+    opts = %{
+      scenario: "read_heavy",
+      include_admin: false,
+      include_destructive: false,
+      include_exec: false,
+      include_federation: true
+    }
+
+    frequencies =
+      "read_heavy"
+      |> EndpointMatrix.select(opts)
+      |> Enum.frequencies_by(& &1["operationId"])
+
+    assert frequencies["searchRepositoryFiles"] == 20
+    assert frequencies["queryRepository"] == 12
+    assert frequencies["readRepositoryFile"] == 10
+    assert frequencies["listRepositoryPaths"] == 8
+    assert frequencies["buildContext"] == 4
+  end
 end

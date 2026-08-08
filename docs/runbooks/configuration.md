@@ -51,9 +51,10 @@ Runtime resource and performance tuning settings:
 - `TREEDX_REPO_DOC_CACHE_ENABLED=true`
 - `TREEDX_REPO_DOC_CACHE_MAX_ENTRIES=256`
 - `TREEDX_REPO_DOC_CACHE_MAX_BYTES`
-- `TREEDX_REPO_CONTEXT_CACHE_TTL_MS=250`
+- `TREEDX_REPO_CONTEXT_CACHE_TTL_MS=5000`
 - `TREEDX_REPO_CONTEXT_CACHE_MAX_ENTRIES=1024`
-- `TREEDX_AUTHORIZATION_CACHE_TTL_MS=250`
+- `TREEDX_AUTHORIZATION_CACHE_TTL_MS=5000`
+- `TREEDX_QUERY_RESULT_CACHE_TTL_MS=300000` caches authorization-scoped responses by resolved commit and policy identity.
 - `TREEDX_AUTHORIZATION_CACHE_MAX_ENTRIES=4096`
 - `TREEDX_AUTH_TOKEN_CACHE_TTL_MS=5000`
 - `TREEDX_AUTH_TOKEN_CACHE_MAX_ENTRIES=4096`
@@ -83,10 +84,11 @@ Runtime resource and performance tuning settings:
 - `TREEDX_POOL_METRICS_INTERVAL_MS=1000`
 
 If `TREEDX_RUNTIME_MEMORY_BUDGET_MB` is set, TreeDX computes an approximate
-cache byte budget from `TREEDX_CACHE_MEMORY_FRACTION` and evicts cache entries
-by TTL, insertion age, entry count, and approximate serialized byte size.
-Cache hits are read-only so concurrent readers do not contend on recency
-writes. If no memory budget is set, caches retain the entry-count behavior.
+cache byte budget from `TREEDX_CACHE_MEMORY_FRACTION` and uses that byte budget
+as the default eviction ceiling. An explicitly configured `*_MAX_ENTRIES`
+setting adds an entry-count ceiling. Cache hits are read-only so concurrent
+readers do not contend on recency writes. If no memory budget is set, caches
+retain their legacy entry-count defaults.
 
 The repository-context cache coalesces repeated durable-catalog reads and Git
 ref resolution only after request authorization succeeds. Its short default

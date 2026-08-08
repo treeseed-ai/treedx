@@ -19,23 +19,27 @@ defmodule TreeDx.RepositoryCache do
   def reset!, do: Cache.reset(@table)
 
   def context(repo_id, requested_ref, loader) do
+    max_bytes = cache_max_bytes()
+
     Cache.get_or_load(
       @table,
       {:repository_context, repo_id, requested_ref || :default},
       Cache.int_env("TREEDX_REPO_CONTEXT_CACHE_TTL_MS", 250),
-      Cache.int_env("TREEDX_REPO_CONTEXT_CACHE_MAX_ENTRIES", 1024),
-      cache_max_bytes(),
+      Cache.entry_limit("TREEDX_REPO_CONTEXT_CACHE_MAX_ENTRIES", 1024, max_bytes),
+      max_bytes,
       fn -> bounded_load(loader) end
     )
   end
 
   def authorization_scope(actor_id, repo_id, loader) do
+    max_bytes = cache_max_bytes()
+
     Cache.get_or_load(
       @table,
       {:authorization_scope, actor_id, repo_id || :global},
       Cache.int_env("TREEDX_AUTHORIZATION_CACHE_TTL_MS", 250),
-      Cache.int_env("TREEDX_AUTHORIZATION_CACHE_MAX_ENTRIES", 4096),
-      cache_max_bytes(),
+      Cache.entry_limit("TREEDX_AUTHORIZATION_CACHE_MAX_ENTRIES", 4096, max_bytes),
+      max_bytes,
       fn -> bounded_load(loader) end
     )
   end
@@ -84,16 +88,38 @@ defmodule TreeDx.RepositoryCache do
     end)
   end
 
+  def result(ctx, operation, params, loader) do
+    identity = {
+      ctx.principal["actorId"],
+      ctx.principal["tenantId"],
+      ctx.scope["policyHash"],
+      ctx.scope["policyVersion"]
+    }
+
+    get_or_load(
+      ctx,
+      {:result, operation, identity, params},
+      Cache.int_env("TREEDX_QUERY_RESULT_CACHE_TTL_MS", 300_000),
+      loader
+    )
+  end
+
   defp bounded_load(loader), do: Pool.run(:repository_query, loader)
 
   defp get_or_load(ctx, kind, loader) do
+    get_or_load(ctx, kind, Cache.int_env("TREEDX_REPO_DOC_CACHE_TTL_MS", 300_000), loader)
+  end
+
+  defp get_or_load(ctx, kind, ttl_ms, loader) do
     if Cache.enabled?("TREEDX_REPO_DOC_CACHE_ENABLED", true) and Process.whereis(__MODULE__) do
+      max_bytes = cache_max_bytes()
+
       Cache.get_or_load(
         @table,
         key(ctx, kind),
-        Cache.int_env("TREEDX_REPO_DOC_CACHE_TTL_MS", 300_000),
-        Cache.int_env("TREEDX_REPO_DOC_CACHE_MAX_ENTRIES", 256),
-        cache_max_bytes(),
+        ttl_ms,
+        Cache.entry_limit("TREEDX_REPO_DOC_CACHE_MAX_ENTRIES", 256, max_bytes),
+        max_bytes,
         loader
       )
     else
