@@ -280,6 +280,31 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
       restore_env("TREEDX_JWT_HS256_SECRET", old_secret)
     end)
 
+    broad_token =
+      jwt(%{
+        "iss" => "https://issuer.example.invalid",
+        "aud" => "treedx",
+        "sub" => "actor_demo",
+        "treedx_actor_id" => "actor_demo",
+        "treedx_tenant_id" => "tenant_demo",
+        "treedx_repo_ids" => [repo_id],
+        "treedx_capabilities" => ["files:read"],
+        "treedx_refs" => ["*"],
+        "treedx_paths" => ["**"],
+        "exp" => System.system_time(:second) + 3600,
+        "jti" => "repo_query_connected_broad_scope_test"
+      })
+
+    broad_paths =
+      build_conn()
+      |> auth(broad_token)
+      |> post("/api/v1/repos/#{repo_id}/paths/list", %{"paths" => ["**"]})
+      |> json_response(200)
+      |> Map.fetch!("entries")
+      |> Enum.map(& &1["path"])
+
+    assert "outside.md" in broad_paths
+
     token =
       jwt(%{
         "iss" => "https://issuer.example.invalid",

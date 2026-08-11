@@ -93,7 +93,8 @@ defmodule TreeDx.RepositoryCache do
       ctx.principal["actorId"],
       ctx.principal["tenantId"],
       ctx.scope["policyHash"],
-      ctx.scope["policyVersion"]
+      ctx.scope["policyVersion"],
+      effective_scope_identity(ctx.scope)
     }
 
     get_or_load(
@@ -102,6 +103,15 @@ defmodule TreeDx.RepositoryCache do
       Cache.int_env("TREEDX_QUERY_RESULT_CACHE_TTL_MS", 300_000),
       loader
     )
+  end
+
+  defp effective_scope_identity(scope) do
+    {
+      scope["repoIds"] || [],
+      scope["capabilities"] || [],
+      scope["refs"] || [],
+      scope["paths"] || []
+    }
   end
 
   defp bounded_load(loader), do: Pool.run(:repository_query, loader)
