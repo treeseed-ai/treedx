@@ -83,7 +83,9 @@ defmodule TreeDx.ExternalGitTransportTest do
     for refspecs <- [
           ["+refs/heads/*:refs/remotes/origin/*"],
           ["refs/heads/main:"],
-          ["main:refs/remotes/origin/main"]
+          ["main:refs/remotes/origin/main"],
+          ["refs/heads/main:refs/heads/../outside"],
+          ["refs/heads/main:refs/heads/main.lock"]
         ] do
       assert {:error, %{code: "validation_error"}} =
                TreeDx.Git.ExternalTransport.fetch(
@@ -91,5 +93,23 @@ defmodule TreeDx.ExternalGitTransportTest do
                  %{"token" => "token"}
                )
     end
+  end
+
+  test "routes public HTTPS fetches through the bounded external transport without a credential" do
+    assert TreeDx.Git.ExternalTransport.required?("https://github.com/example/project.git")
+
+    assert {:ok, result} =
+             TreeDx.Git.ExternalTransport.fetch(
+               %{
+                 repoPath: System.tmp_dir!(),
+                 remoteUrl: "https://github.com/example/project.git",
+                 remoteName: "origin",
+                 refspecs: ["+refs/heads/staging:refs/heads/staging"],
+                 planOnly: true
+               },
+               nil
+             )
+
+    assert result["status"] == "plan"
   end
 end

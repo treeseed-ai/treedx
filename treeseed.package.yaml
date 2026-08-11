@@ -49,12 +49,12 @@ verify:
   local: scripts/verification/test-all.sh
   release: scripts/release/release-gate.sh
 projectArchitecture:
-  topology: single_repository_site
+  topology: split_site_content
   rootPath: .
   sitePath: docs
-  contentPath: docs/src/content
-  contentRuntimeSource: r2_published_manifest
-  localContentMaterialization: existing_path
+  contentPath: src/content
+  contentRuntimeSource: r2_preview_overlay
+  localContentMaterialization: none
   contentPublishTarget:
     kind: cloudflare_r2
     prefix: packages/treedx

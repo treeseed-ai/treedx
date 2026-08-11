@@ -7,13 +7,19 @@ defmodule TreeDx.Git.ExternalTransport do
 
   def fetch(input, credential) do
     with :ok <- enabled?(),
-         :ok <- validate_transport(input.remoteUrl, credential),
+         :ok <- validate_fetch_transport(input.remoteUrl, credential),
          :ok <- validate_fetch_refspecs(input.refspecs || []) do
-      with_credential_environment(credential, fn env ->
-        with {:ok, _output} <- run_git(input.repoPath, fetch_args(input), env) do
-          {:ok, result(input, "synced", [], nil, nil)}
-        end
-      end)
+      if input.planOnly do
+        planned_result(input)
+      else
+        :ok = recover_stale_destination_locks(input)
+
+        with_credential_environment(credential, fn env ->
+          with {:ok, _output} <- run_git(input.repoPath, fetch_args(input), env) do
+            {:ok, result(input, "synced", [], nil, nil)}
+          end
+        end)
+      end
     end
   end
 
@@ -31,8 +37,16 @@ defmodule TreeDx.Git.ExternalTransport do
   end
 
   def required?(remote_url, credential_id \\ nil) do
-    RemoteUrl.ssh?(remote_url) or
-      (RemoteUrl.http?(remote_url) and is_binary(credential_id) and credential_id != "")
+    _credential_id = credential_id
+    RemoteUrl.ssh?(remote_url) or RemoteUrl.http?(remote_url)
+  end
+
+  defp validate_fetch_transport(remote_url, credential) do
+    with :ok <- require_https(remote_url),
+         :ok <- require_allowed_host(remote_url),
+         :ok <- allow_anonymous_fetch_credential(credential) do
+      :ok
+    end
   end
 
   defp guarded_push(input, credential, source, destination) do
@@ -111,6 +125,9 @@ defmodule TreeDx.Git.ExternalTransport do
       {:error,
        %{code: "credential_not_configured", message: "A transient HTTPS credential is required."}}
 
+  defp allow_anonymous_fetch_credential(nil), do: :ok
+  defp allow_anonymous_fetch_credential(credential), do: require_token_credential(credential)
+
   defp validate_fetch_refspecs(refspecs) when is_list(refspecs) and refspecs != [] do
     if Enum.all?(refspecs, &safe_fetch_refspec?/1),
       do: :ok,
@@ -127,7 +144,7 @@ defmodule TreeDx.Git.ExternalTransport do
       case String.split(stripped, ":", parts: 2) do
         [source, destination] ->
           source != "" and destination != "" and
-            String.starts_with?(source, "refs/") and String.starts_with?(destination, "refs/")
+            safe_fetch_ref?(source) and safe_fetch_ref?(destination)
 
         _ ->
           false
@@ -135,6 +152,38 @@ defmodule TreeDx.Git.ExternalTransport do
   end
 
   defp safe_fetch_refspec?(_), do: false
+
+  defp safe_fetch_ref?(ref) do
+    Regex.match?(~r/^refs\/(?:heads|remotes)\/[A-Za-z0-9][A-Za-z0-9._\/-]*$/, ref) and
+      not String.contains?(ref, ["..", "//", "@{", "/."]) and
+      not String.ends_with?(ref, [".lock", ".", "/"])
+  end
+
+  defp recover_stale_destination_locks(input) do
+    stale_before = System.system_time(:second) - 60
+
+    Enum.each(input.refspecs || [], fn refspec ->
+      [_source, destination] = String.split(String.trim_leading(refspec, "+"), ":", parts: 2)
+
+      git_dir =
+        if File.dir?(Path.join(input.repoPath, ".git")),
+          do: Path.join(input.repoPath, ".git"),
+          else: input.repoPath
+
+      lock_path = Path.join(git_dir, "#{destination}.lock")
+
+      case File.stat(lock_path, time: :posix) do
+        {:ok, stat}
+        when is_integer(stat.mtime) and stat.mtime <= stale_before ->
+          File.rm!(lock_path)
+
+        _ ->
+          :ok
+      end
+    end)
+
+    :ok
+  end
 
   defp one_push_refspec([refspec]) when is_binary(refspec) do
     stripped = String.trim_leading(refspec, "+")
@@ -210,7 +259,7 @@ defmodule TreeDx.Git.ExternalTransport do
   defp fetch_args(input), do: ["fetch", "--no-tags", input.remoteUrl | input.refspecs || []]
 
   defp planned_result(input) do
-    {:ok, result(input, "plan", input.refspecs || [], input.expectedRemoteHead, nil)}
+    {:ok, result(input, "plan", input.refspecs || [], Map.get(input, :expectedRemoteHead), nil)}
   end
 
   defp result(input, status, updated_refs, before_head, after_head) do
@@ -249,6 +298,8 @@ defmodule TreeDx.Git.ExternalTransport do
   end
 
   defp with_credential_environment(credential, operation) do
+    credential = credential || %{}
+
     directory =
       Path.join(
         System.tmp_dir!(),
