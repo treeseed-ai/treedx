@@ -85,7 +85,7 @@ pub fn query_graph(
                 reasons,
             })
         })
-		.filter(|entry| path_matches(&entry.node, &request.scope_paths))
+        .filter(|entry| path_matches(&entry.node, &request.scope_paths))
         .filter(|entry| where_matches(&entry.node, &request.where_filters))
         .filter(|entry| type_matches(&entry.node, &request.options.node_types))
         .collect::<Vec<_>>();
@@ -255,13 +255,17 @@ fn scope_matches(node: &GraphNode, scope: &str) -> bool {
 }
 
 fn path_matches(node: &GraphNode, scope_paths: &[String]) -> bool {
-	if scope_paths.is_empty() { return true; }
-	let Some(path) = node.path.as_deref() else { return false; };
-	let path = path.trim_start_matches('/');
-	scope_paths.iter().any(|scope| {
-		let prefix = scope.trim().trim_start_matches('/').trim_end_matches('/');
-		!prefix.is_empty() && (path == prefix || path.starts_with(&format!("{prefix}/")))
-	})
+    if scope_paths.is_empty() {
+        return true;
+    }
+    let Some(path) = node.path.as_deref() else {
+        return false;
+    };
+    let path = path.trim_start_matches('/');
+    scope_paths.iter().any(|scope| {
+        let prefix = scope.trim().trim_start_matches('/').trim_end_matches('/');
+        !prefix.is_empty() && (path == prefix || path.starts_with(&format!("{prefix}/")))
+    })
 }
 
 fn type_matches(node: &GraphNode, node_types: &[String]) -> bool {
@@ -276,7 +280,7 @@ fn where_matches(node: &GraphNode, filters: &[GraphWhereFilter]) -> bool {
                 .clone()
                 .unwrap_or_else(|| node.node_type.clone())
                 .to_lowercase()],
-			"model" => model_values(node),
+            "model" => model_values(node),
             "status" => vec![node.status.clone().unwrap_or_default().to_lowercase()],
             "audience" => node
                 .audience
@@ -313,28 +317,42 @@ fn where_matches(node: &GraphNode, filters: &[GraphWhereFilter]) -> bool {
 }
 
 fn model_values(node: &GraphNode) -> Vec<String> {
-	let mut values = Vec::new();
-	if let Some(frontmatter) = node.data.get("frontmatter").and_then(|value| value.as_object()) {
-		for field in ["model", "type"] {
-			if let Some(value) = frontmatter.get(field).and_then(|value| value.as_str()) {
-				values.push(value.to_lowercase());
-			}
-		}
-		if let Some(value) = frontmatter.get("schemaVersion").or_else(|| frontmatter.get("schema_version")).and_then(|value| value.as_str()) {
-			if let Some(contract) = value.split('/').next().and_then(|prefix| prefix.rsplit('.').next()) {
-				values.push(contract.to_lowercase());
-			}
-		}
-	}
-	if let Some(path) = node.path.as_deref() {
-		let parts = path.split('/').collect::<Vec<_>>();
-		if let Some(index) = parts.iter().position(|part| *part == "content") {
-			if let Some(collection) = parts.get(index + 1) { values.push(collection.to_lowercase()); }
-		}
-	}
-	values.sort();
-	values.dedup();
-	values
+    let mut values = Vec::new();
+    if let Some(frontmatter) = node
+        .data
+        .get("frontmatter")
+        .and_then(|value| value.as_object())
+    {
+        for field in ["model", "type"] {
+            if let Some(value) = frontmatter.get(field).and_then(|value| value.as_str()) {
+                values.push(value.to_lowercase());
+            }
+        }
+        if let Some(value) = frontmatter
+            .get("schemaVersion")
+            .or_else(|| frontmatter.get("schema_version"))
+            .and_then(|value| value.as_str())
+        {
+            if let Some(contract) = value
+                .split('/')
+                .next()
+                .and_then(|prefix| prefix.rsplit('.').next())
+            {
+                values.push(contract.to_lowercase());
+            }
+        }
+    }
+    if let Some(path) = node.path.as_deref() {
+        let parts = path.split('/').collect::<Vec<_>>();
+        if let Some(index) = parts.iter().position(|part| *part == "content") {
+            if let Some(collection) = parts.get(index + 1) {
+                values.push(collection.to_lowercase());
+            }
+        }
+    }
+    values.sort();
+    values.dedup();
+    values
 }
 
 fn node_map(index: &GraphIndex) -> BTreeMap<String, GraphNode> {
