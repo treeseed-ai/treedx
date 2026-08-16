@@ -82,7 +82,7 @@ defmodule TreeDx.Files.Patch do
             remaining,
             rest,
             old_start + consumed,
-            Enum.reverse(additions) ++ unchanged ++ acc
+            additions ++ Enum.reverse(unchanged) ++ acc
           )
 
         error ->

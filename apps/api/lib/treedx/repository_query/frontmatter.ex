@@ -65,6 +65,11 @@ defmodule TreeDx.RepositoryQuery.Frontmatter do
     kind, reason -> {:error, "#{kind}: #{inspect(reason)}"}
   end
 
+  # Yamerl represents both character data and YAML sequences as Erlang lists.
+  # An empty YAML sequence must be handled before the printable-charlist test:
+  # List.ascii_printable?([]) is true and would otherwise corrupt [] into "".
+  defp normalize_yaml([]), do: []
+
   defp normalize_yaml(value) when is_list(value) do
     cond do
       List.ascii_printable?(value) ->

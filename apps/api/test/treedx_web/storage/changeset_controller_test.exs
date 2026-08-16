@@ -32,7 +32,7 @@ defmodule TreeDxWeb.ChangesetControllerTest do
           readme,
           String.replace(readme, "# MVP Provenance", "# Updated Provenance")
         ),
-        create_patch("docs/new.md", "new entry"),
+        create_patch("docs/new.md", "---\nid: new-entry\n---\nnew entry"),
         delete_patch("docs/guide.md", guide)
       ]
       |> Enum.join("\n")
@@ -47,7 +47,7 @@ defmodule TreeDxWeb.ChangesetControllerTest do
     assert replay["workspaceVersion"] == first["workspaceVersion"]
     refute Map.has_key?(first, "artifacts")
 
-    assert read(context, "docs/new.md", 200)["content"] == "new entry\n"
+    assert read(context, "docs/new.md", 200)["content"] == "---\nid: new-entry\n---\nnew entry\n"
     assert read(context, "docs/readme.md", 200)["content"] =~ "# Updated Provenance"
     assert read(context, "docs/guide.md", 404)["error"]["code"] == "not_found"
   end
@@ -123,7 +123,10 @@ defmodule TreeDxWeb.ChangesetControllerTest do
   end
 
   defp create_patch(path, content) do
-    "diff --git a/#{path} b/#{path}\nnew file mode 100644\n--- /dev/null\n+++ b/#{path}\n@@ -0,0 +1,1 @@\n+#{content}"
+    lines = String.split(content, "\n", trim: false)
+
+    "diff --git a/#{path} b/#{path}\nnew file mode 100644\n--- /dev/null\n+++ b/#{path}\n@@ -0,0 +1,#{length(lines)} @@\n" <>
+      Enum.map_join(lines, "\n", &("+" <> &1))
   end
 
   defp replace_patch(path, before, resulting_content) do

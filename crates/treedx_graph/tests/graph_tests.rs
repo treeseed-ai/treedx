@@ -4,7 +4,7 @@ use treedx_graph::{
     build_context_pack, build_graph_index, parse_ctx_dsl, query_graph, read_graph_segments,
     read_latest_graph_manifest, search_graph, write_graph_segments, ContextBudget,
     ContextPackRequest, GraphDocumentInput, GraphIndexInput, GraphQueryOptions, GraphQueryRequest,
-    GraphSearchRequest,
+    GraphSearchRequest, GraphWhereFilter,
 };
 
 fn sample_index() -> treedx_graph::GraphIndex {
@@ -180,6 +180,45 @@ fn ranks_and_queries_deterministically() {
         .nodes
         .iter()
         .any(|entry| entry.node.path.as_deref() == Some("docs/guide.md")));
+}
+
+#[test]
+fn query_scope_paths_exclude_lexical_matches_outside_the_declared_subtree() {
+    let index = sample_index();
+    let query = query_graph(
+        &index,
+        GraphQueryRequest {
+            query: Some("release guide".to_string()),
+            scope_paths: vec!["/docs/guide.md".to_string()],
+            options: GraphQueryOptions { max_nodes: Some(10), ..Default::default() },
+            ..Default::default()
+        },
+    )
+    .expect("scoped query works");
+
+    assert!(!query.nodes.is_empty());
+    assert!(query.nodes.iter().all(|entry| entry.node.path.as_deref() == Some("docs/guide.md")));
+}
+
+#[test]
+fn query_model_filter_uses_portable_content_contracts() {
+    let index = build_graph_index(GraphIndexInput {
+        repo_id: "repo_models".to_string(), ref_name: "refs/heads/main".to_string(),
+        commit_sha: "2123456789012345678901234567890123456789".to_string(), graph_version: None, previous_manifest: None,
+        documents: vec![
+            GraphDocumentInput { path:"src/content/knowledge/guide.mdx".to_string(),object_id:"k1".to_string(),size:0,
+                content:"---\nschemaVersion: generic.knowledge/v1\nid: guide\n---\n# Guide\n".to_string() },
+            GraphDocumentInput { path:"src/content/notes/review.mdx".to_string(),object_id:"n1".to_string(),size:0,
+                content:"---\nschemaVersion: generic.note/v1\nid: review\n---\n# Review\n".to_string() },
+        ],
+    }).expect("model graph builds");
+    let query=query_graph(&index,GraphQueryRequest {
+        query:Some("guide review".to_string()),
+        where_filters:vec![GraphWhereFilter { field:"model".to_string(),op:"eq".to_string(),value:serde_json::json!("knowledge") }],
+        options:GraphQueryOptions { max_nodes:Some(10),..Default::default() },..Default::default()
+    }).expect("model-filtered query works");
+    assert!(!query.nodes.is_empty());
+    assert!(query.nodes.iter().all(|entry| entry.node.path.as_deref()==Some("src/content/knowledge/guide.mdx")));
 }
 
 #[test]

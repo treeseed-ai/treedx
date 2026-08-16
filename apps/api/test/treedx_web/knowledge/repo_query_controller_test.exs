@@ -149,6 +149,7 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
 
     assert structured["frontmatter"]["relations"] == [%{"id" => "page.child", "weight" => 2}]
     assert structured["frontmatter"]["tags"] == ["security", "teams"]
+    assert structured["frontmatter"]["relatedQuestions"] == []
     assert structured["body"] == "# Structured\r\n"
     assert structured["frontmatterError"] == nil
 
@@ -395,7 +396,7 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
 
     File.write!(
       Path.join(path, "docs/structured.md"),
-      "\uFEFF---\r\ntitle: Structured\r\ntags: [security, teams]\r\nrelations:\r\n  - id: page.child\r\n    weight: 2\r\n---\r\n# Structured\r\n"
+      "\uFEFF---\r\ntitle: Structured\r\ntags: [security, teams]\r\nrelatedQuestions: []\r\nrelations:\r\n  - id: page.child\r\n    weight: 2\r\n---\r\n# Structured\r\n"
     )
 
     File.write!(Path.join(path, "docs/malformed.md"), "---\ntags: [broken\n---\nBody\n")
