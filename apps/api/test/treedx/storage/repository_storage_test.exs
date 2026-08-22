@@ -80,7 +80,11 @@ defmodule TreeDx.RepositoryStorageTest do
 
     assert result.repo.repositoryName == "imported-repo"
     assert File.exists?(Path.join([dir, "repositories", "imported-repo", ".git"]))
-    assert TreeDx.Cache.stats(TreeDx.RepositoryCache).entries > 0
+    repo_id = result.repo.repoId
+    cached_keys = TreeDx.RepositoryCache |> :ets.tab2list() |> Enum.map(&elem(&1, 0))
+    assert {:repository_context, repo_id, "refs/heads/main"} in cached_keys
+    assert {:repository_context, repo_id, :default} in cached_keys
+    assert Enum.any?(cached_keys, &match?({:documents, ^repo_id, _, _, _}, &1))
     refute inspect(result) =~ source
   end
 

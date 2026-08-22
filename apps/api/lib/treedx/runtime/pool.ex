@@ -24,7 +24,7 @@ defmodule TreeDx.Runtime.Pool do
     pool = normalize_pool(pool)
 
     if Process.get({__MODULE__, :active_pool}) == pool do
-      fun.()
+      run_nested(fun)
     else
       GenServer.call(__MODULE__, {:run, pool, fun, opts}, :infinity)
     end
@@ -429,6 +429,16 @@ defmodule TreeDx.Runtime.Pool do
        message: "TreeDX failed while processing repository work.",
        details: %{reason: inspect(reason)}
      }}
+  end
+
+  defp run_nested(fun) do
+    try do
+      fun.()
+    rescue
+      error -> task_failed(error)
+    catch
+      kind, reason -> task_failed({kind, reason})
+    end
   end
 
   defp put_pool(state, pool, info) do

@@ -33,4 +33,11 @@ defmodule TreeDx.Runtime.Pool.SnapshotTest do
     after_run = Pool.pool_snapshot(:repository_query)
     assert after_run.started == before.started + 1
   end
+
+  test "nested work preserves pool failure replies" do
+    assert {:error, %{code: "internal_error"}} =
+             Pool.run(:repository_query, fn ->
+               Pool.run(:repository_query, fn -> raise "nested failure" end)
+             end)
+  end
 end
