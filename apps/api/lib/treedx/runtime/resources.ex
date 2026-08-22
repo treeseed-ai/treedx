@@ -73,7 +73,7 @@ defmodule TreeDx.Runtime.Resources do
     do: int_env("TREEDX_SNAPSHOT_WORKER_POOL_SIZE", max(1, div(cpu_budget(), 2)))
 
   def worker_pool_size(:import),
-    do: int_env("TREEDX_IMPORT_WORKER_POOL_SIZE", max(1, div(cpu_budget(), 2)))
+    do: int_env("TREEDX_IMPORT_WORKER_POOL_SIZE", min(4, max(1, div(cpu_budget(), 2))))
 
   def worker_pool_max_queue(:repository_query),
     do: int_env("TREEDX_REPOSITORY_QUERY_MAX_QUEUE", 2_000)

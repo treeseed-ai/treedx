@@ -1,10 +1,15 @@
 defmodule TreeDx.Repos do
   @moduledoc false
 
+  alias TreeDx.Runtime.Pool
+
   def create(params, principal),
     do: register(Map.put_new(params, "createIfMissing", true), principal)
 
-  def import_local(params, principal) do
+  def import_local(params, principal),
+    do: Pool.run(:import, fn -> do_import_local(params, principal) end)
+
+  defp do_import_local(params, principal) do
     with {:ok, _scope} <- TreeDx.Capabilities.require_capability(principal, "repos:write", nil),
          {:ok, repository_name} <- TreeDx.RepositoryStorage.validate_name(params),
          {:ok, source} <- import_source_path(params["sourceRelativePath"]),

@@ -53,7 +53,7 @@ pub fn warm_log(path: &Path, kind: &str) -> Result<(), StoreError> {
     let lock = lock_for(path);
     let _guard = lock.lock().expect("treedx log lock poisoned");
     ensure_log_unlocked(path, kind)?;
-    load_index_unlocked(path, kind).map(|_| ())
+    ensure_index_unlocked(path, kind)
 }
 
 fn ensure_log_unlocked(path: &Path, kind: &str) -> Result<(), StoreError> {
@@ -222,9 +222,14 @@ pub fn replay_record<T: DeserializeOwned + Serialize + Clone>(
     let lock = lock_for(path);
     let _guard = lock.lock().expect("treedx log lock poisoned");
     ensure_log_unlocked(path, kind)?;
-    load_index_unlocked(path, kind)?
-        .latest
-        .get(record_id)
+    ensure_index_unlocked(path, kind)?;
+    let key = (path.to_path_buf(), kind.to_string());
+    let indexes = LOG_INDEXES.get_or_init(|| Mutex::new(HashMap::new()));
+    indexes
+        .lock()
+        .expect("treedx log index poisoned")
+        .get(&key)
+        .and_then(|index| index.latest.get(record_id))
         .cloned()
         .map(serde_json::from_value)
         .transpose()
@@ -232,22 +237,47 @@ pub fn replay_record<T: DeserializeOwned + Serialize + Clone>(
 }
 
 fn next_seq_unlocked(path: &Path, kind: &str) -> Result<u64, StoreError> {
-    Ok(load_index_unlocked(path, kind)?.next_seq)
+    ensure_index_unlocked(path, kind)?;
+    let key = (path.to_path_buf(), kind.to_string());
+    let indexes = LOG_INDEXES.get_or_init(|| Mutex::new(HashMap::new()));
+    Ok(indexes
+        .lock()
+        .expect("treedx log index poisoned")
+        .get(&key)
+        .map(|index| index.next_seq)
+        .unwrap_or(1))
 }
 
 fn load_index_unlocked(path: &Path, kind: &str) -> Result<LogIndex, StoreError> {
+    ensure_index_unlocked(path, kind)?;
+    let key = (path.to_path_buf(), kind.to_string());
+    let indexes = LOG_INDEXES.get_or_init(|| Mutex::new(HashMap::new()));
+    Ok(indexes
+        .lock()
+        .expect("treedx log index poisoned")
+        .get(&key)
+        .cloned()
+        .unwrap_or(LogIndex {
+            file_len: 0,
+            modified: None,
+            next_seq: 1,
+            latest: BTreeMap::new(),
+        }))
+}
+
+fn ensure_index_unlocked(path: &Path, kind: &str) -> Result<(), StoreError> {
     let metadata = fs::metadata(path)?;
     let modified = metadata.modified().ok();
     let key = (path.to_path_buf(), kind.to_string());
     let indexes = LOG_INDEXES.get_or_init(|| Mutex::new(HashMap::new()));
-    if let Some(index) = indexes
+    if indexes
         .lock()
         .expect("treedx log index poisoned")
         .get(&key)
         .filter(|index| index.file_len == metadata.len() && index.modified == modified)
-        .cloned()
+        .is_some()
     {
-        return Ok(index);
+        return Ok(());
     }
     let envelopes = replay_envelopes_unlocked::<serde_json::Value>(path, kind)?;
     let mut latest = BTreeMap::new();
@@ -267,8 +297,8 @@ fn load_index_unlocked(path: &Path, kind: &str) -> Result<LogIndex, StoreError> 
     indexes
         .lock()
         .expect("treedx log index poisoned")
-        .insert(key, index.clone());
-    Ok(index)
+        .insert(key, index);
+    Ok(())
 }
 
 fn update_index_after_write(
