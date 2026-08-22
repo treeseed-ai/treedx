@@ -89,6 +89,12 @@ offered target and measured RPS in its reports and fails below the separately
 configured minimum (475 RPS by default for a 500 RPS target). It also blocks release for reliability-budget,
 profiler, service, assertion, and response-validation failures.
 
+Portfolio and federation reliability profiles separately fail below 18 primary
+requests per second while enforcing the mixed-workload contention budget. That
+budget retains zero tolerance for request, assertion, OpenAPI, semantic,
+permission, consistency, race, and validation failures. Passing it does not
+replace the strict standalone performance profile; release requires both.
+
 Profile Compose starts API nodes from the stripped `treeseed/treedx` production
 image target and runs profiling from the separate Debian-based
 `treeseed/treedx-profiler` image. The service image does not contain profiler
