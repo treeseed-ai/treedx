@@ -44,6 +44,32 @@ defmodule TreeDx.ReposTest do
     assert scope["capabilities"] == ["files:read"]
   end
 
+  test "capability updates invalidate a cached authorization scope immediately" do
+    actor_id = "cached-policy-actor"
+
+    {:ok, grant} =
+      TreeDx.Capabilities.put_grant(%{
+        "actorId" => actor_id,
+        "tenantId" => "tenant_demo",
+        "repoIds" => ["repo_one"],
+        "refs" => ["refs/heads/main"],
+        "paths" => ["docs/**"],
+        "capabilities" => ["files:read"]
+      })
+
+    principal = %{"actorId" => actor_id, "tenantId" => "tenant_demo"}
+    assert {:ok, scope} = TreeDx.Capabilities.effective_scope(principal, "repo_one")
+    assert "files:read" in scope["capabilities"]
+
+    {:ok, _revoked} =
+      grant
+      |> Map.put("revokedAt", DateTime.utc_now() |> DateTime.to_iso8601())
+      |> TreeDx.Capabilities.put_grant()
+
+    assert {:error, %{"code" => "not_found"}} =
+             TreeDx.Capabilities.effective_scope(principal, "repo_one")
+  end
+
   test "repository registration validates required fields", %{principal: principal} do
     assert {:error, %{code: "validation_error"}} = TreeDx.Repos.register(%{}, principal)
   end

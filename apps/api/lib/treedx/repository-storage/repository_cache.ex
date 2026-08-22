@@ -20,12 +20,17 @@ defmodule TreeDx.RepositoryCache do
 
   def invalidate_repository(repo_id) when is_binary(repo_id) do
     if :ets.whereis(@table) != :undefined do
-      @table
-      |> :ets.tab2list()
-      |> Enum.each(fn entry ->
-        key = elem(entry, 0)
-        if repository_key?(key, repo_id), do: Cache.delete(@table, key)
-      end)
+      keys =
+        :ets.foldl(
+          fn entry, acc ->
+            key = elem(entry, 0)
+            if repository_key?(key, repo_id), do: [key | acc], else: acc
+          end,
+          [],
+          @table
+        )
+
+      Enum.each(keys, &Cache.delete(@table, &1))
     end
 
     :ok

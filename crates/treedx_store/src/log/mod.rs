@@ -225,12 +225,15 @@ pub fn replay_record<T: DeserializeOwned + Serialize + Clone>(
     ensure_index_unlocked(path, kind)?;
     let key = (path.to_path_buf(), kind.to_string());
     let indexes = LOG_INDEXES.get_or_init(|| Mutex::new(HashMap::new()));
-    indexes
-        .lock()
-        .expect("treedx log index poisoned")
-        .get(&key)
-        .and_then(|index| index.latest.get(record_id))
-        .cloned()
+    let payload = {
+        let indexes = indexes.lock().expect("treedx log index poisoned");
+        indexes
+            .get(&key)
+            .and_then(|index| index.latest.get(record_id))
+            .cloned()
+    };
+
+    payload
         .map(serde_json::from_value)
         .transpose()
         .map_err(Into::into)
