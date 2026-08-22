@@ -1052,7 +1052,16 @@ jobs:
 
       - name: Publish npm package
         if: github.ref_type == 'tag'
-        run: npm publish --access public
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          if [[ "$version" == *-* ]]; then
+            npm publish --access public --tag rc
+          else
+            echo "Stable npm publication requires a separately governed workflow." >&2
+            exit 1
+          fi
         working-directory: packages/ts-sdk
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
