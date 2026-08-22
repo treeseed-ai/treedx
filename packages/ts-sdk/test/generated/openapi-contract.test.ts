@@ -18,5 +18,7 @@ describe('authoritative OpenAPI contract', () => {
     expect(TREEDX_OPENAPI_CONTRACT.operationCount).toBe(TREEDX_OPENAPI_OPERATIONS.length);
     expect(operationIds.every((operationId) => operationId.length > 0)).toBe(true);
     expect(new Set(operationIds).size).toBe(operationIds.length);
+    expect(TREEDX_OPENAPI_OPERATIONS.find((operation) => operation.operationId === 'getHealth')?.requiredCapabilities).toEqual([]);
+    expect(TREEDX_OPENAPI_OPERATIONS.find((operation) => operation.operationId === 'createRepository')?.requiredCapabilities).toContain('repos:write');
   });
 });
