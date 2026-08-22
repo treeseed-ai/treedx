@@ -1,8 +1,8 @@
 sdk: treedx-python
 language: python
-version: 0.2.43
+version: 0.3.0-rc.1
 sdkSpecVersion: 0.1.0
-openapiVersion: 0.10.0
+openapiVersion: 0.11.0
 testLayout:
   unit: implemented
   adapters: implemented

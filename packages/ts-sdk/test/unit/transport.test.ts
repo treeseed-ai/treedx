@@ -23,4 +23,43 @@ describe('FetchTransport', () => {
     const transport = new FetchTransport({ baseUrl: 'http://treedx.test', fetchImpl });
     await expect(transport.request({ method: 'GET', path: '/api/v1/auth/whoami' })).rejects.toBeInstanceOf(TreeDxApiError);
   });
+
+  it('propagates request identity, trace, and idempotency headers', async () => {
+    let observed: RequestInit | undefined;
+    const fetchImpl = (async (_input: RequestInfo, init?: RequestInit) => {
+      observed = init;
+      return new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } });
+    }) as typeof fetch;
+    const transport = new FetchTransport({ baseUrl: 'http://treedx.test', fetchImpl });
+
+    await transport.request({
+      method: 'POST',
+      path: '/api/v1/query',
+      requestId: 'request-1',
+      traceparent: '00-11111111111111111111111111111111-2222222222222222-01',
+      idempotencyKey: 'idem-1'
+    });
+
+    expect(observed?.headers).toMatchObject({
+      'X-Request-ID': 'request-1',
+      traceparent: '00-11111111111111111111111111111111-2222222222222222-01',
+      'Idempotency-Key': 'idem-1'
+    });
+  });
+
+  it('normalizes cancellation and timeouts', async () => {
+    const fetchImpl = ((_input: RequestInfo, init?: RequestInit) =>
+      new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(init.signal?.reason), { once: true }))) as typeof fetch;
+    const transport = new FetchTransport({ baseUrl: 'http://treedx.test', timeoutMs: 5, fetchImpl });
+
+    await expect(transport.request({ method: 'GET', path: '/api/v1/health' })).rejects.toMatchObject({
+      code: 'request_cancelled'
+    });
+
+    const controller = new AbortController();
+    controller.abort(new Error('cancelled before invocation'));
+    await expect(transport.request({ method: 'GET', path: '/api/v1/health', signal: controller.signal })).rejects.toMatchObject({
+      code: 'request_cancelled'
+    });
+  });
 });

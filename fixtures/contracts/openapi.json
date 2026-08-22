@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "TreeDX MVP API Contract",
-    "version": "0.10.0",
+    "version": "0.11.0",
     "description": "Compact MVP fixture for implemented TreeDX MVP routes. docs/api/openapi.yaml is the human-readable contract."
   },
   "servers": [{ "url": "http://localhost:4000" }],

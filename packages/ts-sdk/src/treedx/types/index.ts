@@ -12,6 +12,7 @@ export interface TreeDxClientConfig {
   authProvider?: AuthProvider;
   transport?: Transport;
   defaultHeaders?: Record<string, string>;
+  timeoutMs?: number;
 }
 
 export interface TreeDxRequest {
@@ -21,6 +22,11 @@ export interface TreeDxRequest {
   headers?: Record<string, string>;
   body?: unknown;
   binaryBody?: BinaryBody;
+  signal?: AbortSignal;
+  timeoutMs?: number;
+  requestId?: string;
+  traceparent?: string;
+  idempotencyKey?: string;
 }
 
 export interface TreeDxResponse<T = unknown> {
