@@ -53,8 +53,12 @@ export class FetchTransport implements Transport {
       ? undefined
       : setTimeout(() => controller.abort(new Error('TreeDX request timed out')), timeoutMs);
     const abort = () => controller.abort(request.signal?.reason);
-    request.signal?.addEventListener('abort', abort, { once: true });
+    if (request.signal?.aborted) abort();
+    else request.signal?.addEventListener('abort', abort, { once: true });
     try {
+      if (controller.signal.aborted) {
+        throw controller.signal.reason;
+      }
       response = await this.fetchImpl(url, { method: request.method, headers, body, signal: controller.signal });
     } catch (error) {
       if (controller.signal.aborted) {

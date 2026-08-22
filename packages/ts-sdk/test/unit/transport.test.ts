@@ -55,5 +55,11 @@ describe('FetchTransport', () => {
     await expect(transport.request({ method: 'GET', path: '/api/v1/health' })).rejects.toMatchObject({
       code: 'request_cancelled'
     });
+
+    const controller = new AbortController();
+    controller.abort(new Error('cancelled before invocation'));
+    await expect(transport.request({ method: 'GET', path: '/api/v1/health', signal: controller.signal })).rejects.toMatchObject({
+      code: 'request_cancelled'
+    });
   });
 });
