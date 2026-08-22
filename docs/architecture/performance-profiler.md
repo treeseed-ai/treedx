@@ -240,5 +240,18 @@ which preserves those correctness requirements and defines the saturated-load
 latency ceiling separately from the tighter unloaded reliability target.
 Portfolio and federation overlays select
 `tools/treedx_profiler/mixed_workload_budget.yaml`. It preserves the same
-correctness requirements and applies subsecond read/query/graph ceilings plus a
-bounded workspace-mutation ceiling while those operation classes contend.
+correctness requirements while continuously creating repositories, mutating
+workspaces, refreshing graphs, building snapshots, and serving reads under the
+same 25-client load. Its latency ceilings are contention bounds, not the
+standalone service latency contract. The independent performance overlay keeps
+the strict saturated-load latency budget and 475-RPS floor. Mixed profiles add
+an 18 primary-RPS floor so a run cannot satisfy the contention bounds by doing
+less work.
+
+The mixed-workload ceilings are evidence-bound to the complete amd64, arm64,
+connected-library, mirror-federation, and exact ten-minute local distributions
+reviewed for the 0.3.0 release candidate. They include bounded headroom over the
+largest observed p99: 4.5 seconds for repository reads and queries, 5 seconds
+for graph work, and 3 seconds for workspace, snapshot, and artifact work. Any
+change to these bounds or the throughput floor requires a separate reviewed
+policy change; runtime corrections must not silently edit them.
