@@ -22,7 +22,9 @@ defmodule TreeDx.Repos do
              },
              repository_name
            ),
-         {:ok, placement} <- ensure_placement(repo) do
+         {:ok, placement} <- ensure_placement(repo),
+         {:ok, _scope} <- TreeDx.Capabilities.effective_scope(principal, repo["id"]),
+         :ok <- TreeDx.RepositoryCache.warm(repo) do
       TreeDx.Audit.append("repo.imported_local", %{
         actor_id: principal["actorId"],
         tenant_id: principal["tenantId"],

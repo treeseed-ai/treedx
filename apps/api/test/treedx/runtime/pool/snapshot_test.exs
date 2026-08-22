@@ -21,4 +21,23 @@ defmodule TreeDx.Runtime.Pool.SnapshotTest do
       :ok = :sys.resume(coordinator)
     end
   end
+
+  test "nested work in the same pool executes inside the existing admission" do
+    before = Pool.pool_snapshot(:repository_query)
+
+    assert :nested_result ==
+             Pool.run(:repository_query, fn ->
+               Pool.run(:repository_query, fn -> :nested_result end)
+             end)
+
+    after_run = Pool.pool_snapshot(:repository_query)
+    assert after_run.started == before.started + 1
+  end
+
+  test "nested work preserves pool failure replies" do
+    assert {:error, %{code: "internal_error"}} =
+             Pool.run(:repository_query, fn ->
+               Pool.run(:repository_query, fn -> raise "nested failure" end)
+             end)
+  end
 end
