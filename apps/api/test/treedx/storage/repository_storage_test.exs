@@ -80,6 +80,7 @@ defmodule TreeDx.RepositoryStorageTest do
 
     assert result.repo.repositoryName == "imported-repo"
     assert File.exists?(Path.join([dir, "repositories", "imported-repo", ".git"]))
+    assert TreeDx.Cache.stats(TreeDx.RepositoryCache).entries > 0
     refute inspect(result) =~ source
   end
 

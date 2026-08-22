@@ -18,6 +18,30 @@ defmodule TreeDx.RepositoryCache do
 
   def reset!, do: Cache.reset(@table)
 
+  def warm(repo) when is_map(repo) do
+    requested_ref = repo["defaultRef"] || "refs/heads/main"
+
+    with {:ok, context} <-
+           context(repo["id"], requested_ref, fn ->
+             ref = requested_ref
+
+             with {:ok, resolved} <-
+                    TreeDx.Git.resolve_ref(TreeDx.RepositoryStorage.path!(repo), ref) do
+               {:ok, %{repo: repo, ref: ref, resolved_ref: resolved["target"]}}
+             end
+           end),
+         {:ok, _default_context} <-
+           context(repo["id"], nil, fn -> {:ok, context} end),
+         {:ok, _documents} <-
+           searchable_documents(%{
+             repo: context.repo,
+             ref: context.ref,
+             resolved_ref: context.resolved_ref
+           }) do
+      :ok
+    end
+  end
+
   def context(repo_id, requested_ref, loader) do
     max_bytes = cache_max_bytes()
 

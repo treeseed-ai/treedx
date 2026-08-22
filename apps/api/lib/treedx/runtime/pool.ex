@@ -21,7 +21,13 @@ defmodule TreeDx.Runtime.Pool do
   end
 
   def run(pool, fun, opts \\ []) when is_function(fun, 0) do
-    GenServer.call(__MODULE__, {:run, pool, fun, opts}, :infinity)
+    pool = normalize_pool(pool)
+
+    if Process.get({__MODULE__, :active_pool}) == pool do
+      fun.()
+    else
+      GenServer.call(__MODULE__, {:run, pool, fun, opts}, :infinity)
+    end
   end
 
   def snapshot, do: Snapshot.all()
@@ -271,7 +277,12 @@ defmodule TreeDx.Runtime.Pool do
     wait_ms = System.monotonic_time(:millisecond) - job.enqueued_at
     Metrics.observe("treedx_pool_wait_ms", wait_ms, %{pool: to_string(job.pool)})
 
-    task = Task.Supervisor.async_nolink(TreeDx.Runtime.Pool.TaskSupervisor, job.fun)
+    task =
+      Task.Supervisor.async_nolink(TreeDx.Runtime.Pool.TaskSupervisor, fn ->
+        Process.put({__MODULE__, :active_pool}, job.pool)
+        job.fun.()
+      end)
+
     execution_timeout_ref = maybe_execution_timeout(job.pool, task.ref, job.execution_timeout_ms)
 
     job = %{
