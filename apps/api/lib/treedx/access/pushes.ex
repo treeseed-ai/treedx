@@ -102,7 +102,8 @@ defmodule TreeDx.Pushes do
              source_ref,
              destination_ref,
              params["expectedDestinationHead"]
-           ) do
+           ),
+         :ok <- TreeDx.RepositoryCache.invalidate_repository(repo_id) do
       TreeDx.Audit.append("git.ref_promoted", %{
         actor_id: principal["actorId"],
         tenant_id: principal["tenantId"],
@@ -153,7 +154,8 @@ defmodule TreeDx.Pushes do
              merged_into_ref,
              params["expectedHead"],
              params["expectedMergedIntoHead"]
-           ) do
+           ),
+         :ok <- TreeDx.RepositoryCache.invalidate_repository(repo_id) do
       TreeDx.Audit.append("git.ref_retired", %{
         actor_id: principal["actorId"],
         tenant_id: principal["tenantId"],
@@ -206,7 +208,8 @@ defmodule TreeDx.Pushes do
              TreeDx.RepositoryStorage.path!(repo),
              ref_name,
              params["expectedHead"]
-           ) do
+           ),
+         :ok <- TreeDx.RepositoryCache.invalidate_repository(repo_id) do
       TreeDx.Audit.append("git.orphan_ref_discarded", %{
         actor_id: principal["actorId"],
         tenant_id: principal["tenantId"],
@@ -270,6 +273,10 @@ defmodule TreeDx.Pushes do
       case fetch_transport(input, credential) do
         {:ok, result} ->
           result = sanitize_result(result, repo_id)
+
+          if result["status"] != "plan" do
+            TreeDx.RepositoryCache.invalidate_repository(repo_id)
+          end
 
           TreeDx.Audit.append("git.fetch.completed", %{
             actor_id: principal["actorId"],

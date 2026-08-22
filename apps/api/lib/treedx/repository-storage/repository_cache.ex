@@ -18,26 +18,37 @@ defmodule TreeDx.RepositoryCache do
 
   def reset!, do: Cache.reset(@table)
 
+  def invalidate_repository(repo_id) when is_binary(repo_id) do
+    if :ets.whereis(@table) != :undefined do
+      keys =
+        :ets.foldl(
+          fn entry, acc ->
+            key = elem(entry, 0)
+            if repository_key?(key, repo_id), do: [key | acc], else: acc
+          end,
+          [],
+          @table
+        )
+
+      Enum.each(keys, &Cache.delete(@table, &1))
+    end
+
+    :ok
+  end
+
   def warm(repo) when is_map(repo) do
     requested_ref = repo["defaultRef"] || "refs/heads/main"
 
     with {:ok, context} <-
            context(repo["id"], requested_ref, fn ->
-             ref = requested_ref
-
              with {:ok, resolved} <-
-                    TreeDx.Git.resolve_ref(TreeDx.RepositoryStorage.path!(repo), ref) do
-               {:ok, %{repo: repo, ref: ref, resolved_ref: resolved["target"]}}
+                    TreeDx.Git.resolve_ref(TreeDx.RepositoryStorage.path!(repo), requested_ref) do
+               {:ok, %{repo: repo, ref: requested_ref, resolved_ref: resolved["target"]}}
              end
            end),
          {:ok, _default_context} <-
            context(repo["id"], nil, fn -> {:ok, context} end),
-         {:ok, _documents} <-
-           searchable_documents(%{
-             repo: context.repo,
-             ref: context.ref,
-             resolved_ref: context.resolved_ref
-           }) do
+         {:ok, _documents} <- searchable_documents(context) do
       :ok
     end
   end
@@ -48,7 +59,7 @@ defmodule TreeDx.RepositoryCache do
     Cache.get_or_load(
       @table,
       {:repository_context, repo_id, requested_ref || :default},
-      Cache.int_env("TREEDX_REPO_CONTEXT_CACHE_TTL_MS", 250),
+      Cache.int_env("TREEDX_REPO_CONTEXT_CACHE_TTL_MS", 300_000),
       Cache.entry_limit("TREEDX_REPO_CONTEXT_CACHE_MAX_ENTRIES", 1024, max_bytes),
       max_bytes,
       fn -> bounded_load(loader) end
@@ -61,7 +72,7 @@ defmodule TreeDx.RepositoryCache do
     Cache.get_or_load(
       @table,
       {:authorization_scope, actor_id, repo_id || :global},
-      Cache.int_env("TREEDX_AUTHORIZATION_CACHE_TTL_MS", 250),
+      Cache.int_env("TREEDX_AUTHORIZATION_CACHE_TTL_MS", 300_000),
       Cache.entry_limit("TREEDX_AUTHORIZATION_CACHE_MAX_ENTRIES", 4096, max_bytes),
       max_bytes,
       fn -> bounded_load(loader) end
@@ -164,6 +175,11 @@ defmodule TreeDx.RepositoryCache do
   defp key(ctx, kind),
     do:
       {kind, ctx.repo["id"], TreeDx.RepositoryStorage.path!(ctx.repo), ctx.ref, ctx.resolved_ref}
+
+  defp repository_key?({:repository_context, repo_id, _requested_ref}, repo_id), do: true
+  defp repository_key?({:authorization_scope, _actor_id, repo_id}, repo_id), do: true
+  defp repository_key?({_kind, repo_id, _path, _ref, _resolved_ref}, repo_id), do: true
+  defp repository_key?(_key, _repo_id), do: false
 
   defp cache_max_bytes do
     case System.get_env("TREEDX_REPO_DOC_CACHE_MAX_BYTES") do

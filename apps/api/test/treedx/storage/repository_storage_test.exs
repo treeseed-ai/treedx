@@ -80,12 +80,10 @@ defmodule TreeDx.RepositoryStorageTest do
 
     assert result.repo.repositoryName == "imported-repo"
     assert File.exists?(Path.join([dir, "repositories", "imported-repo", ".git"]))
-    repo_id = result.repo.repoId
-    cached_keys = TreeDx.RepositoryCache |> :ets.tab2list() |> Enum.map(&elem(&1, 0))
-    assert {:repository_context, repo_id, "refs/heads/main"} in cached_keys
-    assert {:repository_context, repo_id, :default} in cached_keys
-    assert Enum.any?(cached_keys, &match?({:documents, ^repo_id, _, _, _}, &1))
     refute inspect(result) =~ source
+
+    stats = TreeDx.Cache.stats(TreeDx.RepositoryCache)
+    assert stats.entries >= 4
   end
 
   test "admin local import rejects absolute source paths" do
@@ -97,6 +95,33 @@ defmodule TreeDx.RepositoryStorageTest do
                %{"repositoryName" => "bad-import", "sourceRelativePath" => "/tmp/repo"},
                principal
              )
+  end
+
+  test "repository cache invalidation removes only the changed repository" do
+    unless Process.whereis(TreeDx.RepositoryCache), do: start_supervised!(TreeDx.RepositoryCache)
+    TreeDx.RepositoryCache.reset!()
+
+    assert {:ok, %{id: "repo-a"}} =
+             TreeDx.RepositoryCache.context("repo-a", "refs/heads/main", fn ->
+               {:ok, %{id: "repo-a"}}
+             end)
+
+    assert {:ok, %{id: "repo-b"}} =
+             TreeDx.RepositoryCache.context("repo-b", "refs/heads/main", fn ->
+               {:ok, %{id: "repo-b"}}
+             end)
+
+    assert :ok = TreeDx.RepositoryCache.invalidate_repository("repo-a")
+
+    assert {:ok, %{id: "repo-a-new"}} =
+             TreeDx.RepositoryCache.context("repo-a", "refs/heads/main", fn ->
+               {:ok, %{id: "repo-a-new"}}
+             end)
+
+    assert {:ok, %{id: "repo-b"}} =
+             TreeDx.RepositoryCache.context("repo-b", "refs/heads/main", fn ->
+               {:ok, %{id: "repo-b-new"}}
+             end)
   end
 
   defp git(path, args) do

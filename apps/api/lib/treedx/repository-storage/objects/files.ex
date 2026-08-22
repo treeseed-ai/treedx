@@ -219,7 +219,8 @@ defmodule TreeDx.Files do
            TreeDx.Store.mark_workspace_committed(%{
              workspaceId: workspace_id,
              commitSha: result["commitSha"]
-           }) do
+           }),
+         :ok <- TreeDx.RepositoryCache.invalidate_repository(ctx.repo["id"]) do
       audit("workspace.committed", ctx, %{
         workspaceId: workspace_id,
         changedPaths: result["changedPaths"],
