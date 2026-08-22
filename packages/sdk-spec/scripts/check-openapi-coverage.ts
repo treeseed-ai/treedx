@@ -35,6 +35,7 @@ for (const [apiPath, methods] of Object.entries(openapi.paths ?? {})) {
 const capabilities = readYaml(path.join(root, "spec", "capabilities.yaml"));
 const endpoints = readYaml(path.join(root, "spec", "endpoints.yaml"));
 const architecture = readYaml(path.join(root, "spec", "architecture.yaml"));
+const coverageExceptions = readYaml(path.join(root, "spec", "openapi-coverage-exceptions.yaml"));
 const declaredEndpoints = new Set();
 const requiredModules = new Set(architecture.requiredModules ?? []);
 const moduleCapabilityCounts = new Map((architecture.requiredModules ?? []).map((moduleName) => [moduleName, 0]));
@@ -77,10 +78,44 @@ for (const capability of capabilities.capabilities ?? []) {
 }
 
 const uncovered = [...openapiOperations].filter((endpoint) => !declaredEndpoints.has(endpoint)).sort();
+const classifiedExceptions = new Map();
+
+for (const exception of coverageExceptions.exceptions ?? []) {
+  const endpoint = String(exception.endpoint ?? "");
+  const reason = String(exception.reason ?? "").trim();
+  const languages = Array.isArray(exception.languages) ? exception.languages.map(String).sort() : [];
+  if (!openapiOperations.has(endpoint)) {
+    fail(`coverage exception is not in OpenAPI: ${endpoint}`);
+  }
+  if (declaredEndpoints.has(endpoint)) {
+    fail(`coverage exception is already declared by the SDK spec: ${endpoint}`);
+  }
+  if (reason.length < 20) {
+    fail(`coverage exception requires a specific reviewed reason: ${endpoint}`);
+  }
+  const expectedLanguages = [...(architecture.languageSdks ?? [])].map(String).sort();
+  if (JSON.stringify(languages) !== JSON.stringify(expectedLanguages)) {
+    fail(`coverage exception must classify every declared language SDK: ${endpoint}`);
+  }
+  if (classifiedExceptions.has(endpoint)) {
+    fail(`duplicate coverage exception: ${endpoint}`);
+  }
+  classifiedExceptions.set(endpoint, exception);
+}
+
+const unclassified = uncovered.filter((endpoint) => !classifiedExceptions.has(endpoint));
+const staleExceptions = [...classifiedExceptions.keys()].filter((endpoint) => !uncovered.includes(endpoint));
+
+for (const endpoint of unclassified) {
+  fail(`unclassified public OpenAPI operation: ${endpoint}`);
+}
+for (const endpoint of staleExceptions) {
+  fail(`stale coverage exception: ${endpoint}`);
+}
 
 console.log(`Declared SDK endpoint count: ${declaredEndpoints.size}`);
 console.log(`OpenAPI operation count: ${openapiOperations.size}`);
-console.log(`Advisory uncovered OpenAPI operation count: ${uncovered.length}`);
+console.log(`Classified unavailable OpenAPI operation count: ${uncovered.length}`);
 console.log("Required module coverage:");
 for (const moduleName of architecture.requiredModules ?? []) {
   const count = moduleCapabilityCounts.get(moduleName) ?? 0;
@@ -88,9 +123,9 @@ for (const moduleName of architecture.requiredModules ?? []) {
 }
 
 if (uncovered.length > 0) {
-  console.log("Advisory uncovered OpenAPI operations:");
+  console.log("Reviewed unavailable OpenAPI operations:");
   for (const endpoint of uncovered) {
-    console.log(`- ${endpoint}`);
+    console.log(`- ${endpoint}: ${classifiedExceptions.get(endpoint)?.reason ?? "UNCLASSIFIED"}`);
   }
 }
 

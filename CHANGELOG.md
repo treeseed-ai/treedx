@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.0-rc.1] - 2026-08-22
+
+- Publish the authoritative OpenAPI 0.11.0 contract and generated-client metadata for control-plane proxy adoption.
+- Make uncovered public SDK operations fail verification unless every language has an explicit reviewed classification.
+- Remove the inverted TreeSeed SDK workflow dependency and obsolete SDK-backed content publication workflow.
+
 ## [0.2.43] - 2026-07-12
 
 ### Changed

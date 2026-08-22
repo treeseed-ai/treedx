@@ -55,6 +55,7 @@ on:
       - "packages/python-sdk/**"
       - "packages/rust-sdk/**"
       - "packages/elixir-sdk/**"
+      - "treeseed.package.yaml"
       - "scripts/verification/check-sdk-docs.sh"
       - "scripts/verification/test-sdk-packages.sh"
       - "scripts/verification/test-sdk-live-conformance.sh"
@@ -107,6 +108,7 @@ on:
       - "packages/python-sdk/**"
       - "packages/rust-sdk/**"
       - "packages/elixir-sdk/**"
+      - "treeseed.package.yaml"
       - "scripts/verification/check-sdk-docs.sh"
       - "scripts/verification/test-sdk-packages.sh"
       - "scripts/verification/test-sdk-live-conformance.sh"
@@ -127,7 +129,42 @@ env:
   TREEDX_LIVE_NODE_B_REPO_ID: ${{ secrets.TREEDX_LIVE_NODE_B_REPO_ID }}
 
 jobs:
+  fast:
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && github.ref != 'refs/heads/staging' && github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/'))
+    runs-on: ubuntu-24.04
+    name: Fast PR Gate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential ca-certificates git libssl-dev openssl pkg-config
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        env:
+          ImageOS: ubuntu24
+        with:
+          otp-version: "27"
+          elixir-version: "1.17"
+
+      - name: Run focused service verification
+        run: ./scripts/verification/test-treedx-fast.sh
+
   verify:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')))
     strategy:
       fail-fast: false
       matrix:

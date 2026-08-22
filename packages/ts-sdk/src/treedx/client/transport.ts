@@ -10,6 +10,7 @@ export interface FetchTransportOptions {
   token?: string;
   authProvider?: TreeDxClientConfig['authProvider'];
   fetchImpl?: TreeDxFetch;
+  timeoutMs?: number;
 }
 
 export class FetchTransport implements Transport {
@@ -33,6 +34,9 @@ export class FetchTransport implements Transport {
       ...authHeaders,
       ...request.headers
     };
+    if (request.requestId) headers['X-Request-ID'] = request.requestId;
+    if (request.traceparent) headers.traceparent = request.traceparent;
+    if (request.idempotencyKey) headers['Idempotency-Key'] = request.idempotencyKey;
 
     let body: BodyInit | undefined;
     if (request.binaryBody) {
@@ -43,10 +47,26 @@ export class FetchTransport implements Transport {
     }
 
     let response: Response;
+    const controller = new AbortController();
+    const timeoutMs = request.timeoutMs ?? this.options.timeoutMs;
+    const timeout = timeoutMs === undefined
+      ? undefined
+      : setTimeout(() => controller.abort(new Error('TreeDX request timed out')), timeoutMs);
+    const abort = () => controller.abort(request.signal?.reason);
+    request.signal?.addEventListener('abort', abort, { once: true });
     try {
-      response = await this.fetchImpl(url, { method: request.method, headers, body });
+      response = await this.fetchImpl(url, { method: request.method, headers, body, signal: controller.signal });
     } catch (error) {
+      if (controller.signal.aborted) {
+        throw TreeDxApiError.cancelled(
+          timeoutMs === undefined ? undefined : `TreeDX request exceeded ${timeoutMs}ms or was cancelled`,
+          error
+        );
+      }
       throw TreeDxApiError.network('TreeDX network request failed', error);
+    } finally {
+      if (timeout !== undefined) clearTimeout(timeout);
+      request.signal?.removeEventListener('abort', abort);
     }
 
     const data = await parseResponseBody(response);
