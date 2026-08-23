@@ -8,6 +8,8 @@ defmodule TreeDx.Native do
   def put_repository(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
   def list_repositories(_data_dir), do: :erlang.nif_error(:nif_not_loaded)
   def get_repository(_data_dir, _repo_id), do: :erlang.nif_error(:nif_not_loaded)
+  def retire_repository(_data_dir, _repo_id), do: :erlang.nif_error(:nif_not_loaded)
+  def delete_repository_placement(_data_dir, _repo_id), do: :erlang.nif_error(:nif_not_loaded)
   def get_repository_placement(_data_dir, _repo_id), do: :erlang.nif_error(:nif_not_loaded)
   def put_repository_placement(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)
   def list_nodes(_data_dir), do: :erlang.nif_error(:nif_not_loaded)

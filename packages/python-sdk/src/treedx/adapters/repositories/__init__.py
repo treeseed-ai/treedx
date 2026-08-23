@@ -22,6 +22,9 @@ class RepositoriesAdapter:
     def get(self, repo_id: str) -> Any:
         return json_request(self.transport, "GET", f"/api/v1/repos/{segment(repo_id)}")
 
+    def retire(self, repo_id: str) -> Any:
+        return json_request(self.transport, "DELETE", f"/api/v1/repos/{segment(repo_id)}")
+
     def status(self, repo_id: str) -> Any:
         return json_request(self.transport, "GET", f"/api/v1/repos/{segment(repo_id)}/status")
 

@@ -6,6 +6,7 @@ export class RepositoriesAdapter {
   list(): Promise<unknown> { return jsonRequest(this.context.transport, 'GET', '/api/v1/repos'); }
   create(input: unknown): Promise<unknown> { return jsonRequest(this.context.transport, 'POST', '/api/v1/repos', input); }
   get(repoId: string): Promise<unknown> { return jsonRequest(this.context.transport, 'GET', `/api/v1/repos/${segment(repoId)}`); }
+  retire(repoId: string): Promise<unknown> { return jsonRequest(this.context.transport, 'DELETE', `/api/v1/repos/${segment(repoId)}`); }
   status(repoId: string): Promise<unknown> { return jsonRequest(this.context.transport, 'GET', `/api/v1/repos/${segment(repoId)}/status`); }
   refs(repoId: string): Promise<unknown> { return jsonRequest(this.context.transport, 'GET', `/api/v1/repos/${segment(repoId)}/refs`); }
   remotes(repoId: string): Promise<unknown> { return jsonRequest(this.context.transport, 'GET', `/api/v1/repos/${segment(repoId)}/remotes`); }

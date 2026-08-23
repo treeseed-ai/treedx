@@ -69,6 +69,22 @@ fn get_repository<'a>(env: Env<'a>, data_dir: String, repo_id: String) -> Term<'
 }
 
 #[rustler::nif(schedule = "DirtyIo")]
+fn retire_repository<'a>(env: Env<'a>, data_dir: String, repo_id: String) -> Term<'a> {
+    match treedx_store::retire_repository(Path::new(&data_dir), &repo_id) {
+        Ok(record) => ok_json(env, record),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
+fn delete_repository_placement<'a>(env: Env<'a>, data_dir: String, repo_id: String) -> Term<'a> {
+    match treedx_store::delete_repository_placement(Path::new(&data_dir), &repo_id) {
+        Ok(()) => ok_json(env, true),
+        Err(error) => err_json(env, error.code(), error),
+    }
+}
+
+#[rustler::nif(schedule = "DirtyIo")]
 fn get_repository_placement<'a>(env: Env<'a>, data_dir: String, repo_id: String) -> Term<'a> {
     match treedx_store::get_repository_placement(Path::new(&data_dir), &repo_id) {
         Ok(record) => ok_json(env, record),

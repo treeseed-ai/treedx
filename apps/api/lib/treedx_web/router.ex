@@ -67,6 +67,7 @@ defmodule TreeDxWeb.Router do
     post("/repos/register", RepoController, :register)
     get("/repos", RepoController, :index)
     get("/repos/:repo_id", RepoController, :show)
+    delete("/repos/:repo_id", RepoController, :retire)
     get("/repos/:repo_id/status", RepoController, :status)
     get("/repos/:repo_id/refs", RepoController, :refs)
     get("/repos/:repo_id/remotes", RepoController, :remotes)

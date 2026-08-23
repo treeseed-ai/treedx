@@ -57,6 +57,15 @@ pub struct RepositoryRecord {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct RetiredRepositoryRecord {
+    pub repository_id: String,
+    pub repository_name: String,
+    pub retired_storage_relative_path: Option<String>,
+    pub retired_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RepositoryNameRecord {
     pub repository_name: String,
     pub repository_id: String,

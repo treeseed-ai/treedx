@@ -1,6 +1,7 @@
 use crate::catalog::{get_record, list_records, put_record};
 use crate::error::StoreError;
 use crate::ids::mirror_id;
+use crate::log::append_delete;
 use crate::types::{
     FederationPeerRecord, FederationRouteRecord, IdempotencyRecord, MirrorAssignmentRecord,
     MirrorRecord, NodeCapacityRecord, RepositoryAdvertisementRecord, RepositoryPlacementRecord,
@@ -29,6 +30,14 @@ pub fn get_repository_placement(
     get_record(
         data_dir,
         "federation/repository_placements.tdb",
+        "repository_placement",
+        repo_id,
+    )
+}
+
+pub fn delete_repository_placement(data_dir: &Path, repo_id: &str) -> Result<(), StoreError> {
+    append_delete(
+        &data_dir.join("federation/repository_placements.tdb"),
         "repository_placement",
         repo_id,
     )

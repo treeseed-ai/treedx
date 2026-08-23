@@ -101,6 +101,29 @@ pub fn append_record<T: Serialize>(
     Ok(())
 }
 
+pub fn append_delete(path: &Path, kind: &str, record_id: &str) -> Result<(), StoreError> {
+    let lock = lock_for(path);
+    let _guard = lock.lock().expect("treedx log lock poisoned");
+    ensure_log_unlocked(path, kind)?;
+    let seq = next_seq_unlocked(path, kind)?;
+    let payload = serde_json::Value::Null;
+    let envelope = LogEnvelope {
+        schema_version: 1,
+        seq,
+        op: "delete".to_string(),
+        record_kind: kind.to_string(),
+        record_id: record_id.to_string(),
+        recorded_at: chrono::Utc::now(),
+        payload_hash: payload_hash(&payload)?,
+        payload,
+    };
+    let mut file = OpenOptions::new().append(true).open(path)?;
+    writeln!(file, "{}", serde_json::to_string(&envelope)?)?;
+    file.sync_data()?;
+    remove_from_index_after_write(path, kind, seq + 1, record_id)?;
+    Ok(())
+}
+
 pub fn append_records<T: Serialize>(
     path: &Path,
     kind: &str,
@@ -323,6 +346,29 @@ fn update_index_after_write(
     for (record_id, payload) in records {
         index.latest.insert(record_id, payload);
     }
+    index.file_len = metadata.len();
+    index.modified = metadata.modified().ok();
+    index.next_seq = next_seq;
+    Ok(())
+}
+
+fn remove_from_index_after_write(
+    path: &Path,
+    kind: &str,
+    next_seq: u64,
+    record_id: &str,
+) -> Result<(), StoreError> {
+    let metadata = fs::metadata(path)?;
+    let key = (path.to_path_buf(), kind.to_string());
+    let indexes = LOG_INDEXES.get_or_init(|| Mutex::new(HashMap::new()));
+    let mut indexes = indexes.lock().expect("treedx log index poisoned");
+    let index = indexes.entry(key).or_insert(LogIndex {
+        file_len: 0,
+        modified: None,
+        next_seq: 1,
+        latest: BTreeMap::new(),
+    });
+    index.latest.remove(record_id);
     index.file_len = metadata.len();
     index.modified = metadata.modified().ok();
     index.next_seq = next_seq;
