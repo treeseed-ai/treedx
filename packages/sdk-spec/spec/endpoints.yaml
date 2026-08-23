@@ -15,6 +15,7 @@ groups:
   - GET /api/v1/repos
   - POST /api/v1/repos
   - GET /api/v1/repos/{repo_id}
+  - DELETE /api/v1/repos/{repo_id}
   - GET /api/v1/repos/{repo_id}/status
   - GET /api/v1/repos/{repo_id}/refs
   - GET /api/v1/repos/{repo_id}/remotes

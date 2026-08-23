@@ -2,11 +2,11 @@
 
 export const TREEDX_OPENAPI_CONTRACT = {
   "schema": "treedx.openapi-contract/v1",
-  "packageVersion": "0.3.0-rc.3",
-  "openapiVersion": "0.11.0",
-  "openapiSha256": "sha256:52ed190300922c388b115981e60635c306c643d48a3308ef9f79975510ae1926",
-  "operationInventorySha256": "sha256:bcfaa9233fcfe7fb49dd0807f08105b3e4056e07ffc8a5dd890e5ec27f975764",
-  "generatedTypesSha256": "sha256:505c89e5a0778f79853d8ab652e1a5f8d1bb1fcf2c135571be4972fc3326166e",
-  "operationCount": 119,
+  "packageVersion": "0.3.0-rc.4",
+  "openapiVersion": "0.11.1",
+  "openapiSha256": "sha256:7c045a99cb0e5ddfb750f060206db374fce86f94dbefecd377bf3e8a5e182ff4",
+  "operationInventorySha256": "sha256:a9a36b3def243d1fb58f149dd1f93fc6c56e4193eecc1bb4184c0c20b36e54f0",
+  "generatedTypesSha256": "sha256:ff51298be834c3931e725fe017e0def59a23c80998740b2ba1ddbd5ac5e5eca5",
+  "operationCount": 120,
   "compatibility": "breaking-prerelease"
 } as const;

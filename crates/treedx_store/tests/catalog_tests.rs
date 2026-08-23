@@ -66,6 +66,51 @@ fn repository_records_persist_and_ids_are_deterministic() {
 }
 
 #[test]
+fn repository_retirement_tombstones_catalog_and_moves_managed_storage() {
+    let dir = tempdir().unwrap();
+    init_data_dir(
+        dir.path(),
+        InitOptions {
+            node_id: "node_local".to_string(),
+        },
+    )
+    .unwrap();
+    let storage = dir.path().join("repositories/demo");
+    std::fs::create_dir_all(&storage).unwrap();
+    std::fs::write(storage.join("knowledge.txt"), "retained").unwrap();
+    let repository = put_repository(
+        dir.path(),
+        RepositoryInput {
+            name: "demo".to_string(),
+            repository_name: Some("demo".to_string()),
+            local_path: None,
+            storage_relative_path: Some("repositories/demo".to_string()),
+            default_ref: None,
+            remote_url: None,
+        },
+    )
+    .unwrap();
+    let retired = retire_repository(dir.path(), &repository.id)
+        .unwrap()
+        .unwrap();
+    assert!(get_repository(dir.path(), &repository.id)
+        .unwrap()
+        .is_none());
+    assert!(list_repositories(dir.path()).unwrap().is_empty());
+    assert!(!storage.exists());
+    let retired_path = dir
+        .path()
+        .join(retired.retired_storage_relative_path.unwrap());
+    assert_eq!(
+        std::fs::read_to_string(retired_path.join("knowledge.txt")).unwrap(),
+        "retained"
+    );
+    assert!(retire_repository(dir.path(), &repository.id)
+        .unwrap()
+        .is_none());
+}
+
+#[test]
 fn placement_and_mirrors_persist() {
     let dir = tempdir().unwrap();
     init_data_dir(

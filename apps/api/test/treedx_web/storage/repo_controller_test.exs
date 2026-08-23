@@ -43,6 +43,36 @@ defmodule TreeDxWeb.RepoControllerTest do
     assert json_response(conn, 200)["git"]["exists"] == true
   end
 
+  test "retires a managed virtual knowledge repository idempotently", %{token: token} do
+    created =
+      build_conn()
+      |> put_req_header("authorization", "Bearer #{token}")
+      |> post("/api/v1/repos", %{"repositoryName" => "retirement-fixture"})
+
+    repo_id = json_response(created, 200)["repo"]["repoId"]
+
+    retired =
+      build_conn()
+      |> put_req_header("authorization", "Bearer #{token}")
+      |> delete("/api/v1/repos/#{repo_id}")
+
+    assert json_response(retired, 200)["alreadyRetired"] == false
+
+    missing =
+      build_conn()
+      |> put_req_header("authorization", "Bearer #{token}")
+      |> get("/api/v1/repos/#{repo_id}")
+
+    assert json_response(missing, 404)["error"]["code"] == "not_found"
+
+    replay =
+      build_conn()
+      |> put_req_header("authorization", "Bearer #{token}")
+      |> delete("/api/v1/repos/#{repo_id}")
+
+    assert json_response(replay, 200)["alreadyRetired"] == true
+  end
+
   test "lists refs and remotes, syncs, and manages workspace lifecycle", %{token: token} do
     path = Path.join(TreeDx.Store.data_dir(), "repos/bare/git-fixture")
     create_git_fixture(path)

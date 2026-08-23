@@ -1,10 +1,10 @@
 use crate::error::StoreError;
 use crate::ids::{capability_id, repository_id_from_name};
-use crate::log::{append_record, replay_latest, replay_record, warm_log};
+use crate::log::{append_delete, append_record, replay_latest, replay_record, warm_log};
 use crate::types::*;
 use chrono::Utc;
 use serde::{de::DeserializeOwned, Serialize};
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 pub const DATA_DIRS: &[&str] = &[
     "catalog",
@@ -22,6 +22,7 @@ pub const DATA_DIRS: &[&str] = &[
     "federation/migrations",
     "tmp",
     "recovery",
+    "recovery/retired-repositories",
     "config",
 ];
 
@@ -288,6 +289,58 @@ pub fn get_repository(
     repo_id: &str,
 ) -> Result<Option<RepositoryRecord>, StoreError> {
     get_record(data_dir, "catalog/repositories.tdb", "repository", repo_id)
+}
+
+pub fn retire_repository(
+    data_dir: &Path,
+    repo_id: &str,
+) -> Result<Option<RetiredRepositoryRecord>, StoreError> {
+    let Some(repository) = get_repository(data_dir, repo_id)? else {
+        return Ok(None);
+    };
+    let retired_at = Utc::now();
+    let retired_storage_relative_path = if repository.storage_kind == "managed" {
+        if Path::new(&repository.storage_relative_path)
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_)))
+        {
+            return Err(StoreError::Validation(
+                "managed repository storage path is invalid".to_string(),
+            ));
+        }
+        let source = data_dir.join(&repository.storage_relative_path);
+        if source.exists() {
+            let target_relative = format!(
+                "recovery/retired-repositories/{}-{}",
+                repository.id,
+                retired_at.format("%Y%m%dT%H%M%S%.3fZ")
+            );
+            let target = data_dir.join(&target_relative);
+            std::fs::create_dir_all(target.parent().unwrap_or(data_dir))?;
+            std::fs::rename(&source, &target)?;
+            Some(target_relative)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+    append_delete(
+        &data_dir.join("catalog/repositories.tdb"),
+        "repository",
+        repo_id,
+    )?;
+    append_delete(
+        &data_dir.join("catalog/repository_names.tdb"),
+        "repository_name",
+        &repository.repository_name,
+    )?;
+    Ok(Some(RetiredRepositoryRecord {
+        repository_id: repository.id,
+        repository_name: repository.repository_name,
+        retired_storage_relative_path,
+        retired_at,
+    }))
 }
 
 fn repository_name_for(repo: &RepositoryRecord) -> String {

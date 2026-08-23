@@ -11,9 +11,10 @@ class TreeDxOpenApiOperation(TypedDict):
     path: str
 
 
-TREEDX_OPENAPI_OPERATION_COUNT: Final[int] = 119
+TREEDX_OPENAPI_OPERATION_COUNT: Final[int] = 120
 
 TREEDX_OPENAPI_OPERATIONS: Final[tuple[TreeDxOpenApiOperation, ...]] = (
+    {"method": "DELETE", "path": "/api/v1/repos/{repo_id}"},
     {"method": "DELETE", "path": "/api/v1/repos/{repo_id}/artifacts/{artifact_id}"},
     {"method": "DELETE", "path": "/api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}"},
     {"method": "DELETE", "path": "/api/v1/workspaces/{workspace_id}/files"},

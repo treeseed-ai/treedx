@@ -82,6 +82,30 @@ defmodule TreeDx.Repos do
     end
   end
 
+  def retire(repo_id, principal) do
+    with {:ok, _scope} <-
+           TreeDx.Capabilities.require_capability(principal, "repos:write", repo_id),
+         {:ok, retired} when is_map(retired) <- TreeDx.Store.retire_repository(repo_id),
+         {:ok, _} <- TreeDx.Store.delete_repository_placement(repo_id) do
+      TreeDx.Audit.append("repo.retired", %{
+        actor_id: principal["actorId"],
+        tenant_id: principal["tenantId"],
+        repo_id: repo_id,
+        data: %{repository_name: retired["repositoryName"]}
+      })
+
+      {:ok, %{retired: retired, alreadyRetired: false}}
+    else
+      {:ok, nil} ->
+        with {:ok, _} <- TreeDx.Store.delete_repository_placement(repo_id) do
+          {:ok, %{retired: %{repositoryId: repo_id}, alreadyRetired: true}}
+        end
+
+      other ->
+        other
+    end
+  end
+
   def status(repo_id, principal) do
     with {:ok, _scope} <-
            TreeDx.Capabilities.require_capability(principal, "repos:read", repo_id),

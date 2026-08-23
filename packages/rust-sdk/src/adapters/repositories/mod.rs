@@ -60,6 +60,17 @@ impl RepositoriesAdapter {
         .await
     }
 
+    pub async fn retire(&self, repo_id: &str) -> TreeDxResult<Value> {
+        json_request(
+            &self.transport,
+            TreeDxHttpMethod::Delete,
+            format!("/api/v1/repos/{}", segment(repo_id)),
+            None,
+            None,
+        )
+        .await
+    }
+
     pub async fn status(&self, repo_id: &str) -> TreeDxResult<Value> {
         json_request(
             &self.transport,

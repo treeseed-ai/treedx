@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: TreeDX API
-  version: 0.11.0
+  version: 0.11.1
   description: Human-maintained public API contract for implemented TreeDX surfaces.
     SDK API payload types are generated from this document.
 servers:
@@ -568,6 +568,28 @@ paths:
         '403':
           $ref: '#/components/responses/Error'
         '404':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+      security:
+      - bearerAuth: []
+    delete:
+      operationId: retireRepository
+      summary: Retire a repository and move managed storage into recoverable custody.
+      x-treedx-required-capabilities:
+      - repos:write
+      parameters:
+      - $ref: '#/components/parameters/RepoId'
+      responses:
+        '200':
+          description: Repository retirement receipt.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreeDxRetireRepositoryResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
           $ref: '#/components/responses/Error'
         '503':
           $ref: '#/components/responses/Error'
@@ -5506,6 +5528,35 @@ components:
           const: true
         repo:
           $ref: '#/components/schemas/TreeDxRepository'
+      additionalProperties: true
+    TreeDxRetireRepositoryResponse:
+      type: object
+      required:
+      - ok
+      - retired
+      - alreadyRetired
+      properties:
+        ok:
+          const: true
+        retired:
+          type: object
+          required:
+          - repositoryId
+          properties:
+            repositoryId:
+              type: string
+            repositoryName:
+              type: string
+            retiredStorageRelativePath:
+              oneOf:
+              - type: string
+              - type: 'null'
+            retiredAt:
+              type: string
+              format: date-time
+          additionalProperties: false
+        alreadyRetired:
+          type: boolean
       additionalProperties: true
     TreeDxGetRepositoryStatusResponse:
       type: object

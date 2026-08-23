@@ -3,7 +3,7 @@ import { TREEDX_OPENAPI_OPERATION_COUNT, TREEDX_OPENAPI_OPERATIONS } from '../..
 
 describe('generated OpenAPI metadata', () => {
   it('tracks current /api/v1 operation count', () => {
-    expect(TREEDX_OPENAPI_OPERATION_COUNT).toBe(119);
-    expect(TREEDX_OPENAPI_OPERATIONS).toHaveLength(119);
+    expect(TREEDX_OPENAPI_OPERATION_COUNT).toBe(120);
+    expect(TREEDX_OPENAPI_OPERATIONS).toHaveLength(120);
   });
 });

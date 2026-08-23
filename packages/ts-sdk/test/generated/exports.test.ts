@@ -6,6 +6,6 @@ describe('public exports', () => {
     expect(TreeDxClient).toBeDefined();
     expect(TreeDxApiError).toBeDefined();
     expect(TreeDxConformanceAdapter).toBeDefined();
-    expect(TREEDX_OPENAPI_OPERATION_COUNT).toBe(119);
+    expect(TREEDX_OPENAPI_OPERATION_COUNT).toBe(120);
   });
 });

@@ -13,9 +13,10 @@ export type TreeDxOpenApiPath = typeof TREEDX_OPENAPI_OPERATIONS[number]["path"]
 export type TreeDxOpenApiOperationId = typeof TREEDX_OPENAPI_OPERATIONS[number]["operationId"];
 export type TreeDxOpenApiOperationKey = `${TreeDxOpenApiMethod} ${TreeDxOpenApiPath}`;
 
-export const TREEDX_OPENAPI_OPERATION_COUNT = 119 as const;
+export const TREEDX_OPENAPI_OPERATION_COUNT = 120 as const;
 
 export const TREEDX_OPENAPI_OPERATIONS = [
+  { method: "DELETE", operationId: "retireRepository", path: "/api/v1/repos/{repo_id}", requiredCapabilities: ["repos:write"] },
   { method: "DELETE", operationId: "deleteArtifact", path: "/api/v1/repos/{repo_id}/artifacts/{artifact_id}", requiredCapabilities: ["policy:write"] },
   { method: "DELETE", operationId: "abortWorkspaceBlobUpload", path: "/api/v1/workspaces/{workspace_id}/blobs/uploads/{upload_id}", requiredCapabilities: ["files:write"] },
   { method: "DELETE", operationId: "deleteWorkspaceFile", path: "/api/v1/workspaces/{workspace_id}/files", requiredCapabilities: ["files:delete"] },

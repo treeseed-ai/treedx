@@ -13,7 +13,7 @@ describe('authoritative OpenAPI contract', () => {
     const operationIds = TREEDX_OPENAPI_OPERATIONS.map((operation) => operation.operationId);
 
     expect(TREEDX_OPENAPI_CONTRACT.schema).toBe('treedx.openapi-contract/v1');
-    expect(TREEDX_OPENAPI_CONTRACT.openapiVersion).toBe('0.11.0');
+    expect(TREEDX_OPENAPI_CONTRACT.openapiVersion).toBe('0.11.1');
     expect(TREEDX_OPENAPI_CONTRACT.openapiSha256).toBe(sha256(openapi));
     expect(TREEDX_OPENAPI_CONTRACT.operationCount).toBe(TREEDX_OPENAPI_OPERATIONS.length);
     expect(operationIds.every((operationId) => operationId.length > 0)).toBe(true);
