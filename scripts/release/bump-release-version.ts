@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
-const root = path.resolve(import.meta.dirname, "..");
+const root = path.resolve(import.meta.dirname, "../..");
 const version = process.argv[2];
 
 if (!version || version === "-h" || version === "--help") {
@@ -75,7 +75,7 @@ replaceInFile(
 );
 
 replaceInFile(
-  "apps/api/lib/treedx/version.ex",
+  "apps/api/lib/treedx/runtime/version.ex",
   /@version "[^"]+"/,
   `@version "${version}"`
 );
