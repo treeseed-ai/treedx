@@ -248,6 +248,12 @@ the strict saturated-load latency budget and 475-RPS floor. Mixed profiles add
 an 18 primary-RPS floor so a run cannot satisfy the contention bounds by doing
 less work.
 
+Mixed profiles cap native repository-import admission at two workers by
+default. This matches the runtime's CPU-aware default on the four-vCPU hosted
+runner and prevents import storage work from oversubscribing the repository
+read lane. Operators may override the pool explicitly when the profile host
+has independently measured additional CPU capacity.
+
 The mixed-workload ceilings are evidence-bound to the complete amd64, arm64,
 connected-library, mirror-federation, and exact ten-minute local distributions
 reviewed for the 0.3.0 release candidate. They include bounded headroom over the
