@@ -69,8 +69,12 @@ defmodule TreeDx.Store do
 
   def list_repositories, do: call_json(&TreeDx.Native.list_repositories/1, data_dir())
   def get_repository(repo_id), do: call_json(&TreeDx.Native.get_repository/2, data_dir(), repo_id)
-  def retire_repository(repo_id), do: call_json(&TreeDx.Native.retire_repository/2, data_dir(), repo_id)
-  def delete_repository_placement(repo_id), do: call_json(&TreeDx.Native.delete_repository_placement/2, data_dir(), repo_id)
+
+  def retire_repository(repo_id),
+    do: call_json(&TreeDx.Native.retire_repository/2, data_dir(), repo_id)
+
+  def delete_repository_placement(repo_id),
+    do: call_json(&TreeDx.Native.delete_repository_placement/2, data_dir(), repo_id)
 
   def get_repository_placement(repo_id),
     do: call_json(&TreeDx.Native.get_repository_placement/2, data_dir(), repo_id)

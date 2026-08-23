@@ -101,7 +101,8 @@ defmodule TreeDx.Repos do
           {:ok, %{retired: %{repositoryId: repo_id}, alreadyRetired: true}}
         end
 
-      other -> other
+      other ->
+        other
     end
   end
 
