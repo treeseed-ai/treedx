@@ -11,3 +11,4 @@
 **/.elixir_ls
 /tools/treedx_profiler/treedx_profiler
 repomix-snapshot.xml
+/release-assets

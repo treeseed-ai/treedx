@@ -46,6 +46,9 @@ defmodule TreeDx.Exec.Backend do
       "firecracker_or_microvm" ->
         {:ok, TreeDx.Exec.Backends.FirecrackerMicrovm}
 
+      "disabled" ->
+        {:error, %{code: "sandbox_unavailable", message: "Execution is disabled."}}
+
       other ->
         {:error, %{code: "validation_error", message: "Unknown exec backend #{other}."}}
     end

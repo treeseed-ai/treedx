@@ -34,6 +34,22 @@ artifacts:
     architectures:
       - amd64
       - arm64
+packageRuntime:
+  schemaVersion: treeseed.package-runtime/v1
+  componentId: treedx
+  services:
+    - id: treedx
+      composeService: treedx
+      endpoints:
+        - id: http
+          protocol: http
+          port: 4000
+          visibility: host
+          defaultAlias: treedx.treeseed.localhost
+          aliasOverride: true
+          tls: edge
+          authentication: application
+          healthGate: { protocol: http, path: /api/v1/ready, timeoutSeconds: 120 }
 githubEnvironments:
   - staging
   - production

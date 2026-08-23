@@ -63,6 +63,18 @@ defmodule TreeDxWeb.ExecSandboxTest do
     assert sandbox.resourceLimits.pids == 64
   end
 
+  test "managed runtime can disable execution without a Docker control socket" do
+    previous_backend = System.get_env("TREEDX_EXEC_BACKEND")
+    System.put_env("TREEDX_EXEC_BACKEND", "disabled")
+
+    try do
+      assert {:error, %{code: "sandbox_unavailable", message: "Execution is disabled."}} =
+               TreeDx.Exec.Backend.run("true", System.tmp_dir!(), 1000, 1000, %{})
+    after
+      restore_env("TREEDX_EXEC_BACKEND", previous_backend)
+    end
+  end
+
   test "container sandbox reports unavailable when docker cannot be found" do
     previous_backend = System.get_env("TREEDX_EXEC_BACKEND")
     previous_path = System.get_env("PATH")
