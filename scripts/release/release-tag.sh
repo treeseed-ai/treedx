@@ -80,6 +80,8 @@ git add \
   packages/ts-sdk/package.json \
   packages/ts-sdk/package-lock.json \
   packages/ts-sdk/sdk-manifest.yaml \
+  packages/ts-sdk/openapi-contract.json \
+  packages/ts-sdk/src/treedx/openapi/contract.ts \
   packages/python-sdk/pyproject.toml \
   packages/python-sdk/sdk-manifest.yaml \
   packages/rust-sdk/Cargo.toml \
