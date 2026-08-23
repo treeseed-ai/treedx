@@ -18,10 +18,11 @@ services:
       PORT: "4000"
       TREEDX_DATA_DIR: /var/lib/treedx
       TREEDX_AUTH_MODE: connected
-      TREEDX_AUTH_VERIFIER: hs256_dev
+      TREEDX_AUTH_VERIFIER: ${TREESEED_TREEDX_AUTH_VERIFIER:-jwks_oidc}
       TREEDX_ALLOW_DEV_VERIFIER_IN_PROD: "true"
       TREEDX_JWT_ISSUER: ${TREESEED_TREEDX_JWT_ISSUER:-https://api.treeseed.local/treedx}
       TREEDX_JWT_AUDIENCE: ${TREESEED_TREEDX_JWT_AUDIENCE:-treedx-local}
+      TREEDX_JWKS_URL: ${TREESEED_TREEDX_JWKS_URL:-http://host.docker.internal:3002/.well-known/treedx-jwks.json}
       TREEDX_JWT_HS256_SECRET: ${TREESEED_TREEDX_JWT_HS256_SECRET:-treeseed-local-treedx-jwt-secret}
       TREEDX_BOOTSTRAP_TRUST_ACTOR_ID: ${TREESEED_TREEDX_PROXY_ACTOR_ID:-treeseed-api}
       TREEDX_BOOTSTRAP_TRUST_TENANT_ID: ${TREESEED_TREEDX_PROXY_TENANT_ID:-treeseed-control-plane}
