@@ -2,7 +2,7 @@
 
 export const TREEDX_OPENAPI_CONTRACT = {
   "schema": "treedx.openapi-contract/v1",
-  "packageVersion": "0.3.0-rc.1",
+  "packageVersion": "0.3.0-rc.3",
   "openapiVersion": "0.11.0",
   "openapiSha256": "sha256:52ed190300922c388b115981e60635c306c643d48a3308ef9f79975510ae1926",
   "operationInventorySha256": "sha256:bcfaa9233fcfe7fb49dd0807f08105b3e4056e07ffc8a5dd890e5ec27f975764",

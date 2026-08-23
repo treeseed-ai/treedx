@@ -86,6 +86,17 @@ replaceInFile(
   `assert json_response(conn, 200)["version"] == "${version}"`
 );
 
+for (const contractArtifact of [
+  "packages/ts-sdk/openapi-contract.json",
+  "packages/ts-sdk/src/treedx/openapi/contract.ts"
+]) {
+  replaceInFile(
+    contractArtifact,
+    /"packageVersion": "[^"]+"/,
+    `"packageVersion": "${version}"`
+  );
+}
+
 console.log(`Updated release version to ${version}:`);
 for (const file of changed) {
   console.log(`- ${file}`);

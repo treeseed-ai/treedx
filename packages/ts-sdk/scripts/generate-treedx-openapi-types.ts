@@ -10,6 +10,9 @@ const outputPath = path.join(packageRoot, "src", "treedx", "generated", "openapi
 const contractOutputPath = path.join(packageRoot, "src", "treedx", "openapi", "contract.ts");
 const packagedOpenapiPath = path.join(packageRoot, "openapi.yaml");
 const packagedContractPath = path.join(packageRoot, "openapi-contract.json");
+const packageVersion = JSON.parse(
+  fs.readFileSync(path.join(packageRoot, "package.json"), "utf8")
+).version;
 
 function sha256(value) {
   return `sha256:${crypto.createHash("sha256").update(value).digest("hex")}`;
@@ -49,7 +52,7 @@ export function renderOpenApiContractArtifacts() {
   const inventory = operations.map(({ method, operationId, path: apiPath, requiredCapabilities }) => ({ method, operationId, path: apiPath, requiredCapabilities }));
   const contract = {
     schema: "treedx.openapi-contract/v1",
-    packageVersion: "0.3.0-rc.1",
+    packageVersion,
     openapiVersion: String(openapi.info?.version ?? ""),
     openapiSha256: sha256(source),
     operationInventorySha256: sha256(JSON.stringify(inventory)),
