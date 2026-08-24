@@ -8,7 +8,7 @@ test.afterEach(() => rmSync('release-assets', { recursive: true, force: true }))
 
 test('materializes an SDK-validated immutable production bundle', () => {
   execFileSync(process.execPath, ['release/create-component-release.mjs'], {
-    env: { ...process.env, TREESEED_RELEASE: '0.3.0-rc.5', TREESEED_SOURCE_COMMIT: 'a'.repeat(40), TREESEED_TREEDX_DIGEST: digest },
+    env: { ...process.env, TREESEED_RELEASE: '0.3.0-rc.6', TREESEED_SOURCE_COMMIT: 'a'.repeat(40), TREESEED_TREEDX_DIGEST: digest },
   });
   const compose = readFileSync('release-assets/compose.yml', 'utf8');
   const bundle = JSON.parse(readFileSync('release-assets/component-release.json', 'utf8'));
@@ -16,6 +16,8 @@ test('materializes an SDK-validated immutable production bundle', () => {
   assert.doesNotMatch(compose, /^\s+ports:/mu);
   assert.doesNotMatch(compose, /docker\.sock/u);
   assert.match(compose, new RegExp(`treeseed/treedx@${digest}`));
+  assert.match(compose, /test: \["CMD", "\/app\/bin\/treedx_healthcheck"\]/u);
+  assert.match(readFileSync('Dockerfile', 'utf8'), /_build\/prod\/rel\/treedx\/bin\/treedx_healthcheck/u);
   assert.equal(bundle.componentId, 'treedx');
   assert.equal(bundle.track, 'development');
   assert.equal(bundle.stableBase.catalogDigest, null);
