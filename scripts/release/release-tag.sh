@@ -82,6 +82,8 @@ git add \
   packages/ts-sdk/sdk-manifest.yaml \
   packages/ts-sdk/openapi-contract.json \
   packages/ts-sdk/src/treedx/openapi/contract.ts \
+  release/package.json \
+  release/package-lock.json \
   packages/python-sdk/pyproject.toml \
   packages/python-sdk/sdk-manifest.yaml \
   packages/rust-sdk/Cargo.toml \

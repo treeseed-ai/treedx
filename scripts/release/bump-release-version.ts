@@ -35,6 +35,17 @@ updateJson("packages/ts-sdk/package-lock.json", (json) => {
   }
 });
 
+updateJson("release/package.json", (json) => {
+  json.version = version;
+});
+
+updateJson("release/package-lock.json", (json) => {
+  json.version = version;
+  if (json.packages?.[""]) {
+    json.packages[""].version = version;
+  }
+});
+
 replaceInFile(
   "packages/python-sdk/pyproject.toml",
   /^version = "[^"]+"/m,
