@@ -1,12 +1,12 @@
 {
   "name": "@treeseed/treedx-release",
-  "version": "0.3.0-rc.6",
+  "version": "0.3.0-rc.7",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "cd .. && node --test release/publication.test.mjs"
   },
   "dependencies": {
-    "@treeseed/sdk": "0.13.0-rc.27"
+    "@treeseed/sdk": "0.13.0-rc.29"
   }
 }

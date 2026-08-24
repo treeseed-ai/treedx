@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { componentReleaseSchema, deploymentDigest } from '@treeseed/sdk/deployment';
@@ -9,12 +10,17 @@ if (!release || !sourceCommit || !imageDigest) throw new Error('Release, exact s
 if (!/^[a-f0-9]{40}$/u.test(sourceCommit) || !/^sha256:[a-f0-9]{64}$/u.test(imageDigest)) throw new Error('Source or image digest is malformed.');
 
 const track = release.includes('-rc.') ? 'development' : 'stable';
-const debianRelease = release.replace(/-rc\.(\d+)$/u, '~rc$1');
+const revision = Number(process.env.TREESEED_COMPONENT_REVISION ?? '1');
+if (!Number.isInteger(revision) || revision < 1) throw new Error('Component revision must be a positive integer.');
+const debianRelease = `${release.replace(/-rc\.(\d+)$/u, '~rc$1')}-${revision}`;
+const compose = readFileSync(resolve('release/compose.template.yml'), 'utf8').replace('@TREEDX_IMAGE@', `treeseed/treedx@${imageDigest}`);
+if (/\bbuild\s*:/u.test(compose) || /@TREEDX_IMAGE@/u.test(compose)) throw new Error('Production Compose bundle is not fully materialized.');
+const composeDigest = `sha256:${createHash('sha256').update(compose).digest('hex')}`;
 const runtime = {
   schemaVersion: 'treeseed.package-runtime/v1',
   componentId: 'treedx',
   version: debianRelease,
-  compose: { projectName: 'treeseed-treedx', files: ['compose.yml'] },
+  compose: { projectName: 'treeseed-treedx', files: [{ path: 'compose.yml', digest: composeDigest }] },
   services: [{
     id: 'treedx',
     composeService: 'treedx',
@@ -28,12 +34,15 @@ const runtime = {
   stateVolumes: [{ id: 'data', volume: '/var/lib/treeseed/components/treedx/data', backup: 'required' }],
   migrations: [{ id: 'treedx-snapshot', order: 0, backupRequired: true }],
   requiredCapabilities: ['docker-compose'],
+  dependencies: [{ id: 'control-plane', capability: 'control-plane-api', locality: 'either', optional: false }],
 };
 const evidenceUrl = `https://hub.docker.com/r/treeseed/treedx/tags?name=${encodeURIComponent(release)}`;
 const bundle = componentReleaseSchema.parse({
   schemaVersion: 'treeseed.component-release/v1',
   componentId: 'treedx',
   release: debianRelease,
+  applicationVersion: release,
+  revision,
   track,
   source: { repository: 'treeseed-ai/treedx', commit: sourceCommit },
   stableBase: track === 'development' ? { releaseRange: '>=0.1.0 <0.2.0', compatibilityId: 'treeseed-linux-amd64-v1', catalogDigest: null } : null,
@@ -47,8 +56,6 @@ const bundle = componentReleaseSchema.parse({
 
 const output = resolve('release-assets');
 mkdirSync(output, { recursive: true });
-const compose = readFileSync(resolve('release/compose.template.yml'), 'utf8').replace('@TREEDX_IMAGE@', `treeseed/treedx@${imageDigest}`);
-if (/\bbuild\s*:/u.test(compose) || /@TREEDX_IMAGE@/u.test(compose)) throw new Error('Production Compose bundle is not fully materialized.');
 writeFileSync(resolve(output, 'compose.yml'), compose);
 writeFileSync(resolve(output, 'component-release.json'), `${JSON.stringify(bundle, null, 2)}\n`);
 console.log(JSON.stringify({ ok: true, release, sourceCommit, imageDigest, runtimeDigest: bundle.runtimeDigest }));
