@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.0-rc.6] - 2026-08-23
+
+- Correct the managed component health check to invoke the executable shipped in the production release image.
+
 ## [0.3.0-rc.1] - 2026-08-22
 
 - Publish the authoritative OpenAPI 0.11.0 contract and generated-client metadata for control-plane proxy adoption.

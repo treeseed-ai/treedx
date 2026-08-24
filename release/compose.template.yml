@@ -22,7 +22,7 @@ services:
     expose: ["4000"]
     networks: [private, platform, treeseed-edge]
     healthcheck:
-      test: ["CMD", "/usr/local/bin/docker-healthcheck"]
+      test: ["CMD", "/app/bin/treedx_healthcheck"]
       interval: 10s
       timeout: 5s
       retries: 20
