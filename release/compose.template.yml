@@ -13,6 +13,7 @@ services:
       TREEDX_AUTH_VERIFIER: jwks_oidc
       TREEDX_JWKS_URL: ${TREESEED_CONTROL_PLANE_URL:?TREESEED_CONTROL_PLANE_URL is required}/.well-known/treedx-jwks.json
       TREEDX_EXEC_BACKEND: disabled
+      TREEDX_GIT_EXTERNAL_TRANSPORT_ENABLED: "true"
       TREEDX_REMOTE_CREDENTIAL_PROVIDER: http_broker
       TREEDX_REMOTE_CREDENTIAL_BROKER_URL: ${TREESEED_CONTROL_PLANE_URL:?TREESEED_CONTROL_PLANE_URL is required}/v1/internal/credential-deliveries/consume
     volumes:
