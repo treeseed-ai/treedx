@@ -73,11 +73,18 @@ fn refs_remotes_tree_and_blob_can_be_read() {
         ],
     );
     let sha = git_stdout(dir.path(), &["rev-parse", "HEAD"]);
+    git(
+        dir.path(),
+        &["update-ref", "refs/remotes/origin/main", &sha],
+    );
 
-    assert!(list_refs(dir.path())
-        .unwrap()
-        .iter()
-        .any(|entry| entry.name == "refs/heads/main"));
+    let refs = list_refs(dir.path()).unwrap();
+    assert!(refs.iter().any(|entry| entry.name == "refs/heads/main"));
+    assert!(refs.iter().any(|entry| {
+        entry.name == "refs/remotes/origin/main"
+            && entry.target.as_deref() == Some(sha.as_str())
+            && entry.kind == "remote"
+    }));
     assert_eq!(
         list_remotes(dir.path()).unwrap()[0].url.as_deref(),
         Some("https://example.invalid/demo.git")
