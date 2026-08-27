@@ -64,6 +64,41 @@ verify:
   fast: scripts/verification/test-treedx-fast.sh
   local: scripts/verification/test-all.sh
   release: scripts/release/release-gate.sh
+development:
+  schemaVersion: treeseed.development-runtime/v1
+  project: { id: treedx, repository: treeseed-ai/treedx }
+  defaults: { leaseSeconds: 14400, restoreOnFailure: true }
+  targets:
+    - id: service
+      kind: rebuild-restart
+      platforms: [linux-amd64, linux-arm64, darwin-arm64, darwin-amd64]
+      runtimeRequirements: [docker, compose, rust, elixir]
+      sourceRoots: [apps, crates, packages, Dockerfile, compose.yaml, scripts/development]
+      ignoredPaths: [target, apps/api/_build, apps/api/deps, .treeseed/cache]
+      operations:
+        build: { command: bash, args: [scripts/development/runtime.sh, rebuild], environment: {}, timeoutSeconds: 3600 }
+        stop: { command: bash, args: [scripts/development/runtime.sh, stop], environment: {}, timeoutSeconds: 300 }
+        verify: { command: bash, args: [scripts/development/runtime.sh, verify], environment: {}, timeoutSeconds: 3600 }
+        cleanup: { command: bash, args: [scripts/development/runtime.sh, cleanup], environment: {}, timeoutSeconds: 300 }
+      ready: { kind: http, path: /api/v1/ready, expectedStatus: 200, timeoutSeconds: 180 }
+      outputs: []
+      endpoints: [{ id: http, protocol: http, port: 4000, canonicalAlias: treedx.treeseed.localhost, visibility: host, authentication: application }]
+      dependencies:
+        - { id: api, target: service, capability: control-plane-api, locality: either, reaction: restart }
+        - { id: sdk, target: package, locality: either, reaction: rebuild }
+      statePolicy: clone
+      migrationPolicy: disposable-only
+      secretRefs: {}
+      shutdown: { drainOperation: { command: bash, args: [scripts/development/runtime.sh, verify], environment: {}, timeoutSeconds: 3600 }, graceSeconds: 60, activeWorkPolicy: block }
+      resources: {}
+      logs: [.treeseed/development/service.log]
+      forbiddenOperations: [shared-production-data, destructive-migration, publish, production-tag]
+      freeze:
+        kind: oci-image
+        operation: { command: bash, args: [scripts/development/runtime.sh, freeze], environment: {}, timeoutSeconds: 3600 }
+        artifacts: [.treeseed/candidates/treedx-image-digest.txt]
+        contractOperations: []
+      promotion: { liveAdmissible: false, candidateRequiresVerification: true }
 projectArchitecture:
   topology: split_site_content
   rootPath: .
