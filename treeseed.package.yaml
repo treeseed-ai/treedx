@@ -55,11 +55,12 @@ githubEnvironments:
   - production
 requiredSecrets:
   - DOCKERHUB_TOKEN
-  - DOCKERHUB_USERNAME
   - NPM_TOKEN
   - PYPI_API_TOKEN
   - CARGO_REGISTRY_TOKEN
   - HEX_API_KEY
+requiredVariables:
+  - DOCKERHUB_USERNAME
 verify:
   fast: scripts/verification/test-treedx-fast.sh
   local: scripts/verification/test-all.sh
