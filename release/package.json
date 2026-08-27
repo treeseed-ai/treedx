@@ -1,12 +1,16 @@
 {
   "name": "@treeseed/treedx-release",
-  "version": "0.3.0-rc.9",
+  "version": "0.3.0-rc.10",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "cd .. && node --test release/publication.test.mjs"
+    "test": "cd .. && node --test release/publication.test.mjs release/custody.test.mjs",
+    "custody": "node custody.mjs",
+    "check-tag": "node check-tag.mjs",
+    "publish-crate": "node publish-crate.mjs",
+    "publish-hex": "node publish-hex.mjs"
   },
   "dependencies": {
-    "@treeseed/sdk": "0.13.0-rc.29"
+    "@treeseed/sdk": "0.13.0-rc.48"
   }
 }
