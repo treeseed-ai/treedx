@@ -169,10 +169,37 @@ jobs:
           CARGO_REGISTRY_TOKEN: "${{ secrets.CARGO_REGISTRY_TOKEN }}"
           HEX_API_KEY: "${{ secrets.HEX_API_KEY }}"
         run: |
-          npm publish "$(find candidate/npm -maxdepth 1 -name '*.tgz' -print -quit)" --access public --tag rc --provenance
-          python -m twine upload --non-interactive candidate/python/*
-          npm --prefix release run publish-crate -- "$(find candidate/rust -maxdepth 1 -name '*.crate' -print -quit)"
-          npm --prefix release run publish-hex -- "$(find candidate/hex -maxdepth 1 -name '*.tar' -print -quit)"
+          set -euo pipefail
+          version="$GITHUB_REF_NAME"
+          npm_archive="$(find candidate/npm -maxdepth 1 -name '*.tgz' -print -quit)"
+          crate_archive="$(find candidate/rust -maxdepth 1 -name '*.crate' -print -quit)"
+          hex_archive="$(find candidate/hex -maxdepth 1 -name '*.tar' -print -quit)"
+          readback="$(mktemp -d)"
+          if npm view "@treeseed/treedx@${version}" version >/dev/null 2>&1; then
+            curl --fail --location --silent --show-error "https://registry.npmjs.org/@treeseed/treedx/-/treedx-${version}.tgz" -o "$readback/npm.tgz"
+            test "$(sha256sum "$npm_archive" | awk '{print $1}')" = "$(sha256sum "$readback/npm.tgz" | awk '{print $1}')"
+          else
+            npm publish "$npm_archive" --access public --tag rc --provenance
+          fi
+          python_version="${version/-rc./rc}"
+          if curl --fail --location --silent --show-error "https://pypi.org/pypi/treedx/${python_version}/json" -o "$readback/pypi.json"; then
+            for archive in candidate/python/*; do
+              digest="$(sha256sum "$archive" | awk '{print $1}')"
+              jq -e --arg digest "$digest" 'any(.urls[]; .digests.sha256 == $digest)' "$readback/pypi.json" >/dev/null
+            done
+          else
+            python -m twine upload --non-interactive candidate/python/*
+          fi
+          if curl --fail --location --silent --show-error "https://crates.io/api/v1/crates/treedx/${version}" -o "$readback/crates.json"; then
+            test "$(jq -r '.version.checksum' "$readback/crates.json")" = "$(sha256sum "$crate_archive" | awk '{print $1}')"
+          else
+            npm --prefix release run publish-crate -- "$GITHUB_WORKSPACE/$crate_archive"
+          fi
+          if curl --fail --location --silent --show-error "https://hex.pm/api/packages/treedx/releases/${version}" -o "$readback/hex.json"; then
+            test "$(jq -r '.checksum' "$readback/hex.json")" = "$(sha256sum "$hex_archive" | awk '{print $1}')"
+          else
+            npm --prefix release run publish-hex -- "$GITHUB_WORKSPACE/$hex_archive"
+          fi
       - name: Promote exact image manifests
         run: |
           node -e "const e=require('./candidate/release-evidence-v1.json'); for(const a of e.artifacts.filter(x=>x.kind==='oci-image')) console.log(a.identity)" | while read -r identity; do
