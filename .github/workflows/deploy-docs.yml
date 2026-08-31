@@ -9,7 +9,7 @@ on:
         type: choice
         options:
           - staging
-          - prod
+          - production
       action_kind:
         required: true
         default: deploy_web
@@ -21,16 +21,13 @@ on:
       project_id:
         required: false
         type: string
-      preview_id:
-        required: false
-        type: string
 
 jobs:
   web:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    environment: ${{ inputs.environment == 'prod' && 'production' || 'staging' }}
+    environment: ${{ inputs.environment }}
     defaults:
       run:
         working-directory: docs
@@ -48,7 +45,6 @@ jobs:
       TREESEED_WORKFLOW_ACTION: ${{ inputs.action_kind }}
       TREESEED_WORKFLOW_ENVIRONMENT: ${{ inputs.environment }}
       TREESEED_WORKFLOW_PROJECT: ${{ inputs.project_id || vars.TREESEED_PROJECT_ID || 'treedx' }}
-      TREESEED_WORKFLOW_PREVIEW_ID: ${{ inputs.preview_id }}
     steps:
       - uses: actions/checkout@v4
 
@@ -72,5 +68,4 @@ jobs:
           set -euo pipefail
           EXTRA_ARGS=()
           if [[ -n "${TREESEED_WORKFLOW_PROJECT:-}" ]]; then EXTRA_ARGS+=(--project-id "${TREESEED_WORKFLOW_PROJECT}"); fi
-          if [[ -n "${TREESEED_WORKFLOW_PREVIEW_ID:-}" ]]; then EXTRA_ARGS+=(--preview-id "${TREESEED_WORKFLOW_PREVIEW_ID}"); fi
           node ./node_modules/@treeseed/sdk/scripts/tenant-workflow-action.js --action "${TREESEED_WORKFLOW_ACTION}" --environment "${TREESEED_WORKFLOW_ENVIRONMENT}" "${EXTRA_ARGS[@]}"
