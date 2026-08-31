@@ -13,6 +13,8 @@ on:
           - "true"
   pull_request:
     paths:
+      - "AGENTS.md"
+      - ".github/workflows/**"
       - "apps/api/**"
       - "apps/api/native/**"
       - "config/**"
