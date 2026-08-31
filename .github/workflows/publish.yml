@@ -61,7 +61,7 @@ jobs:
   candidate-build:
     if: github.ref == 'refs/heads/staging'
     needs: candidate-package
-    environment: development
+    environment: staging
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -90,7 +90,7 @@ jobs:
   candidate-seal:
     if: github.ref == 'refs/heads/staging'
     needs: candidate-build
-    environment: development
+    environment: staging
     runs-on: ubuntu-24.04
     permissions: { actions: read, contents: read }
     steps:
