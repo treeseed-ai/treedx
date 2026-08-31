@@ -143,9 +143,13 @@ activityProfiles:
       messageTypes: []
       modelMutations:
         - workday_report:create
+    capabilityRequirements:
+      - capabilityId: treeseed.coordination.reporting
+        versionRange: ^1.0.0
+        requirement: required
+        requiredFeatures: []
+        configuration: {}
     execution:
-      requiredCapabilities:
-        - agent-execution
       maxRuntimeSeconds: 1800
       maxRetries: 2
       verificationRequired: false

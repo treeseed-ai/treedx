@@ -96,6 +96,14 @@ pub fn commit_overlay(input: CommitOverlayInput) -> Result<CommitOverlayResult, 
         format!("treedx commit: {}", input.message),
     )
     .map_err(|err| GitError::Git(err.to_string()))?;
+    let preservation_ref = format!("refs/treedx/commits/{commit_id}");
+    repo.reference(
+        preservation_ref.as_str(),
+        commit_id,
+        gix::refs::transaction::PreviousValue::MustNotExist,
+        format!("treedx preserve commit: {commit_id}"),
+    )
+    .map_err(|err| GitError::Git(err.to_string()))?;
 
     Ok(CommitOverlayResult {
         commit_sha: commit_id.to_string(),

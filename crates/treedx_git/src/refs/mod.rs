@@ -19,6 +19,12 @@ pub fn list_refs(path: &Path) -> Result<Vec<GitRefSummary>, GitError> {
         &mut refs,
     )?;
     collect_refs(&git_dir.join("refs/tags"), "refs/tags", "tag", &mut refs)?;
+    collect_refs(
+        &git_dir.join("refs/treedx/commits"),
+        "refs/treedx/commits",
+        "preserved_commit",
+        &mut refs,
+    )?;
     refs.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(refs)
 }

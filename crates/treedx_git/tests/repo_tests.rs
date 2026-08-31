@@ -195,6 +195,15 @@ fn commit_overlay_writes_modifies_and_deletes_files() {
             .target,
         result.commit_sha
     );
+    assert_eq!(
+        resolve_ref(
+            dir.path(),
+            &format!("refs/treedx/commits/{}", result.commit_sha)
+        )
+        .unwrap()
+        .target,
+        result.commit_sha
+    );
     let updated = read_blob(dir.path(), "refs/heads/agent/overlay", "docs/readme.md").unwrap();
     assert_eq!(updated.byte_length, "updated\n".len());
     assert!(read_blob(dir.path(), "refs/heads/agent/overlay", "docs/new.md").is_ok());
