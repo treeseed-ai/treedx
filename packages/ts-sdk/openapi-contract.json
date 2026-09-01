@@ -1,6 +1,6 @@
 {
   "schema": "treedx.openapi-contract/v1",
-  "packageVersion": "0.3.0-rc.13",
+  "packageVersion": "0.3.0-rc.14",
   "openapiVersion": "0.11.1",
   "openapiSha256": "sha256:db39f7e88e6385f2a236a8ea64f570b663fd88e5057db6c4ebb9cc542f20fc74",
   "operationInventorySha256": "sha256:a9a36b3def243d1fb58f149dd1f93fc6c56e4193eecc1bb4184c0c20b36e54f0",
