@@ -73,6 +73,10 @@ The text between delimiters is YAML. The body is the remaining text after the cl
 
 Invalid, unterminated, or non-mapping YAML does not make a repository file unreadable in TreeDX. Repository reads keep file content available, return empty frontmatter, and include `frontmatterError`; graph refreshes keep the file readable and add its authorized logical path to `invalidFrontmatterPaths`. TreeDX must never construct partial metadata from invalid YAML.
 
+## Logical Content Paths
+
+Repository reads accept extensionless content identifiers such as `objectives/core` in addition to exact source paths. TreeDX resolves supported Astro content extensions at the requested immutable ref, returns the canonical extensionless identifier as `logicalPath`, and retains the exact Git path as both `path` and `sourcePath`. `requestedPath` records the caller's input. If multiple supported files claim the same logical identifier, the read fails with a conflict; TreeDX never chooses one implicitly.
+
 ## Body And Content Fields
 
 The SDK treats parsed Markdown/MDX body as `body`. TreeDX exposes both:

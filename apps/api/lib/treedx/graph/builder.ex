@@ -7,7 +7,8 @@ defmodule TreeDx.Graph.Builder do
   @extensions ~w(.md .mdx .txt)
 
   def build_input(ctx, params, previous_manifest) do
-    with {:ok, patterns} <- PathMatch.normalize_patterns(params["paths"]),
+    with {:ok, patterns} <-
+           PathMatch.normalize_patterns(expand_logical_content_paths(params["paths"])),
          {:ok, entries} <-
            TreeDx.Git.list_tree_recursive(TreeDx.RepositoryStorage.path!(ctx.repo), ctx.ref, nil),
          {:ok, documents} <- documents(ctx, entries, patterns, params) do
@@ -21,6 +22,24 @@ defmodule TreeDx.Graph.Builder do
        }}
     end
   end
+
+  defp expand_logical_content_paths(paths) when is_list(paths) do
+    paths
+    |> Enum.flat_map(fn
+      path when is_binary(path) ->
+        if Path.extname(path) == "" and not String.ends_with?(path, "*") do
+          [path, path <> ".md", path <> ".mdx"]
+        else
+          [path]
+        end
+
+      path ->
+        [path]
+    end)
+    |> Enum.uniq()
+  end
+
+  defp expand_logical_content_paths(paths), do: paths
 
   defp documents(ctx, entries, patterns, params) do
     entries

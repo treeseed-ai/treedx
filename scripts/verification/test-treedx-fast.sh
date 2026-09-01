@@ -6,7 +6,7 @@ TREEDX_TARGET_DIR="${TREEDX_TARGET_DIR:-${TREEDX_BUILD_TMP_DIR%/}/treedx-target}
 
 ./scripts/verification/check-file-lengths.sh
 grep -Fq 'TREESEED_TREEDX_AUTH_VERIFIER:-jwks_oidc' compose.yaml
-grep -Fq 'TREESEED_TREEDX_JWKS_URL:-http://host.docker.internal:3002/.well-known/treedx-jwks.json' compose.yaml
+grep -Fq 'TREESEED_TREEDX_JWKS_URL:-http://host.docker.internal:3000/.well-known/treedx-jwks.json' compose.yaml
 
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo fmt --all -- --check
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo clippy --workspace -- -D warnings

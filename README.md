@@ -785,13 +785,13 @@ POST /api/v1/repos/:repo_id/files/search
 POST /api/v1/repos/:repo_id/query
 ```
 
-Read a Markdown file with frontmatter and body:
+Read content with frontmatter and body. Content identifiers may omit a supported Astro content extension; the response preserves the exact Git source path separately:
 
 ```bash
 curl -fsS -X POST http://localhost:4000/api/v1/repos/$REPO_ID/files/read \
   -H "authorization: Bearer $TREEDX_TOKEN" \
   -H 'content-type: application/json' \
-  -d '{"ref":"refs/heads/main","path":"docs/readme.md","parseFrontmatter":true}'
+  -d '{"ref":"refs/heads/main","path":"objectives/core","parseFrontmatter":true}'
 ```
 
 List Markdown and MDX paths:
