@@ -5,6 +5,7 @@ defmodule TreeDx.RepositoryQuery do
 
   alias TreeDx.RepositoryQuery.{
     Context,
+    ContentPaths,
     Filters,
     Links,
     Pagination,
@@ -27,11 +28,17 @@ defmodule TreeDx.RepositoryQuery do
 
   defp do_read(repo_id, params, principal) do
     with {:ok, ctx} <- context(repo_id, params, principal, "files:read"),
-         {:ok, paths} <- read_paths(params),
-         :ok <- authorize_direct_paths(ctx.scope, paths),
-         :ok <- authorize_protected_direct(paths, truthy?(params["allowProtected"])),
-         {:ok, files} <- read_files(ctx, paths, params) do
-      audit("repo.files_read", ctx, %{paths: paths, resultCount: length(files)})
+         {:ok, requested_paths} <- read_paths(params),
+         {:ok, paths} <- ContentPaths.resolve(ctx, requested_paths),
+         source_paths = Enum.map(paths, & &1.source),
+         :ok <- authorize_direct_paths(ctx.scope, source_paths),
+         :ok <- authorize_protected_direct(source_paths, truthy?(params["allowProtected"])),
+         {:ok, files} <- ContentPaths.read(ctx, paths, params) do
+      audit("repo.files_read", ctx, %{
+        paths: requested_paths,
+        sourcePaths: source_paths,
+        resultCount: length(files)
+      })
 
       response = base_response(ctx)
 
@@ -330,26 +337,6 @@ defmodule TreeDx.RepositoryQuery do
     end
   end
 
-  defp read_files(ctx, paths, params) do
-    with {:ok, bounds} <- read_bounds(paths, params) do
-      paths
-      |> Enum.map(fn path ->
-        with {:ok, document} <-
-               TreeDx.RepositoryCache.document(ctx, path,
-                 encoding: params["encoding"] || "utf8",
-                 parse_frontmatter: params["parseFrontmatter"] != false
-               ) do
-          TreeDx.RepositoryQuery.BoundedRead.project(document, bounds)
-        end
-      end)
-      |> collect_ok()
-    end
-  end
-
-  defp read_bounds(paths, params) do
-    TreeDx.RepositoryQuery.BoundedRead.normalize(paths, params)
-  end
-
   defp filtered_entries(ctx, patterns, params) do
     with {:ok, entries} <- TreeDx.RepositoryCache.tree_entries(ctx) do
       allow_protected = truthy?(params["allowProtected"])
@@ -470,17 +457,6 @@ defmodule TreeDx.RepositoryQuery do
 
   defp base_response(ctx),
     do: %{repoId: ctx.repo["id"], ref: ctx.ref, resolvedRef: ctx.resolved_ref}
-
-  defp collect_ok(results) do
-    Enum.reduce_while(results, {:ok, []}, fn
-      {:ok, item}, {:ok, acc} -> {:cont, {:ok, [item | acc]}}
-      {:error, error}, _ -> {:halt, {:error, error}}
-    end)
-    |> case do
-      {:ok, items} -> {:ok, Enum.reverse(items)}
-      other -> other
-    end
-  end
 
   defp audit(event_type, ctx, data) do
     TreeDx.Audit.append(event_type, %{

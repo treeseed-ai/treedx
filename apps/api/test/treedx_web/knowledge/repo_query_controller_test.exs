@@ -49,6 +49,41 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
     assert Enum.any?(cache_keys, &match?({{:document, "docs/readme.md", _, _}, _, _, _, _}, &1))
     refute Enum.any?(cache_keys, &match?({kind, _, _, _, _} when kind in [:tree, :documents], &1))
 
+    logical_conn =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{
+        "path" => "docs/readme",
+        "parseFrontmatter" => true
+      })
+
+    logical_file = json_response(logical_conn, 200)["file"]
+    assert logical_file["path"] == "docs/readme.md"
+    assert logical_file["logicalPath"] == "docs/readme"
+    assert logical_file["requestedPath"] == "docs/readme"
+    assert logical_file["sourcePath"] == "docs/readme.md"
+    assert logical_file["frontmatter"]["title"] == "Read Me"
+
+    explicit_file =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{"path" => "docs/page.mdx"})
+      |> json_response(200)
+      |> Map.fetch!("file")
+
+    assert explicit_file["logicalPath"] == "docs/page"
+    assert explicit_file["requestedPath"] == "docs/page.mdx"
+    assert explicit_file["sourcePath"] == "docs/page.mdx"
+
+    ambiguous =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{"path" => "docs/ambiguous"})
+      |> json_response(409)
+
+    assert ambiguous["error"]["code"] == "conflict"
+    assert ambiguous["error"]["details"]["logicalPath"] == "docs/ambiguous"
+
     conn =
       build_conn()
       |> auth(token)
@@ -400,6 +435,8 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
     )
 
     File.write!(Path.join(path, "docs/malformed.md"), "---\ntags: [broken\n---\nBody\n")
+    File.write!(Path.join(path, "docs/ambiguous.md"), "markdown\n")
+    File.write!(Path.join(path, "docs/ambiguous.mdx"), "mdx\n")
 
     File.write!(Path.join(path, ".env"), "SECRET=true\n")
     File.write!(Path.join(path, "outside.md"), "outside docs scope\n")

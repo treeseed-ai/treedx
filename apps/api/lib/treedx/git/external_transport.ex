@@ -279,15 +279,25 @@ defmodule TreeDx.Git.ExternalTransport do
   defp run_git(repo_path, args, env) do
     task =
       Task.async(fn ->
-        System.cmd("git", args, cd: repo_path, env: env, stderr_to_stdout: true)
+        # Managed repositories can be materialized by a host process whose UID
+        # differs from the runtime container UID. Trust only this already
+        # resolved repository path for this invocation; never mutate global Git
+        # configuration or permit arbitrary safe directories.
+        System.cmd(
+          "git",
+          ["-c", "safe.directory=#{repo_path}" | args],
+          cd: repo_path,
+          env: env,
+          stderr_to_stdout: true
+        )
       end)
 
     case Task.yield(task, @timeout_ms) || Task.shutdown(task, :brutal_kill) do
       {:ok, {output, 0}} ->
         {:ok, output}
 
-      {:ok, {_output, _status}} ->
-        {:error, %{code: "git_error", message: "Git external transport failed."}}
+      {:ok, {output, status}} ->
+        {:error, classify_git_failure(output, status)}
 
       _ ->
         {:error, %{code: "git_timeout", message: "Git external transport timed out."}}
@@ -295,6 +305,53 @@ defmodule TreeDx.Git.ExternalTransport do
   rescue
     ErlangError ->
       {:error, %{code: "unsupported_transport", message: "git executable is not available."}}
+  end
+
+  # Git output can contain repository identities and implementation details, so
+  # never return it. Preserve a bounded category and exit status instead; this
+  # keeps operator diagnostics useful without risking credential disclosure.
+  defp classify_git_failure(output, status) do
+    normalized = String.downcase(output || "")
+
+    {code, message} =
+      cond do
+        String.contains?(normalized, [
+          "authentication failed",
+          "could not read username",
+          "invalid username or password"
+        ]) ->
+          {"git_authentication_failed", "Git rejected the transient repository credential."}
+
+        String.contains?(normalized, ["repository not found", "not found"]) ->
+          {"git_repository_unavailable",
+           "The remote Git repository is unavailable to this credential."}
+
+        String.contains?(normalized, ["couldn't find remote ref", "could not find remote ref"]) ->
+          {"git_remote_ref_missing", "A required remote Git ref is missing."}
+
+        String.contains?(normalized, ["cannot lock ref", "unable to create", "index.lock"]) ->
+          {"git_local_ref_locked", "The local Git repository could not update a destination ref."}
+
+        String.contains?(normalized, "detected dubious ownership") ->
+          {"git_repository_ownership_failed",
+           "The managed Git repository ownership was not trusted by the runtime."}
+
+        String.contains?(normalized, ["certificate", "ssl", "tls"]) ->
+          {"git_tls_failed", "Git could not validate the remote TLS connection."}
+
+        String.contains?(normalized, [
+          "could not resolve host",
+          "failed to connect",
+          "connection timed out",
+          "network is unreachable"
+        ]) ->
+          {"git_network_failed", "Git could not reach the remote repository host."}
+
+        true ->
+          {"git_error", "Git external transport failed."}
+      end
+
+    %{code: code, message: message, gitExitStatus: status}
   end
 
   defp with_credential_environment(credential, operation) do

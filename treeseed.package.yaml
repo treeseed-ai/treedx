@@ -77,7 +77,7 @@ development:
       sourceRoots: [apps, crates, packages, Dockerfile, compose.yaml, scripts/development]
       ignoredPaths: [target, apps/api/_build, apps/api/deps, .treeseed/cache]
       operations:
-        build: { command: bash, args: [scripts/development/runtime.sh, rebuild], environment: {}, timeoutSeconds: 3600 }
+        build: { command: bash, args: [scripts/development/runtime.sh, rebuild], environment: { TREESEED_DEVELOPMENT_EDGE_HOST: host.docker.internal }, timeoutSeconds: 3600 }
         stop: { command: bash, args: [scripts/development/runtime.sh, stop], environment: {}, timeoutSeconds: 300 }
         verify: { command: bash, args: [scripts/development/runtime.sh, verify], environment: {}, timeoutSeconds: 3600 }
         cleanup: { command: bash, args: [scripts/development/runtime.sh, cleanup], environment: {}, timeoutSeconds: 300 }
@@ -89,7 +89,8 @@ development:
         - { id: sdk, target: package, locality: either, reaction: rebuild }
       statePolicy: clone
       migrationPolicy: disposable-only
-      secretRefs: {}
+      secretRefs:
+        TREEDX_REMOTE_CREDENTIAL_BROKER_ASSERTION: treedx-credential-broker-assertion
       shutdown: { drainOperation: { command: bash, args: [scripts/development/runtime.sh, verify], environment: {}, timeoutSeconds: 3600 }, graceSeconds: 60, activeWorkPolicy: block }
       resources: {}
       logs: [.treeseed/development/service.log]

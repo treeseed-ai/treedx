@@ -45,6 +45,31 @@ defmodule TreeDxWeb.ContextControllerTest do
     assert context["diagnostics"]["effectiveScope"]["repoId"] == repo_id
   end
 
+  test "builds current context without requiring a previously published graph", %{token: token} do
+    repo_path = Path.join(TreeDx.Store.data_dir(), "repos/bare/context-exact-ref")
+    create_context_fixture(repo_path)
+
+    repo_id =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/register", %{"name" => "context-exact-ref", "localPath" => repo_path})
+      |> json_response(200)
+      |> get_in(["repo", "repoId"])
+
+    context =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/context/build", %{
+        "query" => "release provenance",
+        "paths" => ["docs/readme"],
+        "budget" => %{"maxNodes" => 2, "maxTokens" => 80}
+      })
+      |> json_response(200)
+
+    assert context["diagnostics"]["graphSource"] == "on-demand"
+    assert context["includedPaths"] == ["docs/readme.md"]
+  end
+
   test "parses ctx DSL and reports parse errors as results", %{token: token, repo_id: repo_id} do
     parsed =
       build_conn()

@@ -4286,6 +4286,16 @@ components:
       properties:
         path:
           type: string
+          description: Exact repository source path.
+        logicalPath:
+          type: string
+          description: Extensionless identifier for a supported content file.
+        requestedPath:
+          type: string
+          description: Path or logical content identifier supplied by the caller.
+        sourcePath:
+          type: string
+          description: Exact repository source path used to read the content.
         content:
           type: string
         sha:
@@ -4631,10 +4641,12 @@ components:
           type: string
         path:
           type: string
+          description: Repository path or extensionless content identifier, such as objectives/core.
         paths:
           type: array
           items:
             type: string
+          description: Repository paths or extensionless content identifiers.
         maxBytes:
           type: integer
           minimum: 1
