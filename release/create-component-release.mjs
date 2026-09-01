@@ -31,6 +31,17 @@ const runtime = {
       healthGate: { protocol: 'http', path: '/api/v1/ready', timeoutSeconds: 120 },
     }],
   }],
+  configuration: {
+    environment: [
+      'TREEDX_GIT_ALLOWED_HOSTS', 'TREEDX_JWT_ALLOWED_ALGS', 'TREEDX_JWT_AUDIENCE', 'TREEDX_JWT_ISSUER',
+      'TREEDX_REMOTE_CREDENTIAL_BROKER_SERVICE_ID',
+    ].map((name) => ({ name, required: true, source: 'configuration' })),
+    secretEnvironment: [
+      'TREEDX_REMOTE_CREDENTIAL_BROKER_ASSERTION', 'TREEDX_SECRET_KEY_BASE',
+    ].map((name) => ({ name, required: true })),
+    secretFiles: [],
+    files: [],
+  },
   stateVolumes: [{ id: 'data', volume: '/var/lib/treeseed/components/treedx/data', backup: 'required' }],
   migrations: [{ id: 'treedx-snapshot', order: 0, backupRequired: true }],
   requiredCapabilities: ['docker-compose'],

@@ -27,5 +27,13 @@ test('materializes an SDK-validated immutable production bundle', () => {
   assert.match(bundle.runtime.compose.files[0].digest, /^sha256:[a-f0-9]{64}$/u);
   assert.equal(bundle.runtime.dependencies[0].id, 'control-plane');
   assert.doesNotMatch(compose, /http:\/\/api:/u);
+  const publicInputs = bundle.runtime.configuration.environment.map(({ name }) => name).sort();
+  const secretInputs = bundle.runtime.configuration.secretEnvironment.map(({ name }) => name).sort();
+  assert.deepEqual(publicInputs, [
+    'TREEDX_GIT_ALLOWED_HOSTS', 'TREEDX_JWT_ALLOWED_ALGS', 'TREEDX_JWT_AUDIENCE', 'TREEDX_JWT_ISSUER',
+    'TREEDX_REMOTE_CREDENTIAL_BROKER_SERVICE_ID',
+  ]);
+  assert.deepEqual(secretInputs, ['TREEDX_REMOTE_CREDENTIAL_BROKER_ASSERTION', 'TREEDX_SECRET_KEY_BASE']);
+  for (const name of [...publicInputs, ...secretInputs]) assert.ok(compose.includes(`${name}: ` + '${' + `${name}:?`));
   assert.equal(bundle.runtime.services[0].endpoints[0].defaultAlias, 'treedx.treeseed.localhost');
 });
