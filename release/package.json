@@ -11,6 +11,6 @@
     "publish-hex": "node publish-hex.mjs"
   },
   "dependencies": {
-    "@treeseed/sdk": "0.13.0-rc.48"
+    "@treeseed/sdk": "0.13.0-rc.68"
   }
 }
