@@ -35,7 +35,10 @@ const runtime = {
     environment: [
       'TREEDX_GIT_ALLOWED_HOSTS', 'TREEDX_JWT_ALLOWED_ALGS', 'TREEDX_JWT_AUDIENCE', 'TREEDX_JWT_ISSUER',
       'TREEDX_REMOTE_CREDENTIAL_BROKER_SERVICE_ID',
-    ].map((name) => ({ name, required: true, source: 'configuration' })),
+    ].map((name) => ({ name, required: true, source: 'configuration' })).concat([
+      { name: 'TREEDX_BOOTSTRAP_TRUST_ACTOR_ID', required: true, source: 'configuration', default: 'treeseed-api' },
+      { name: 'TREEDX_BOOTSTRAP_TRUST_TENANT_ID', required: true, source: 'configuration', default: 'treeseed-control-plane' },
+    ]),
     secretEnvironment: [
       'TREEDX_REMOTE_CREDENTIAL_BROKER_ASSERTION', 'TREEDX_SECRET_KEY_BASE',
     ].map((name) => ({ name, required: true })),

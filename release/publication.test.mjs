@@ -30,10 +30,14 @@ test('materializes an SDK-validated immutable production bundle', () => {
   const publicInputs = bundle.runtime.configuration.environment.map(({ name }) => name).sort();
   const secretInputs = bundle.runtime.configuration.secretEnvironment.map(({ name }) => name).sort();
   assert.deepEqual(publicInputs, [
+    'TREEDX_BOOTSTRAP_TRUST_ACTOR_ID', 'TREEDX_BOOTSTRAP_TRUST_TENANT_ID',
     'TREEDX_GIT_ALLOWED_HOSTS', 'TREEDX_JWT_ALLOWED_ALGS', 'TREEDX_JWT_AUDIENCE', 'TREEDX_JWT_ISSUER',
     'TREEDX_REMOTE_CREDENTIAL_BROKER_SERVICE_ID',
   ]);
   assert.deepEqual(secretInputs, ['TREEDX_REMOTE_CREDENTIAL_BROKER_ASSERTION', 'TREEDX_SECRET_KEY_BASE']);
   for (const name of [...publicInputs, ...secretInputs]) assert.ok(compose.includes(`${name}: ` + '${' + `${name}:?`));
+  const publicDeclarations = Object.fromEntries(bundle.runtime.configuration.environment.map((input) => [input.name, input]));
+  assert.equal(publicDeclarations.TREEDX_BOOTSTRAP_TRUST_ACTOR_ID.default, 'treeseed-api');
+  assert.equal(publicDeclarations.TREEDX_BOOTSTRAP_TRUST_TENANT_ID.default, 'treeseed-control-plane');
   assert.equal(bundle.runtime.services[0].endpoints[0].defaultAlias, 'treedx.treeseed.localhost');
 });

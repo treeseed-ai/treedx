@@ -1,6 +1,6 @@
 sdk: treedx-typescript
 language: typescript
-version: 0.3.0-rc.14
+version: 0.3.0-rc.15
 sdkSpecVersion: 0.1.0
 openapiVersion: 0.11.1
 testLayout:
