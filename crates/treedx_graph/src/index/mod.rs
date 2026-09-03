@@ -1,3 +1,4 @@
+mod delta;
 mod groups;
 mod nodes;
 
@@ -7,6 +8,7 @@ use crate::parse::{
 };
 use crate::types::*;
 use chrono::Utc;
+use delta::compute_delta;
 use groups::{apply_group_hierarchy, GroupRelationship};
 use nodes::{edge, metadata_node, section_node, SectionSpec};
 use serde_json::json;
@@ -455,50 +457,6 @@ fn resolve_link_path(from: &str, target: &str) -> Option<String> {
             .to_string_lossy()
             .replace('\\', "/"),
     )
-}
-
-fn compute_delta(
-    previous: Option<&GraphManifest>,
-    previous_docs: &[GraphDocument],
-    docs: &[GraphDocument],
-) -> GraphDelta {
-    let current: BTreeMap<&str, &GraphDocument> =
-        docs.iter().map(|doc| (doc.path.as_str(), doc)).collect();
-    if previous.is_none() {
-        return GraphDelta {
-            added: current.keys().map(|path| (*path).to_string()).collect(),
-            modified: Vec::new(),
-            removed: Vec::new(),
-        };
-    }
-    if previous_docs.is_empty() {
-        return GraphDelta::default();
-    }
-    let prior: BTreeMap<&str, &GraphDocument> = previous_docs
-        .iter()
-        .map(|doc| (doc.path.as_str(), doc))
-        .collect();
-    GraphDelta {
-        added: current
-            .keys()
-            .filter(|path| !prior.contains_key(**path))
-            .map(|path| (*path).to_string())
-            .collect(),
-        modified: current
-            .iter()
-            .filter(|(path, doc)| {
-                prior
-                    .get(**path)
-                    .is_some_and(|old| old.object_id != doc.object_id)
-            })
-            .map(|(path, _)| (*path).to_string())
-            .collect(),
-        removed: prior
-            .keys()
-            .filter(|path| !current.contains_key(**path))
-            .map(|path| (*path).to_string())
-            .collect(),
-    }
 }
 
 fn dedupe<T, F>(items: &mut Vec<T>, mut key: F)
