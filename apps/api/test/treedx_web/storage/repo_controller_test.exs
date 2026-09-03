@@ -326,6 +326,42 @@ defmodule TreeDxWeb.RepoControllerTest do
     assert json_response(retired_again, 200)["retirement"]["status"] == "already_retired"
   end
 
+  test "initializes a missing destination branch from an exact available base", %{token: token} do
+    path = Path.join(TreeDx.Store.data_dir(), "repos/bare/initial-ref-promotion")
+    create_git_fixture(path)
+    main_sha = git_output(path, ["rev-parse", "refs/heads/main"])
+    git(path, ["checkout", "-b", "knowledge/reviewed"])
+    File.write!(Path.join(path, "docs/reviewed.md"), "reviewed")
+    git(path, ["add", "docs/reviewed.md"])
+    git(path, ["commit", "-m", "reviewed knowledge"])
+    reviewed_sha = git_output(path, ["rev-parse", "refs/heads/knowledge/reviewed"])
+
+    registered =
+      build_conn()
+      |> put_req_header("authorization", "Bearer #{token}")
+      |> post("/api/v1/repos/register", %{"name" => "initial-ref-promotion", "localPath" => path})
+
+    repo_id = json_response(registered, 200)["repo"]["repoId"]
+
+    promoted =
+      build_conn()
+      |> put_req_header("authorization", "Bearer #{token}")
+      |> post("/api/v1/repos/#{repo_id}/refs/promote", %{
+        "sourceRef" => "refs/heads/knowledge/reviewed",
+        "destinationRef" => "refs/heads/staging",
+        "expectedDestinationHead" => main_sha
+      })
+
+    assert json_response(promoted, 200)["promotion"] == %{
+             "repoId" => repo_id,
+             "sourceRef" => "refs/heads/knowledge/reviewed",
+             "destinationRef" => "refs/heads/staging",
+             "beforeHead" => main_sha,
+             "afterHead" => reviewed_sha,
+             "status" => "promoted"
+           }
+  end
+
   defp create_git_fixture(path) do
     File.rm_rf!(path)
     File.mkdir_p!(path)

@@ -14,6 +14,7 @@ fn sample_index() -> treedx_graph::GraphIndex {
         commit_sha: "0123456789012345678901234567890123456789".to_string(),
         graph_version: None,
         previous_manifest: None,
+        previous_documents: vec![],
         documents: vec![
             GraphDocumentInput {
                 path: "docs/readme.md".to_string(),
@@ -85,6 +86,7 @@ fn indexes_direct_and_inherited_group_membership_at_the_commit() {
         commit_sha: "1123456789012345678901234567890123456789".to_string(),
         graph_version: None,
         previous_manifest: None,
+        previous_documents: vec![],
         documents: vec![
             GraphDocumentInput {
                 path: "groups/engineering.mdx".to_string(), object_id: "g1".to_string(), size: 0,
@@ -214,6 +216,7 @@ fn query_model_filter_uses_portable_content_contracts() {
         commit_sha: "2123456789012345678901234567890123456789".to_string(),
         graph_version: None,
         previous_manifest: None,
+        previous_documents: vec![],
         documents: vec![
             GraphDocumentInput {
                 path: "src/content/knowledge/guide.mdx".to_string(),

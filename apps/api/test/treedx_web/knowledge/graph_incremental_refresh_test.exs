@@ -50,7 +50,10 @@ defmodule TreeDxWeb.GraphIncrementalRefreshTest do
     assert second["refreshMode"] == "incremental"
     assert second["fallbackReason"] == nil
     assert second["changedPathCount"] == 1
+    assert second["loadedPathCount"] == 1
+    assert second["reusedPathCount"] == 1
     assert second["indexedPathCount"] == 1
+    assert second["changed"]["modified"] == ["docs/readme.md"]
     assert second["jobId"] =~ "grjob_"
 
     status =
@@ -62,6 +65,27 @@ defmodule TreeDxWeb.GraphIncrementalRefreshTest do
     assert status["job"]["status"] == "completed"
     assert status["job"]["graphVersion"] == second["graphVersion"]
     refute inspect(status) =~ TreeDx.Store.data_dir()
+
+    File.rm!(Path.join(repo_path, "docs/guide.md"))
+    git(repo_path, ["add", "."])
+    git(repo_path, ["commit", "-m", "remove guide"])
+
+    removed =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/graph/refresh", %{
+        "paths" => ["docs/**"],
+        "incremental" => true,
+        "baseGraphVersion" => second["graphVersion"],
+        "changedPaths" => ["docs/guide.md"]
+      })
+      |> json_response(200)
+
+    assert removed["refreshMode"] == "incremental"
+    assert removed["loadedPathCount"] == 0
+    assert removed["reusedPathCount"] == 1
+    assert removed["removedPathCount"] == 1
+    assert removed["changed"]["removed"] == ["docs/guide.md"]
   end
 
   test "falls back to full refresh for stale base graph", %{token: token, repo_id: repo_id} do

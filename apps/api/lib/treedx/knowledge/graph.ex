@@ -40,6 +40,8 @@ defmodule TreeDx.Graph do
          refreshMode: refresh_plan.mode,
          fallbackReason: refresh_plan.fallback_reason,
          changedPathCount: length(changed_paths),
+         loadedPathCount: refresh_plan[:loaded_path_count] || indexed_count,
+         reusedPathCount: refresh_plan[:reused_path_count] || 0,
          indexedPathCount: indexed_count,
          removedPathCount: removed_count,
          stale: refresh_plan.stale,
@@ -197,7 +199,8 @@ defmodule TreeDx.Graph do
   end
 
   defp build_refresh(ctx, params, previous, refresh_plan) do
-    with {:ok, job} <-
+    with {:ok, {previous_index, refresh_plan}} <- incremental_base(ctx, previous, refresh_plan),
+         {:ok, job} <-
            RefreshJobs.start(
              ctx,
              params,
@@ -205,13 +208,32 @@ defmodule TreeDx.Graph do
              refresh_plan.fallback_reason,
              refresh_plan.stale
            ),
-         {:ok, input} <- Builder.build_input(ctx, params, previous),
+         {:ok, input} <- Builder.build_input(ctx, params, previous, previous_index),
          {:ok, index} <- Native.build_graph_index(input),
          {:ok, manifest} <- Native.write_graph_segments(index),
          :ok <- TreeDx.Graph.IndexCache.put(index) do
-      {:ok, {job, index, manifest, refresh_plan}}
+      plan =
+        refresh_plan
+        |> Map.put(:loaded_path_count, input.loadedPathCount)
+        |> Map.put(:reused_path_count, input.reusedPathCount)
+
+      {:ok, {job, index, manifest, plan}}
     end
   end
+
+  defp incremental_base(ctx, previous, %{mode: "incremental"} = refresh_plan) do
+    case Native.read_graph_segments(ctx.repo["id"], previous["graphVersion"]) do
+      {:ok, index} ->
+        {:ok, {index, refresh_plan}}
+
+      _ ->
+        {:ok,
+         {nil,
+          %{refresh_plan | mode: "full", fallback_reason: "missing_base_segments", stale: true}}}
+    end
+  end
+
+  defp incremental_base(_ctx, _previous, refresh_plan), do: {:ok, {nil, refresh_plan}}
 
   def query_request(params) do
     %{

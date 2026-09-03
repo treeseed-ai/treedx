@@ -19,6 +19,8 @@ pub struct GraphIndexInput {
     pub graph_version: Option<String>,
     #[serde(default)]
     pub documents: Vec<GraphDocumentInput>,
+    #[serde(default)]
+    pub previous_documents: Vec<GraphDocument>,
     pub previous_manifest: Option<GraphManifest>,
 }
 

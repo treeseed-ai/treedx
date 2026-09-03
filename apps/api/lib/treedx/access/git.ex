@@ -26,10 +26,11 @@ defmodule TreeDx.Git do
 
   def promote_ref(repo_path, source_ref, destination_ref, expected_destination) do
     with {:ok, %{"target" => source_sha}} <- resolve_ref(repo_path, source_ref),
-         {:ok, %{"target" => destination_sha}} <- resolve_ref(repo_path, destination_ref),
+         {:ok, {destination_sha, destination_cas}} <-
+           promotion_destination(repo_path, destination_ref, expected_destination),
          :ok <- require_expected_or_applied(destination_sha, expected_destination, source_sha),
          :ok <- require_fast_forward(repo_path, destination_sha, source_sha),
-         :ok <- update_ref_if_needed(repo_path, destination_ref, destination_sha, source_sha) do
+         :ok <- update_ref_if_needed(repo_path, destination_ref, destination_cas, source_sha) do
       {:ok,
        %{
          "sourceRef" => source_ref,
@@ -43,6 +44,40 @@ defmodule TreeDx.Git do
         other
     end
   end
+
+  defp promotion_destination(repo_path, destination_ref, expected_destination) do
+    case resolve_ref(repo_path, destination_ref) do
+      {:ok, %{"target" => destination_sha}} ->
+        {:ok, {destination_sha, destination_sha}}
+
+      {:error, %{code: "not_found"}} ->
+        missing_promotion_destination(repo_path, expected_destination)
+
+      {:error, %{"code" => "not_found"}} ->
+        missing_promotion_destination(repo_path, expected_destination)
+
+      other ->
+        other
+    end
+  end
+
+  defp missing_promotion_destination(repo_path, expected_destination)
+       when is_binary(expected_destination) and expected_destination != "" do
+    case git(repo_path, ["cat-file", "-e", "#{expected_destination}^{commit}"]) do
+      {_output, 0} ->
+        {:ok, {expected_destination, ""}}
+
+      _ ->
+        {:error,
+         %{
+           code: "conflict",
+           message: "The reviewed base is unavailable for initial ref promotion."
+         }}
+    end
+  end
+
+  defp missing_promotion_destination(_repo_path, _expected_destination),
+    do: {:error, %{code: "validation_error", message: "expectedDestinationHead is required."}}
 
   def retire_ref(repo_path, ref_name, merged_into_ref, expected_head, expected_merged_head) do
     with {:ok, %{"target" => merged_head}} <- resolve_ref(repo_path, merged_into_ref),
@@ -123,10 +158,7 @@ defmodule TreeDx.Git do
     do: {:error, %{code: "validation_error", message: "The expected #{label} head is required."}}
 
   defp delete_ref(repo_path, ref_name, expected_head) do
-    case System.cmd("git", ["update-ref", "-d", ref_name, expected_head],
-           cd: repo_path,
-           stderr_to_stdout: true
-         ) do
+    case git(repo_path, ["update-ref", "-d", ref_name, expected_head]) do
       {_output, 0} -> :ok
       _ -> {:error, %{code: "conflict", message: "The retired ref changed during deletion."}}
     end
@@ -135,10 +167,7 @@ defmodule TreeDx.Git do
   defp update_ref_if_needed(_repo_path, _destination_ref, sha, sha), do: :ok
 
   defp update_ref_if_needed(repo_path, destination_ref, destination_sha, source_sha) do
-    case System.cmd("git", ["update-ref", destination_ref, source_sha, destination_sha],
-           cd: repo_path,
-           stderr_to_stdout: true
-         ) do
+    case git(repo_path, ["update-ref", destination_ref, source_sha, destination_sha]) do
       {_output, 0} ->
         :ok
 
@@ -167,13 +196,17 @@ defmodule TreeDx.Git do
     do: {:error, %{code: "validation_error", message: "expectedDestinationHead is required."}}
 
   defp require_fast_forward(repo_path, destination_sha, source_sha) do
-    case System.cmd("git", ["merge-base", "--is-ancestor", destination_sha, source_sha],
-           cd: repo_path,
-           stderr_to_stdout: true
-         ) do
+    case git(repo_path, ["merge-base", "--is-ancestor", destination_sha, source_sha]) do
       {_output, 0} -> :ok
       _ -> {:error, %{code: "conflict", message: "Ref promotion must be a fast-forward."}}
     end
+  end
+
+  defp git(repo_path, args) do
+    System.cmd("git", ["-c", "safe.directory=#{repo_path}" | args],
+      cd: repo_path,
+      stderr_to_stdout: true
+    )
   end
 
   def commit_overlay(input) do
