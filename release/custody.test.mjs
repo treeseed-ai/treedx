@@ -8,6 +8,9 @@ test('tag promotion consumes sealed artifacts and contains no build command', ()
   assert.match(promotion, /Download exact accepted candidate/u);
   assert.doesNotMatch(promotion, /(?:docker\s+build(?:\s|$)|docker\/build-push-action|npm\s+(?:run\s+)?build|python\s+-m\s+build|cargo\s+(?:build|package|publish)|mix\s+hex\.build)/u);
   assert.match(promotion, /custody -- verify/u);
+  assert.match(workflow, /environment: \$\{\{ contains\(github\.ref_name, '-'\) && 'staging' \|\| 'production' \}\}/u);
+  assert.match(workflow, /candidate_branch=staging; else candidate_branch=main/u);
+  assert.match(workflow, /paths-ignore: \['\.github\/workflows\/publish\.yml'\]/u);
 });
 
 test('legacy release gate cannot publish a tag', () => {

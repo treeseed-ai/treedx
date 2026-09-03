@@ -2,15 +2,16 @@ name: Build or Promote TreeDX Candidate
 
 on:
   push:
-    branches: [staging]
+    branches: [staging, main]
     tags: ["*.*.*"]
+    paths-ignore: ['.github/workflows/publish.yml']
 
 env:
   CARGO_TARGET_DIR: /tmp/treedx-target
 
 jobs:
   candidate-package:
-    if: github.ref == 'refs/heads/staging'
+    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -59,9 +60,9 @@ jobs:
         with: { name: "treedx-source-${{ github.sha }}", path: source-assets/, if-no-files-found: error }
 
   candidate-build:
-    if: github.ref == 'refs/heads/staging'
+    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
     needs: candidate-package
-    environment: staging
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -88,9 +89,9 @@ jobs:
           provenance: mode=max
 
   candidate-seal:
-    if: github.ref == 'refs/heads/staging'
+    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
     needs: candidate-build
-    environment: staging
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
     runs-on: ubuntu-24.04
     permissions: { actions: read, contents: read }
     steps:
@@ -104,16 +105,16 @@ jobs:
         with: { username: "${{ vars.DOCKERHUB_USERNAME || secrets.DOCKERHUB_USERNAME }}", password: "${{ secrets.DOCKERHUB_TOKEN }}" }
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with: { name: "treedx-source-${{ github.sha }}", path: release-assets }
-      - name: Require exact protected staging verification
+      - name: Require exact protected-branch verification
         env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
         run: |
           for attempt in {1..60}; do
             conclusion="$(gh run list --workflow release-gate.yml --commit "$GITHUB_SHA" --event push --limit 1 --json conclusion --jq '.[0].conclusion // ""')"
             if [[ "$conclusion" == success ]]; then exit 0; fi
-            if [[ -n "$conclusion" && "$conclusion" != success ]]; then echo "Exact staging release gate concluded $conclusion" >&2; exit 1; fi
+            if [[ -n "$conclusion" && "$conclusion" != success ]]; then echo "Exact protected-branch release gate concluded $conclusion" >&2; exit 1; fi
             sleep 30
           done
-          echo 'Exact staging release gate did not complete within 30 minutes.' >&2
+          echo 'Exact protected-branch release gate did not complete within 30 minutes.' >&2
           exit 1
       - name: Seal exact images, component assets, and package archives
         run: |
@@ -136,7 +137,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-24.04
     permissions: { actions: read, contents: write, id-token: write }
-    environment: production
+    environment: ${{ contains(github.ref_name, '-') && 'staging' || 'production' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with: { fetch-depth: 0 }
@@ -153,8 +154,9 @@ jobs:
       - name: Download exact accepted candidate
         env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
         run: |
-          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/staging)"
-          run_id="$(gh run list --workflow publish.yml --branch staging --commit "$GITHUB_SHA" --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then candidate_branch=staging; else candidate_branch=main; fi
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "origin/${candidate_branch}")"
+          run_id="$(gh run list --workflow publish.yml --branch "$candidate_branch" --commit "$GITHUB_SHA" --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
           test -n "$run_id"
           gh run download "$run_id" --name "treedx-candidate-${GITHUB_SHA}" --dir candidate
           npm --prefix release run check-tag
