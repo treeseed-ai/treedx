@@ -33,7 +33,7 @@ fn reports_invalid_and_unterminated_frontmatter() {
 fn graph_preserves_frontmatter_and_reports_invalid_paths() {
     let index = build_graph_index(GraphIndexInput {
         repo_id: "repo".to_string(), ref_name: "main".to_string(), commit_sha: "abc".to_string(),
-        graph_version: None, previous_manifest: None,
+        graph_version: None, previous_manifest: None, previous_documents: vec![],
         documents: vec![
             GraphDocumentInput { path: "guide.md".to_string(), object_id: "one".to_string(), size: 1,
                 content: "---\ntitle: Guide\nrelatedKnowledgeIds: [page.child]\ncontext:\n  nested: true\n---\n# Guide\n".to_string() },

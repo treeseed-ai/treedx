@@ -1,3 +1,4 @@
+mod delta;
 mod groups;
 mod nodes;
 
@@ -7,6 +8,7 @@ use crate::parse::{
 };
 use crate::types::*;
 use chrono::Utc;
+use delta::compute_delta;
 use groups::{apply_group_hierarchy, GroupRelationship};
 use nodes::{edge, metadata_node, section_node, SectionSpec};
 use serde_json::json;
@@ -364,7 +366,11 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
 
     dedupe(&mut nodes, |node| node.id.clone());
     dedupe(&mut edges, |edge| edge.id.clone());
-    let delta = compute_delta(input.previous_manifest.as_ref(), &documents);
+    let delta = compute_delta(
+        input.previous_manifest.as_ref(),
+        &input.previous_documents,
+        &documents,
+    );
     let metrics = GraphMetrics {
         total_files: documents.len() as u64,
         total_sections: nodes
@@ -451,18 +457,6 @@ fn resolve_link_path(from: &str, target: &str) -> Option<String> {
             .to_string_lossy()
             .replace('\\', "/"),
     )
-}
-
-fn compute_delta(previous: Option<&GraphManifest>, docs: &[GraphDocument]) -> GraphDelta {
-    let current: BTreeSet<String> = docs.iter().map(|doc| doc.path.clone()).collect();
-    if previous.is_none() {
-        return GraphDelta {
-            added: current.into_iter().collect(),
-            modified: Vec::new(),
-            removed: Vec::new(),
-        };
-    }
-    GraphDelta::default()
 }
 
 fn dedupe<T, F>(items: &mut Vec<T>, mut key: F)
