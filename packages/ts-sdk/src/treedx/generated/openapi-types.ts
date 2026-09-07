@@ -98,7 +98,7 @@ export const TREEDX_OPENAPI_OPERATIONS = [
   { method: "POST", operationId: "readRepositoryFile", path: "/api/v1/repos/{repo_id}/files/read", requiredCapabilities: ["files:read"] },
   { method: "POST", operationId: "searchRepositoryFiles", path: "/api/v1/repos/{repo_id}/files/search", requiredCapabilities: ["files:search"] },
   { method: "POST", operationId: "queryRepositoryGraph", path: "/api/v1/repos/{repo_id}/graph/query", requiredCapabilities: ["graph:query"] },
-  { method: "POST", operationId: "refreshRepositoryGraph", path: "/api/v1/repos/{repo_id}/graph/refresh", requiredCapabilities: ["graph:refresh"] },
+  { method: "POST", operationId: "refreshRepositoryGraph", path: "/api/v1/repos/{repo_id}/graph/refresh", requiredCapabilities: ["files:read","git:read","graph:refresh"] },
   { method: "POST", operationId: "getRelatedGraphNodes", path: "/api/v1/repos/{repo_id}/graph/related", requiredCapabilities: ["graph:query"] },
   { method: "POST", operationId: "searchGraphEntities", path: "/api/v1/repos/{repo_id}/graph/search-entities", requiredCapabilities: ["graph:query"] },
   { method: "POST", operationId: "searchGraphFiles", path: "/api/v1/repos/{repo_id}/graph/search-files", requiredCapabilities: ["graph:query"] },

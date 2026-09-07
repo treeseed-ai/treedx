@@ -1009,6 +1009,8 @@ paths:
       operationId: refreshRepositoryGraph
       summary: Refresh repository graph with optional incremental metadata
       x-treedx-required-capabilities:
+      - files:read
+      - git:read
       - graph:refresh
       parameters:
       - $ref: '#/components/parameters/RepoId'
