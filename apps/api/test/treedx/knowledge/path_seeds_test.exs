@@ -50,6 +50,7 @@ defmodule TreeDx.Graph.PathSeedsTest do
              ["docs/guide.md", "n1", "docs/setup1.yaml"]
 
     assert hd(result["seeds"])["kind"] == "path"
+
     assert {:ok, %{"seeds" => []}} =
              PathSeeds.resolve(index(["docs/guide.md"]), %{"paths" => ["missing/**"]})
   end
@@ -71,6 +72,7 @@ defmodule TreeDx.Graph.PathSeedsTest do
              PathSeeds.resolve(authorized, %{"paths" => ["**/setup"]})
 
     assert seed["value"] == "public/setup.md"
+
     assert {:ok, %{"seeds" => []}} =
              PathSeeds.resolve(authorized, %{"paths" => ["private/**"]})
   end
