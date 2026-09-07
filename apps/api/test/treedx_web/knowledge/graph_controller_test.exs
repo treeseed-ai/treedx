@@ -104,6 +104,22 @@ defmodule TreeDxWeb.GraphControllerTest do
     assert query["providerId"] == "treedx-graph-mvp"
     assert Enum.any?(query["nodes"], &(&1["node"]["nodeType"] == "Section"))
 
+    selectors = [%{"paths" => ["docs/**/readm?"]}, %{"seeds" => [%{"value" => "docs/readme"}]}]
+
+    for selector <- selectors do
+      result =
+        build_conn()
+        |> auth(token)
+        |> post(
+          "/api/v1/repos/#{repo_id}/graph/query",
+          Map.put(selector, "options", %{"depth" => 0})
+        )
+        |> json_response(200)
+
+      assert result["nodes"] != []
+      assert Enum.all?(result["nodes"], &(&1["node"]["path"] == "docs/readme.md"))
+    end
+
     subgraph =
       build_conn()
       |> auth(token)

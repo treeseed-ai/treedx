@@ -93,6 +93,7 @@ defmodule TreeDx.Graph do
   defp do_query(repo_id, params, principal) do
     with {:ok, ctx} <- Auth.context(repo_id, params, principal, "graph:query"),
          {:ok, index} <- load_authorized_index(ctx, params),
+         {:ok, params} <- TreeDx.Graph.PathSeeds.resolve(index, params),
          {:ok, result} <- Native.query_graph(index, query_request(params)) do
       audit("graph.queried", ctx, %{
         graphVersion: index["manifest"]["graphVersion"],

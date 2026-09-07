@@ -126,7 +126,17 @@ defmodule TreeDx.RepositoryQuery do
   end
 
   defp do_query(repo_id, params, principal) do
-    type = params["type"] || "text"
+    params =
+      if params["type"] do
+        params
+      else
+        params
+        |> Map.put("type", "path")
+        |> Map.put_new("paths", params["query"])
+        |> Map.delete("query")
+      end
+
+    type = params["type"]
     capability = query_capability(type)
 
     with {:ok, ctx} <- context(repo_id, params, principal, capability),
@@ -155,6 +165,8 @@ defmodule TreeDx.RepositoryQuery do
   defp path_query(ctx, params) do
     with {:ok, patterns} <- PathMatch.normalize_patterns(params["paths"]),
          {:ok, entries} <- filtered_entries(ctx, patterns, params),
+         {:ok, selected} <- ContentPaths.select(patterns, Map.new(entries, &{&1["path"], true})),
+         entries <- Enum.filter(entries, &(&1["path"] in selected)),
          entries <- filter_extensions(entries, params["extensions"]),
          entries <- filter_path_query(entries, params["query"]),
          {page_entries, page} <-
@@ -353,7 +365,7 @@ defmodule TreeDx.RepositoryQuery do
   defp entry_allowed?(entry, scope, patterns, allow_protected) do
     path = entry["path"]
 
-    PathMatch.match_any?(patterns, path) and
+    Enum.any?(patterns, &ContentPaths.matches?(&1, path)) and
       (allow_protected or !PathPolicy.protected?(path)) and
       match?(
         :ok,

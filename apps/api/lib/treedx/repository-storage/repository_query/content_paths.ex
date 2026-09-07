@@ -3,6 +3,35 @@ defmodule TreeDx.RepositoryQuery.ContentPaths do
 
   @content_extensions [".mdx", ".md", ".markdown", ".json", ".yaml", ".yml", ".toml"]
 
+  alias TreeDx.RepositoryQuery.PathMatch
+
+  # Query patterns match both physical filenames and extensionless content names.
+  # Explicit extensions remain exact; writes never use this query resolver.
+  def matches?(pattern, path) do
+    PathMatch.matches?(pattern, path) or
+      (Path.extname(pattern) == "" and PathMatch.matches?(pattern, logical_path(path)))
+  end
+
+  def select(patterns, available) do
+    with {:ok, patterns} <- PathMatch.normalize_patterns(patterns) do
+      patterns
+      |> Enum.map(fn pattern ->
+        if String.contains?(pattern, ["*", "?"]) do
+          {:ok, available |> Map.keys() |> Enum.filter(&matches?(pattern, &1)) |> Enum.sort()}
+        else
+          with {:ok, match} <- resolve_path(pattern, available) do
+            {:ok, if(Map.has_key?(available, match.source), do: [match.source], else: [])}
+          end
+        end
+      end)
+      |> collect_ok()
+      |> case do
+        {:ok, paths} -> {:ok, paths |> List.flatten() |> Enum.uniq() |> Enum.sort()}
+        error -> error
+      end
+    end
+  end
+
   def resolve(ctx, paths) do
     if Enum.any?(paths, &(Path.extname(&1) == "")) do
       with {:ok, entries} <- TreeDx.RepositoryCache.tree_entries(ctx) do
@@ -43,7 +72,7 @@ defmodule TreeDx.RepositoryQuery.ContentPaths do
   end
 
   defp resolve_path(path, available) do
-    if Map.has_key?(available, path) do
+    if Map.has_key?(available, path) or Path.extname(path) != "" do
       {:ok, resolution(path, path)}
     else
       resolve_extension(path, available)

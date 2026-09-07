@@ -21,6 +21,22 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
     {:ok, token: token, repo_id: repo_id}
   end
 
+  test "repository queries default to extensionless paths and glob patterns", %{
+    token: token,
+    repo_id: repo_id
+  } do
+    for query <- ["docs/readme", "docs/**/readm?"] do
+      result =
+        build_conn()
+        |> auth(token)
+        |> post("/api/v1/repos/#{repo_id}/query", %{"query" => query})
+        |> json_response(200)
+
+      assert result["type"] == "path"
+      assert Enum.map(result["results"], & &1["path"]) == ["docs/readme.md"]
+    end
+  end
+
   test "reads, lists, searches, queries, and compares repository content", %{
     token: token,
     repo_id: repo_id
