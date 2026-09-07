@@ -32,15 +32,18 @@ defmodule TreeDx.RepositoryQuery.PathMatch do
 
   def matches?(pattern, path) do
     cond do
-      String.ends_with?(pattern, "/**") ->
+      String.ends_with?(pattern, "/**") and
+          !String.contains?(String.trim_trailing(pattern, "/**"), ["*", "?"]) ->
         prefix = String.trim_trailing(pattern, "/**")
         path == prefix or String.starts_with?(path, prefix <> "/")
 
-      String.contains?(pattern, "*") ->
+      String.contains?(pattern, ["*", "?"]) ->
         pattern
         |> Regex.escape()
+        |> String.replace("\\*\\*/", "(?:.*/)?")
         |> String.replace("\\*\\*", ".*")
         |> String.replace("\\*", "[^/]*")
+        |> String.replace("\\?", "[^/]")
         |> then(&Regex.compile!("^#{&1}$"))
         |> Regex.match?(path)
 
@@ -54,7 +57,7 @@ defmodule TreeDx.RepositoryQuery.PathMatch do
       pattern in ["", "**"] ->
         {:ok, "**"}
 
-      String.contains?(pattern, "*") ->
+      String.contains?(pattern, ["*", "?"]) ->
         validate_glob(pattern)
 
       true ->
@@ -76,11 +79,8 @@ defmodule TreeDx.RepositoryQuery.PathMatch do
       String.contains?(pattern, "\\") ->
         {:error, %{code: "validation_error", message: "path must use POSIX separators."}}
 
-      Enum.any?(String.split(pattern, "/", trim: true), &(&1 == "..")) ->
-        {:error, %{code: "validation_error", message: "path traversal is not allowed."}}
-
       true ->
-        {:ok, pattern |> String.split("/", trim: true) |> Enum.join("/")}
+        PathPolicy.normalize(pattern, allow_empty: false)
     end
   end
 end

@@ -4774,6 +4774,12 @@ components:
       type: object
       required: []
       properties:
+        paths:
+          description: Repository-relative paths or globs; content extensions are optional, including in glob patterns. Expanded only against authorized indexed paths.
+          type: array
+          maxItems: 1000
+          items:
+            type: string
         repoId:
           type: string
         ref:
@@ -4788,6 +4794,7 @@ components:
           type: array
           items:
             type: object
+            description: A seed defaults to kind path. Path values accept extensionless names and glob patterns; explicit node IDs require kind id.
             additionalProperties: true
         relations:
           type: array

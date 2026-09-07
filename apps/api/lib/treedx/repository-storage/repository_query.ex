@@ -353,7 +353,7 @@ defmodule TreeDx.RepositoryQuery do
   defp entry_allowed?(entry, scope, patterns, allow_protected) do
     path = entry["path"]
 
-    PathMatch.match_any?(patterns, path) and
+    Enum.any?(patterns, &ContentPaths.matches?(&1, path)) and
       (allow_protected or !PathPolicy.protected?(path)) and
       match?(
         :ok,
