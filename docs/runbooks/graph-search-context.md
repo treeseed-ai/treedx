@@ -27,6 +27,8 @@ If the response contains `fallbackReason`, TreeDX performed a full refresh. This
 ## Query By File Path
 
 File paths are the default seed selector; node IDs remain explicit advanced selectors.
+Repository queries also default to path selection: `{"query":"knowledge/**/setup?"}`
+selects matching files. Full-text searches use `type: "text"` or the search endpoint.
 Send `{"paths":["knowledge/**/setup?"],"ref":"<exact-ref>","options":{"depth":0}}`
 to `/api/v1/repos/<repo-id>/graph/query`. A seed such as
 `{"value":"knowledge/providers"}` also defaults to a path.

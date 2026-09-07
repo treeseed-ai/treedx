@@ -27,6 +27,17 @@ defmodule TreeDxWeb.RepoQueryControllerTest do
   } do
     TreeDx.RepositoryCache.reset!()
 
+    for query <- ["docs/readme", "docs/**/readm?"] do
+      result =
+        build_conn()
+        |> auth(token)
+        |> post("/api/v1/repos/#{repo_id}/query", %{"query" => query})
+        |> json_response(200)
+
+      assert result["type"] == "path"
+      assert Enum.map(result["results"], & &1["path"]) == ["docs/readme.md"]
+    end
+
     conn =
       build_conn()
       |> auth(token)

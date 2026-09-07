@@ -4709,6 +4709,8 @@ components:
           type: string
         type:
           type: string
+          default: path
+          description: Defaults to path selection using query as a repository-relative name or glob. Select text explicitly for full-text search.
         query:
           type: string
         paths:
