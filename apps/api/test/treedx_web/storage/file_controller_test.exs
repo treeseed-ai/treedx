@@ -89,6 +89,7 @@ defmodule TreeDxWeb.FileControllerTest do
     +++ b/docs/readme.md
     @@ -1,1 +1,1 @@
     -hello
+    \\ No newline at end of file
     +patched
     """
 
