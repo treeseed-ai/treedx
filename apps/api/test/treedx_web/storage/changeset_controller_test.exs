@@ -47,7 +47,7 @@ defmodule TreeDxWeb.ChangesetControllerTest do
     assert replay["workspaceVersion"] == first["workspaceVersion"]
     refute Map.has_key?(first, "artifacts")
 
-    assert read(context, "docs/new.md", 200)["content"] == "---\nid: new-entry\n---\nnew entry\n"
+    assert read(context, "docs/new.md", 200)["content"] == "---\nid: new-entry\n---\nnew entry"
     assert read(context, "docs/readme.md", 200)["content"] =~ "# Updated Provenance"
     assert read(context, "docs/guide.md", 404)["error"]["code"] == "not_found"
   end
@@ -123,27 +123,38 @@ defmodule TreeDxWeb.ChangesetControllerTest do
   end
 
   defp create_patch(path, content) do
-    lines = String.split(content, "\n", trim: false)
+    lines = patch_lines(content, "+")
 
     "diff --git a/#{path} b/#{path}\nnew file mode 100644\n--- /dev/null\n+++ b/#{path}\n@@ -0,0 +1,#{length(lines)} @@\n" <>
-      Enum.map_join(lines, "\n", &("+" <> &1))
+      Enum.join(lines, "\n")
   end
 
   defp replace_patch(path, before, resulting_content) do
-    old_lines = String.split(before, "\n", trim: false)
-    new_lines = String.split(resulting_content, "\n", trim: false)
+    old_lines = patch_lines(before, "-")
+    new_lines = patch_lines(resulting_content, "+")
 
     "diff --git a/#{path} b/#{path}\n--- a/#{path}\n+++ b/#{path}\n@@ -1,#{length(old_lines)} +1,#{length(new_lines)} @@\n" <>
-      Enum.map_join(old_lines, "\n", &("-" <> &1)) <>
+      Enum.join(old_lines, "\n") <>
       "\n" <>
-      Enum.map_join(new_lines, "\n", &("+" <> &1))
+      Enum.join(new_lines, "\n")
   end
 
   defp delete_patch(path, before) do
-    old_lines = String.split(before, "\n", trim: false)
+    old_lines = patch_lines(before, "-")
 
     "diff --git a/#{path} b/#{path}\ndeleted file mode 100644\n--- a/#{path}\n+++ /dev/null\n@@ -1,#{length(old_lines)} +0,0 @@\n" <>
-      Enum.map_join(old_lines, "\n", &("-" <> &1))
+      Enum.join(old_lines, "\n")
+  end
+
+  defp patch_lines(content, prefix) do
+    parts = String.split(content, "\n", trim: false)
+
+    if String.ends_with?(content, "\n") do
+      Enum.map(Enum.drop(parts, -1), &(prefix <> &1))
+    else
+      lines = Enum.map(parts, &(prefix <> &1))
+      List.update_at(lines, -1, &(&1 <> "\n\\ No newline at end of file"))
+    end
   end
 
   defp apply_changeset(context, request, status) do

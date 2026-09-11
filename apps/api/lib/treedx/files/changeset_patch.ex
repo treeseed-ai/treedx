@@ -59,12 +59,31 @@ defmodule TreeDx.Files.ChangesetPatch do
          {:ok, new_path} <- parse_target(new_header, "+++ ", "b/"),
          {:ok, op, path} <- classify(old_path, new_path),
          :ok <- require_matching_headers(diff_old, diff_new, path),
-         true <- Enum.any?(lines, &String.starts_with?(&1, "@@ ")) do
+         :ok <- require_hunk_or_empty_file(lines, op, path) do
       {:ok, %{op: op, path: path, patch: Enum.join(lines, "\n")}}
     else
-      false -> error("every changeset file must contain at least one hunk.")
       other -> other
     end
+  end
+
+  defp require_hunk_or_empty_file(lines, op, path) do
+    has_hunk = Enum.any?(lines, &String.starts_with?(&1, "@@ "))
+    mode = if op == :create, do: "new file mode 100644", else: "deleted file mode 100644"
+
+    allowed = [
+      "diff --git a/#{path} b/#{path}",
+      mode,
+      "--- /dev/null",
+      "+++ /dev/null",
+      "--- a/#{path}",
+      "+++ b/#{path}",
+      ""
+    ]
+
+    if has_hunk or
+         (op in [:create, :delete] and mode in lines and Enum.all?(lines, &(&1 in allowed))),
+       do: :ok,
+       else: error("changesets require a hunk or an explicit empty-file create/delete.")
   end
 
   defp parse_diff_header("diff --git a/" <> value) do
