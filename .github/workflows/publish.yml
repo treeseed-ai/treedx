@@ -1,6 +1,12 @@
 name: Build or Promote TreeDX Candidate
 
 on:
+  workflow_dispatch:
+    inputs:
+      resume_tag:
+        description: Already-published RC tag whose sealed GitHub release needs resuming
+        required: true
+        type: string
   push:
     branches: [staging, main]
     tags: ["*.*.*"]
@@ -11,7 +17,7 @@ env:
 
 jobs:
   candidate-package:
-    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -192,7 +198,7 @@ jobs:
           else
             python -m twine upload --non-interactive candidate/python/*
           fi
-          if curl --fail --location --silent --show-error "https://crates.io/api/v1/crates/treedx/${version}" -o "$readback/crates.json"; then
+          if curl --fail --location --silent --show-error -H 'User-Agent: TreeSeed-release-custody/1' "https://crates.io/api/v1/crates/treedx/${version}" -o "$readback/crates.json"; then
             test "$(jq -r '.version.checksum' "$readback/crates.json")" = "$(sha256sum "$crate_archive" | awk '{print $1}')"
           else
             npm --prefix release run publish-crate -- "$GITHUB_WORKSPACE/$crate_archive"
@@ -246,3 +252,64 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - run: node --test release/custody.test.mjs
+
+  resume-promotion:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-24.04
+    environment: staging
+    permissions: { actions: read, contents: write }
+    env:
+      RELEASE_TAG: ${{ inputs.resume_tag }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: { ref: '${{ inputs.resume_tag }}', fetch-depth: 0 }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: { node-version: 24 }
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: release
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - name: Require exact accepted RC source and sealed artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$ ]]
+          test "$GITHUB_WORKFLOW_REF" = "$GITHUB_REPOSITORY/.github/workflows/publish.yml@refs/heads/staging"
+          source_commit="$(git rev-parse HEAD)"
+          test "$source_commit" = "$(git rev-list -n 1 "refs/tags/$RELEASE_TAG")"
+          git merge-base --is-ancestor "$source_commit" origin/staging
+          npm --prefix release run check-tag -- "$RELEASE_TAG"
+          gate="$(gh run list --workflow release-gate.yml --branch staging --commit "$source_commit" --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          candidate="$(gh run list --workflow publish.yml --branch staging --commit "$source_commit" --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          test -n "$gate"; test -n "$candidate"
+          gh run download "$candidate" --name "treedx-candidate-$source_commit" --dir candidate
+          npm --prefix release run custody -- verify candidate/release-evidence-v1.json
+          jq -e --arg version "$RELEASE_TAG" 'all(.packages[]; .version == $version)' candidate/release-evidence-v1.json
+      - name: Read back existing registries and image tags without uploading
+        shell: bash
+        run: |
+          set -euo pipefail
+          readback="$(mktemp -d)"
+          fetch() { curl --fail --location --silent --show-error -H 'User-Agent: TreeSeed-release-custody/1' "$1" -o "$2"; }
+          fetch "https://registry.npmjs.org/@treeseed/treedx/-/treedx-${RELEASE_TAG}.tgz" "$readback/npm.tgz"
+          test "$(sha256sum candidate/npm/*.tgz | awk '{print $1}')" = "$(sha256sum "$readback/npm.tgz" | awk '{print $1}')"
+          python_version="${RELEASE_TAG/-rc./rc}"
+          fetch "https://pypi.org/pypi/treedx/${python_version}/json" "$readback/pypi.json"
+          for archive in candidate/python/*; do
+            digest="$(sha256sum "$archive" | awk '{print $1}')"
+            jq -e --arg digest "$digest" 'any(.urls[]; .digests.sha256 == $digest)' "$readback/pypi.json" >/dev/null
+          done
+          fetch "https://crates.io/api/v1/crates/treedx/${RELEASE_TAG}" "$readback/crates.json"
+          test "$(jq -r '.version.checksum' "$readback/crates.json")" = "$(sha256sum candidate/rust/*.crate | awk '{print $1}')"
+          fetch "https://hex.pm/api/packages/treedx/releases/${RELEASE_TAG}" "$readback/hex.json"
+          test "$(jq -r '.checksum' "$readback/hex.json")" = "$(sha256sum candidate/hex/*.tar | awk '{print $1}')"
+          jq -r '.artifacts[] | select(.kind == "oci-image") | .identity' candidate/release-evidence-v1.json | while read -r identity; do
+            image="${identity%@*}"; digest="${identity#*@}"
+            test "$(docker buildx imagetools inspect "${image}:${RELEASE_TAG}" --format '{{json .Manifest}}' | jq -r '.digest')" = "$digest"
+          done
+      - name: Publish unchanged accepted GitHub assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' assets < <(find candidate -type f -print0)
+          gh release create "$RELEASE_TAG" "${assets[@]}" --generate-notes --verify-tag --prerelease
