@@ -1,7 +1,7 @@
 defmodule TreeDx.Files do
   @moduledoc false
 
-  alias TreeDx.Files.{Diff, Overlay, Patch, PathPolicy, Search, WorkspaceFiles}
+  alias TreeDx.Files.{AdditionalParents, Diff, Overlay, Patch, PathPolicy, Search, WorkspaceFiles}
   alias TreeDx.Runtime.Pool
 
   @default_search_limit 20
@@ -205,10 +205,12 @@ defmodule TreeDx.Files do
          {:ok, overlays} <- TreeDx.Store.list_workspace_files(workspace_id),
          :ok <- require_changes(overlays),
          {:ok, changes} <- commit_changes(overlays),
+         {:ok, additional_parent_commit_shas} <- AdditionalParents.resolve(ctx, params),
          {:ok, result} <-
            TreeDx.Git.commit_overlay(%{
              repoPath: TreeDx.RepositoryStorage.path!(ctx.repo),
              baseCommitSha: ctx.workspace["baseCommitSha"],
+             additionalParentCommitShas: additional_parent_commit_shas,
              branchName: ctx.workspace["branchName"],
              message: params["message"] || "Update repository file through TreeDX",
              authorName: get_in(params, ["author", "name"]) || "TreeDX Agent",

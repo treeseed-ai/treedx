@@ -4,7 +4,7 @@ export const TREEDX_OPENAPI_CONTRACT = {
   "schema": "treedx.openapi-contract/v1",
   "packageVersion": "0.3.0-rc.18",
   "openapiVersion": "0.11.1",
-  "openapiSha256": "sha256:90b040cc8372e1359e77c1a4e7c23c930365202c5eb0a9d4ca865d2f11eb48e1",
+  "openapiSha256": "sha256:37cb612ad4538bb7a1038bca2bf59607c6fba63ca5ed2fdf1d51636a1bb0366c",
   "operationInventorySha256": "sha256:4f481063ad858cbade4d5fa19c529aca4f108c3e70f12c55ed645c8b412bb17b",
   "generatedTypesSha256": "sha256:b920eba21f37637c5907d2377a5c55ea5084f5c92100dceeb10b03f7749a74b2",
   "operationCount": 120,
