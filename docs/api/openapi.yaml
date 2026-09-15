@@ -4446,6 +4446,11 @@ components:
           additionalProperties: true
         branchName:
           type: string
+        additionalParentRefs:
+          type: array
+          maxItems: 1
+          items:
+            type: string
       additionalProperties: true
     TreeDxCommitResult:
       type: object
