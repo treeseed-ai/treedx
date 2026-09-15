@@ -16,6 +16,23 @@ pub fn commit_overlay(input: CommitOverlayInput) -> Result<CommitOverlayResult, 
         .map_err(|err| GitError::Git(err.to_string()))?
         .peel_to_commit()
         .map_err(|err| GitError::Git(err.to_string()))?;
+    if input.additional_parent_commit_shas.len() > 1 {
+        return Err(GitError::Git(
+            "at most one additional publication parent is supported".to_string(),
+        ));
+    }
+    let mut parent_ids = vec![base_id];
+    for value in &input.additional_parent_commit_shas {
+        let parent_id = gix::ObjectId::from_hex(value.as_bytes())
+            .map_err(|err| GitError::Git(err.to_string()))?;
+        repo.find_object(parent_id)
+            .map_err(|err| GitError::Git(err.to_string()))?
+            .peel_to_commit()
+            .map_err(|err| GitError::Git(err.to_string()))?;
+        if !parent_ids.contains(&parent_id) {
+            parent_ids.push(parent_id);
+        }
+    }
     let base_tree_id = base_commit
         .tree_id()
         .map_err(|err| GitError::Git(err.to_string()))?
@@ -84,7 +101,7 @@ pub fn commit_overlay(input: CommitOverlayInput) -> Result<CommitOverlayResult, 
             author,
             input.message.as_str(),
             tree_id,
-            [base_id],
+            parent_ids,
         )
         .map_err(|err| GitError::Git(err.to_string()))?
         .detach();

@@ -160,6 +160,7 @@ fn commit_overlay_writes_modifies_and_deletes_files() {
     let result = commit_overlay(CommitOverlayInput {
         repo_path: dir.path().display().to_string(),
         base_commit_sha: base,
+        additional_parent_commit_shas: vec![],
         branch_name: "refs/heads/agent/overlay".to_string(),
         message: "overlay commit".to_string(),
         author_name: "TreeDX Test".to_string(),
@@ -208,6 +209,56 @@ fn commit_overlay_writes_modifies_and_deletes_files() {
     assert_eq!(updated.byte_length, "updated\n".len());
     assert!(read_blob(dir.path(), "refs/heads/agent/overlay", "docs/new.md").is_ok());
     assert!(read_blob(dir.path(), "refs/heads/agent/overlay", "docs/delete.md").is_err());
+}
+
+#[test]
+fn commit_overlay_can_preserve_one_divergent_publication_parent() {
+    let dir = tempdir().unwrap();
+    git(dir.path(), &["init", "-b", "staging"]);
+    git(dir.path(), &["config", "user.name", "TreeDX Test"]);
+    git(
+        dir.path(),
+        &["config", "user.email", "test@example.invalid"],
+    );
+    std::fs::write(dir.path().join("README.md"), "base\n").unwrap();
+    git(dir.path(), &["add", "README.md"]);
+    git(dir.path(), &["commit", "-m", "base"]);
+    let base = git_stdout(dir.path(), &["rev-parse", "HEAD"]);
+
+    git(dir.path(), &["checkout", "-b", "remote", &base]);
+    std::fs::write(dir.path().join("remote.md"), "remote\n").unwrap();
+    git(dir.path(), &["add", "remote.md"]);
+    git(dir.path(), &["commit", "-m", "remote"]);
+    let remote = git_stdout(dir.path(), &["rev-parse", "HEAD"]);
+
+    git(dir.path(), &["checkout", "staging"]);
+    std::fs::write(dir.path().join("local.md"), "local\n").unwrap();
+    git(dir.path(), &["add", "local.md"]);
+    git(dir.path(), &["commit", "-m", "local"]);
+    let local = git_stdout(dir.path(), &["rev-parse", "HEAD"]);
+
+    let result = commit_overlay(CommitOverlayInput {
+        repo_path: dir.path().display().to_string(),
+        base_commit_sha: local.clone(),
+        additional_parent_commit_shas: vec![remote.clone()],
+        branch_name: "refs/heads/knowledge/reconcile".to_string(),
+        message: "reconcile".to_string(),
+        author_name: "TreeDX Test".to_string(),
+        author_email: "test@example.invalid".to_string(),
+        changes: vec![FileChange {
+            path: "objective.md".to_string(),
+            op: "put".to_string(),
+            content_base64: Some(base64::engine::general_purpose::STANDARD.encode("objective\n")),
+            expected_sha: None,
+        }],
+    })
+    .unwrap();
+
+    let parents = git_stdout(
+        dir.path(),
+        &["show", "-s", "--format=%P", &result.commit_sha],
+    );
+    assert_eq!(parents, format!("{local} {remote}"));
 }
 
 #[test]

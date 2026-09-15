@@ -78,6 +78,8 @@ pub struct FileChange {
 pub struct CommitOverlayInput {
     pub repo_path: String,
     pub base_commit_sha: String,
+    #[serde(default)]
+    pub additional_parent_commit_shas: Vec<String>,
     pub branch_name: String,
     pub message: String,
     pub author_name: String,
