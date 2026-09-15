@@ -72,8 +72,8 @@ defmodule TreeDx.RepositoryQuery.Frontmatter do
 
   defp normalize_yaml(value) when is_list(value) do
     cond do
-      List.ascii_printable?(value) ->
-        to_string(value)
+      unicode_charlist?(value) ->
+        List.to_string(value)
 
       Keyword.keyword?(value) or Enum.all?(value, &match?({_, _}, &1)) ->
         Map.new(value, fn {key, val} -> {to_string_key(key), normalize_yaml(val)} end)
@@ -92,6 +92,17 @@ defmodule TreeDx.RepositoryQuery.Frontmatter do
   defp normalize_yaml(value) when is_binary(value), do: value
   defp normalize_yaml(value) when is_atom(value), do: Atom.to_string(value)
   defp normalize_yaml(value), do: value
+
+  # Yamerl returns Unicode scalar values as a charlist. `List.ascii_printable?/1`
+  # misclassifies otherwise valid strings containing non-ASCII characters as a
+  # YAML sequence, leaking their codepoints through the JSON API.
+  defp unicode_charlist?(value) do
+    Enum.all?(value, &is_integer/1) and
+      case :unicode.characters_to_binary(value) do
+        binary when is_binary(binary) -> String.valid?(binary) and String.printable?(binary)
+        _ -> false
+      end
+  end
 
   defp to_string_key(value) when is_binary(value), do: value
   defp to_string_key(value) when is_atom(value), do: Atom.to_string(value)
