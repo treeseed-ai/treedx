@@ -1,4 +1,5 @@
 mod delta;
+mod dependency_links;
 mod groups;
 mod nodes;
 
@@ -9,6 +10,7 @@ use crate::parse::{
 use crate::types::*;
 use chrono::Utc;
 use delta::compute_delta;
+use dependency_links::append_typed_dependency_links;
 use groups::{apply_group_hierarchy, GroupRelationship};
 use nodes::{edge, metadata_node, section_node, SectionSpec};
 use serde_json::json;
@@ -106,6 +108,14 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
         let file_id = file_id(&doc_input.path);
         file_by_path.insert(strip_extension(&doc_input.path), file_id.clone());
         file_by_path.insert(doc_input.path.clone(), file_id.clone());
+        append_typed_dependency_links(
+            &frontmatter,
+            &doc_input.path,
+            &file_id,
+            &mut nodes,
+            &mut edges,
+            &mut diagnostics,
+        );
         let title = string_field(&frontmatter, &["title", "name"])
             .unwrap_or_else(|| fallback_title(&doc_input.path));
         let group_ids = string_array(&frontmatter, "groupIds");

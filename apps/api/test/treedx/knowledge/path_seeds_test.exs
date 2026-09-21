@@ -77,6 +77,30 @@ defmodule TreeDx.Graph.PathSeedsTest do
              PathSeeds.resolve(authorized, %{"paths" => ["private/**"]})
   end
 
+  test "typed reference edges do not reveal links owned by an unauthorized note" do
+    index = %{
+      "nodes" => [
+        %{"id" => "public", "path" => "public/dependency.md", "ownerFileId" => "public"},
+        %{"id" => "private", "path" => "private/dependency.md", "ownerFileId" => "private"},
+        %{"id" => "source", "path" => nil, "ownerFileId" => "private"},
+        %{"id" => "target", "path" => nil, "ownerFileId" => "private"}
+      ],
+      "edges" => [
+        %{
+          "sourceId" => "source",
+          "targetId" => "target",
+          "ownerFileId" => "private",
+          "type" => "DEPENDS_ON"
+        }
+      ],
+      "manifest" => %{}
+    }
+
+    authorized = TreeDx.Graph.Filter.authorize(index, %{"paths" => ["public/**"]}, %{})
+    assert Enum.map(authorized["nodes"], & &1["id"]) == ["public"]
+    assert authorized["edges"] == []
+  end
+
   test "rejects traversal, absolute paths, invalid seeds, and oversized expansion" do
     for path <- ["../*", "/docs/*", "docs/%2e%2e/?", "docs\\*", <<0>>] do
       assert {:error, %{code: "validation_error"}} =
