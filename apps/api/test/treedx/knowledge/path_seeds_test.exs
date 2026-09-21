@@ -86,7 +86,12 @@ defmodule TreeDx.Graph.PathSeedsTest do
         %{"id" => "target", "path" => nil, "ownerFileId" => "private"}
       ],
       "edges" => [
-        %{"sourceId" => "source", "targetId" => "target", "ownerFileId" => "private", "type" => "DEPENDS_ON"}
+        %{
+          "sourceId" => "source",
+          "targetId" => "target",
+          "ownerFileId" => "private",
+          "type" => "DEPENDS_ON"
+        }
       ],
       "manifest" => %{}
     }
