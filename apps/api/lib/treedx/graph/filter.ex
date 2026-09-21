@@ -8,7 +8,9 @@ defmodule TreeDx.Graph.Filter do
 
     allowed_files =
       index["nodes"]
-      |> Enum.filter(fn node -> is_binary(node["path"]) and allowed_node?(node, scope, allow_protected) end)
+      |> Enum.filter(fn node ->
+        is_binary(node["path"]) and allowed_node?(node, scope, allow_protected)
+      end)
       |> MapSet.new(& &1["id"])
 
     allowed_ids =

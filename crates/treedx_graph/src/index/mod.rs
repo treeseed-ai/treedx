@@ -1,4 +1,5 @@
 mod delta;
+mod dependency_links;
 mod groups;
 mod nodes;
 
@@ -9,6 +10,7 @@ use crate::parse::{
 use crate::types::*;
 use chrono::Utc;
 use delta::compute_delta;
+use dependency_links::append_typed_dependency_links;
 use groups::{apply_group_hierarchy, GroupRelationship};
 use nodes::{edge, metadata_node, section_node, SectionSpec};
 use serde_json::json;
@@ -106,41 +108,14 @@ pub fn build_graph_index(input: GraphIndexInput) -> Result<GraphIndex, crate::Gr
         let file_id = file_id(&doc_input.path);
         file_by_path.insert(strip_extension(&doc_input.path), file_id.clone());
         file_by_path.insert(doc_input.path.clone(), file_id.clone());
-        if let Some(links) = frontmatter.get("links").and_then(|value| value.as_array()) {
-            for link in links {
-                if link.get("relation").and_then(|value| value.as_str()) != Some("depends_on") {
-                    continue;
-                }
-                let ends = [link.get("from"), link.get("to")];
-                if ends.iter().any(|end| {
-                    let Some(end) = end else { return true; };
-                    ["repository", "commit", "path", "anchor", "digest", "id"].iter().any(|key|
-                        end.get(*key).and_then(|value| value.as_str()).is_none_or(str::is_empty))
-                }) {
-                    diagnostics.warnings.push(format!("Invalid depends_on link in {}", doc_input.path));
-                    continue;
-                }
-                let mut ids = Vec::new();
-                for end in ends.into_iter().flatten() {
-                    let encoded = serde_json::to_string(end).unwrap_or_default();
-                    let id = reference_id(&encoded);
-                    nodes.push(GraphNode {
-                        id: id.clone(), node_type: "Reference".to_string(),
-                        entity_type: Some("ExactEntityReference".to_string()),
-                        owner_file_id: Some(file_id.clone()), path: None, slug: None,
-                        title: end.get("id").and_then(|value| value.as_str()).map(str::to_string),
-                        heading: None, heading_path: None, level: None, text: None,
-                        group_ids: Vec::new(), effective_group_ids: Vec::new(), series: None,
-                        file_id: None, status: None, canonical: None, version: None, domain: None,
-                        audience: Vec::new(), updated_at: None, data: end.clone(),
-                    });
-                    ids.push(id);
-                }
-                let mut dependency = edge(&ids[0], "DEPENDS_ON", &ids[1], Some(&file_id));
-                dependency.data = json!({"link": link, "ownerPath": doc_input.path});
-                edges.push(dependency);
-            }
-        }
+        append_typed_dependency_links(
+            &frontmatter,
+            &doc_input.path,
+            &file_id,
+            &mut nodes,
+            &mut edges,
+            &mut diagnostics,
+        );
         let title = string_field(&frontmatter, &["title", "name"])
             .unwrap_or_else(|| fallback_title(&doc_input.path));
         let group_ids = string_array(&frontmatter, "groupIds");
