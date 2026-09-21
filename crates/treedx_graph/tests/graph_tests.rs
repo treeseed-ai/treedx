@@ -79,6 +79,26 @@ fn builds_generic_graph_nodes_and_edges() {
 }
 
 #[test]
+fn indexes_exact_directional_dependency_links_without_changing_proposals() {
+    let index = build_graph_index(GraphIndexInput {
+        repo_id: "library".to_string(), ref_name: "refs/heads/staging".to_string(),
+        commit_sha: "0123456789012345678901234567890123456789".to_string(),
+        graph_version: None, previous_manifest: None, previous_documents: vec![],
+        documents: vec![GraphDocumentInput {
+            path: "notes/dependency.md".to_string(), object_id: "note".to_string(), size: 0,
+            content: format!("---\nlinks:\n  - relation: depends_on\n    from:\n      id: predecessor\n      repository: sdk-library\n      commit: {}\n      path: proposals/sdk.md\n      anchor: work-item/simulate-release\n      digest: sha256:{}\n    to:\n      id: dependent\n      repository: api-library\n      commit: {}\n      path: proposals/api.md\n      anchor: work-item/tests-first\n      digest: sha256:{}\n---\nDependency evidence.\n",
+                "a".repeat(40), "a".repeat(64), "b".repeat(40), "b".repeat(64)),
+        }],
+    }).expect("graph builds");
+    let dependency = index.edges.iter().find(|edge| edge.edge_type == "DEPENDS_ON")
+        .expect("typed dependency indexed");
+    assert_ne!(dependency.source_id, dependency.target_id);
+    assert_eq!(dependency.data["link"]["from"]["anchor"], "work-item/simulate-release");
+    assert_eq!(dependency.data["link"]["to"]["anchor"], "work-item/tests-first");
+    assert_eq!(dependency.data["ownerPath"], "notes/dependency.md");
+}
+
+#[test]
 fn indexes_direct_and_inherited_group_membership_at_the_commit() {
     let index = build_graph_index(GraphIndexInput {
         repo_id: "repo_groups".to_string(),

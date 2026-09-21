@@ -6,15 +6,24 @@ defmodule TreeDx.Graph.Filter do
   def authorize(index, scope, params) do
     allow_protected = params["allowProtected"] in [true, "true", "1", 1]
 
+    allowed_files =
+      index["nodes"]
+      |> Enum.filter(fn node -> is_binary(node["path"]) and allowed_node?(node, scope, allow_protected) end)
+      |> MapSet.new(& &1["id"])
+
     allowed_ids =
       index["nodes"]
-      |> Enum.filter(&allowed_node?(&1, scope, allow_protected))
+      |> Enum.filter(fn node ->
+        allowed_node?(node, scope, allow_protected) and
+          (is_nil(node["ownerFileId"]) or MapSet.member?(allowed_files, node["ownerFileId"]))
+      end)
       |> MapSet.new(& &1["id"])
 
     edges =
       Enum.filter(index["edges"], fn edge ->
         MapSet.member?(allowed_ids, edge["sourceId"]) and
-          MapSet.member?(allowed_ids, edge["targetId"])
+          MapSet.member?(allowed_ids, edge["targetId"]) and
+          (is_nil(edge["ownerFileId"]) or MapSet.member?(allowed_files, edge["ownerFileId"]))
       end)
 
     connected_ids =
