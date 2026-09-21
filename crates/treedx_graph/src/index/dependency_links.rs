@@ -20,18 +20,26 @@ pub(super) fn append_typed_dependency_links(
         }
         let ends = [link.get("from"), link.get("to")];
         if ends.iter().any(|end| {
-            let Some(end) = end else { return true; };
+            let Some(end) = end else {
+                return true;
+            };
             ["repository", "commit", "path", "anchor", "digest", "id"]
                 .iter()
-                .any(|key| end.get(*key).and_then(Value::as_str).is_none_or(str::is_empty))
+                .any(|key| {
+                    end.get(*key)
+                        .and_then(Value::as_str)
+                        .is_none_or(str::is_empty)
+                })
         }) {
-            diagnostics.warnings.push(format!("Invalid depends_on link in {path}"));
+            diagnostics
+                .warnings
+                .push(format!("Invalid depends_on link in {path}"));
             continue;
         }
         let mut ids = Vec::new();
         for end in ends.into_iter().flatten() {
             let encoded = serde_json::to_string(end).unwrap_or_default();
-            let id = reference_id(&encoded);
+            let id = reference_id(&format!("{file_id}:{encoded}"));
             nodes.push(GraphNode {
                 id: id.clone(),
                 node_type: "Reference".to_string(),

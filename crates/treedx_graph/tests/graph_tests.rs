@@ -90,11 +90,20 @@ fn indexes_exact_directional_dependency_links_without_changing_proposals() {
                 "a".repeat(40), "a".repeat(64), "b".repeat(40), "b".repeat(64)),
         }],
     }).expect("graph builds");
-    let dependency = index.edges.iter().find(|edge| edge.edge_type == "DEPENDS_ON")
+    let dependency = index
+        .edges
+        .iter()
+        .find(|edge| edge.edge_type == "DEPENDS_ON")
         .expect("typed dependency indexed");
     assert_ne!(dependency.source_id, dependency.target_id);
-    assert_eq!(dependency.data["link"]["from"]["anchor"], "work-item/simulate-release");
-    assert_eq!(dependency.data["link"]["to"]["anchor"], "work-item/tests-first");
+    assert_eq!(
+        dependency.data["link"]["from"]["anchor"],
+        "work-item/simulate-release"
+    );
+    assert_eq!(
+        dependency.data["link"]["to"]["anchor"],
+        "work-item/tests-first"
+    );
     assert_eq!(dependency.data["ownerPath"], "notes/dependency.md");
 }
 
