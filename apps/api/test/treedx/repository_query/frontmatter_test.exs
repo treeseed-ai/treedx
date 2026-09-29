@@ -20,6 +20,7 @@ defmodule TreeDx.RepositoryQuery.FrontmatterTest do
   test "preserves a long Unicode estimate rationale as a string" do
     rationale =
       String.duplicate("The engineer’s estimate includes reasoning and verification. ", 20)
+      |> String.trim_trailing()
 
     document =
       Frontmatter.parse(
