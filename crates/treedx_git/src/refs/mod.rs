@@ -1,30 +1,36 @@
 use crate::error::GitError;
-use crate::repo::git_dir;
 use crate::types::{GitRefSummary, ResolvedRef};
 use std::path::Path;
 
 pub fn list_refs(path: &Path) -> Result<Vec<GitRefSummary>, GitError> {
-    let git_dir = git_dir(path);
+    let repo = gix::open(path).map_err(|err| GitError::Git(err.to_string()))?;
+    let references = repo
+        .references()
+        .map_err(|err| GitError::Git(err.to_string()))?;
     let mut refs = Vec::new();
-    collect_refs(
-        &git_dir.join("refs/heads"),
-        "refs/heads",
-        "branch",
-        &mut refs,
-    )?;
-    collect_refs(
-        &git_dir.join("refs/remotes"),
-        "refs/remotes",
-        "remote",
-        &mut refs,
-    )?;
-    collect_refs(&git_dir.join("refs/tags"), "refs/tags", "tag", &mut refs)?;
-    collect_refs(
-        &git_dir.join("refs/treedx/commits"),
-        "refs/treedx/commits",
-        "preserved_commit",
-        &mut refs,
-    )?;
+    for item in references
+        .all()
+        .map_err(|err| GitError::Git(err.to_string()))?
+    {
+        let reference = item.map_err(|err| GitError::Git(err.to_string()))?;
+        let name = reference.name().to_string();
+        let kind = if name.starts_with("refs/heads/") {
+            "branch"
+        } else if name.starts_with("refs/remotes/") {
+            "remote"
+        } else if name.starts_with("refs/tags/") {
+            "tag"
+        } else if name.starts_with("refs/treedx/commits/") {
+            "preserved_commit"
+        } else {
+            continue;
+        };
+        refs.push(GitRefSummary {
+            name,
+            target: reference.try_id().map(|id| id.to_string()),
+            kind: kind.to_string(),
+        });
+    }
     refs.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(refs)
 }
@@ -55,34 +61,4 @@ pub fn resolve_ref(path: &Path, ref_name: &str) -> Result<ResolvedRef, GitError>
         target: peeled.id.to_string(),
         kind: "commit".to_string(),
     })
-}
-
-fn collect_refs(
-    dir: &Path,
-    prefix: &str,
-    kind: &str,
-    refs: &mut Vec<GitRefSummary>,
-) -> Result<(), GitError> {
-    if !dir.exists() {
-        return Ok(());
-    }
-    for entry in std::fs::read_dir(dir)? {
-        let entry = entry?;
-        let path = entry.path();
-        if path.is_dir() {
-            let name = entry.file_name().to_string_lossy().to_string();
-            collect_refs(&path, &format!("{prefix}/{name}"), kind, refs)?;
-        } else if path.is_file() {
-            let name = entry.file_name().to_string_lossy().to_string();
-            let target = std::fs::read_to_string(&path)
-                .ok()
-                .map(|value| value.trim().to_string());
-            refs.push(GitRefSummary {
-                name: format!("{prefix}/{name}"),
-                target,
-                kind: kind.to_string(),
-            });
-        }
-    }
-    Ok(())
 }

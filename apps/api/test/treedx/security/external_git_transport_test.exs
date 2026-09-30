@@ -112,4 +112,20 @@ defmodule TreeDx.ExternalGitTransportTest do
 
     assert result["status"] == "plan"
   end
+
+  test "classifies GitHub refusals without forwarding remote output" do
+    for {output, expected} <- [
+          {"remote: error: GH013: Repository rule violations found for refs/heads/staging",
+           "git_protected_ref"},
+          {"fatal: unable to access URL: The requested URL returned error: 403",
+           "git_permission_denied"},
+          {"! [rejected] staging -> staging (non-fast-forward)", "git_non_fast_forward"},
+          {"error: failed to push some refs", "git_remote_rejected"}
+        ] do
+      result = TreeDx.Git.ExternalTransport.classify_git_failure(output, 1, "push")
+      assert result.code == expected
+      refute inspect(result) =~ output
+      assert result.gitExitStatus == 1
+    end
+  end
 end
