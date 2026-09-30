@@ -61,7 +61,6 @@ defmodule TreeDx.Git.ExternalTransport do
                input.repoPath,
                [
                  "push",
-                 "--force-with-lease=#{destination}:#{expected || ""}",
                  input.remoteUrl,
                  "#{source}:#{destination}"
                ],
@@ -297,7 +296,7 @@ defmodule TreeDx.Git.ExternalTransport do
         {:ok, output}
 
       {:ok, {output, status}} ->
-        {:error, classify_git_failure(output, status)}
+        {:error, classify_git_failure(output, status, hd(args))}
 
       _ ->
         {:error, %{code: "git_timeout", message: "Git external transport timed out."}}
@@ -310,7 +309,8 @@ defmodule TreeDx.Git.ExternalTransport do
   # Git output can contain repository identities and implementation details, so
   # never return it. Preserve a bounded category and exit status instead; this
   # keeps operator diagnostics useful without risking credential disclosure.
-  defp classify_git_failure(output, status) do
+  def classify_git_failure(output, status, action)
+      when action in ["fetch", "push", "ls-remote", "rev-parse"] do
     normalized = String.downcase(output || "")
 
     {code, message} =
@@ -321,6 +321,27 @@ defmodule TreeDx.Git.ExternalTransport do
           "invalid username or password"
         ]) ->
           {"git_authentication_failed", "Git rejected the transient repository credential."}
+
+        String.contains?(normalized, [
+          "gh006",
+          "gh013",
+          "protected branch",
+          "repository rule violation"
+        ]) ->
+          {"git_protected_ref", "The remote repository rejected an update to a protected ref."}
+
+        String.contains?(normalized, ["non-fast-forward", "fetch first", "stale info"]) ->
+          {"git_non_fast_forward", "The remote ref moved before the guarded Git update."}
+
+        String.contains?(normalized, [
+          "http 403",
+          "error: 403",
+          "requested url returned error: 403",
+          "permission to",
+          "write access to repository not granted"
+        ]) ->
+          {"git_permission_denied",
+           "The repository credential lacks authority for this Git operation."}
 
         String.contains?(normalized, ["repository not found", "not found"]) ->
           {"git_repository_unavailable",
@@ -343,12 +364,25 @@ defmodule TreeDx.Git.ExternalTransport do
           "could not resolve host",
           "failed to connect",
           "connection timed out",
-          "network is unreachable"
+          "network is unreachable",
+          "remote end hung up unexpectedly",
+          "broken pipe"
         ]) ->
           {"git_network_failed", "Git could not reach the remote repository host."}
 
+        String.contains?(normalized, ["remote rejected", "failed to push some refs"]) ->
+          {"git_remote_rejected", "The remote repository rejected the Git update."}
+
+        String.contains?(normalized, [
+          "not a git repository",
+          "bad object",
+          "not a valid object name"
+        ]) ->
+          {"git_local_repository_invalid",
+           "The managed Git repository lacks the requested object or ref."}
+
         true ->
-          {"git_error", "Git external transport failed."}
+          {"git_error", "Git external #{action} failed."}
       end
 
     %{code: code, message: message, gitExitStatus: status}

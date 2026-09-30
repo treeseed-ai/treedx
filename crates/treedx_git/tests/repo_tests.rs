@@ -110,6 +110,29 @@ fn refs_remotes_tree_and_blob_can_be_read() {
 }
 
 #[test]
+fn packed_publication_refs_remain_visible() {
+    let dir = tempdir().unwrap();
+    git(dir.path(), &["init", "-b", "main"]);
+    git(dir.path(), &["config", "user.name", "TreeDX Test"]);
+    git(
+        dir.path(),
+        &["config", "user.email", "test@example.invalid"],
+    );
+    std::fs::write(dir.path().join("README.md"), "publication").unwrap();
+    git(dir.path(), &["add", "README.md"]);
+    git(dir.path(), &["commit", "-m", "publication"]);
+    let sha = git_stdout(dir.path(), &["rev-parse", "HEAD"]);
+    let incoming = format!("refs/heads/treedx/incoming/{sha}");
+    git(dir.path(), &["update-ref", &incoming, &sha]);
+    git(dir.path(), &["pack-refs", "--all"]);
+
+    assert!(list_refs(dir.path())
+        .unwrap()
+        .iter()
+        .any(|entry| { entry.name == incoming && entry.target.as_deref() == Some(sha.as_str()) }));
+}
+
+#[test]
 fn blob_read_is_binary_safe() {
     let dir = tempdir().unwrap();
     git(dir.path(), &["init", "-b", "main"]);
