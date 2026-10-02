@@ -91,7 +91,7 @@ impl ReqwestTransport {
         };
         let mut url = Url::parse(&format!("{base}{path}"))
             .map_err(|error| TreeDxApiError::network(format!("invalid TreeDX URL: {error}")))?;
-        {
+        if !request.query.is_empty() {
             let mut pairs = url.query_pairs_mut();
             for (key, value) in &request.query {
                 pairs.append_pair(key, value);
@@ -196,5 +196,50 @@ impl Transport for ReqwestTransport {
             headers,
             data,
         })
+    }
+}
+
+#[cfg(test)]
+mod url_contract {
+    use super::*;
+
+    #[test]
+    fn empty_query_preserves_the_exact_endpoint() {
+        let transport = ReqwestTransport::new(TreeDxConfig {
+            base_url: "http://127.0.0.1:4000".to_string(),
+            ..Default::default()
+        });
+        let request = TreeDxRequest::new(TreeDxHttpMethod::Get, "/api/v1/health");
+        assert_eq!(
+            transport.url_for(&request).unwrap().as_str(),
+            "http://127.0.0.1:4000/api/v1/health"
+        );
+    }
+
+    #[test]
+    fn query_values_preserve_order_and_encoding() {
+        let transport = ReqwestTransport::new(TreeDxConfig {
+            base_url: "http://127.0.0.1:4000/".to_string(),
+            ..Default::default()
+        });
+        let mut request = TreeDxRequest::new(TreeDxHttpMethod::Get, "api/v1/health");
+        request.query.insert("a".to_string(), "a+b c&d".to_string());
+        request.query.insert("z".to_string(), "1".to_string());
+        assert_eq!(
+            transport.url_for(&request).unwrap().as_str(),
+            "http://127.0.0.1:4000/api/v1/health?a=a%2Bb+c%26d&z=1"
+        );
+    }
+
+    #[test]
+    fn invalid_base_remains_a_network_error() {
+        let transport = ReqwestTransport::new(TreeDxConfig {
+            base_url: "invalid".to_string(),
+            ..Default::default()
+        });
+        let request = TreeDxRequest::new(TreeDxHttpMethod::Get, "/api/v1/health");
+        let error = transport.url_for(&request).unwrap_err();
+        assert_eq!(error.status, 0);
+        assert_eq!(error.code, "network_error");
     }
 }
