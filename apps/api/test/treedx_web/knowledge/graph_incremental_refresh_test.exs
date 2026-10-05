@@ -110,6 +110,140 @@ defmodule TreeDxWeb.GraphIncrementalRefreshTest do
     assert refresh["stale"] == true
   end
 
+  test "job reader authorizes its stored ref rather than a caller ref or repository default", %{
+    repo_id: repo_id
+  } do
+    {:ok, _} =
+      TreeDx.Capabilities.put_grant(%{
+        "actorId" => "graph_job_unit_reader",
+        "tenantId" => "tenant_demo",
+        "repoIds" => ["*"],
+        "refs" => ["*"],
+        "paths" => ["docs/**"],
+        "capabilities" => ["graph:query"]
+      })
+
+    {:ok, job} =
+      TreeDx.Graph.RefreshJobs.start(
+        %{repo: %{"id" => repo_id}, ref: "refs/heads/staging"},
+        %{"paths" => ["docs/**"]},
+        "full",
+        nil,
+        false
+      )
+
+    {:ok, completed} = TreeDx.Graph.RefreshJobs.complete(job, "graph_staging", 2, 0)
+
+    principal = fn ref ->
+      %{
+        "actorId" => "graph_job_unit_reader",
+        "authMode" => "connected",
+        "tokenScope" => %{
+          "repoIds" => [repo_id],
+          "capabilities" => ["graph:query"],
+          "refs" => [ref],
+          "paths" => ["docs/**"]
+        }
+      }
+    end
+
+    staging = principal.("refs/heads/staging")
+    main = principal.("refs/heads/main")
+
+    observations =
+      for params <- [%{}, %{"ref" => "refs/heads/main"}, %{"ref" => "refs/heads/staging"}] do
+        {TreeDx.Graph.RefreshJobs.get(repo_id, job["jobId"], params, staging),
+         TreeDx.Graph.RefreshJobs.get(repo_id, job["jobId"], params, main)}
+      end
+
+    missing = TreeDx.Graph.RefreshJobs.get(repo_id, "grjob_missing", %{}, staging)
+    foreign = TreeDx.Graph.RefreshJobs.get("repo_missing", job["jobId"], %{}, staging)
+    {:ok, after_reads} = TreeDx.Store.get_graph_refresh_job(repo_id, job["jobId"])
+    assert after_reads == completed
+
+    for {allowed, denied} <- observations do
+      assert {:ok, %{job: public}} = allowed
+      assert public == TreeDx.Graph.RefreshJobs.public(completed)
+      assert {:error, %{code: "permission_denied"}} = denied
+    end
+
+    assert {:error, %{code: "not_found"}} = missing
+    assert {:error, %{code: "not_found"}} = foreign
+
+    assert {:error, %{code: "authentication_required"}} =
+             TreeDx.Graph.RefreshJobs.get(repo_id, job["jobId"], %{}, nil)
+  end
+
+  test "native graph job HTTP readback admits only the job ref and retains completed history", %{
+    token: token,
+    repo_id: repo_id,
+    repo_path: repo_path
+  } do
+    git(repo_path, ["branch", "staging"])
+
+    refresh =
+      build_conn()
+      |> auth(token)
+      |> post("/api/v1/repos/#{repo_id}/graph/refresh", %{
+        "ref" => "refs/heads/staging",
+        "paths" => ["docs/**"]
+      })
+      |> json_response(200)
+
+    {:ok, original} = TreeDx.Store.get_graph_refresh_job(repo_id, refresh["jobId"])
+
+    tokens =
+      for {actor, ref} <- [
+            {"graph_staging_reader", "refs/heads/staging"},
+            {"graph_main_reader", "refs/heads/main"}
+          ] do
+        {:ok, _} =
+          TreeDx.Capabilities.put_grant(%{
+            "actorId" => actor,
+            "tenantId" => "tenant_demo",
+            "repoIds" => [repo_id],
+            "refs" => [ref],
+            "paths" => ["docs/**"],
+            "capabilities" => ["graph:query"]
+          })
+
+        build_conn()
+        |> post("/api/v1/auth/dev-token", %{"actorId" => actor, "tenantId" => "tenant_demo"})
+        |> json_response(200)
+        |> Map.fetch!("accessToken")
+      end
+
+    [staging_token, main_token] = tokens
+    path = "/api/v1/repos/#{repo_id}/graph/refresh-jobs/#{refresh["jobId"]}"
+
+    observations =
+      for suffix <- ["", "?ref=refs%2Fheads%2Fmain", "?ref=refs%2Fheads%2Fstaging"] do
+        {build_conn() |> auth(staging_token) |> get(path <> suffix),
+         build_conn() |> auth(main_token) |> get(path <> suffix)}
+      end
+
+    missing =
+      build_conn()
+      |> auth(staging_token)
+      |> get("/api/v1/repos/#{repo_id}/graph/refresh-jobs/grjob_missing")
+
+    {:ok, after_reads} = TreeDx.Store.get_graph_refresh_job(repo_id, refresh["jobId"])
+    assert after_reads == original
+
+    for {allowed, denied} <- observations do
+      public = json_response(allowed, 200)["job"]
+      assert public["ref"] == "refs/heads/staging"
+      assert public["status"] == "completed"
+      assert public["graphVersion"] == refresh["graphVersion"]
+      assert json_response(denied, 403)["error"]["code"] == "permission_denied"
+    end
+
+    assert json_response(missing, 404)["error"]["code"] == "not_found"
+
+    assert json_response(get(build_conn(), path), 401)["error"]["code"] ==
+             "authentication_required"
+  end
+
   defp auth(conn, token), do: put_req_header(conn, "authorization", "Bearer #{token}")
 
   defp create_fixture(path) do
