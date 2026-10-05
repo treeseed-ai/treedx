@@ -156,6 +156,7 @@ jobs:
   fast:
     if: >-
       github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && github.ref != 'refs/heads/staging' && github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/'))
     runs-on: ubuntu-24.04
     name: Fast PR Gate
