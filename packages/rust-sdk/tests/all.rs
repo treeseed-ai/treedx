@@ -1,5 +1,9 @@
 #![allow(clippy::duplicate_mod)]
 
+#[path = "integration/async_transport.rs"]
+mod integration_async_transport;
+#[path = "unit/async_trait_contract.rs"]
+mod unit_async_trait_contract;
 #[path = "unit/auth.rs"]
 mod unit_auth;
 #[path = "unit/binary.rs"]
