@@ -9,7 +9,20 @@ cleanup_generated_outputs() {
   git clean -fd packages/python-sdk/dist packages/rust-sdk/target >/dev/null
 }
 
-trap cleanup_generated_outputs EXIT
+binding_file=""
+cleanup() {
+  local status=$?
+  if [[ -n "$binding_file" ]]; then
+    set -a
+    source "$binding_file"
+    set +a
+    if ! (cd packages/ts-sdk && node --import tsx scripts/native-conformance.ts stop); then status=1; fi
+    rm -f "$binding_file"
+  fi
+  cleanup_generated_outputs
+  return "$status"
+}
+trap cleanup EXIT
 
 tsx_bin() {
   local candidate="../sdk-spec/node_modules/.bin/tsx"
@@ -48,8 +61,17 @@ section "TypeScript SDK"
   npm ci
   npm run treedx:check-generated
   npm run build
-  npm test
 )
+# Own one disposable engine for all original language suites in this process.
+# Caller-provided connected credentials are never changed in the parent process.
+cargo build -p treedx_git --bin treedx_git_worker
+(cd apps/api && MIX_ENV=dev mix deps.get && MIX_ENV=dev mix compile)
+binding_file="$(mktemp)"
+(cd packages/ts-sdk && GITHUB_ENV="$binding_file" node --import tsx scripts/native-conformance.ts start)
+set -a
+source "$binding_file"
+set +a
+(cd packages/ts-sdk && npm test)
 
 section "Python SDK"
 (
