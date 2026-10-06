@@ -19,6 +19,11 @@ describe('auth helpers', () => {
     expect(fixture).toContain("refs: [ref]"); expect(fixture).toContain("capabilities: ['graph:query']");
     expect(fixture).toContain('await admin.graph.refresh('); expect(fixture).toContain('await reader.graph.refreshJob(');
     expect(fixture).toContain('Never signal an unowned process');
+    const complete = fs.readFileSync(path.join(root, 'scripts/verification/test-sdk-packages.sh'), 'utf8');
+    expect(complete).toContain('node --import tsx scripts/native-conformance.ts start');
+    expect(complete).toContain('node --import tsx scripts/native-conformance.ts stop');
+    expect(complete).toContain('trap cleanup EXIT');
+    expect(complete.indexOf('scripts/native-conformance.ts start')).toBeLessThan(complete.indexOf('npm test', complete.indexOf('section "TypeScript SDK"')));
   });
   it('returns static bearer tokens', async () => {
     await expect(Promise.resolve(new StaticBearerTokenAuthProvider('token').getToken())).resolves.toBe('token');
