@@ -55,14 +55,13 @@ defmodule TreeDx.Graph.RefreshJobs do
     TreeDx.Store.put_graph_refresh_job(record)
   end
 
-  def get(repo_id, job_id, params, principal) do
+  def get(repo_id, job_id, _params, principal) do
     with {:ok, scope} <-
            TreeDx.Capabilities.require_capability(principal, "graph:query", repo_id),
          {:ok, repo} when is_map(repo) <- TreeDx.Store.get_repository(repo_id),
-         ref <- params["ref"] || repo["defaultRef"] || "refs/heads/main",
-         :ok <- TreeDx.Capabilities.require_ref(scope, ref),
          {:ok, job} <- TreeDx.Store.get_graph_refresh_job(repo_id, job_id),
-         {:ok, job} <- require_job(job) do
+         {:ok, job} <- require_job(job),
+         :ok <- TreeDx.Capabilities.require_ref(scope, job["refName"]) do
       {:ok, %{job: public(job)}}
     else
       {:ok, nil} -> {:error, %{code: "not_found", message: "Graph refresh job not found."}}

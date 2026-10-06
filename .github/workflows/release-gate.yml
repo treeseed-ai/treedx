@@ -347,6 +347,32 @@ jobs:
         run: npm ci
         working-directory: packages/ts-sdk
 
+      - name: Setup native SDK fixture Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup native SDK fixture Elixir
+        uses: erlef/setup-beam@v1
+        env:
+          ImageOS: ubuntu24
+        with:
+          otp-version: "27"
+          elixir-version: "1.17"
+
+      - name: Build original native SDK fixture Git worker
+        run: cargo build -p treedx_git --bin treedx_git_worker
+
+      - name: Compile original native SDK fixture engine
+        env:
+          MIX_ENV: dev
+        run: |
+          mix deps.get
+          mix compile
+        working-directory: apps/api
+
+      - name: Start disposable native SDK conformance fixture
+        run: node --import tsx scripts/native-conformance.ts start
+        working-directory: packages/ts-sdk
+
       - name: Check generated OpenAPI metadata
         run: npm run treedx:check-generated
         working-directory: packages/ts-sdk
@@ -369,6 +395,11 @@ jobs:
 
       - name: Run full test suite
         run: npm test
+        working-directory: packages/ts-sdk
+
+      - name: Stop disposable native SDK conformance fixture
+        if: always()
+        run: node --import tsx scripts/native-conformance.ts stop
         working-directory: packages/ts-sdk
 
   test-python-sdk:
