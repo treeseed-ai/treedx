@@ -358,6 +358,9 @@ jobs:
           otp-version: "27"
           elixir-version: "1.17"
 
+      - name: Build original native SDK fixture Git worker
+        run: cargo build -p treedx_git --bin treedx_git_worker
+
       - name: Compile original native SDK fixture engine
         env:
           MIX_ENV: dev

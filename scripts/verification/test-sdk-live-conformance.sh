@@ -11,6 +11,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
+cargo build -p treedx_git --bin treedx_git_worker
 (cd apps/api && MIX_ENV=dev mix deps.get && MIX_ENV=dev mix compile)
 (cd packages/ts-sdk && npm ci && GITHUB_ENV="$binding_file" node --import tsx scripts/native-conformance.ts start)
 set -a

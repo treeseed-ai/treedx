@@ -9,10 +9,11 @@ describe('auth helpers', () => {
     const root = path.resolve(import.meta.dirname, '../../../..');
     const job = YAML.parse(fs.readFileSync(path.join(root, '.github/workflows/release-gate.yml'), 'utf8')).jobs['test-typescript-sdk'];
     const start = job.steps.findIndex((step: { run?: string }) => step.run === 'node --import tsx scripts/native-conformance.ts start');
+    const worker = job.steps.findIndex((step: { run?: string }) => step.run === 'cargo build -p treedx_git --bin treedx_git_worker');
     const conformance = job.steps.findIndex((step: { run?: string }) => step.run === 'npm run test:treedx-conformance');
     const full = job.steps.findIndex((step: { run?: string }) => step.run === 'npm test');
     const stop = job.steps.findIndex((step: { run?: string }) => step.run === 'node --import tsx scripts/native-conformance.ts stop');
-    expect(start).toBeGreaterThan(-1); expect(conformance).toBeGreaterThan(start); expect(full).toBeGreaterThan(conformance);
+    expect(worker).toBeGreaterThan(-1); expect(start).toBeGreaterThan(worker); expect(conformance).toBeGreaterThan(start); expect(full).toBeGreaterThan(conformance);
     expect(stop).toBeGreaterThan(full); expect(job.steps[stop].if).toBe('always()');
     const fixture = fs.readFileSync(path.join(root, 'packages/ts-sdk/scripts/native-conformance.ts'), 'utf8');
     expect(fixture).toContain("refs: [ref]"); expect(fixture).toContain("capabilities: ['graph:query']");
