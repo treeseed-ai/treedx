@@ -14,7 +14,7 @@ function loadScenarios(): TreeDxConformanceScenario[] {
 
 describe('TreeDxConformanceAdapter', () => {
   it('graph.refresh_job_node reads the exact completed native job with bounded nondefault ref authority and immutable replay', async () => {
-    const baseUrl = process.env.TREEDX_BASE_URL, token = process.env.TREEDX_TOKEN;
+    const baseUrl = process.env.TREEDX_BASE_URL, token = process.env.TREEDX_CONFORMANCE_JOB_TOKEN;
     const repoId = process.env.TREEDX_CONFORMANCE_REPO_ID, jobId = process.env.TREEDX_CONFORMANCE_JOB_ID;
     const ref = process.env.TREEDX_CONFORMANCE_REF;
     expect(baseUrl, 'Native TreeDX binding is required').toBeTruthy();
