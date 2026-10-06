@@ -1,0 +1,483 @@
+defmodule TreeDx.RepositoryQuery do
+  @moduledoc false
+
+  alias TreeDx.Files.PathPolicy
+
+  alias TreeDx.RepositoryQuery.{
+    Context,
+    ContentPaths,
+    Filters,
+    Links,
+    Pagination,
+    PathMatch,
+    SearchResults,
+    Sections,
+    Sort
+  }
+
+  alias TreeDx.Search.Ranking
+
+  @default_query_limit 20
+  @max_query_limit 50
+  @default_path_limit 100
+  @max_path_limit 500
+
+  def read(repo_id, params, principal) do
+    do_read(repo_id, params, principal)
+  end
+
+  defp do_read(repo_id, params, principal) do
+    with {:ok, ctx} <- context(repo_id, params, principal, "files:read"),
+         {:ok, requested_paths} <- read_paths(params),
+         {:ok, paths} <- ContentPaths.resolve(ctx, requested_paths),
+         source_paths = Enum.map(paths, & &1.source),
+         :ok <- authorize_direct_paths(ctx.scope, source_paths),
+         :ok <- authorize_protected_direct(source_paths, truthy?(params["allowProtected"])),
+         {:ok, files} <- ContentPaths.read(ctx, paths, params) do
+      audit("repo.files_read", ctx, %{
+        paths: requested_paths,
+        sourcePaths: source_paths,
+        resultCount: length(files)
+      })
+
+      response = base_response(ctx)
+
+      {:ok,
+       if(Map.has_key?(params, "paths"),
+         do: Map.put(response, :files, files),
+         else: Map.put(response, :file, List.first(files))
+       )}
+    end
+  end
+
+  def paths(repo_id, params, principal) do
+    do_paths(repo_id, params, principal)
+  end
+
+  defp do_paths(repo_id, params, principal) do
+    with {:ok, ctx} <- context(repo_id, params, principal, "files:read"),
+         {:ok, patterns} <- PathMatch.normalize_patterns(params["paths"]),
+         {:ok, entries} <- filtered_entries(ctx, patterns, params),
+         {:ok, entries} <- filter_kinds(entries, params["kinds"]),
+         entries <- filter_extensions(entries, params["extensions"]),
+         {page_entries, page} <-
+           Pagination.paginate(
+             entries,
+             params["limit"],
+             params["cursor"],
+             @default_path_limit,
+             @max_path_limit
+           ) do
+      audit("repo.paths_listed", ctx, %{
+        paths: patterns,
+        resultCount: length(page_entries)
+      })
+
+      {:ok,
+       base_response(ctx)
+       |> Map.merge(%{entries: Enum.map(page_entries, &path_entry/1), page: page})}
+    end
+  end
+
+  def search(repo_id, params, principal) do
+    do_search(repo_id, params, principal)
+  end
+
+  defp do_search(repo_id, params, principal) do
+    with {:ok, ctx} <- context(repo_id, params, principal, "files:search"),
+         :ok <- validate_query(params["query"], false),
+         {:ok, patterns} <- PathMatch.normalize_patterns(params["paths"]),
+         {:ok, documents} <- searchable_documents(ctx, patterns, params),
+         {:ok, filtered} <- Filters.apply(documents, params["filters"] || []),
+         results <- text_results(filtered, params),
+         {:ok, sorted} <-
+           Sort.apply(results, params["sort"] || [%{"field" => "score", "direction" => "desc"}]),
+         {page_results, page} <-
+           Pagination.paginate(
+             sorted,
+             params["limit"],
+             params["cursor"],
+             @default_query_limit,
+             @max_query_limit
+           ) do
+      audit("repo.files_searched", ctx, %{paths: patterns, resultCount: length(page_results)})
+
+      response =
+        base_response(ctx)
+        |> Map.merge(%{
+          query: params["query"],
+          results: Enum.map(page_results, &SearchResults.project(&1, params)),
+          page: page
+        })
+        |> Ranking.maybe_put_diagnostics(
+          results,
+          page_results,
+          params,
+          patterns,
+          Ranking.include?(params)
+        )
+
+      {:ok, response}
+    end
+  end
+
+  def query(repo_id, params, principal) do
+    do_query(repo_id, params, principal)
+  end
+
+  defp do_query(repo_id, params, principal) do
+    params =
+      if params["type"] do
+        params
+      else
+        params
+        |> Map.put("type", "path")
+        |> Map.put_new("paths", params["query"])
+        |> Map.delete("query")
+      end
+
+    type = params["type"]
+    capability = query_capability(type)
+
+    with {:ok, ctx} <- context(repo_id, params, principal, capability),
+         {:ok, result} <- execute_query(type, ctx, params) do
+      audit("repo.query_executed", ctx, %{
+        paths: params["paths"] || ["**"],
+        queryType: type,
+        resultCount: length(Map.get(result, :results, []))
+      })
+
+      {:ok, result}
+    end
+  end
+
+  defp execute_query("path", ctx, params), do: path_query(ctx, params)
+  defp execute_query("text", ctx, params), do: search_query(ctx, params)
+  defp execute_query("frontmatter", ctx, params), do: frontmatter_query(ctx, params)
+  defp execute_query("section", ctx, params), do: section_query(ctx, params)
+  defp execute_query("link", ctx, params), do: link_query(ctx, params)
+  defp execute_query("changed_path", ctx, params), do: changed_path_query(ctx, params)
+  defp execute_query("combined", ctx, params), do: combined_query(ctx, params)
+
+  defp execute_query(_type, _ctx, _params),
+    do: {:error, %{code: "validation_error", message: "query type is not supported."}}
+
+  defp path_query(ctx, params) do
+    with {:ok, patterns} <- PathMatch.normalize_patterns(params["paths"]),
+         {:ok, entries} <- filtered_entries(ctx, patterns, params),
+         {:ok, selected} <- ContentPaths.select(patterns, Map.new(entries, &{&1["path"], true})),
+         entries <- Enum.filter(entries, &(&1["path"] in selected)),
+         entries <- filter_extensions(entries, params["extensions"]),
+         entries <- filter_path_query(entries, params["query"]),
+         {page_entries, page} <-
+           Pagination.paginate(
+             entries,
+             params["limit"],
+             params["cursor"],
+             @default_query_limit,
+             @max_query_limit
+           ) do
+      {:ok,
+       base_response(ctx)
+       |> Map.merge(%{
+         type: "path",
+         results: Enum.map(page_entries, &Map.put(path_entry(&1), :kind, "path")),
+         page: page
+       })}
+    end
+  end
+
+  defp search_query(ctx, params) do
+    with {:ok, response} <-
+           do_search(ctx.repo["id"], Map.put(params, "__ctx", ctx), ctx.principal) do
+      {:ok, response |> Map.put(:type, "text")}
+    end
+  end
+
+  defp frontmatter_query(ctx, params) do
+    with {:ok, patterns} <- PathMatch.normalize_patterns(params["paths"]),
+         {:ok, documents} <- searchable_documents(ctx, patterns, params),
+         {:ok, filtered} <- Filters.apply(documents, params["filters"] || []),
+         {:ok, sorted} <- Sort.apply(filtered, params["sort"] || []),
+         {page_docs, page} <-
+           Pagination.paginate(
+             sorted,
+             params["limit"],
+             params["cursor"],
+             @default_query_limit,
+             @max_query_limit
+           ) do
+      {:ok,
+       base_response(ctx)
+       |> Map.merge(%{
+         type: "frontmatter",
+         results:
+           Enum.map(
+             page_docs,
+             &Map.take(&1, ["path", "name", "extension", "objectId", "frontmatter"])
+           ),
+         page: page
+       })}
+    end
+  end
+
+  defp section_query(ctx, params) do
+    with {:ok, patterns} <- PathMatch.normalize_patterns(params["paths"]),
+         {:ok, documents} <- searchable_documents(ctx, patterns, params),
+         sections <- Enum.flat_map(documents, &Sections.extract/1),
+         sections <- filter_textish(sections, params["query"], "heading"),
+         {page_sections, page} <-
+           Pagination.paginate(
+             sections,
+             params["limit"],
+             params["cursor"],
+             @default_query_limit,
+             @max_query_limit
+           ) do
+      {:ok,
+       base_response(ctx) |> Map.merge(%{type: "section", results: page_sections, page: page})}
+    end
+  end
+
+  defp link_query(ctx, params) do
+    with {:ok, patterns} <- PathMatch.normalize_patterns(params["paths"]),
+         {:ok, documents} <- searchable_documents(ctx, patterns, params),
+         links <- Enum.flat_map(documents, &Links.extract/1),
+         links <- filter_textish(links, params["query"], "target"),
+         {page_links, page} <-
+           Pagination.paginate(
+             links,
+             params["limit"],
+             params["cursor"],
+             @default_query_limit,
+             @max_query_limit
+           ) do
+      {:ok, base_response(ctx) |> Map.merge(%{type: "link", results: page_links, page: page})}
+    end
+  end
+
+  defp changed_path_query(ctx, params) do
+    base_ref = params["baseRef"]
+
+    with true <- is_binary(base_ref) and base_ref != "",
+         {:ok, _scope} <-
+           TreeDx.Capabilities.require_capability(ctx.principal, "files:read", ctx.repo["id"]),
+         :ok <- TreeDx.Capabilities.require_ref(ctx.scope, base_ref),
+         {:ok, patterns} <- PathMatch.normalize_patterns(params["paths"]),
+         {:ok, changes} <-
+           TreeDx.Git.changed_paths(TreeDx.RepositoryStorage.path!(ctx.repo), base_ref, ctx.ref),
+         changes <- filter_changed_paths(changes, ctx.scope, patterns, params),
+         {page_changes, page} <-
+           Pagination.paginate(
+             changes,
+             params["limit"],
+             params["cursor"],
+             @default_query_limit,
+             @max_query_limit
+           ) do
+      {:ok,
+       base_response(ctx)
+       |> Map.merge(%{type: "changed_path", baseRef: base_ref, results: page_changes, page: page})}
+    else
+      false -> {:error, %{code: "validation_error", message: "baseRef is required."}}
+      other -> other
+    end
+  end
+
+  defp combined_query(ctx, params) do
+    with {:ok, text} <- search_query(ctx, params),
+         {:ok, sections} <- section_query(ctx, params) do
+      results =
+        Enum.map(text.results, &Map.put(&1, :kind, "text")) ++
+          Enum.map(sections.results, &Map.put(&1, "kind", "section"))
+
+      {page_results, page} =
+        Pagination.paginate(
+          results,
+          params["limit"],
+          params["cursor"],
+          @default_query_limit,
+          @max_query_limit
+        )
+
+      {:ok,
+       base_response(ctx) |> Map.merge(%{type: "combined", results: page_results, page: page})}
+    end
+  end
+
+  def context(repo_id, params, principal, capability),
+    do: Context.resolve(repo_id, params, principal, capability)
+
+  defp query_capability("text"), do: "files:search"
+  defp query_capability("combined"), do: "files:search"
+  defp query_capability("changed_path"), do: "git:diff"
+  defp query_capability(_), do: "files:read"
+
+  defp read_paths(%{"paths" => paths}) when is_list(paths) do
+    paths
+    |> Enum.reduce_while({:ok, []}, fn path, {:ok, acc} ->
+      case PathPolicy.normalize(path) do
+        {:ok, path} -> {:cont, {:ok, [path | acc]}}
+        {:error, error} -> {:halt, {:error, error}}
+      end
+    end)
+    |> case do
+      {:ok, paths} -> {:ok, Enum.reverse(paths)}
+      other -> other
+    end
+  end
+
+  defp read_paths(%{"path" => path}),
+    do:
+      PathPolicy.normalize(path)
+      |> then(fn
+        {:ok, path} -> {:ok, [path]}
+        other -> other
+      end)
+
+  defp read_paths(_),
+    do: {:error, %{code: "validation_error", message: "path or paths is required."}}
+
+  defp authorize_direct_paths(scope, paths), do: TreeDx.Capabilities.require_paths(scope, paths)
+
+  defp authorize_protected_direct(paths, allow_protected) do
+    if !allow_protected and Enum.any?(paths, &PathPolicy.protected?/1) do
+      {:error,
+       %{code: "permission_denied", message: "Permission denied.", details: %{protected: true}}}
+    else
+      :ok
+    end
+  end
+
+  defp filtered_entries(ctx, patterns, params) do
+    with {:ok, entries} <- TreeDx.RepositoryCache.tree_entries(ctx) do
+      allow_protected = truthy?(params["allowProtected"])
+
+      entries =
+        entries
+        |> Enum.filter(&entry_allowed?(&1, ctx.scope, patterns, allow_protected))
+        |> Enum.sort_by(& &1["path"])
+
+      {:ok, entries}
+    end
+  end
+
+  defp entry_allowed?(entry, scope, patterns, allow_protected) do
+    path = entry["path"]
+
+    Enum.any?(patterns, &ContentPaths.matches?(&1, path)) and
+      (allow_protected or !PathPolicy.protected?(path)) and
+      match?(
+        :ok,
+        TreeDx.Capabilities.require_paths(scope, [path])
+      )
+  end
+
+  defp searchable_documents(ctx, patterns, params) do
+    with {:ok, documents} <- TreeDx.RepositoryCache.searchable_documents(ctx) do
+      allow_protected = truthy?(params["allowProtected"])
+
+      {:ok,
+       Enum.filter(documents, fn doc ->
+         entry_allowed?(%{"path" => doc["path"]}, ctx.scope, patterns, allow_protected)
+       end)}
+    end
+  end
+
+  defp text_results(documents, params) do
+    SearchResults.score(documents, params)
+  end
+
+  defp filter_kinds(entries, nil), do: {:ok, entries}
+  defp filter_kinds(entries, []), do: {:ok, entries}
+
+  defp filter_kinds(entries, kinds) when is_list(kinds) do
+    if Enum.all?(kinds, &(&1 in ["blob", "tree"])) do
+      {:ok, Enum.filter(entries, &(&1["kind"] in kinds))}
+    else
+      {:error, %{code: "validation_error", message: "kinds are invalid."}}
+    end
+  end
+
+  defp filter_kinds(_entries, _),
+    do: {:error, %{code: "validation_error", message: "kinds must be a list."}}
+
+  defp filter_extensions(entries, nil), do: entries
+  defp filter_extensions(entries, []), do: entries
+
+  defp filter_extensions(entries, extensions) when is_list(extensions) do
+    Enum.filter(entries, &(Path.extname(&1["path"]) in extensions))
+  end
+
+  defp filter_extensions(entries, _), do: entries
+
+  defp filter_path_query(entries, nil), do: entries
+  defp filter_path_query(entries, ""), do: entries
+
+  defp filter_path_query(entries, query) do
+    needle = String.downcase(to_string(query))
+    Enum.filter(entries, &(String.downcase(&1["path"]) |> String.contains?(needle)))
+  end
+
+  defp filter_textish(items, nil, _field), do: items
+  defp filter_textish(items, "", _field), do: items
+
+  defp filter_textish(items, query, field) do
+    needle = String.downcase(query)
+    Enum.filter(items, &(String.downcase(to_string(&1[field] || "")) |> String.contains?(needle)))
+  end
+
+  defp filter_changed_paths(changes, scope, patterns, params) do
+    allow_protected = truthy?(params["allowProtected"])
+
+    changes
+    |> Enum.filter(&entry_allowed?(&1, scope, patterns, allow_protected))
+    |> Enum.map(fn change ->
+      %{
+        kind: "changed_path",
+        path: change["path"],
+        status: change["status"],
+        baseObjectId: change["baseObjectId"],
+        objectId: change["objectId"]
+      }
+    end)
+  end
+
+  defp path_entry(entry) do
+    %{
+      path: entry["path"],
+      name: Path.basename(entry["path"]),
+      kind: entry["kind"],
+      extension: Path.extname(entry["path"]),
+      objectId: entry["objectId"],
+      mode: entry["mode"],
+      size: entry["size"]
+    }
+  end
+
+  defp validate_query(nil, true), do: :ok
+  defp validate_query("", true), do: :ok
+
+  defp validate_query(query, _optional) when is_binary(query) do
+    if String.length(query) <= 200,
+      do: :ok,
+      else: {:error, %{code: "validation_error", message: "query is too long."}}
+  end
+
+  defp validate_query(_query, _optional),
+    do: {:error, %{code: "validation_error", message: "query is required."}}
+
+  defp base_response(ctx),
+    do: %{repoId: ctx.repo["id"], ref: ctx.ref, resolvedRef: ctx.resolved_ref}
+
+  defp audit(event_type, ctx, data) do
+    TreeDx.Audit.append(event_type, %{
+      actor_id: ctx.principal["actorId"],
+      tenant_id: ctx.principal["tenantId"],
+      repo_id: ctx.repo["id"],
+      data: Map.merge(%{ref: ctx.ref, resolvedRef: ctx.resolved_ref}, data)
+    })
+  end
+
+  defp truthy?(value), do: value in [true, "true", "1", 1]
+end

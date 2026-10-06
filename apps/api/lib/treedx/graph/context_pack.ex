@@ -1,11 +1,11 @@
 defmodule TreeDx.Graph.ContextPack do
   @moduledoc false
 
-  alias TreeDx.Graph.Native
+  alias TreeDx.Graph.{Builder, Native}
 
   def build(repo_id, params, principal) do
     with {:ok, ctx} <- TreeDx.Graph.Auth.context(repo_id, params, principal, "graph:query"),
-         {:ok, index} <- TreeDx.Graph.load_authorized_index(ctx, params),
+         {:ok, index, graph_source} <- load_or_build_authorized_index(ctx, params),
          {:ok, pack} <-
            Native.build_context_pack(index, %{
              graphQuery: TreeDx.Graph.query_request(params),
@@ -24,6 +24,7 @@ defmodule TreeDx.Graph.ContextPack do
       diagnostics =
         Map.merge(pack["diagnostics"] || %{}, %{
           "mode" => context_mode(params),
+          "graphSource" => graph_source,
           "budget" => budget_diagnostics(params, pack),
           "provenancePaths" => pack["includedPaths"] || [],
           "effectiveScope" => %{
@@ -38,6 +39,34 @@ defmodule TreeDx.Graph.ContextPack do
        |> Map.merge(Map.delete(pack, "diagnostics"))
        |> Map.put(:mode, context_mode(params))
        |> Map.put(:diagnostics, diagnostics)}
+    end
+  end
+
+  # Exact immutable commits are valid query authorities even when no persisted graph
+  # generation has been published for that spelling of the ref. Build a bounded,
+  # authorization-filtered transient index instead of rejecting the context request.
+  # The transient index is deliberately not published as the repository's shared graph:
+  # a caller's path scope may be narrower than another caller's scope.
+  defp load_or_build_authorized_index(ctx, params) do
+    case TreeDx.Graph.load_authorized_index(ctx, params) do
+      {:ok, index} ->
+        {:ok, index, "indexed"}
+
+      {:error, %{code: "graph_not_ready"}} ->
+        build_transient_authorized_index(ctx, params)
+
+      {:error, %{"code" => "graph_not_ready"}} ->
+        build_transient_authorized_index(ctx, params)
+
+      other ->
+        other
+    end
+  end
+
+  defp build_transient_authorized_index(ctx, params) do
+    with {:ok, input} <- Builder.build_input(ctx, params, nil),
+         {:ok, index} <- Native.build_graph_index(input) do
+      {:ok, index, "on-demand"}
     end
   end
 

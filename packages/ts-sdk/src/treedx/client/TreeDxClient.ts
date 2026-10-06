@@ -84,6 +84,11 @@ export class TreeDxClient {
       body?: unknown;
       binaryBody?: BinaryBody;
       headers?: Record<string, string>;
+      signal?: AbortSignal;
+      timeoutMs?: number;
+      requestId?: string;
+      traceparent?: string;
+      idempotencyKey?: string;
     } = {}
   ): Promise<T> {
     if (!TREEDX_OPENAPI_OPERATIONS.some((operation) => operation.method === method && operation.path === path)) {
@@ -96,6 +101,18 @@ export class TreeDxClient {
       }
       return encodeURIComponent(String(value));
     });
-    return this.transport.request<T>({ method, path: resolvedPath, query: options.query, body: options.body, binaryBody: options.binaryBody, headers: options.headers }).then((response) => response.data);
+    return this.transport.request<T>({
+      method,
+      path: resolvedPath,
+      query: options.query,
+      body: options.body,
+      binaryBody: options.binaryBody,
+      headers: options.headers,
+      signal: options.signal,
+      timeoutMs: options.timeoutMs,
+      requestId: options.requestId,
+      traceparent: options.traceparent,
+      idempotencyKey: options.idempotencyKey
+    }).then((response) => response.data);
   }
 }

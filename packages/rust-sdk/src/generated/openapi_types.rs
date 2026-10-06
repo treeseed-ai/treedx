@@ -6,9 +6,13 @@ pub struct TreeDxOpenApiOperation {
     pub path: &'static str,
 }
 
-pub const TREEDX_OPENAPI_OPERATION_COUNT: usize = 113;
+pub const TREEDX_OPENAPI_OPERATION_COUNT: usize = 120;
 
 pub const TREEDX_OPENAPI_OPERATIONS: &[TreeDxOpenApiOperation] = &[
+    TreeDxOpenApiOperation {
+        method: "DELETE",
+        path: "/api/v1/repos/{repo_id}",
+    },
     TreeDxOpenApiOperation {
         method: "DELETE",
         path: "/api/v1/repos/{repo_id}/artifacts/{artifact_id}",
@@ -391,6 +395,18 @@ pub const TREEDX_OPENAPI_OPERATIONS: &[TreeDxOpenApiOperation] = &[
     },
     TreeDxOpenApiOperation {
         method: "POST",
+        path: "/api/v1/repos/{repo_id}/refs/discard-orphan",
+    },
+    TreeDxOpenApiOperation {
+        method: "POST",
+        path: "/api/v1/repos/{repo_id}/refs/promote",
+    },
+    TreeDxOpenApiOperation {
+        method: "POST",
+        path: "/api/v1/repos/{repo_id}/refs/retire",
+    },
+    TreeDxOpenApiOperation {
+        method: "POST",
         path: "/api/v1/repos/{repo_id}/search/index/compact",
     },
     TreeDxOpenApiOperation {
@@ -419,6 +435,10 @@ pub const TREEDX_OPENAPI_OPERATIONS: &[TreeDxOpenApiOperation] = &[
     },
     TreeDxOpenApiOperation {
         method: "POST",
+        path: "/api/v1/workspaces/{workspace_id}/abandon",
+    },
+    TreeDxOpenApiOperation {
+        method: "POST",
         path: "/api/v1/workspaces/{workspace_id}/blobs/delete",
     },
     TreeDxOpenApiOperation {
@@ -432,6 +452,10 @@ pub const TREEDX_OPENAPI_OPERATIONS: &[TreeDxOpenApiOperation] = &[
     TreeDxOpenApiOperation {
         method: "POST",
         path: "/api/v1/workspaces/{workspace_id}/blobs/write",
+    },
+    TreeDxOpenApiOperation {
+        method: "POST",
+        path: "/api/v1/workspaces/{workspace_id}/changesets",
     },
     TreeDxOpenApiOperation {
         method: "POST",
@@ -460,5 +484,9 @@ pub const TREEDX_OPENAPI_OPERATIONS: &[TreeDxOpenApiOperation] = &[
     TreeDxOpenApiOperation {
         method: "PUT",
         path: "/api/v1/workspaces/{workspace_id}/files",
+    },
+    TreeDxOpenApiOperation {
+        method: "PUT",
+        path: "/api/v1/workspaces/{workspace_id}/files/batch",
     },
 ];

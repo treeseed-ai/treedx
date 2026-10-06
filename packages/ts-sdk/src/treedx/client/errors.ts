@@ -37,4 +37,13 @@ export class TreeDxApiError extends Error {
       cause
     });
   }
+
+  static cancelled(message = 'TreeDX request was cancelled', cause?: unknown): TreeDxApiError {
+    return new TreeDxApiError({
+      status: 0,
+      code: 'request_cancelled',
+      message,
+      cause
+    });
+  }
 }

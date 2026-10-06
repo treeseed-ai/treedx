@@ -3,6 +3,7 @@ defmodule TreeDx.Runtime.Pool do
   use GenServer
 
   alias TreeDx.Observability.Metrics
+  alias TreeDx.Runtime.Pool.Snapshot
   alias TreeDx.Runtime.Resources
 
   @pools [:repository_query, :workspace_mutation, :graph, :snapshot, :import]
@@ -12,29 +13,37 @@ defmodule TreeDx.Runtime.Pool do
 
   def init(_opts) do
     state = Map.new(@pools, &{&1, new_pool(&1)})
+    Snapshot.create!()
+    Snapshot.replace(state)
     publish(state)
+    schedule_publish()
     {:ok, state}
   end
 
   def run(pool, fun, opts \\ []) when is_function(fun, 0) do
-    GenServer.call(__MODULE__, {:run, pool, fun, opts}, :infinity)
+    pool = normalize_pool(pool)
+
+    if Process.get({__MODULE__, :active_pool}) == pool do
+      run_nested(fun)
+    else
+      GenServer.call(__MODULE__, {:run, pool, fun, opts}, :infinity)
+    end
   end
 
-  def snapshot, do: GenServer.call(__MODULE__, :snapshot)
+  def snapshot, do: Snapshot.all()
 
-  def pool_snapshot(pool), do: Map.get(snapshot(), pool) || Map.get(snapshot(), to_string(pool))
+  def pool_snapshot(pool), do: Snapshot.get(pool)
 
   def pressure(pool) do
     case pool_snapshot(pool) do
       nil -> :unknown
-      info -> pressure_for(info)
+      %{pressure: pressure} when is_binary(pressure) -> String.to_existing_atom(pressure)
+      info -> Snapshot.pressure_for(info)
     end
   end
 
   def saturated?(pool), do: pressure(pool) == :saturated
   def available?(pool), do: pressure(pool) in [:low, :moderate]
-
-  def handle_call(:snapshot, _from, state), do: {:reply, materialize(state), state}
 
   def handle_call({:run, pool, fun, opts}, from, state) do
     pool = normalize_pool(pool)
@@ -44,12 +53,12 @@ defmodule TreeDx.Runtime.Pool do
     cond do
       map_size(info.active) < info.size ->
         {info, _job} = start_job(info, job)
-        state = put_and_publish(state, pool, info)
+        state = put_pool(state, pool, info)
         {:noreply, state}
 
       info.queue_depth < info.queue_max ->
         info = enqueue(info, job)
-        state = put_and_publish(state, pool, info)
+        state = put_pool(state, pool, info)
         {:noreply, state}
 
       true ->
@@ -60,7 +69,7 @@ defmodule TreeDx.Runtime.Pool do
           reason: "queue_full"
         })
 
-        state = put_and_publish(state, pool, info)
+        state = put_pool(state, pool, info)
         {:reply, busy(pool, "queue_full"), state}
     end
   end
@@ -71,7 +80,7 @@ defmodule TreeDx.Runtime.Pool do
 
     case dequeue_job(info, job_id) do
       {nil, info} ->
-        {:noreply, put_and_publish(state, pool, info)}
+        {:noreply, put_pool(state, pool, info)}
 
       {job, info} ->
         cancel_timer(job.timeout_ref)
@@ -79,8 +88,14 @@ defmodule TreeDx.Runtime.Pool do
         GenServer.reply(job.from, busy(pool, "queue_timeout"))
         info = %{info | queue_timeouts: info.queue_timeouts + 1}
         Metrics.incr("treedx_pool_queue_timeouts_total", %{pool: to_string(pool)})
-        {:noreply, put_and_publish(state, pool, info)}
+        {:noreply, put_pool(state, pool, info)}
     end
+  end
+
+  def handle_info(:publish_metrics, state) do
+    publish(state)
+    schedule_publish()
+    {:noreply, state}
   end
 
   def handle_info({:execution_timeout, pool, task_ref}, state) do
@@ -103,7 +118,7 @@ defmodule TreeDx.Runtime.Pool do
           |> maybe_start_next()
 
         Metrics.incr("treedx_pool_execution_timeouts_total", %{pool: to_string(pool)})
-        {:noreply, put_and_publish(state, pool, info)}
+        {:noreply, put_pool(state, pool, info)}
     end
   end
 
@@ -131,7 +146,7 @@ defmodule TreeDx.Runtime.Pool do
           |> maybe_start_next()
 
         Metrics.incr("treedx_pool_completed_total", %{pool: to_string(pool)})
-        {:noreply, put_and_publish(state, pool, info)}
+        {:noreply, put_pool(state, pool, info)}
     end
   end
 
@@ -146,7 +161,7 @@ defmodule TreeDx.Runtime.Pool do
           |> Map.update!(:cancelled, &(&1 + 1))
 
         Metrics.incr("treedx_pool_cancelled_total", %{pool: to_string(pool), state: "queued"})
-        {:noreply, put_and_publish(state, pool, info)}
+        {:noreply, put_pool(state, pool, info)}
 
       {:active, pool, info, job, task_ref} ->
         if job.task_pid,
@@ -163,7 +178,7 @@ defmodule TreeDx.Runtime.Pool do
           |> maybe_start_next()
 
         Metrics.incr("treedx_pool_cancelled_total", %{pool: to_string(pool), state: "active"})
-        {:noreply, put_and_publish(state, pool, info)}
+        {:noreply, put_pool(state, pool, info)}
 
       nil ->
         case find_active(state, ref) do
@@ -184,7 +199,7 @@ defmodule TreeDx.Runtime.Pool do
               |> maybe_start_next()
 
             Metrics.incr("treedx_pool_completed_total", %{pool: to_string(pool), status: "crash"})
-            {:noreply, put_and_publish(state, pool, info)}
+            {:noreply, put_pool(state, pool, info)}
         end
     end
   end
@@ -262,7 +277,12 @@ defmodule TreeDx.Runtime.Pool do
     wait_ms = System.monotonic_time(:millisecond) - job.enqueued_at
     Metrics.observe("treedx_pool_wait_ms", wait_ms, %{pool: to_string(job.pool)})
 
-    task = Task.Supervisor.async_nolink(TreeDx.Runtime.Pool.TaskSupervisor, job.fun)
+    task =
+      Task.Supervisor.async_nolink(TreeDx.Runtime.Pool.TaskSupervisor, fn ->
+        Process.put({__MODULE__, :active_pool}, job.pool)
+        job.fun.()
+      end)
+
     execution_timeout_ref = maybe_execution_timeout(job.pool, task.ref, job.execution_timeout_ms)
 
     job = %{
@@ -411,9 +431,27 @@ defmodule TreeDx.Runtime.Pool do
      }}
   end
 
-  defp put_and_publish(state, pool, info) do
-    publish_pool(pool, info)
+  defp run_nested(fun) do
+    try do
+      fun.()
+    rescue
+      error -> task_failed(error)
+    catch
+      kind, reason -> task_failed({kind, reason})
+    end
+  end
+
+  defp put_pool(state, pool, info) do
+    Snapshot.put(pool, info)
     Map.put(state, pool, info)
+  end
+
+  defp schedule_publish do
+    Process.send_after(
+      self(),
+      :publish_metrics,
+      Resources.int_env("TREEDX_POOL_METRICS_INTERVAL_MS", 1_000)
+    )
   end
 
   defp publish(state), do: Enum.each(state, fn {pool, info} -> publish_pool(pool, info) end)
@@ -426,50 +464,18 @@ defmodule TreeDx.Runtime.Pool do
     Metrics.put_gauge("treedx_pool_queue_depth", info.queue_depth, labels)
     Metrics.put_gauge("treedx_pool_queue_depth_max", info.queue_depth_max, labels)
     Metrics.put_gauge("treedx_pool_queue_max", info.queue_max, labels)
-    Metrics.put_gauge("treedx_pool_pressure", pressure_value(pressure_for(info)), labels)
+
+    Metrics.put_gauge(
+      "treedx_pool_pressure",
+      pressure_value(Snapshot.pressure_for(info)),
+      labels
+    )
+
     Metrics.put_gauge("treedx_pool_rejections_total", info.rejected, labels)
     Metrics.put_gauge("treedx_pool_queue_timeouts_total", info.queue_timeouts, labels)
     Metrics.put_gauge("treedx_pool_execution_timeouts_total", info.execution_timeouts, labels)
   end
 
-  defp materialize(state), do: Map.new(state, fn {pool, info} -> {pool, public_info(info)} end)
-
-  defp public_info(info) do
-    %{
-      size: info.size,
-      active: map_size(info.active),
-      queueDepth: info.queue_depth,
-      queueMax: info.queue_max,
-      activeMax: info.active_max,
-      queueDepthMax: info.queue_depth_max,
-      enqueued: info.enqueued,
-      started: info.started,
-      completed: info.completed,
-      rejected: info.rejected,
-      queueTimeouts: info.queue_timeouts,
-      executionTimeouts: info.execution_timeouts,
-      cancelled: info.cancelled,
-      availableSlots: max(info.size - map_size(info.active), 0),
-      pressure: to_string(pressure_for(info)),
-      totalWaitMs: info.total_wait_ms,
-      totalExecutionMs: info.total_execution_ms
-    }
-  end
-
-  defp pressure_for(%{active: active, size: size, queue_depth: queue_depth, queue_max: queue_max}) do
-    active_ratio = safe_ratio(map_size(active), size)
-    queue_ratio = safe_ratio(queue_depth, queue_max)
-
-    cond do
-      queue_ratio >= 0.9 -> :saturated
-      active_ratio >= 0.9 or queue_ratio >= 0.6 -> :high
-      active_ratio >= 0.7 or queue_ratio >= 0.25 -> :moderate
-      true -> :low
-    end
-  end
-
-  defp safe_ratio(_value, max) when max in [nil, 0], do: 0.0
-  defp safe_ratio(value, max), do: value / max
   defp pressure_value(:low), do: 0
   defp pressure_value(:moderate), do: 1
   defp pressure_value(:high), do: 2

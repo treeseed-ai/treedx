@@ -48,19 +48,19 @@ through the GitHub `production` environment.
 Run the full local SDK gate from the repository root:
 
 ```bash
-./scripts/test-sdk-packages.sh
+./scripts/verification/test-sdk-packages.sh
 ```
 
 Run the SDK documentation gate:
 
 ```bash
-./scripts/check-sdk-docs.sh
+./scripts/verification/check-sdk-docs.sh
 ```
 
 Run the root OpenAPI gate:
 
 ```bash
-./scripts/openapi-check.sh
+./scripts/verification/openapi-check.sh
 ```
 
 When TypeScript SDK changes can affect the downstream TreeSeed package, run the
@@ -83,7 +83,7 @@ npm run build
 `packages/trsd-sdk` is standalone and downstream-only. Do not add local file links from `packages/trsd-sdk` to sibling SDK packages during focused regression.
 
 If `python3 -m pip` is unavailable locally, install Python packaging tooling
-before running `scripts/test-sdk-packages.sh`. The lighter dependency-free
+before running `scripts/verification/test-sdk-packages.sh`. The lighter dependency-free
 Python checks used during earlier bootstrap phases are not a complete Phase 14
 SDK gate.
 
@@ -129,7 +129,7 @@ Git does not provide a native hook that runs before `git tag`, so use the
 checked-in release helper instead of creating tags by hand:
 
 ```bash
-scripts/release-tag.sh 0.1.2
+scripts/release/release-tag.sh 0.1.2
 git push origin HEAD
 git push origin 0.1.2
 ```
@@ -141,7 +141,7 @@ from a dirty worktree so unrelated edits do not land in the release commit.
 To install a local shorthand:
 
 ```bash
-git config alias.release-tag '!scripts/release-tag.sh'
+git config alias.release-tag '!scripts/release/release-tag.sh'
 ```
 
 Then run:
@@ -154,7 +154,7 @@ If a worktree already contains intentional release fixes, update only the
 version files and commit everything together:
 
 ```bash
-scripts/bump-release-version.ts 0.1.2
+scripts/release/bump-release-version.ts 0.1.2
 ```
 
 ## Package Registry Setup
@@ -209,9 +209,9 @@ For the implemented SDK baseline, final readiness means all four language SDKs v
 Run:
 
 ```bash
-./scripts/check-sdk-docs.sh
-./scripts/test-sdk-packages.sh
-./scripts/openapi-check.sh
+./scripts/verification/check-sdk-docs.sh
+./scripts/verification/test-sdk-packages.sh
+./scripts/verification/openapi-check.sh
 ```
 
 Python packaging tooling is required for the complete implemented SDK gate. If it is unavailable on a developer machine, record the local environment blocker and run dependency-free Python checks only as a diagnostic fallback:
@@ -236,10 +236,10 @@ A full release candidate is ready when:
   and Hex.
 - Optional live integration is either not configured and cleanly reports not
   configured, or configured and passes.
-- `scripts/test-sdk-packages.sh` passes locally or in release candidate
+- `scripts/verification/test-sdk-packages.sh` passes locally or in release candidate
   automation.
-- `scripts/check-sdk-docs.sh` passes.
-- `./scripts/openapi-check.sh` passes.
+- `scripts/verification/check-sdk-docs.sh` passes.
+- `./scripts/verification/openapi-check.sh` passes.
 
 ## Troubleshooting
 

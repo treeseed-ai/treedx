@@ -66,6 +66,51 @@ fn repository_records_persist_and_ids_are_deterministic() {
 }
 
 #[test]
+fn repository_retirement_tombstones_catalog_and_moves_managed_storage() {
+    let dir = tempdir().unwrap();
+    init_data_dir(
+        dir.path(),
+        InitOptions {
+            node_id: "node_local".to_string(),
+        },
+    )
+    .unwrap();
+    let storage = dir.path().join("repositories/demo");
+    std::fs::create_dir_all(&storage).unwrap();
+    std::fs::write(storage.join("knowledge.txt"), "retained").unwrap();
+    let repository = put_repository(
+        dir.path(),
+        RepositoryInput {
+            name: "demo".to_string(),
+            repository_name: Some("demo".to_string()),
+            local_path: None,
+            storage_relative_path: Some("repositories/demo".to_string()),
+            default_ref: None,
+            remote_url: None,
+        },
+    )
+    .unwrap();
+    let retired = retire_repository(dir.path(), &repository.id)
+        .unwrap()
+        .unwrap();
+    assert!(get_repository(dir.path(), &repository.id)
+        .unwrap()
+        .is_none());
+    assert!(list_repositories(dir.path()).unwrap().is_empty());
+    assert!(!storage.exists());
+    let retired_path = dir
+        .path()
+        .join(retired.retired_storage_relative_path.unwrap());
+    assert_eq!(
+        std::fs::read_to_string(retired_path.join("knowledge.txt")).unwrap(),
+        "retained"
+    );
+    assert!(retire_repository(dir.path(), &repository.id)
+        .unwrap()
+        .is_none());
+}
+
+#[test]
 fn placement_and_mirrors_persist() {
     let dir = tempdir().unwrap();
     init_data_dir(
@@ -148,11 +193,28 @@ fn workspaces_persist_and_writable_lease_conflicts() {
         },
     )
     .unwrap();
-    let input = workspace_input("ws_one", "refs/heads/agent/demo", 60);
+    let mut input = workspace_input("ws_one", "refs/heads/agent/demo", 60);
+    let materialized = dir.path().join("workspaces/active/ws_one");
+    std::fs::create_dir_all(&materialized).unwrap();
+    std::fs::write(materialized.join("draft.md"), "draft").unwrap();
+    input.materialized_path = materialized.to_string_lossy().into_owned();
     let first = put_workspace(dir.path(), input.clone()).unwrap();
     assert_eq!(first.status, "ready");
     assert!(first.lease_id.is_some());
     assert!(get_workspace(dir.path(), "ws_one").unwrap().is_some());
+
+    let replay = put_workspace(dir.path(), input.clone()).unwrap();
+    assert_eq!(replay.id, first.id);
+    assert_eq!(replay.lease_id, first.lease_id);
+
+    let mut mismatched_replay = input.clone();
+    mismatched_replay.allowed_paths = vec!["**".to_string()];
+    assert_eq!(
+        put_workspace(dir.path(), mismatched_replay)
+            .unwrap_err()
+            .code(),
+        "conflict"
+    );
 
     let mut duplicate = input;
     duplicate.id = Some("ws_two".to_string());
@@ -161,6 +223,12 @@ fn workspaces_persist_and_writable_lease_conflicts() {
 
     let closed = close_workspace(dir.path(), "ws_one").unwrap().unwrap();
     assert_eq!(closed.status, "closed");
+    assert!(!materialized.exists());
+
+    // Reconciliation also retires materialization left by older versions.
+    std::fs::create_dir_all(&materialized).unwrap();
+    cleanup_expired_workspaces(dir.path()).unwrap();
+    assert!(!materialized.exists());
 
     let mut after_close = workspace_input("ws_three", "refs/heads/agent/demo", 60);
     after_close.materialized_path = "/tmp/ws_three".to_string();
@@ -177,11 +245,11 @@ fn expired_workspace_cleanup_marks_workspace_and_releases_lease() {
         },
     )
     .unwrap();
-    put_workspace(
-        dir.path(),
-        workspace_input("ws_expired", "refs/heads/agent/expired", 1),
-    )
-    .unwrap();
+    let mut input = workspace_input("ws_expired", "refs/heads/agent/expired", 1);
+    let materialized = dir.path().join("workspaces/active/ws_expired");
+    std::fs::create_dir_all(&materialized).unwrap();
+    input.materialized_path = materialized.to_string_lossy().into_owned();
+    put_workspace(dir.path(), input).unwrap();
     std::thread::sleep(std::time::Duration::from_millis(1200));
     let report = cleanup_expired_workspaces(dir.path()).unwrap();
     assert_eq!(report.expired_workspace_ids, vec!["ws_expired".to_string()]);
@@ -192,6 +260,7 @@ fn expired_workspace_cleanup_marks_workspace_and_releases_lease() {
             .status,
         "expired"
     );
+    assert!(!materialized.exists());
 }
 
 fn workspace_input(id: &str, branch_name: &str, ttl_seconds: i64) -> WorkspaceInput {

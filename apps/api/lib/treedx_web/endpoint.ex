@@ -7,7 +7,8 @@ defmodule TreeDxWeb.Endpoint do
   plug(Plug.Parsers,
     parsers: [:json],
     pass: ["application/json", "application/octet-stream"],
-    json_decoder: Jason
+    json_decoder: Jason,
+    body_reader: {TreeDxWeb.RequestBodyReader, :read_body, []}
   )
 
   plug(TreeDxWeb.Router)

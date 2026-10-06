@@ -23,7 +23,7 @@ The required fast layer is:
 
 The optional deployment layer is:
 
-- `scripts/mvp-smoke.sh`
+- `scripts/acceptance/mvp-smoke.sh`
 - `packages/treedx/test/utils/treedx-live-contract.test.ts` when live env vars are set
 
 ## Federation Scope

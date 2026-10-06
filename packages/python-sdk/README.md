@@ -6,7 +6,7 @@ encode TreeSeed product semantics. `packages/trsd-sdk` is a downstream
 TreeSeed consumer/reference only.
 
 The current `sdk-manifest.yaml` reports modules, capabilities, and test roots as
-`implemented`. The SDK exposes all 113 `/api/v1` OpenAPI operations through
+`implemented`. The SDK exposes all 118 `/api/v1` OpenAPI operations through
 first-class module methods and a validated raw operation fallback.
 
 ## Install

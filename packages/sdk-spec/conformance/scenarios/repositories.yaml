@@ -62,6 +62,8 @@ scenarios:
   serverRequired: true
   endpointRefs:
   - POST /api/v1/repos/{repo_id}/push
+  - POST /api/v1/repos/{repo_id}/refs/promote
+  - POST /api/v1/repos/{repo_id}/refs/retire
   - POST /api/v1/repos/{repo_id}/sync
   fixtures:
     repos: []

@@ -3,6 +3,7 @@ defmodule TreeDx.Graph.IndexCache do
   use GenServer
 
   alias TreeDx.Cache
+  alias TreeDx.Graph.Native
 
   @table __MODULE__
 
@@ -17,16 +18,18 @@ defmodule TreeDx.Graph.IndexCache do
 
   def get_or_load(repo_id, graph_version, loader) do
     if Cache.enabled?("TREEDX_GRAPH_INDEX_CACHE_ENABLED", true) and Process.whereis(__MODULE__) do
+      max_bytes = cache_max_bytes()
+
       Cache.get_or_load(
         @table,
         {repo_id, graph_version},
         Cache.int_env("TREEDX_GRAPH_INDEX_CACHE_TTL_MS", 300_000),
-        Cache.int_env("TREEDX_GRAPH_INDEX_CACHE_MAX_ENTRIES", 128),
-        cache_max_bytes(),
-        loader
+        Cache.entry_limit("TREEDX_GRAPH_INDEX_CACHE_MAX_ENTRIES", 128, max_bytes),
+        max_bytes,
+        fn -> loader.() |> with_native_resource() end
       )
     else
-      loader.()
+      loader.() |> with_native_resource()
     end
   end
 
@@ -36,17 +39,30 @@ defmodule TreeDx.Graph.IndexCache do
     graph_version = manifest["graphVersion"]
 
     if is_binary(repo_id) and is_binary(graph_version) do
+      max_bytes = cache_max_bytes()
+
       Cache.put(
         @table,
         {repo_id, graph_version},
-        index,
+        add_native_resource(index),
         System.monotonic_time(:millisecond),
-        Cache.int_env("TREEDX_GRAPH_INDEX_CACHE_MAX_ENTRIES", 128),
-        cache_max_bytes()
+        Cache.entry_limit("TREEDX_GRAPH_INDEX_CACHE_MAX_ENTRIES", 128, max_bytes),
+        max_bytes
       )
     end
 
     :ok
+  end
+
+  defp with_native_resource({:ok, index}) when is_map(index),
+    do: {:ok, add_native_resource(index)}
+
+  defp with_native_resource(other), do: other
+
+  defp add_native_resource(%{native_resource: _resource} = index), do: index
+
+  defp add_native_resource(index) do
+    Map.put(index, :native_resource, Native.load_graph_resource(index))
   end
 
   defp cache_max_bytes do

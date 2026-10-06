@@ -174,7 +174,7 @@ mix test test/treedx_web/openapi_contract_test.exs
 mix test test/treedx_web/route_openapi_inventory_test.exs
   pass: 1 test, 0 failures
 
-./scripts/openapi-check.sh
+./scripts/verification/openapi-check.sh
   initial observed result: blocked because the TreeDX data directory was already locked by PID 1223583
   latest serial retry: pass, 4 tests, 0 failures
 ```
@@ -2066,7 +2066,7 @@ npm run check-openapi-coverage
 npm run check-sdk-manifests
 npm run render-capability-matrix
 npm test
-./scripts/check-sdk-docs.sh
+./scripts/verification/check-sdk-docs.sh
 ```
 
 Each language SDK has architecture-matrix test jobs inside `TreeDX Release
@@ -2172,7 +2172,7 @@ mix format --check-formatted
 mix test
 MIX_ENV=prod mix hex.build
 
-./scripts/openapi-check.sh
+./scripts/verification/openapi-check.sh
 ```
 
 ### Phase Complete When
@@ -2215,7 +2215,7 @@ gate to own every language toolchain by default.
 Create:
 
 ```text
-scripts/test-sdk-packages.sh
+scripts/verification/test-sdk-packages.sh
 docs/runbooks/sdk-release.md
 ```
 
@@ -2229,13 +2229,13 @@ packages/sdk-spec/README.md
 Do not update:
 
 ```text
-scripts/release-gate.sh
+scripts/release/release-gate.sh
 sdk-plan.md
 ```
 
 ### Local SDK Gate
 
-`scripts/test-sdk-packages.sh` runs the full local SDK gate:
+`scripts/verification/test-sdk-packages.sh` runs the full local SDK gate:
 
 - `packages/sdk-spec`: validation, OpenAPI coverage, manifest validation,
   capability matrix, and tests.
@@ -2253,7 +2253,7 @@ actionable local environment failure, not a skipped SDK release check.
 
 ### Release Policy
 
-Root `scripts/release-gate.sh` remains focused on the TreeDX service, native
+Root `scripts/release/release-gate.sh` remains focused on the TreeDX service, native
 crates used by the service, API contract, storage, security, container, and
 operational checks.
 
@@ -2284,8 +2284,8 @@ manual or future step.
 Run:
 
 ```bash
-./scripts/test-sdk-packages.sh
-./scripts/openapi-check.sh
+./scripts/verification/test-sdk-packages.sh
+./scripts/verification/openapi-check.sh
 ```
 
 Run focused `packages/trsd-sdk` regression when TypeScript SDK changes can
@@ -2324,7 +2324,7 @@ Cleanup after verification
   workflow checks, optional live integration, focused TreeSeed regression,
   troubleshooting, and cleanup.
 
-Phase 14 is complete. `scripts/test-sdk-packages.sh` provides a local full SDK
+Phase 14 is complete. `scripts/verification/test-sdk-packages.sh` provides a local full SDK
 package gate across `sdk-spec`, TypeScript, Python, Rust, and Elixir. The release
 gate runbook now documents how SDK tests and package artifact jobs are integrated
 into the root `TreeDX Release Gate`. `docs/runbooks/sdk-release.md` documents
@@ -2356,7 +2356,7 @@ docs/runbooks/sdk-conformance.md
 docs/runbooks/sdk-release.md
 docs/runbooks/sdk-remote-mode.md
 docs/api/compatibility-notes.md
-scripts/check-sdk-docs.sh
+scripts/verification/check-sdk-docs.sh
 ```
 
 ### Documentation Work
@@ -2412,7 +2412,7 @@ Current not_configured adapter behavior
 Future live conformance boundary
 ```
 
-`scripts/check-sdk-docs.sh` verifies required documentation files, stale
+`scripts/verification/check-sdk-docs.sh` verifies required documentation files, stale
 TreeDX repository-id wording, required README topics, required command
 references, and Phase 15 completion status.
 
@@ -2421,7 +2421,7 @@ references, and Phase 15 completion status.
 Run documentation checks:
 
 ```bash
-./scripts/check-sdk-docs.sh
+./scripts/verification/check-sdk-docs.sh
 ```
 
 Run SDK and package checks:
@@ -2476,7 +2476,7 @@ commands. The shared SDK standard documents language onboarding and TreeSeed
 boundaries. `docs/runbooks/sdk-conformance.md` documents the shared scenario
 catalog and current `not_configured` adapter behavior. TreeSeed integration docs
 now describe portfolio-backed TreeDX content without a global repository id.
-`scripts/check-sdk-docs.sh` verifies required documentation files, key command
+`scripts/verification/check-sdk-docs.sh` verifies required documentation files, key command
 references, stale TreeDX repo-id language, and Phase 15 completion status.
 
 ---
@@ -2503,8 +2503,8 @@ packages/elixir-sdk
 .github/workflows/python-sdk-release-gate.yml
 .github/workflows/rust-sdk-release-gate.yml
 .github/workflows/elixir-sdk-release-gate.yml
-scripts/test-sdk-packages.sh
-scripts/check-sdk-docs.sh
+scripts/verification/test-sdk-packages.sh
+scripts/verification/check-sdk-docs.sh
 docs/runbooks/sdk-conformance.md
 docs/runbooks/sdk-release.md
 docs/research/sdk-final-verification.md
@@ -2515,19 +2515,19 @@ docs/research/sdk-final-verification.md
 Run all package checks:
 
 ```bash
-./scripts/test-sdk-packages.sh
+./scripts/verification/test-sdk-packages.sh
 ```
 
 Run documentation checks:
 
 ```bash
-./scripts/check-sdk-docs.sh
+./scripts/verification/check-sdk-docs.sh
 ```
 
 Run the root OpenAPI gate:
 
 ```bash
-./scripts/openapi-check.sh
+./scripts/verification/openapi-check.sh
 ```
 
 Expected final verification state:
@@ -2547,7 +2547,7 @@ Capability matrix shows all required capabilities implemented for TypeScript, Py
 Documentation commands are accurate
 ```
 
-The full root `scripts/release-gate.sh` remains required for complete TreeDX
+The full root `scripts/release/release-gate.sh` remains required for complete TreeDX
 service release readiness, but Phase 16 SDK baseline verification does not run
 that service release gate by default because it covers broader service,
 container, storage, and operational checks.

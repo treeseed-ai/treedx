@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM elixir:1.17.3-otp-27-slim AS base
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -40,7 +41,10 @@ ENV MIX_ENV=prod \
     TREEDX_DATA_DIR=/var/lib/treedx
 COPY . .
 WORKDIR /workspace/treedx/apps/api
-RUN mix deps.get --only prod \
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+  --mount=type=cache,target=/usr/local/cargo/git \
+  --mount=type=cache,target=/workspace/treedx/target \
+  mix deps.get --only prod \
   && mix compile \
   && cargo build --release -p treedx_git --bin treedx_git_worker \
   && mix release \
@@ -72,7 +76,7 @@ RUN apt-get update \
 FROM debian:bookworm-slim AS prod
 RUN apt-get update \
   && apt-get upgrade -y \
-  && apt-get install -y --no-install-recommends ca-certificates libssl3 libstdc++6 libtinfo6 util-linux zlib1g \
+  && apt-get install -y --no-install-recommends ca-certificates git libssl3 libstdc++6 libtinfo6 util-linux zlib1g \
   && mkdir -p /var/lib/treedx /data \
   && chown -R 65532:65532 /var/lib/treedx /data \
   && apt-get clean \

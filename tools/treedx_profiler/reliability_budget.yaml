@@ -13,12 +13,12 @@
   "minMeasuredDurationRatio": 0.99,
   "maxRaceInterferenceRate": 5.0,
   "maxP99MsByCategory": {
-    "operations": 5000,
-    "repository_read": 30000,
-    "repository_query": 30000,
-    "workspace": 30000,
-    "graph": 30000,
-    "snapshot": 30000,
-    "artifact": 30000
+    "operations": 1000,
+    "repository_read": 200,
+    "repository_query": 250,
+    "workspace": 1000,
+    "graph": 500,
+    "snapshot": 2000,
+    "artifact": 1000
   }
 }

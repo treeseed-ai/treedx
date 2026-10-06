@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       performance_profile:
-        description: Run optional 100 RPS performance profile
+        description: Run the 500 primary RPS production performance gate
         required: false
         default: "false"
         type: choice
@@ -13,6 +13,8 @@ on:
           - "true"
   pull_request:
     paths:
+      - "AGENTS.md"
+      - ".github/workflows/**"
       - "apps/api/**"
       - "apps/api/native/**"
       - "config/**"
@@ -22,17 +24,18 @@ on:
       - "native/**"
       - "profiles/**"
       - "tools/treedx_profiler/**"
-      - "scripts/release-gate.sh"
-      - "scripts/test-all.sh"
-      - "scripts/test-treedx-fast.sh"
-      - "scripts/openapi-check.sh"
-      - "scripts/storage-recovery-check.sh"
-      - "scripts/security-check.sh"
-      - "scripts/mvp-smoke.sh"
-      - "scripts/federation-live-check.sh"
-      - "scripts/profile-compose.sh"
-      - "scripts/profile-treedx.sh"
-      - "scripts/profile-treedx-smoke.sh"
+      - "scripts/release/release-gate.sh"
+      - "scripts/verification/test-all.sh"
+      - "scripts/verification/test-treedx-fast.sh"
+      - "scripts/verification/check-file-lengths.sh"
+      - "scripts/verification/openapi-check.sh"
+      - "scripts/verification/storage-recovery-check.sh"
+      - "scripts/verification/security-check.sh"
+      - "scripts/acceptance/mvp-smoke.sh"
+      - "scripts/acceptance/federation-live-check.sh"
+      - "scripts/profiling/profile-compose.sh"
+      - "scripts/profiling/profile-treedx.sh"
+      - "scripts/profiling/profile-treedx-smoke.sh"
       - "Dockerfile"
       - "Dockerfile.profiler"
       - "docker-healthcheck.c"
@@ -54,15 +57,15 @@ on:
       - "packages/python-sdk/**"
       - "packages/rust-sdk/**"
       - "packages/elixir-sdk/**"
-      - "scripts/check-sdk-docs.sh"
-      - "scripts/test-sdk-packages.sh"
-      - "scripts/test-sdk-live-conformance.sh"
+      - "treeseed.package.yaml"
+      - "release/**"
+      - "scripts/verification/check-sdk-docs.sh"
+      - "scripts/verification/test-sdk-packages.sh"
+      - "scripts/verification/test-sdk-live-conformance.sh"
       - ".github/workflows/release-gate.yml"
   push:
     branches:
       - "**"
-    tags:
-      - "*"
     paths:
       - "apps/api/**"
       - "apps/api/native/**"
@@ -73,17 +76,18 @@ on:
       - "native/**"
       - "profiles/**"
       - "tools/treedx_profiler/**"
-      - "scripts/release-gate.sh"
-      - "scripts/test-all.sh"
-      - "scripts/test-treedx-fast.sh"
-      - "scripts/openapi-check.sh"
-      - "scripts/storage-recovery-check.sh"
-      - "scripts/security-check.sh"
-      - "scripts/mvp-smoke.sh"
-      - "scripts/federation-live-check.sh"
-      - "scripts/profile-compose.sh"
-      - "scripts/profile-treedx.sh"
-      - "scripts/profile-treedx-smoke.sh"
+      - "scripts/release/release-gate.sh"
+      - "scripts/verification/test-all.sh"
+      - "scripts/verification/test-treedx-fast.sh"
+      - "scripts/verification/check-file-lengths.sh"
+      - "scripts/verification/openapi-check.sh"
+      - "scripts/verification/storage-recovery-check.sh"
+      - "scripts/verification/security-check.sh"
+      - "scripts/acceptance/mvp-smoke.sh"
+      - "scripts/acceptance/federation-live-check.sh"
+      - "scripts/profiling/profile-compose.sh"
+      - "scripts/profiling/profile-treedx.sh"
+      - "scripts/profiling/profile-treedx-smoke.sh"
       - "Dockerfile"
       - "Dockerfile.profiler"
       - "docker-healthcheck.c"
@@ -105,9 +109,11 @@ on:
       - "packages/python-sdk/**"
       - "packages/rust-sdk/**"
       - "packages/elixir-sdk/**"
-      - "scripts/check-sdk-docs.sh"
-      - "scripts/test-sdk-packages.sh"
-      - "scripts/test-sdk-live-conformance.sh"
+      - "treeseed.package.yaml"
+      - "release/**"
+      - "scripts/verification/check-sdk-docs.sh"
+      - "scripts/verification/test-sdk-packages.sh"
+      - "scripts/verification/test-sdk-live-conformance.sh"
       - ".github/workflows/release-gate.yml"
 
 env:
@@ -125,7 +131,65 @@ env:
   TREEDX_LIVE_NODE_B_REPO_ID: ${{ secrets.TREEDX_LIVE_NODE_B_REPO_ID }}
 
 jobs:
+  component-release-contract:
+    runs-on: ubuntu-24.04
+    name: Managed Component Release Contract
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: release/package-lock.json
+
+      - name: Install release contract dependencies
+        run: npm ci --ignore-scripts
+        working-directory: release
+
+      - name: Verify managed release bundle
+        run: npm test
+        working-directory: release
+
+  fast:
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref != 'refs/heads/staging' && github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/'))
+    runs-on: ubuntu-24.04
+    name: Fast PR Gate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential ca-certificates git libssl-dev openssl pkg-config
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        env:
+          ImageOS: ubuntu24
+        with:
+          otp-version: "27"
+          elixir-version: "1.17"
+
+      - name: Run focused service verification
+        run: ./scripts/verification/test-treedx-fast.sh
+
   verify:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')))
     strategy:
       fail-fast: false
       matrix:
@@ -211,7 +275,7 @@ jobs:
           retry bash -c 'curl --http1.1 -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin'
 
       - name: Run release gate
-        run: ./scripts/release-gate.sh
+        run: ./scripts/release/release-gate.sh
 
   sdk-spec:
     runs-on: ubuntu-24.04
@@ -253,7 +317,7 @@ jobs:
         working-directory: packages/sdk-spec
 
       - name: Check SDK documentation
-        run: ./scripts/check-sdk-docs.sh
+        run: ./scripts/verification/check-sdk-docs.sh
 
   test-typescript-sdk:
     needs: sdk-spec
@@ -549,7 +613,7 @@ jobs:
           export TREEDX_PROFILE_FAILURE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
           export TREEDX_PROFILE_REPORT_FORMAT="both"
 
-          ./scripts/profile-compose.sh "${mode}"
+          ./scripts/profiling/profile-compose.sh "${mode}"
 
       - name: Capture compose logs
         if: failure()
@@ -638,7 +702,7 @@ jobs:
           export TREEDX_PROFILE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
           export TREEDX_PROFILE_FAILURE_REPLAY_LOG="target/profiles/ci-${mode}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
 
-          ./scripts/profile-compose.sh "${mode}"
+          ./scripts/profiling/profile-compose.sh "${mode}"
 
       - name: Capture compose logs
         if: failure()
@@ -699,6 +763,7 @@ jobs:
           TREEDX_PROFILE_DURATION: ${{ vars.TREEDX_CI_PERFORMANCE_PROFILE_DURATION }}
           TREEDX_PROFILE_CONCURRENCY: ${{ vars.TREEDX_CI_PERFORMANCE_PROFILE_CONCURRENCY }}
           TREEDX_PROFILE_TARGET_PRIMARY_RPS: ${{ vars.TREEDX_CI_PERFORMANCE_TARGET_PRIMARY_RPS }}
+          TREEDX_CI_PERFORMANCE_MIN_PRIMARY_RPS: ${{ vars.TREEDX_CI_PERFORMANCE_MIN_PRIMARY_RPS }}
           TREEDX_PROFILE_PROBE_SAMPLING_RATE: ${{ vars.TREEDX_CI_PERFORMANCE_PROBE_SAMPLING_RATE }}
           TREEDX_RUNTIME_CPU_BUDGET: ${{ vars.TREEDX_CI_PERFORMANCE_CPU_BUDGET }}
           TREEDX_RUNTIME_MEMORY_BUDGET_MB: ${{ vars.TREEDX_CI_PERFORMANCE_MEMORY_BUDGET_MB }}
@@ -706,47 +771,28 @@ jobs:
           set -euo pipefail
 
           mkdir -p target/profiles
-          cat > target/profiles/performance-errors-only-budget.json <<'JSON'
-          {
-            "maxTotalErrors": 0,
-            "maxAssertionFailures": 0,
-            "maxOpenApiFailures": 0,
-            "maxReconciliationDrift": 0,
-            "maxUnverifiedRaces": 0,
-            "maxValidationProbeFailures": 0,
-            "maxNegativeTestFailures": 0,
-            "maxMetamorphicFailures": 0,
-            "maxEndpointConsistencyFailures": 0,
-            "maxDelayedConsistencyFailures": 0,
-            "maxPermissionMatrixFailures": 0,
-            "minMeasuredDurationRatio": 0,
-            "maxRaceInterferenceRate": 1000000,
-            "maxP99MsByCategory": {}
-          }
-          JSON
-
           mode="performance"
           export TREEDX_PROFILE_PROFILE_PURPOSE="performance"
           export TREEDX_PROFILE_DURATION="${TREEDX_PROFILE_DURATION:-10m}"
           export TREEDX_PROFILE_MINIMUM_MEASURED_DURATION="${TREEDX_PROFILE_DURATION}"
           export TREEDX_PROFILE_DURATION_IS_CONTROLLING="true"
           export TREEDX_PROFILE_ITERATIONS=""
-          export TREEDX_PROFILE_CONCURRENCY="${TREEDX_PROFILE_CONCURRENCY:-150}"
-          export TREEDX_PROFILE_TARGET_PRIMARY_RPS="${TREEDX_PROFILE_TARGET_PRIMARY_RPS:-100}"
+          export TREEDX_PROFILE_CONCURRENCY="${TREEDX_PROFILE_CONCURRENCY:-300}"
+          export TREEDX_PROFILE_TARGET_PRIMARY_RPS="${TREEDX_PROFILE_TARGET_PRIMARY_RPS:-500}"
           export TREEDX_PROFILE_VALIDATION_PROBE_MODE="sampled"
           export TREEDX_PROFILE_PROBE_SAMPLING_RATE="${TREEDX_PROFILE_PROBE_SAMPLING_RATE:-0.10}"
           export TREEDX_RUNTIME_CPU_BUDGET="${TREEDX_RUNTIME_CPU_BUDGET:-4}"
           export TREEDX_RUNTIME_MEMORY_BUDGET_MB="${TREEDX_RUNTIME_MEMORY_BUDGET_MB:-4096}"
-          export TREEDX_PROFILE_FAIL_BELOW_PRIMARY_RPS=""
+          export TREEDX_PROFILE_FAIL_BELOW_PRIMARY_RPS="${TREEDX_CI_PERFORMANCE_MIN_PRIMARY_RPS:-475}"
           export TREEDX_PROFILE_INCLUDE_EXEC="false"
-          export TREEDX_PROFILE_RELIABILITY_BUDGET="target/profiles/performance-errors-only-budget.json"
+          export TREEDX_PROFILE_RELIABILITY_BUDGET="tools/treedx_profiler/performance_budget.yaml"
           export TREEDX_PROFILE_REPORT_FORMAT="both"
           export TREEDX_PROFILE_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.yaml"
           export TREEDX_PROFILE_MARKDOWN_OUTPUT="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}.md"
           export TREEDX_PROFILE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-replay.jsonl"
           export TREEDX_PROFILE_FAILURE_REPLAY_LOG="target/profiles/performance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.arch }}-failures.jsonl"
 
-          ./scripts/profile-compose.sh "${mode}"
+          ./scripts/profiling/profile-compose.sh "${mode}"
 
       - name: Capture compose logs
         if: failure()
@@ -773,7 +819,7 @@ jobs:
     needs: verify
     if: >-
       github.event_name == 'push' &&
-      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+      github.ref == 'refs/heads/main'
     permissions:
       contents: read
     outputs:
@@ -1031,7 +1077,16 @@ jobs:
 
       - name: Publish npm package
         if: github.ref_type == 'tag'
-        run: npm publish --access public
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          if [[ "$version" == *-* ]]; then
+            npm publish --access public --tag rc
+          else
+            echo "Stable npm publication requires a separately governed workflow." >&2
+            exit 1
+          fi
         working-directory: packages/ts-sdk
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -1292,6 +1347,7 @@ jobs:
 
   publish:
     needs:
+      - component-release-contract
       - publish-plan
       - build-publish-image
       - build-publish-profiler-image
@@ -1302,9 +1358,25 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     permissions:
-      contents: read
+      contents: write
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        if: github.ref_type == 'tag'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: release/package-lock.json
+
+      - name: Install release contract dependencies
+        if: github.ref_type == 'tag'
+        run: npm ci --ignore-scripts
+        working-directory: release
+
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -1362,3 +1434,40 @@ jobs:
             docker buildx imagetools inspect "${ref}" >/dev/null
             verify_attestation "${ref}"
           done
+
+      - name: Read exact TreeDX image digest
+        if: github.ref_type == 'tag'
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          digest="$(docker buildx imagetools inspect "${{ needs.publish-plan.outputs.service_image_tag }}" --format '{{json .Manifest}}' | jq -r '.digest')"
+          [[ "${digest}" =~ ^sha256:[a-f0-9]{64}$ ]]
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+
+      - name: Build exact managed component release
+        if: github.ref_type == 'tag'
+        env:
+          TREESEED_RELEASE: ${{ github.ref_name }}
+          TREESEED_SOURCE_COMMIT: ${{ github.sha }}
+          TREESEED_TREEDX_DIGEST: ${{ steps.image.outputs.digest }}
+        run: node release/create-component-release.mjs
+
+      - name: Upload managed component release
+        if: github.ref_type == 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: treedx-component-release-${{ github.sha }}
+          path: release-assets/
+          if-no-files-found: error
+
+      - name: Publish GitHub release assets
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          prerelease=()
+          if [[ "${GITHUB_REF_NAME}" == *-rc.* ]]; then prerelease+=(--prerelease); fi
+          gh release create "${GITHUB_REF_NAME}" release-assets/* --generate-notes --verify-tag "${prerelease[@]}"

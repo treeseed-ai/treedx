@@ -1,0 +1,24 @@
+{
+  "maxTotalErrors": 0,
+  "maxAssertionFailures": 0,
+  "maxOpenApiFailures": 0,
+  "maxReconciliationDrift": 0,
+  "maxUnverifiedRaces": 0,
+  "maxValidationProbeFailures": 0,
+  "maxNegativeTestFailures": 0,
+  "maxMetamorphicFailures": 0,
+  "maxEndpointConsistencyFailures": 0,
+  "maxDelayedConsistencyFailures": 0,
+  "maxPermissionMatrixFailures": 0,
+  "minMeasuredDurationRatio": 0.99,
+  "maxRaceInterferenceRate": 5.0,
+  "maxP99MsByCategory": {
+    "operations": 1000,
+    "repository_read": 900,
+    "repository_query": 900,
+    "workspace": 1000,
+    "graph": 500,
+    "snapshot": 2000,
+    "artifact": 1000
+  }
+}

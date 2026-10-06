@@ -24,6 +24,28 @@ curl -sS -H "authorization: Bearer $TOKEN" \
 
 If the response contains `fallbackReason`, TreeDX performed a full refresh. This is safe and expected when the base graph is stale, missing, or too many changed paths were supplied.
 
+## Query By File Path
+
+File paths are the default seed selector; node IDs remain explicit advanced selectors.
+Repository queries also default to path selection: `{"query":"knowledge/**/setup?"}`
+selects matching files. Full-text searches use `type: "text"` or the search endpoint.
+Send `{"paths":["knowledge/**/setup?"],"ref":"<exact-ref>","options":{"depth":0}}`
+to `/api/v1/repos/<repo-id>/graph/query`. A seed such as
+`{"value":"knowledge/providers"}` also defaults to a path.
+
+Extensions are optional for both names and glob patterns. `*` matches within one
+path segment, `?` matches one character, and `**/` spans zero or more directories.
+Thus `knowledge/**/setup?` matches `knowledge/setup1.md` and
+`knowledge/nested/setup2.yaml`. Explicit extensions such as `**/*.md` restrict the
+format. Recognized content formats are MDX, Markdown (`md`, `markdown`), JSON,
+YAML (`yaml`, `yml`), and TOML. Results retain actual source paths and resolved refs.
+
+An exact existing filename wins. A single extensionless name with multiple matches
+returns a conflict; use a glob to request multiple formats intentionally. Graph
+expansion uses only authorized indexed paths, is capped at 1,000 paths, and does
+not change graph result limits. Missing matches return no seed results. Repository
+path filters use the same extensionless glob semantics. Writes still require exact paths.
+
 ## Check Refresh Job Status
 
 ```bash

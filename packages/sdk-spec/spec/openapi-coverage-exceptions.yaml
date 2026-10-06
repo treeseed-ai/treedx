@@ -1,0 +1,14 @@
+version: 1
+exceptions:
+  - endpoint: POST /api/v1/repos/{repo_id}/refs/discard-orphan
+    languages: [elixir, python, rust, typescript]
+    reason: The recovery operation is retained for operators, but it is intentionally excluded from the product-neutral language facades.
+  - endpoint: POST /api/v1/workspaces/{workspace_id}/abandon
+    languages: [elixir, python, rust, typescript]
+    reason: The service operation is retained, but the language facades have not yet adopted explicit destructive-workspace abandonment.
+  - endpoint: POST /api/v1/workspaces/{workspace_id}/changesets
+    languages: [elixir, python, rust, typescript]
+    reason: The service operation is retained, but the language facades have not yet adopted the atomic changeset request model.
+  - endpoint: PUT /api/v1/workspaces/{workspace_id}/files/batch
+    languages: [elixir, python, rust, typescript]
+    reason: The service operation is retained, but the language facades have not yet adopted the batch file-write request model.

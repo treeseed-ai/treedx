@@ -26,7 +26,7 @@ public API.
 Run:
 
 ```bash
-scripts/profile-compose.sh portfolio
+scripts/profiling/profile-compose.sh portfolio
 ```
 
 The default profile runs growing portfolio mode:
@@ -59,7 +59,7 @@ TREEDX_PROFILE_CONCURRENCY=100 \
 TREEDX_PROFILE_DURATION=30m \
 TREEDX_PROFILE_OUTPUT=target/profiles/medium-c100.yaml \
 TREEDX_PROFILE_MARKDOWN_OUTPUT=target/profiles/medium-c100.md \
-scripts/profile-compose.sh portfolio
+scripts/profiling/profile-compose.sh portfolio
 ```
 
 ## Repeatable Compose Profiles
@@ -68,16 +68,16 @@ The gateway script routes named workload profiles to the base Compose manifest
 plus a small override file:
 
 ```bash
-scripts/profile-compose.sh smoke
-scripts/profile-compose.sh fixed
-scripts/profile-compose.sh portfolio
-scripts/profile-compose.sh read-heavy
-scripts/profile-compose.sh write-heavy
-scripts/profile-compose.sh graph
-scripts/profile-compose.sh binary
-scripts/profile-compose.sh admin
-scripts/profile-compose.sh soak
-scripts/profile-compose.sh performance
+scripts/profiling/profile-compose.sh smoke
+scripts/profiling/profile-compose.sh fixed
+scripts/profiling/profile-compose.sh portfolio
+scripts/profiling/profile-compose.sh read-heavy
+scripts/profiling/profile-compose.sh write-heavy
+scripts/profiling/profile-compose.sh graph
+scripts/profiling/profile-compose.sh binary
+scripts/profiling/profile-compose.sh admin
+scripts/profiling/profile-compose.sh soak
+scripts/profiling/profile-compose.sh performance
 ```
 
 Each profile maps to `profiles/compose.profile.<mode>.yaml` and can still be customized
@@ -85,7 +85,7 @@ with `TREEDX_PROFILE_*` variables. Use `--config` to inspect the merged Compose
 configuration without running it:
 
 ```bash
-scripts/profile-compose.sh graph --config
+scripts/profiling/profile-compose.sh graph --config
 ```
 
 Use `--no-clean` to keep the previous profiling volume and `--no-build` to skip
@@ -93,7 +93,7 @@ image rebuilds. Use `--dev-api` to run the API through `mix phx.server` with the
 repository bind-mounted for development profiling:
 
 ```bash
-scripts/profile-compose.sh portfolio --dev-api
+scripts/profiling/profile-compose.sh portfolio --dev-api
 ```
 
 ## Performance Mode And RPS
@@ -102,13 +102,16 @@ Reliability profiles remain the strict correctness gate. Performance mode is a
 separate benchmark profile for RPS tuning:
 
 ```bash
-scripts/profile-compose.sh performance
+scripts/profiling/profile-compose.sh performance
 ```
 
-It defaults to a read-mostly portfolio workload, 150 concurrent workers, 10
-minutes of measured load, sampled validation probes, and a target of 100 primary
-workload requests per second. The target is reported, not enforced, unless
-`--fail-below-primary-rps` or `TREEDX_PROFILE_FAIL_BELOW_PRIMARY_RPS` is set.
+It defaults to a read-mostly portfolio workload, 300 concurrent workers, 10
+minutes of measured load, sampled validation probes, and a target of 500 primary
+workload requests per second. Release CI requires at least 475 primary requests
+per second (95% of the offered rate), zero errors, and the category p99 latency
+budget. The tolerance prevents the open-loop scheduler from issuing artificial
+catch-up bursts for late slots. Local exploratory runs can still choose whether
+to set `--fail-below-primary-rps`.
 
 Reports distinguish:
 
@@ -118,8 +121,12 @@ Reports distinguish:
   profiler HTTP traffic during the measured window.
 
 Validation probes are real server load, so they are included in total HTTP RPS,
-but they are not counted as primary business throughput. This keeps the 100 RPS
+but they are not counted as primary business throughput. This keeps the 500 RPS
 target honest while still showing the full pressure the profiler applied.
+Performance mode disables full OpenAPI response validation in the load path so
+the colocated profiler models production clients instead of spending a CPU core
+validating every response. The reliability and contract profiles retain full
+schema validation.
 
 Tune server resources for the performance profile with:
 
@@ -127,10 +134,10 @@ Tune server resources for the performance profile with:
 TREEDX_RUNTIME_CPU_BUDGET=8 \
 TREEDX_RUNTIME_MEMORY_BUDGET_MB=8192 \
 TREEDX_CACHE_MEMORY_FRACTION=0.35 \
-TREEDX_REPOSITORY_QUERY_POOL_SIZE=16 \
+TREEDX_REPOSITORY_QUERY_POOL_SIZE=32 \
 TREEDX_WORKSPACE_WORKER_POOL_SIZE=16 \
 TREEDX_REPOSITORY_QUERY_MAX_QUEUE=2000 \
-scripts/profile-compose.sh performance
+scripts/profiling/profile-compose.sh performance
 ```
 
 The report includes `resourceTuning`, `cache`, and `workerPools` sections when
@@ -156,7 +163,7 @@ mix escript.build
 From the repository root, use:
 
 ```bash
-./scripts/profile-treedx.sh \
+./scripts/profiling/profile-treedx.sh \
   --base-url http://localhost:4000 \
   --auth-mode dev \
   --fixture small-docs \
@@ -221,6 +228,16 @@ The profiler exits non-zero when the reliability budget is violated. The
 default budget is `tools/treedx_profiler/reliability_budget.yaml` and requires
 zero server errors, semantic failures, OpenAPI failures, reconciliation drift,
 unverified races, and short measured-duration runs.
+
+Saturated production-load profiles use
+`tools/treedx_profiler/performance_budget.yaml`. It retains the zero-error and
+correctness guarantees while applying explicit subsecond p99 capacity ceilings;
+the default reliability budget keeps tighter latency targets for unloaded runs.
+Growing portfolio and federation profiles use
+`tools/treedx_profiler/mixed_workload_budget.yaml`. That contract keeps zero-error
+correctness checks while allowing bounded storage contention from concurrent
+imports, workspace mutations, snapshots, and graph refreshes. Read-heavy and
+unloaded profiles continue to use the tighter default reliability budget.
 
 ## Load Modes
 
@@ -301,9 +318,9 @@ missing setup are reported explicitly in `coverage`.
 The profiler supports three-node federation profiles through the Compose gateway:
 
 ```bash
-scripts/profile-compose.sh mirror-federation
-scripts/profile-compose.sh connected-library
-scripts/profile-compose.sh federation-soak
+scripts/profiling/profile-compose.sh mirror-federation
+scripts/profiling/profile-compose.sh connected-library
+scripts/profiling/profile-compose.sh federation-soak
 ```
 
 Federation profile options can also be passed directly:

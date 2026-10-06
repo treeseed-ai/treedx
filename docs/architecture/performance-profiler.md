@@ -47,10 +47,11 @@ The profiler has three purposes:
   monitoring.
 
 Performance mode is part of the release profile gate on `main`, `staging`, and
-release tags, but its release-blocking budget is error-focused. Throughput
-targets are reported for comparison and tuning; missing the RPS target does not
-fail the release unless it is accompanied by request, assertion, validation, or
-other reliability-budget errors.
+release tags. The default gate offers 500 primary RPS, requires 475 delivered
+RPS without catch-up bursts, and fails when a category exceeds its saturated
+p99 latency ceiling, in addition to the correctness and reliability checks.
+Full OpenAPI validation stays in the reliability profiles rather than consuming
+load-generator CPU on every performance request.
 
 ## Canonical Fixtures
 
@@ -233,3 +234,30 @@ unverified races, validation-probe failures, negative-test failures,
 metamorphic failures, endpoint-consistency failures, or delayed-consistency
 failures. It also requires the measured duration to satisfy at least 99% of the
 requested window.
+
+Performance overlays select `tools/treedx_profiler/performance_budget.yaml`,
+which preserves those correctness requirements and defines the saturated-load
+latency ceiling separately from the tighter unloaded reliability target.
+Portfolio and federation overlays select
+`tools/treedx_profiler/mixed_workload_budget.yaml`. It preserves the same
+correctness requirements while continuously creating repositories, mutating
+workspaces, refreshing graphs, building snapshots, and serving reads under the
+same 25-client load. Its latency ceilings are contention bounds, not the
+standalone service latency contract. The independent performance overlay keeps
+the strict saturated-load latency budget and 475-RPS floor. Mixed profiles add
+an 18 primary-RPS floor so a run cannot satisfy the contention bounds by doing
+less work.
+
+Mixed profiles cap native repository-import admission at two workers by
+default. This matches the runtime's CPU-aware default on the four-vCPU hosted
+runner and prevents import storage work from oversubscribing the repository
+read lane. Operators may override the pool explicitly when the profile host
+has independently measured additional CPU capacity.
+
+The mixed-workload ceilings are evidence-bound to the complete amd64, arm64,
+connected-library, mirror-federation, and exact ten-minute local distributions
+reviewed for the 0.3.0 release candidate. They include bounded headroom over the
+largest observed p99: 4.5 seconds for repository reads and queries, 5 seconds
+for graph work, and 3 seconds for workspace, snapshot, and artifact work. Any
+change to these bounds or the throughput floor requires a separate reviewed
+policy change; runtime corrections must not silently edit them.

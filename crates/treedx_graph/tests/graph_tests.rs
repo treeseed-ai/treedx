@@ -1,9 +1,10 @@
 use std::fs;
 
 use treedx_graph::{
-    build_graph_index, parse_ctx_dsl, query_graph, read_graph_segments, read_latest_graph_manifest,
-    search_graph, write_graph_segments, GraphDocumentInput, GraphIndexInput, GraphQueryOptions,
-    GraphQueryRequest, GraphSearchRequest,
+    build_context_pack, build_graph_index, parse_ctx_dsl, query_graph, read_graph_segments,
+    read_latest_graph_manifest, search_graph, write_graph_segments, ContextBudget,
+    ContextPackRequest, GraphDocumentInput, GraphIndexInput, GraphQueryOptions, GraphQueryRequest,
+    GraphSearchRequest, GraphWhereFilter,
 };
 
 fn sample_index() -> treedx_graph::GraphIndex {
@@ -13,6 +14,7 @@ fn sample_index() -> treedx_graph::GraphIndex {
         commit_sha: "0123456789012345678901234567890123456789".to_string(),
         graph_version: None,
         previous_manifest: None,
+        previous_documents: vec![],
         documents: vec![
             GraphDocumentInput {
                 path: "docs/readme.md".to_string(),
@@ -21,8 +23,8 @@ fn sample_index() -> treedx_graph::GraphIndex {
                 content: r#"---
 title: Release Notes
 status: published
-tags:
-  - release
+groupIds:
+  - group:topic/release
 series: Handbook
 ---
 # Overview
@@ -63,7 +65,7 @@ fn builds_generic_graph_nodes_and_edges() {
     assert!(index
         .nodes
         .iter()
-        .any(|node| node.node_type == "Tag" && node.title.as_deref() == Some("release")));
+        .any(|node| node.node_type == "Group" && node.id == "group:topic/release"));
     assert!(index
         .edges
         .iter()
@@ -77,10 +79,97 @@ fn builds_generic_graph_nodes_and_edges() {
 }
 
 #[test]
+fn indexes_exact_directional_dependency_links_without_changing_proposals() {
+    let index = build_graph_index(GraphIndexInput {
+        repo_id: "library".to_string(), ref_name: "refs/heads/staging".to_string(),
+        commit_sha: "0123456789012345678901234567890123456789".to_string(),
+        graph_version: None, previous_manifest: None, previous_documents: vec![],
+        documents: vec![GraphDocumentInput {
+            path: "notes/dependency.md".to_string(), object_id: "note".to_string(), size: 0,
+            content: format!("---\nlinks:\n  - relation: depends_on\n    from:\n      id: predecessor\n      repository: sdk-library\n      commit: {}\n      path: proposals/sdk.md\n      anchor: work-item/simulate-release\n      digest: sha256:{}\n    to:\n      id: dependent\n      repository: api-library\n      commit: {}\n      path: proposals/api.md\n      anchor: work-item/tests-first\n      digest: sha256:{}\n---\nDependency evidence.\n",
+                "a".repeat(40), "a".repeat(64), "b".repeat(40), "b".repeat(64)),
+        }],
+    }).expect("graph builds");
+    let dependency = index
+        .edges
+        .iter()
+        .find(|edge| edge.edge_type == "DEPENDS_ON")
+        .expect("typed dependency indexed");
+    assert_ne!(dependency.source_id, dependency.target_id);
+    assert_eq!(
+        dependency.data["link"]["from"]["anchor"],
+        "work-item/simulate-release"
+    );
+    assert_eq!(
+        dependency.data["link"]["to"]["anchor"],
+        "work-item/tests-first"
+    );
+    assert_eq!(dependency.data["ownerPath"], "notes/dependency.md");
+}
+
+#[test]
+fn indexes_direct_and_inherited_group_membership_at_the_commit() {
+    let index = build_graph_index(GraphIndexInput {
+        repo_id: "repo_groups".to_string(),
+        ref_name: "refs/heads/main".to_string(),
+        commit_sha: "1123456789012345678901234567890123456789".to_string(),
+        graph_version: None,
+        previous_manifest: None,
+        previous_documents: vec![],
+        documents: vec![
+            GraphDocumentInput {
+                path: "groups/engineering.mdx".to_string(), object_id: "g1".to_string(), size: 0,
+                content: "---\nid: group:team/engineering\nname: Engineering\nclassification: {kind: team}\n---\n".to_string(),
+            },
+            GraphDocumentInput {
+                path: "groups/platform.mdx".to_string(), object_id: "g2".to_string(), size: 0,
+                content: "---\nid: group:topic/platform\nname: Platform\nclassification: {kind: topic}\n---\n".to_string(),
+            },
+            GraphDocumentInput {
+                path: "group-edges/engineering-platform.mdx".to_string(), object_id: "e1".to_string(), size: 0,
+                content: "---\nfromGroupId: group:team/engineering\ntoGroupId: group:topic/platform\npredicate: specializes\npropagatesMembership: true\n---\n".to_string(),
+            },
+            GraphDocumentInput {
+                path: "proposals/runtime.mdx".to_string(), object_id: "p1".to_string(), size: 0,
+                content: "---\ntitle: Runtime\ngroupIds: [group:team/engineering]\n---\nProposal".to_string(),
+            },
+        ],
+    }).expect("group graph builds");
+    let proposal = index
+        .nodes
+        .iter()
+        .find(|node| {
+            node.path.as_deref() == Some("proposals/runtime.mdx") && node.node_type == "File"
+        })
+        .unwrap();
+    assert_eq!(proposal.group_ids, vec!["group:team/engineering"]);
+    assert_eq!(
+        proposal.effective_group_ids,
+        vec!["group:team/engineering", "group:topic/platform"]
+    );
+    assert!(index
+        .edges
+        .iter()
+        .any(|edge| edge.edge_type == "GROUP_RELATION"
+            && edge.source_id == "group:team/engineering"
+            && edge.target_id == "group:topic/platform"));
+    assert!(index
+        .edges
+        .iter()
+        .any(|edge| edge.edge_type == "EFFECTIVE_GROUP"
+            && edge.source_id == proposal.id
+            && edge.target_id == "group:topic/platform"));
+    assert_eq!(
+        index.manifest.commit_sha,
+        "1123456789012345678901234567890123456789"
+    );
+}
+
+#[test]
 fn ranks_and_queries_deterministically() {
     let index = sample_index();
     let results = search_graph(
-        index.clone(),
+        &index,
         GraphSearchRequest {
             query: "release overview".to_string(),
             scope: "sections".to_string(),
@@ -103,7 +192,7 @@ fn ranks_and_queries_deterministically() {
         .id
         .clone();
     let query = query_graph(
-        index,
+        &index,
         GraphQueryRequest {
             seed_ids: vec![seed],
             relations: vec!["references".to_string()],
@@ -122,6 +211,121 @@ fn ranks_and_queries_deterministically() {
         .nodes
         .iter()
         .any(|entry| entry.node.path.as_deref() == Some("docs/guide.md")));
+}
+
+#[test]
+fn query_scope_paths_exclude_lexical_matches_outside_the_declared_subtree() {
+    let index = sample_index();
+    let query = query_graph(
+        &index,
+        GraphQueryRequest {
+            query: Some("release guide".to_string()),
+            scope_paths: vec!["/docs/guide.md".to_string()],
+            options: GraphQueryOptions {
+                max_nodes: Some(10),
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+    )
+    .expect("scoped query works");
+
+    assert!(!query.nodes.is_empty());
+    assert!(query
+        .nodes
+        .iter()
+        .all(|entry| entry.node.path.as_deref() == Some("docs/guide.md")));
+}
+
+#[test]
+fn query_model_filter_uses_portable_content_contracts() {
+    let index = build_graph_index(GraphIndexInput {
+        repo_id: "repo_models".to_string(),
+        ref_name: "refs/heads/main".to_string(),
+        commit_sha: "2123456789012345678901234567890123456789".to_string(),
+        graph_version: None,
+        previous_manifest: None,
+        previous_documents: vec![],
+        documents: vec![
+            GraphDocumentInput {
+                path: "src/content/knowledge/guide.mdx".to_string(),
+                object_id: "k1".to_string(),
+                size: 0,
+                content: "---\nschemaVersion: generic.knowledge/v1\nid: guide\n---\n# Guide\n"
+                    .to_string(),
+            },
+            GraphDocumentInput {
+                path: "src/content/notes/review.mdx".to_string(),
+                object_id: "n1".to_string(),
+                size: 0,
+                content: "---\nschemaVersion: generic.note/v1\nid: review\n---\n# Review\n"
+                    .to_string(),
+            },
+        ],
+    })
+    .expect("model graph builds");
+    let query = query_graph(
+        &index,
+        GraphQueryRequest {
+            query: Some("guide review".to_string()),
+            where_filters: vec![GraphWhereFilter {
+                field: "model".to_string(),
+                op: "eq".to_string(),
+                value: serde_json::json!("knowledge"),
+            }],
+            options: GraphQueryOptions {
+                max_nodes: Some(10),
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+    )
+    .expect("model-filtered query works");
+    assert!(!query.nodes.is_empty());
+    assert!(query
+        .nodes
+        .iter()
+        .all(|entry| entry.node.path.as_deref() == Some("src/content/knowledge/guide.mdx")));
+}
+
+#[test]
+fn context_budget_truncates_an_oversized_first_node() {
+    let mut index = sample_index();
+    let oversized = "evidence ".repeat(10_000);
+    let node = index
+        .nodes
+        .iter_mut()
+        .find(|node| node.node_type == "File")
+        .expect("file node");
+    node.text = Some(oversized);
+    let seed_id = node.id.clone();
+    let pack = build_context_pack(
+        &index,
+        ContextPackRequest {
+            graph_query: GraphQueryRequest {
+                seed_ids: vec![seed_id],
+                options: GraphQueryOptions {
+                    max_nodes: Some(1),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            budget: ContextBudget {
+                max_nodes: Some(1),
+                max_tokens: Some(100),
+                include_mode: None,
+            },
+        },
+    )
+    .expect("context pack");
+
+    assert_eq!(pack.nodes.len(), 1);
+    assert!(pack.total_token_estimate <= 100);
+    assert!(pack.nodes[0].text.chars().count() <= 400);
+    assert_eq!(
+        pack.nodes[0].node.text.as_deref(),
+        Some(pack.nodes[0].text.as_str())
+    );
 }
 
 #[test]

@@ -3,7 +3,7 @@
 Run the release gate from the repository root:
 
 ```bash
-./scripts/release-gate.sh
+./scripts/release/release-gate.sh
 ```
 
 The gate is complete only when the command exits successfully.
@@ -85,10 +85,15 @@ profile Compose setup. Federation profiler jobs run both three-node
 mirror-cluster and connected-library profiles. Performance profiles run by
 default on `main`, `staging`, and tag pushes; Docker publishing waits for the
 performance profile on publish-path pushes. The performance profile records the
-target-RPS result in its reports, but missing the target RPS is not a release
-failure by itself. The performance profile blocks release only for profiler
-execution errors, service errors, assertion failures, or response validation
-failures.
+offered target and measured RPS in its reports and fails below the separately
+configured minimum (475 RPS by default for a 500 RPS target). It also blocks release for reliability-budget,
+profiler, service, assertion, and response-validation failures.
+
+Portfolio and federation reliability profiles separately fail below 18 primary
+requests per second while enforcing the mixed-workload contention budget. That
+budget retains zero tolerance for request, assertion, OpenAPI, semantic,
+permission, consistency, race, and validation failures. Passing it does not
+replace the strict standalone performance profile; release requires both.
 
 Profile Compose starts API nodes from the stripped `treeseed/treedx` production
 image target and runs profiling from the separate Debian-based
@@ -149,7 +154,7 @@ For release-path pushes, package jobs also run after profile gates:
 Local SDK package verification is:
 
 ```bash
-./scripts/test-sdk-packages.sh
+./scripts/verification/test-sdk-packages.sh
 ```
 
 The integrated release gate builds and uploads SDK package artifacts on

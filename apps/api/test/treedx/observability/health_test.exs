@@ -6,12 +6,12 @@ defmodule TreeDx.Observability.HealthTest do
   setup do
     previous = Application.get_env(:treedx, :data_dir)
     dir = Path.join(System.tmp_dir!(), "treedx-health-test-#{System.unique_integer([:positive])}")
-    File.rm_rf!(dir)
+    remove_dir(dir)
     Application.put_env(:treedx, :data_dir, dir)
     TreeDx.Store.init!(node_id: "node_local")
 
     on_exit(fn ->
-      File.rm_rf!(dir)
+      remove_dir(dir)
 
       if previous,
         do: Application.put_env(:treedx, :data_dir, previous),
@@ -19,6 +19,22 @@ defmodule TreeDx.Observability.HealthTest do
     end)
 
     :ok
+  end
+
+  defp remove_dir(dir, attempts \\ 3)
+
+  defp remove_dir(dir, attempts) do
+    case File.rm_rf(dir) do
+      {:ok, _files} ->
+        :ok
+
+      {:error, _reason, _file} when attempts > 0 ->
+        Process.sleep(25)
+        remove_dir(dir, attempts - 1)
+
+      {:error, reason, file} ->
+        raise File.Error, reason: reason, action: "remove directory recursively", path: file
+    end
   end
 
   test "readiness reports ready for initialized store" do

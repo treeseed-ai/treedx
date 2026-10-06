@@ -1,8 +1,14 @@
 /packages/trsd-sdk
 /target
+**/node_modules/
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/dist/
 **/_build
 **/deps
 **/priv/native
 **/.elixir_ls
 /tools/treedx_profiler/treedx_profiler
 repomix-snapshot.xml
+/release-assets

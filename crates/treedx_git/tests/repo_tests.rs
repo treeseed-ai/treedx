@@ -73,11 +73,18 @@ fn refs_remotes_tree_and_blob_can_be_read() {
         ],
     );
     let sha = git_stdout(dir.path(), &["rev-parse", "HEAD"]);
+    git(
+        dir.path(),
+        &["update-ref", "refs/remotes/origin/main", &sha],
+    );
 
-    assert!(list_refs(dir.path())
-        .unwrap()
-        .iter()
-        .any(|entry| entry.name == "refs/heads/main"));
+    let refs = list_refs(dir.path()).unwrap();
+    assert!(refs.iter().any(|entry| entry.name == "refs/heads/main"));
+    assert!(refs.iter().any(|entry| {
+        entry.name == "refs/remotes/origin/main"
+            && entry.target.as_deref() == Some(sha.as_str())
+            && entry.kind == "remote"
+    }));
     assert_eq!(
         list_remotes(dir.path()).unwrap()[0].url.as_deref(),
         Some("https://example.invalid/demo.git")
@@ -100,6 +107,29 @@ fn refs_remotes_tree_and_blob_can_be_read() {
     assert!(recursive
         .iter()
         .any(|entry| entry.path == "docs/readme.md" && entry.kind == "blob"));
+}
+
+#[test]
+fn packed_publication_refs_remain_visible() {
+    let dir = tempdir().unwrap();
+    git(dir.path(), &["init", "-b", "main"]);
+    git(dir.path(), &["config", "user.name", "TreeDX Test"]);
+    git(
+        dir.path(),
+        &["config", "user.email", "test@example.invalid"],
+    );
+    std::fs::write(dir.path().join("README.md"), "publication").unwrap();
+    git(dir.path(), &["add", "README.md"]);
+    git(dir.path(), &["commit", "-m", "publication"]);
+    let sha = git_stdout(dir.path(), &["rev-parse", "HEAD"]);
+    let incoming = format!("refs/heads/treedx/incoming/{sha}");
+    git(dir.path(), &["update-ref", &incoming, &sha]);
+    git(dir.path(), &["pack-refs", "--all"]);
+
+    assert!(list_refs(dir.path())
+        .unwrap()
+        .iter()
+        .any(|entry| { entry.name == incoming && entry.target.as_deref() == Some(sha.as_str()) }));
 }
 
 #[test]
@@ -153,6 +183,7 @@ fn commit_overlay_writes_modifies_and_deletes_files() {
     let result = commit_overlay(CommitOverlayInput {
         repo_path: dir.path().display().to_string(),
         base_commit_sha: base,
+        additional_parent_commit_shas: vec![],
         branch_name: "refs/heads/agent/overlay".to_string(),
         message: "overlay commit".to_string(),
         author_name: "TreeDX Test".to_string(),
@@ -188,10 +219,69 @@ fn commit_overlay_writes_modifies_and_deletes_files() {
             .target,
         result.commit_sha
     );
+    assert_eq!(
+        resolve_ref(
+            dir.path(),
+            &format!("refs/treedx/commits/{}", result.commit_sha)
+        )
+        .unwrap()
+        .target,
+        result.commit_sha
+    );
     let updated = read_blob(dir.path(), "refs/heads/agent/overlay", "docs/readme.md").unwrap();
     assert_eq!(updated.byte_length, "updated\n".len());
     assert!(read_blob(dir.path(), "refs/heads/agent/overlay", "docs/new.md").is_ok());
     assert!(read_blob(dir.path(), "refs/heads/agent/overlay", "docs/delete.md").is_err());
+}
+
+#[test]
+fn commit_overlay_can_preserve_one_divergent_publication_parent() {
+    let dir = tempdir().unwrap();
+    git(dir.path(), &["init", "-b", "staging"]);
+    git(dir.path(), &["config", "user.name", "TreeDX Test"]);
+    git(
+        dir.path(),
+        &["config", "user.email", "test@example.invalid"],
+    );
+    std::fs::write(dir.path().join("README.md"), "base\n").unwrap();
+    git(dir.path(), &["add", "README.md"]);
+    git(dir.path(), &["commit", "-m", "base"]);
+    let base = git_stdout(dir.path(), &["rev-parse", "HEAD"]);
+
+    git(dir.path(), &["checkout", "-b", "remote", &base]);
+    std::fs::write(dir.path().join("remote.md"), "remote\n").unwrap();
+    git(dir.path(), &["add", "remote.md"]);
+    git(dir.path(), &["commit", "-m", "remote"]);
+    let remote = git_stdout(dir.path(), &["rev-parse", "HEAD"]);
+
+    git(dir.path(), &["checkout", "staging"]);
+    std::fs::write(dir.path().join("local.md"), "local\n").unwrap();
+    git(dir.path(), &["add", "local.md"]);
+    git(dir.path(), &["commit", "-m", "local"]);
+    let local = git_stdout(dir.path(), &["rev-parse", "HEAD"]);
+
+    let result = commit_overlay(CommitOverlayInput {
+        repo_path: dir.path().display().to_string(),
+        base_commit_sha: local.clone(),
+        additional_parent_commit_shas: vec![remote.clone()],
+        branch_name: "refs/heads/knowledge/reconcile".to_string(),
+        message: "reconcile".to_string(),
+        author_name: "TreeDX Test".to_string(),
+        author_email: "test@example.invalid".to_string(),
+        changes: vec![FileChange {
+            path: "objective.md".to_string(),
+            op: "put".to_string(),
+            content_base64: Some(base64::engine::general_purpose::STANDARD.encode("objective\n")),
+            expected_sha: None,
+        }],
+    })
+    .unwrap();
+
+    let parents = git_stdout(
+        dir.path(),
+        &["show", "-s", "--format=%P", &result.commit_sha],
+    );
+    assert_eq!(parents, format!("{local} {remote}"));
 }
 
 #[test]

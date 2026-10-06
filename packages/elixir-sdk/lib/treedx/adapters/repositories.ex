@@ -18,6 +18,10 @@ defmodule TreeDxSdk.Repositories do
     Common.json_request(client, :get, "/api/v1/repos/" <> Common.segment(repo_id), nil, %{})
   end
 
+  def retire(client, repo_id) do
+    Common.json_request(client, :delete, "/api/v1/repos/" <> Common.segment(repo_id), nil, %{})
+  end
+
   def status(client, repo_id) do
     Common.json_request(
       client,

@@ -6,6 +6,7 @@ repository: treeseed-ai/treedx
 versionSource: apps/api/mix.exs
 image: treeseed/treedx
 workflowTemplateVersion: custom
+workflowDependencies: []
 deploymentSource:
   staging: git
   prod: image
@@ -33,27 +34,68 @@ artifacts:
     architectures:
       - amd64
       - arm64
+packageRuntime:
+  schemaVersion: treeseed.package-runtime/v1
+  componentId: treedx
+  services:
+    - id: treedx
+      composeService: treedx
+      endpoints:
+        - id: http
+          protocol: http
+          port: 4000
+          visibility: host
+          defaultAlias: treedx.treeseed.localhost
+          aliasOverride: true
+          tls: edge
+          authentication: application
+          healthGate: { protocol: http, path: /api/v1/ready, timeoutSeconds: 120 }
 githubEnvironments:
   - staging
   - production
 requiredSecrets:
   - DOCKERHUB_TOKEN
-  - DOCKERHUB_USERNAME
   - NPM_TOKEN
   - PYPI_API_TOKEN
   - CARGO_REGISTRY_TOKEN
   - HEX_API_KEY
+requiredVariables:
+  - DOCKERHUB_USERNAME
 verify:
-  fast: scripts/test-treedx-fast.sh
-  local: scripts/test-all.sh
-  release: scripts/release-gate.sh
-projectArchitecture:
-  topology: single_repository_site
-  rootPath: .
-  sitePath: docs
-  contentPath: docs/src/content
-  contentRuntimeSource: r2_published_manifest
-  localContentMaterialization: existing_path
-  contentPublishTarget:
-    kind: cloudflare_r2
-    prefix: packages/treedx
+  fast: scripts/verification/test-treedx-fast.sh
+  local: scripts/verification/test-all.sh
+  release: scripts/release/release-gate.sh
+development:
+  schemaVersion: treeseed.development-runtime/v1
+  project: { id: treedx, repository: treeseed-ai/treedx }
+  defaults: { leaseSeconds: 14400, restoreOnFailure: true }
+  targets:
+    - id: service
+      kind: rebuild-restart
+      executionCustody: manager
+      platforms: [linux-amd64, linux-arm64, darwin-arm64, darwin-amd64]
+      runtimeRequirements: [treeseed-manager, rust, elixir]
+      sourceRoots: [apps, crates, packages, Dockerfile, compose.yaml, scripts/development]
+      ignoredPaths: [target, apps/api/_build, apps/api/deps, .treeseed/cache]
+      operations:
+        verify: { command: bash, args: [scripts/development/runtime.sh, verify], environment: {}, timeoutSeconds: 3600 }
+      ready: { kind: http, path: /api/v1/ready, expectedStatus: 200, timeoutSeconds: 180 }
+      outputs: []
+      endpoints: [{ id: http, protocol: http, port: 4000, canonicalAlias: treedx.treeseed.localhost, visibility: host, authentication: application }]
+      dependencies:
+        - { id: api, target: service, capability: control-plane-api, locality: either, reaction: restart }
+        - { id: sdk, target: package, locality: either, reaction: rebuild }
+      statePolicy: shared-compatible
+      migrationPolicy: explicit-review
+      secretRefs:
+        TREEDX_REMOTE_CREDENTIAL_BROKER_ASSERTION: treedx-credential-broker-assertion
+      shutdown: { graceSeconds: 60, activeWorkPolicy: block }
+      resources: {}
+      logs: [.treeseed/development/service.log]
+      forbiddenOperations: [shared-production-data, destructive-migration, publish, production-tag]
+      freeze:
+        kind: oci-image
+        operation: { command: bash, args: [scripts/development/runtime.sh, freeze], environment: {}, timeoutSeconds: 3600 }
+        artifacts: [.treeseed/candidates/treedx-image-digest.txt]
+        contractOperations: []
+      promotion: { liveAdmissible: false, candidateRequiresVerification: true }

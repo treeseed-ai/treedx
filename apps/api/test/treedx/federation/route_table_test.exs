@@ -90,4 +90,34 @@ defmodule TreeDx.Federation.RouteTableTest do
     assert route["servedByNodeId"] == "node_local"
     assert route["source"] == "local"
   end
+
+  test "placement updates invalidate cached routes" do
+    repo_id = "repo_route_table_invalidation"
+
+    {:ok, _placement} =
+      TreeDx.Store.put_repository_placement(%{
+        repositoryId: repo_id,
+        primaryNodeId: "node_local",
+        mirrorNodeIds: [],
+        readPolicy: "primary_only",
+        writePolicy: "primary_only",
+        migrationState: "stable"
+      })
+
+    assert {:ok, first} = TreeDx.Federation.RouteTable.resolve(repo_id)
+    assert first["primaryNodeId"] == "node_local"
+
+    {:ok, _placement} =
+      TreeDx.Store.put_repository_placement(%{
+        repositoryId: repo_id,
+        primaryNodeId: "node_replacement",
+        mirrorNodeIds: [],
+        readPolicy: "primary_only",
+        writePolicy: "primary_proxy",
+        migrationState: "stable"
+      })
+
+    assert {:ok, replacement} = TreeDx.Federation.RouteTable.resolve(repo_id)
+    assert replacement["primaryNodeId"] == "node_replacement"
+  end
 end

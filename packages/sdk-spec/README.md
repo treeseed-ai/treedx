@@ -177,7 +177,7 @@ mix test
 For release-candidate SDK verification, use:
 
 ```bash
-./scripts/test-sdk-packages.sh
+./scripts/verification/test-sdk-packages.sh
 ```
 
 See `docs/runbooks/sdk-release.md` for the full SDK release process and how it
@@ -252,7 +252,7 @@ npm test
 Run the documentation gate from the repository root after SDK doc changes:
 
 ```bash
-./scripts/check-sdk-docs.sh
+./scripts/verification/check-sdk-docs.sh
 ```
 
 ## Phase 2 Limits

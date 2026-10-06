@@ -24,13 +24,13 @@ live-conformance-complete release. All SDK manifests intentionally report
 Documentation gate:
 
 ```bash
-./scripts/check-sdk-docs.sh
+./scripts/verification/check-sdk-docs.sh
 ```
 
 SDK package gate:
 
 ```bash
-./scripts/test-sdk-packages.sh
+./scripts/verification/test-sdk-packages.sh
 ```
 
 Python dependency-free fallback:
@@ -91,7 +91,7 @@ npm run build
 Root OpenAPI gate:
 
 ```bash
-./scripts/openapi-check.sh
+./scripts/verification/openapi-check.sh
 ```
 
 Repository-id guard:
