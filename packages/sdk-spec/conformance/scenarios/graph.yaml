@@ -62,6 +62,8 @@ scenarios:
     action: graph.refresh_job_node
     description: Execute graph.refresh_job_node through the public SDK facade against the local TreeDX conformance harness.
   assertions:
+  - Job readback authorizes the stored job ref, never the repository default or a caller-selected substitute.
+  - A bounded nondefault-ref reader receives the exact completed job and graph version; anonymous and missing-job reads fail and replay preserves the original job.
   - The SDK dispatches the declared OpenAPI operation through its transport/auth/error stack.
   - Responses and TreeDX error envelopes are exposed without product-specific semantics.
 - id: graph.related_subgraph
