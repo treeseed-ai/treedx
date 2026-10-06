@@ -2,7 +2,9 @@ defmodule TreeDx.AuditWriterTest do
   use ExUnit.Case, async: false
 
   setup do
+    :ok = TreeDx.Audit.flush()
     previous = System.get_env("TREEDX_AUDIT_ASYNC")
+    previous_data_dir = Application.get_env(:treedx, :data_dir)
     System.put_env("TREEDX_AUDIT_ASYNC", "true")
 
     dir =
@@ -16,11 +18,10 @@ defmodule TreeDx.AuditWriterTest do
     {:ok, _} = TreeDx.Store.seed_dev_records("node_local", "http://localhost:4000")
 
     on_exit(fn ->
-      restore_env("TREEDX_AUDIT_ASYNC", previous)
-      File.rm_rf!(dir)
+      close_fixture(dir, previous_data_dir, previous)
     end)
 
-    :ok
+    %{directory: dir, previous_data_dir: previous_data_dir, previous_async: previous}
   end
 
   test "async audit append flushes before list" do
@@ -44,6 +45,45 @@ defmodule TreeDx.AuditWriterTest do
              TreeDx.Audit.Writer
              |> Process.whereis()
              |> Process.info(:priority)
+  end
+
+  test "fixture drains pending native audit writes and restores storage authority before deleting only its allocated directory",
+       %{directory: dir, previous_data_dir: previous_data_dir, previous_async: previous} do
+    writer = Process.whereis(TreeDx.Audit.Writer)
+    assert is_pid(writer)
+    assert :ok = :sys.suspend(writer)
+
+    try do
+      assert {:ok, _event} =
+               TreeDx.Audit.append("repo.files_read", %{
+                 actor_id: "actor_demo",
+                 tenant_id: "tenant_demo",
+                 repo_id: "repo_demo",
+                 status: "ok",
+                 data: %{path: "docs/pending.md"}
+               })
+    after
+      assert :ok = :sys.resume(writer)
+    end
+
+    close_fixture(dir, previous_data_dir, previous)
+    assert Application.get_env(:treedx, :data_dir) == previous_data_dir
+    assert System.get_env("TREEDX_AUDIT_ASYNC") == previous
+    assert %{queue: [], size: 0} = :sys.get_state(writer)
+    refute File.exists?(dir)
+  end
+
+  defp close_fixture(dir, previous_data_dir, previous) do
+    restore_env("TREEDX_AUDIT_ASYNC", previous)
+    :ok = TreeDx.Audit.flush()
+
+    if is_nil(previous_data_dir) do
+      Application.delete_env(:treedx, :data_dir)
+    else
+      Application.put_env(:treedx, :data_dir, previous_data_dir)
+    end
+
+    File.rm_rf!(dir)
   end
 
   defp restore_env(_key, nil), do: System.delete_env("TREEDX_AUDIT_ASYNC")
