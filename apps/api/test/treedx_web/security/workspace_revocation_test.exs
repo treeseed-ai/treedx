@@ -143,6 +143,28 @@ defmodule TreeDxWeb.WorkspaceRevocationTest do
 
     assert {:ok, ^retained} = TreeDx.Store.get_workspace(workspace_id)
 
+    for scope <- [
+          %{"repoIds" => [repo_id], "capabilities" => ["files:write"]},
+          %{"repoIds" => ["repo_foreign"], "capabilities" => ["files:read"]}
+        ] do
+      denied_principal =
+        Map.merge(principal, %{"authMode" => "connected", "tokenScope" => scope})
+
+      assert {:error, %{code: "permission_denied"}} =
+               TreeDx.Workspaces.get(workspace_id, denied_principal)
+
+      assert {:ok, ^retained} = TreeDx.Store.get_workspace(workspace_id)
+    end
+
+    still_revoked =
+      build_conn()
+      |> auth_conn(limited_token)
+      |> get("/api/v1/workspaces/#{workspace_id}/files", %{"path" => "docs/readme.md"})
+      |> json!(409)
+
+    assert still_revoked["error"]["code"] == "workspace_revoked"
+    assert {:ok, ^retained} = TreeDx.Store.get_workspace(workspace_id)
+
     closed =
       build_conn()
       |> auth_conn(limited_token)
