@@ -30,3 +30,6 @@ scenarios:
       - Workspace IDs are preserved across create, get, and close operations.
       - Closed workspace state is surfaced without transport-specific wrappers.
       - Workspace errors preserve TreeDxApiError-compatible fields.
+      - Declared metadata read scope includes the current files:read capability and the same-owner identity invariant; identity alone is not a grantable file capability.
+      - Missing read capability, anonymous callers, foreign owners, and missing resources are denied by the actual native server.
+      - The exact owning workspace and repository identities survive closeout and repeated closed readback without restoring productive authority.

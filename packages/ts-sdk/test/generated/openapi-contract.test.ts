@@ -8,6 +8,12 @@ const sha256 = (value: string): string =>
   `sha256:${crypto.createHash('sha256').update(value).digest('hex')}`;
 
 describe('authoritative OpenAPI contract', () => {
+  it('declares the real current read capability alongside owner identity for workspace metadata and closeout', () => {
+    for (const id of ['getWorkspace', 'closeWorkspace', 'abandonWorkspace']) {
+      const operation = TREEDX_OPENAPI_OPERATIONS.find(value => value.operationId === id);
+      expect(operation?.requiredCapabilities).toEqual(['files:read', 'workspace:same_actor']);
+    }
+  });
   it('binds the packaged specification to the generated operation inventory', () => {
     const openapi = fs.readFileSync(new URL('../../openapi.yaml', import.meta.url), 'utf8');
     const operationIds = TREEDX_OPENAPI_OPERATIONS.map((operation) => operation.operationId);
