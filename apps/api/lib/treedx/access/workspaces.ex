@@ -66,10 +66,20 @@ defmodule TreeDx.Workspaces do
   def get(workspace_id, principal) do
     with {:ok, workspace} when is_map(workspace) <- TreeDx.Store.get_workspace(workspace_id),
          :ok <- workspace_actor_allowed(workspace, principal),
-         {:ok, workspace, _scope} <- ensure_policy_current(workspace, principal, "files:read") do
+         {:ok, scope} <-
+           TreeDx.Capabilities.require_capability(
+             principal,
+             "files:read",
+             workspace["repositoryId"]
+           ),
+         true <- TreeDx.Capabilities.allowed_repo?(scope, workspace["repositoryId"]) do
+      # Metadata read-back cannot revive productive authority or change the
+      # retained policy/status. File, write and execution operations still use
+      # ensure_policy_current; the owner can inspect and close revoked work.
       {:ok, public_workspace(workspace)}
     else
       {:ok, nil} -> {:error, %{code: "not_found", message: "Workspace not found."}}
+      false -> {:error, %{code: "permission_denied", message: "Permission denied."}}
       other -> other
     end
   end
