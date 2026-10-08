@@ -2,9 +2,9 @@
   "schema": "treedx.openapi-contract/v1",
   "packageVersion": "0.3.0-rc.18",
   "openapiVersion": "0.11.1",
-  "openapiSha256": "sha256:37cb612ad4538bb7a1038bca2bf59607c6fba63ca5ed2fdf1d51636a1bb0366c",
-  "operationInventorySha256": "sha256:4f481063ad858cbade4d5fa19c529aca4f108c3e70f12c55ed645c8b412bb17b",
-  "generatedTypesSha256": "sha256:b920eba21f37637c5907d2377a5c55ea5084f5c92100dceeb10b03f7749a74b2",
+  "openapiSha256": "sha256:d7428e2451e63ba1981bdd2aaad981f0a655d6c4fe860e4a27b61e8aa06cbb39",
+  "operationInventorySha256": "sha256:9c8b18ae0ac3c645ba62b17fb03c6573941e13264d8459ae1451fc892f1f784b",
+  "generatedTypesSha256": "sha256:60ef44398275b7acd2a88555a448b69e4a410deebd884e86cc35754af6dff72c",
   "operationCount": 120,
   "compatibility": "breaking-prerelease"
 }

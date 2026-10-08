@@ -1807,6 +1807,7 @@ paths:
       operationId: getWorkspace
       summary: Get workspace metadata
       x-treedx-required-capabilities:
+      - files:read
       - workspace:same_actor
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
@@ -1834,6 +1835,7 @@ paths:
       operationId: closeWorkspace
       summary: Close a workspace
       x-treedx-required-capabilities:
+      - files:read
       - workspace:same_actor
       parameters:
       - $ref: '#/components/parameters/WorkspaceId'
