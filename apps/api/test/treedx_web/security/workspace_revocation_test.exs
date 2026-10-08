@@ -116,6 +116,33 @@ defmodule TreeDxWeb.WorkspaceRevocationTest do
         "paths" => ["docs/**"]
       })
 
+    # Metadata must not restore productive authority or mutate the retained
+    # revoked resource. Capture both owning service and real endpoint outcomes
+    # before asserting, so either boundary's failure remains observable.
+    principal = %{"actorId" => "actor_limited", "tenantId" => "tenant_demo"}
+    {:ok, retained} = TreeDx.Store.get_workspace(workspace_id)
+    direct = TreeDx.Workspaces.get(workspace_id, principal)
+
+    metadata_conn =
+      build_conn()
+      |> auth_conn(limited_token)
+      |> get("/api/v1/workspaces/#{workspace_id}")
+
+    assert {:ok, %{workspaceId: ^workspace_id, repoId: ^repo_id, status: "quarantined"}} =
+             direct
+
+    assert metadata_conn.status == 200
+    metadata = Jason.decode!(metadata_conn.resp_body)
+    assert metadata["workspaceId"] == workspace_id
+    assert metadata["repoId"] == repo_id
+    assert metadata["status"] == "quarantined"
+    assert {:ok, ^retained} = TreeDx.Store.get_workspace(workspace_id)
+
+    assert {:error, %{code: "permission_denied"}} =
+             TreeDx.Workspaces.get(workspace_id, %{principal | "actorId" => "foreign_actor"})
+
+    assert {:ok, ^retained} = TreeDx.Store.get_workspace(workspace_id)
+
     closed =
       build_conn()
       |> auth_conn(limited_token)
@@ -124,5 +151,24 @@ defmodule TreeDxWeb.WorkspaceRevocationTest do
 
     assert closed["status"] == "closed"
     refute File.exists?(Path.join([data_dir, "workspaces", "active", workspace_id]))
+
+    {:ok, retained_closed} = TreeDx.Store.get_workspace(workspace_id)
+
+    for _ <- 1..2 do
+      assert {:ok, %{workspaceId: ^workspace_id, repoId: ^repo_id, status: "closed"}} =
+               TreeDx.Workspaces.get(workspace_id, principal)
+
+      readback =
+        build_conn()
+        |> auth_conn(limited_token)
+        |> get("/api/v1/workspaces/#{workspace_id}")
+        |> json!(200)
+
+      assert readback["workspaceId"] == workspace_id
+      assert readback["repoId"] == repo_id
+      assert readback["status"] == "closed"
+      assert {:ok, ^retained_closed} = TreeDx.Store.get_workspace(workspace_id)
+      refute File.exists?(Path.join([data_dir, "workspaces", "active", workspace_id]))
+    end
   end
 end
