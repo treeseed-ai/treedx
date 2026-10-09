@@ -25,6 +25,8 @@ on:
       - "profiles/**"
       - "tools/treedx_profiler/**"
       - "scripts/release/release-gate.sh"
+      - "scripts/verification/reporting/**"
+      - "tests/reporting/**"
       - "scripts/verification/test-all.sh"
       - "scripts/verification/test-treedx-fast.sh"
       - "scripts/verification/check-file-lengths.sh"
@@ -77,6 +79,8 @@ on:
       - "profiles/**"
       - "tools/treedx_profiler/**"
       - "scripts/release/release-gate.sh"
+      - "scripts/verification/reporting/**"
+      - "tests/reporting/**"
       - "scripts/verification/test-all.sh"
       - "scripts/verification/test-treedx-fast.sh"
       - "scripts/verification/check-file-lengths.sh"
@@ -168,11 +172,12 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential ca-certificates git libssl-dev openssl pkg-config
+          sudo apt-get install -y --no-install-recommends build-essential ca-certificates git libssl-dev openssl pkg-config strace
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: "1.99.0"
           components: rustfmt, clippy
 
       - name: Setup Elixir
@@ -182,6 +187,21 @@ jobs:
         with:
           otp-version: "27"
           elixir-version: "1.17"
+
+      - name: Setup exact reporting Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.12.0"
+
+      - name: Install existing TypeScript tooling
+        run: npm ci --ignore-scripts
+        working-directory: packages/ts-sdk
+
+      - name: Check native reporting TypeScript
+        run: node packages/ts-sdk/node_modules/typescript/bin/tsc -p scripts/verification/reporting/tsconfig.json
+
+      - name: Verify native reporting contracts
+        run: node --test tests/reporting/*.test.ts
 
       - name: Run focused service verification
         run: ./scripts/verification/test-treedx-fast.sh
