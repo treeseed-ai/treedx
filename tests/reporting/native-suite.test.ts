@@ -24,7 +24,7 @@ test('original shell entrypoint and public reporting command retain native asser
  const quote=(value:string)=>`'${value.replaceAll("'","'\\''")}'`;
  try{
   const file=join(root,'boundary.test.ts'),script=join(root,'whole.sh'),cleanup=join(root,'cleanup'),pid=join(root,'native.pid');
-  const shell=`#!/usr/bin/env bash\nset -euo pipefail\ntrap 'printf closed > ${quote(cleanup)}' EXIT\ntrap 'exit 143' TERM\n${quote(process.execPath)} ${quote(helper)} node -- ${quote(process.execPath)} --test ${quote(file)}\n`;
+  const shell=`#!/usr/bin/env bash\nset -euo pipefail\ntrap ${quote(`printf closed > ${quote(cleanup)}`)} EXIT\ntrap 'exit 143' TERM\n${quote(process.execPath)} ${quote(helper)} node -- ${quote(process.execPath)} --test ${quote(file)}\n`;
   writeFileSync(script,shell);writeFileSync(file,"import test from 'node:test';import assert from 'node:assert/strict';test('exact public boundary',()=>assert.equal(2+2,4));\n");
   const publicRun=await promisify(execFile)(process.execPath,[helper,'suite','--','bash',script],{cwd:root,encoding:'utf8'});
   const complete=JSON.parse(publicRun.stdout);assert.equal(complete.success,true);assert.equal(complete.numTotalTests,1);assert.equal(complete.numPassedTests,1);
