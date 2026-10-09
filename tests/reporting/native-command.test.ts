@@ -18,6 +18,24 @@ test('native timing trace observes stdout writes without copying unrelated nativ
  }finally{rmSync(root,{recursive:true,force:true});}
 });
 
+test('native concurrent blocked stdout writes retain complete resumed syscall evidence without inventing assertions',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'treedx-native-blocked-write-'));
+ try{
+  const file=join(root,'writer.ts');
+  writeFileSync(file,`import {spawn} from 'node:child_process';import {writeSync} from 'node:fs';
+if(process.argv[2]==='child'){process.stderr.write('ready\\n');writeSync(1,Buffer.alloc(256*1024,97));}else{
+ const child=spawn(process.execPath,[import.meta.filename,'child'],{stdio:['ignore','pipe','pipe']});let size=0;
+ child.stderr.once('data',()=>setTimeout(()=>{writeSync(1,'native-boundary\\n');child.stdout.on('data',bytes=>size+=bytes.length);},100));
+ child.once('close',code=>{if(code!==0||size!==256*1024)process.exitCode=1;});}
+`);
+  const native=await collectNativeCommand([process.execPath,file],root,{format:'rust'});
+  assert.equal(native.exitCode,0);assert.equal(native.signal,null);assert.equal(native.stdout,'native-boundary\n');
+  assert.match(native.trace,/write\(1, .+<unfinished \.\.\.>/u);assert.match(native.trace,/<\.\.\. write resumed>\) = 262144/u);
+  const report=nativeAssertionReport(native);assert.equal(report.success,false);assert.ok(report.errors.includes('native_assertions_missing'));
+  assert.ok(!report.errors.includes('native_trace_write_incomplete'),JSON.stringify(report.errors));assert.deepEqual(report.raw,native);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+
 test('native Cargo execution retains real assertion identities timing counts and raw failed ignored and interrupted observations', async()=>{
  const root=mkdtempSync(join(tmpdir(),'treedx-native-report-'));
  try{

@@ -24,6 +24,22 @@ test('strict native reporting never invents Rust test durations from exit zero o
  assert.equal(report.testResults[0]!.assertionResults[0]!.duration,null);
  assert.equal(report.testResults[0]!.assertionResults[0]!.status,'passed');
 });
+test('strict native reporting reconciles paired concurrent syscall records and rejects every incomplete or conflicting pair',()=>{
+ const split=trace.replace('write(1, "ok\\n", 3) = 3','write(1, "ok\\n", 3 <unfinished ...>\n205 1770000000.600001 write(1, "cargo:build-script\\n", 19) = 19\n104 1770000000.600002 <... write resumed>) = 3');
+ assert.notEqual(split,trace);
+ const supplied={...observation,trace:split},before=structuredClone(supplied),report=nativeAssertionReport(supplied);
+ assert.equal(report.success,true,JSON.stringify(report.errors));assert.equal(report.testResults[0]!.assertionResults[0]!.duration,500);
+ assert.deepEqual(report.raw,before);assert.deepEqual(supplied,before);
+ for(const changed of [
+  split.replace('104 1770000000.600002 <... write resumed>) = 3',''),
+  split.replace('104 1770000000.600002 <... write resumed>) = 3','999 1770000000.600002 <... write resumed>) = 3'),
+  split.replace('<... write resumed>) = 3','<... write resumed>) = 2'),
+  split.replace('1770000000.600002','1770000000.599999'),
+  split.replace('104 1770000000.600000 write(1, "ok\\n", 3 <unfinished ...>',''),
+  split.replace('104 1770000000.600002 <... write resumed>) = 3','104 1770000000.600002 <... write resumed>) = 3\n104 1770000000.600003 <... write resumed>) = 3'),
+  split.replace('205 1770000000.600001','104 1770000000.600001'),
+ ]){const failed={...observation,trace:changed},retained=structuredClone(failed),result=nativeAssertionReport(failed);assert.equal(result.success,false);assert.ok(result.errors.includes('native_trace_write_incomplete')||result.errors.includes('native_trace_clock_reversed'));assert.deepEqual(result.raw,retained);assert.deepEqual(failed,retained);}
+});
 test('strict native reporting rejects truncated filtered ignored duplicate interrupted or conflicting native observations without repairing them',()=>{
  for(const change of [
   {stdout:'running 1 test\ntest boundary ... ok\n'},
