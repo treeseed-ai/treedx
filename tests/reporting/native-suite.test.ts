@@ -30,6 +30,8 @@ test('original shell entrypoint and public reporting command retain native asser
   const complete=JSON.parse(publicRun.stdout);assert.equal(complete.success,true);assert.equal(complete.numTotalTests,1);assert.equal(complete.numPassedTests,1);
   assert.equal(complete.nativeReports[0].testResults[0].assertionResults[0].title,'exact public boundary');
   assert.deepEqual(complete.execution.command,['bash',script]);assert.match(complete.execution.stdout,/exact public boundary/u);assert.equal(readFileSync(cleanup,'utf8'),'closed');
+  writeFileSync(file,"import test from 'node:test';test('exact public boundary',()=>console.log('original-native-observation:'.repeat(20000)));\n");
+  const large=await collectNativeSuite(['bash',script],root);assert.equal(large.success,true);assert.match(large.nativeReports[0]!.raw.stdout,/original-native-observation:/u);assert.ok(large.nativeReports[0]!.raw.stdout.length>500000);
   writeFileSync(file,"import test from 'node:test';test('exact public boundary',()=>{throw new Error('original failed boundary');});\n");
   const failed=await collectNativeSuite(['bash',script],root);assert.equal(failed.success,false);assert.equal(failed.numFailedTests,1);assert.match(failed.execution.stdout,/original failed boundary/u);
   const retained=structuredClone(failed);
