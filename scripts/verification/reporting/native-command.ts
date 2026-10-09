@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import type { NativeObservation } from './native-report.ts';
 
 /** Observe the original native command without replacing its owning test harness. */
-export async function collectNativeCommand(command:string[],cwd:string, options:{format:NativeObservation['format'];signal?:AbortSignal;onStdout?:(chunk:string)=>void}):Promise<NativeObservation>{
+export async function collectNativeCommand(command:string[],cwd:string, options:{format:NativeObservation['format'];signal?:AbortSignal;onStdout?:(chunk:string)=>void;onStderr?:(chunk:string)=>void}):Promise<NativeObservation>{
  if(!command.length||command.some(value=>!value||value.includes('\0')))throw new Error('Native command identity is required.');
  const root=await mkdtemp(join(tmpdir(),'treedx-native-trace-')),path=join(root,'writes.log');
  try{
@@ -22,7 +22,7 @@ export async function collectNativeCommand(command:string[],cwd:string, options:
   const stop=()=>{if(child.pid){try{process.kill(-child.pid,'SIGTERM');}catch(error){if((error as NodeJS.ErrnoException).code!=='ESRCH')throw error;}}};
   const result=await new Promise<{exitCode:number|null;signal:NodeJS.Signals|null}>((resolve,reject)=>{
    child.stdout.on('data',(chunk:Buffer)=>{stdout.push(chunk);options.onStdout?.(chunk.toString('utf8'));});
-   child.stderr.on('data',(chunk:Buffer)=>stderr.push(chunk));
+   child.stderr.on('data',(chunk:Buffer)=>{stderr.push(chunk);options.onStderr?.(chunk.toString('utf8'));});
    child.once('error',reject);child.once('close',(exitCode,signal)=>resolve({exitCode,signal}));
    options.signal?.addEventListener('abort',stop,{once:true});if(options.signal?.aborted)stop();
   }).finally(()=>options.signal?.removeEventListener('abort',stop));
