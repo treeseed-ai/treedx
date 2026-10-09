@@ -1,11 +1,22 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { collectNativeCommand } from '../../scripts/verification/reporting/native-command.ts';
 import { nativeAssertionReport } from '../../scripts/verification/reporting/native-report.ts';
+
+test('native timing trace observes stdout writes without copying unrelated native file data',async()=>{
+ const root=mkdtempSync(join(tmpdir(),'treedx-native-write-scope-'));
+ try{
+  const output=join(root,'original.bin'),file=join(root,'writer.ts');
+  writeFileSync(file,`import {writeFileSync,writeSync} from 'node:fs';writeFileSync(${JSON.stringify(output)},Buffer.alloc(8*1024*1024,97));writeSync(1,'native-original-stdout\\n');\n`);
+  const native=await collectNativeCommand([process.execPath,file],root,{format:'rust'});
+  assert.equal(native.exitCode,0);assert.equal(native.signal,null);assert.equal(native.stdout,'native-original-stdout\n');assert.equal(readFileSync(output).length,8*1024*1024);
+  assert.match(native.trace,/write\(1,/u);assert.doesNotMatch(native.trace,/write\((?!1,)/u);assert.ok(native.trace.length<65536);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
 
 test('native Cargo execution retains real assertion identities timing counts and raw failed ignored and interrupted observations', async()=>{
  const root=mkdtempSync(join(tmpdir(),'treedx-native-report-'));
