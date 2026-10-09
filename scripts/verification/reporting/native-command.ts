@@ -13,7 +13,7 @@ export async function collectNativeCommand(command:string[],cwd:string, options:
   const reportPath=join(root,'report.json');
   const nativeCommand=options.format==='vitest'?[...command,'--', '--reporter=json',`--outputFile=${reportPath}`]:options.format==='node'?[command[0]!,`--test-reporter=${fileURLToPath(new URL('./node-events.ts',import.meta.url))}`,...command.slice(1)]:[...command];
   const executable=options.format==='rust'?'/usr/bin/strace':nativeCommand[0]!;
-  const args=options.format==='rust'?['-f','-ttt','-xx','-s','16777216','-e','trace=write','-o',path,'--',...nativeCommand]:nativeCommand.slice(1);
+  const args=options.format==='rust'?['-f','-ttt','-xx','-s','16777216','-e','trace=write','-e','trace-fds=1','-o',path,'--',...nativeCommand]:nativeCommand.slice(1);
   const env:NodeJS.ProcessEnv={...process.env,CARGO_TERM_COLOR:'never'};delete env.NODE_TEST_CONTEXT;
   const child=spawn(executable,args,{
    cwd,detached:true,stdio:['ignore','pipe','pipe'],env,
