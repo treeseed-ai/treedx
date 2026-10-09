@@ -1,6 +1,10 @@
+import { vitestAssertionReport } from './vitest-report.ts';
+import { nodeAssertionReport } from './node-report.ts';
+import { pytestAssertionReport } from './pytest-report.ts';
+import { exUnitAssertionReport } from './exunit-report.ts';
 export interface NativeObservation {
- format: 'rust'; command: string[]; cwd: string; stdout: string; stderr: string;
- exitCode: number | null; signal: string | null; trace: string;
+ format: 'rust' | 'exunit' | 'pytest' | 'node' | 'vitest'; command: string[]; cwd: string; stdout: string; stderr: string;
+ exitCode: number | null; signal: string | null; trace: string; report?:string;
 }
 interface Assertion { title: string; status: 'passed' | 'failed' | 'pending'; duration: number | null; failureMessages: string[] }
 interface NativeSuite {
@@ -69,6 +73,10 @@ function observedDuration(processes: Map<string,Write[]>, nativeName: string, na
 
 /** Convert original native observations to the existing strict assertion report. */
 export function nativeAssertionReport(observation: NativeObservation) {
+ if(observation.format==='vitest')return vitestAssertionReport(observation);
+ if(observation.format==='node')return nodeAssertionReport(observation);
+ if(observation.format==='pytest')return pytestAssertionReport(observation);
+ if(observation.format==='exunit')return exUnitAssertionReport(observation);
  const errors:string[]=[],suites:NativeSuite[]=[];
  const headers=[...observation.stderr.matchAll(/^\s*(Running [^\n]+|Doc-tests [^\n]+)$/gmu)].map(match=>match[1]!);
  let processes=new Map<string,Write[]>();
