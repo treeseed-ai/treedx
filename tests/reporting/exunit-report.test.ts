@@ -20,7 +20,7 @@ test('strict ExUnit reporting preserves native failures and skipped dispositions
   {stdout:stdout.replace('1 test, 0 failures','2 tests, 0 failures')},{stdout:stdout.replace('0 failures','0 failures, 1 excluded')},
   {stdout:stdout.replace('100.2ms','NaNms')},{stdout:stdout.replace('\u001b[32m\r','\u001b[35m\r')},
   {stdout:stdout.replace('Native.BoundaryTest [test/boundary_test.exs]\n','')},
-  {stdout:stdout.replace('\u001b[0m\n\nFinished','\u001b[0m\n'+stdout.split('\n')[4]+'\nFinished')},
+  {stdout:stdout.replace('\u001b[0m\n\nFinished','\u001b[0m\n'+stdout.split('\n')[3]+'\nFinished')},
   {exitCode:null,signal:'SIGTERM'},
  ]){const supplied={...native,...change},before=structuredClone(supplied),report=exUnitAssertionReport(supplied);assert.equal(report.success,false,JSON.stringify(change));assert.deepEqual(report.raw,before);assert.deepEqual(supplied,before);}
 });
