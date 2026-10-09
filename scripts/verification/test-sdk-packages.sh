@@ -23,6 +23,8 @@ cleanup() {
   return "$status"
 }
 trap cleanup EXIT
+trap 'exit 143' TERM
+trap 'exit 130' INT
 
 tsx_bin() {
   local candidate="../sdk-spec/node_modules/.bin/tsx"
@@ -71,7 +73,7 @@ binding_file="$(mktemp)"
 set -a
 source "$binding_file"
 set +a
-(cd packages/ts-sdk && npm test)
+(cd packages/ts-sdk && node ../../scripts/verification/reporting/command.ts vitest -- npm test)
 
 section "Python SDK"
 (
@@ -80,7 +82,7 @@ section "Python SDK"
   python3 -m pip install "${pip_extra_args[@]}" -e ".[dev]"
   python3 scripts/check_treedx_generated_types.py
   python3 -m build
-  python3 -m pytest
+  node ../../scripts/verification/reporting/command.ts pytest -- python3 -m pytest
 )
 
 section "Rust SDK"
@@ -89,7 +91,7 @@ section "Rust SDK"
   "$(tsx_bin)" scripts/check_treedx_generated_types.ts
   cargo fmt --all -- --check
   cargo clippy --all-targets -- -D warnings
-  cargo test
+  node ../../scripts/verification/reporting/command.ts rust -- cargo test
 )
 
 section "Elixir SDK"
@@ -98,7 +100,7 @@ section "Elixir SDK"
   mix deps.get
   mix run scripts/check_treedx_generated_types.exs
   mix format --check-formatted
-  mix test
+  node ../../scripts/verification/reporting/command.ts exunit -- mix test
 )
 
 section "SDK package verification complete"

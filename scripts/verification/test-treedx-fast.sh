@@ -10,7 +10,7 @@ grep -Fq 'TREESEED_TREEDX_JWKS_URL:-http://host.docker.internal:3000/.well-known
 
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo fmt --all -- --check
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo clippy --workspace -- -D warnings
-CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo test --workspace
+CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" node ./scripts/verification/reporting/command.ts rust -- cargo test --workspace
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo build -p treedx_git --bin treedx_git_worker
 
 (
@@ -25,5 +25,5 @@ CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" cargo build -p treedx
 
   CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$TREEDX_TARGET_DIR}" \
   RUSTLER_TARGET_DIR="${RUSTLER_TARGET_DIR:-$TREEDX_TARGET_DIR}" \
-  mix test
+  node ../../scripts/verification/reporting/command.ts exunit -- mix test
 )

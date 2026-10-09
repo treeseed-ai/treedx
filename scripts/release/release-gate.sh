@@ -17,8 +17,8 @@ run_stage() {
   echo "::endgroup::"
 }
 
-run_stage "TreeDX tests" "${TREEDX_TEST_ALL_TIMEOUT_SECONDS:-1200}" ./scripts/verification/test-all.sh
-run_stage "TreeDX SDK packages" "${TREEDX_SDK_PACKAGES_TIMEOUT_SECONDS:-1800}" ./scripts/verification/test-sdk-packages.sh
+run_stage "TreeDX tests" "${TREEDX_TEST_ALL_TIMEOUT_SECONDS:-1200}" \
+  bash -c './scripts/verification/test-all.sh > "$1"' -- "${RUNNER_TEMP:-/tmp}/treedx-native-prerequisites.json"
 run_stage "TreeDX security check" "${TREEDX_SECURITY_CHECK_TIMEOUT_SECONDS:-1200}" ./scripts/verification/security-check.sh
 run_stage "TreeDX MVP smoke" "${TREEDX_MVP_SMOKE_TIMEOUT_SECONDS:-900}" ./scripts/acceptance/mvp-smoke.sh
 run_stage "TreeDX federation live check" "${TREEDX_FEDERATION_LIVE_TIMEOUT_SECONDS:-120}" ./scripts/acceptance/federation-live-check.sh

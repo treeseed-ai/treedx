@@ -25,6 +25,8 @@ on:
       - "profiles/**"
       - "tools/treedx_profiler/**"
       - "scripts/release/release-gate.sh"
+      - "scripts/verification/reporting/**"
+      - "tests/reporting/**"
       - "scripts/verification/test-all.sh"
       - "scripts/verification/test-treedx-fast.sh"
       - "scripts/verification/check-file-lengths.sh"
@@ -77,6 +79,8 @@ on:
       - "profiles/**"
       - "tools/treedx_profiler/**"
       - "scripts/release/release-gate.sh"
+      - "scripts/verification/reporting/**"
+      - "tests/reporting/**"
       - "scripts/verification/test-all.sh"
       - "scripts/verification/test-treedx-fast.sh"
       - "scripts/verification/check-file-lengths.sh"
@@ -141,7 +145,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "24.12.0"
           cache: npm
           cache-dependency-path: release/package-lock.json
 
@@ -168,11 +172,12 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential ca-certificates git libssl-dev openssl pkg-config
+          sudo apt-get install -y --no-install-recommends build-essential ca-certificates git libssl-dev openssl pkg-config strace
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: "1.99.0"
           components: rustfmt, clippy
 
       - name: Setup Elixir
@@ -183,11 +188,35 @@ jobs:
           otp-version: "27"
           elixir-version: "1.17"
 
+      - name: Setup exact reporting Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.12.0"
+
+      - name: Setup native reporting Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install native pytest reporter fixture dependency
+        run: python3 -m pip install pytest==8.4.2
+
+      - name: Install existing TypeScript tooling
+        run: npm ci --ignore-scripts
+        working-directory: packages/ts-sdk
+
+      - name: Check native reporting TypeScript
+        run: node packages/ts-sdk/node_modules/typescript/bin/tsc -p scripts/verification/reporting/tsconfig.json
+
+      - name: Verify native reporting contracts
+        run: node --test --test-reporter=tap tests/reporting/*.test.ts
+
       - name: Run focused service verification
         run: ./scripts/verification/test-treedx-fast.sh
 
   verify:
     if: >-
+      github.event_name == 'pull_request' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')))
     strategy:
@@ -217,10 +246,27 @@ jobs:
             libssl-dev \
             openssl \
             pkg-config \
+            strace \
             zstd
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.99.0"
+          components: rustfmt, clippy
+
+      - name: Setup exact reporting Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.12.0"
+
+      - name: Setup native reporting Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install native pytest reporter fixture dependency
+        run: python3 -m pip install pytest==8.4.2
 
       - name: Cache Rust target
         uses: actions/cache@v4
@@ -277,6 +323,15 @@ jobs:
       - name: Run release gate
         run: ./scripts/release/release-gate.sh
 
+      - name: Retain complete native prerequisite observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: treedx-native-prerequisites-${{ matrix.arch }}-${{ github.sha }}
+          path: ${{ runner.temp }}/treedx-native-prerequisites.json
+          if-no-files-found: error
+          retention-days: 30
+
   sdk-spec:
     runs-on: ubuntu-24.04
     name: SDK Spec
@@ -288,7 +343,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "24.12.0"
           cache: npm
           cache-dependency-path: packages/sdk-spec/package-lock.json
 
@@ -339,7 +394,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "24.12.0"
           cache: npm
           cache-dependency-path: packages/ts-sdk/package-lock.json
 
@@ -349,6 +404,8 @@ jobs:
 
       - name: Setup native SDK fixture Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.99.0"
 
       - name: Setup native SDK fixture Elixir
         uses: erlef/setup-beam@v1
@@ -451,7 +508,7 @@ jobs:
       - name: Setup native SDK fixture Node
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "24.12.0"
           cache: npm
           cache-dependency-path: packages/ts-sdk/package-lock.json
 
@@ -461,6 +518,8 @@ jobs:
 
       - name: Setup native SDK fixture Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.99.0"
 
       - name: Setup native SDK fixture Elixir
         uses: erlef/setup-beam@v1
@@ -542,6 +601,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: "1.99.0"
           components: rustfmt, clippy
 
       - name: Cache Cargo dependencies
