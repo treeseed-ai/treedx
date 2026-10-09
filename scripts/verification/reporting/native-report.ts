@@ -33,8 +33,21 @@ function cBytes(source: string): Buffer {
 
 function tracedWrites(trace: string): Map<string,Write[]> {
  const processes=new Map<string,Write[]>();
- for(const line of trace.split('\n')){
+ const pending=new Map<string,{line:string;time:bigint}>();
+ for(const original of trace.split('\n')){
+  let line=original.trim();
+  const resumed=/^(\d+)\s+(\d+)\.(\d{6})\s+<\.\.\. write resumed>\)\s+= (\d+)$/u.exec(line);
+  if(line.includes('<... write resumed>')){
+   if(!resumed)throw new Error('native_trace_write_incomplete');
+   const entry=pending.get(resumed[1]!);if(!entry)throw new Error('native_trace_write_incomplete');
+   if(BigInt(resumed[2]!)*1_000_000n+BigInt(resumed[3]!)<entry.time)throw new Error('native_trace_clock_reversed');
+   pending.delete(resumed[1]!);line=`${entry.line}) = ${resumed[4]!}`;
+  }
   if(!/\bwrite\(1,/u.test(line))continue;
+  const identity=/^(\d+)\s+(\d+)\.(\d{6})\s+/u.exec(line);
+  if(!identity||pending.has(identity[1]!))throw new Error('native_trace_write_incomplete');
+  const unfinished=/ <unfinished \.\.\.>$/u.test(line);
+  if(unfinished){pending.set(identity[1]!,{line:line.replace(/ <unfinished \.\.\.>$/u,''),time:BigInt(identity[2]!)*1_000_000n+BigInt(identity[3]!)});continue;}
   const match=/^(\d+)\s+(\d+)\.(\d{6})\s+write\(1, "((?:[^"\\]|\\.)*)", (\d+)\)\s+= (\d+)$/u.exec(line.trim());
   if(!match)throw new Error('native_trace_write_incomplete');
   const bytes=cBytes(match[4]!);
@@ -44,6 +57,7 @@ function tracedWrites(trace: string): Map<string,Write[]> {
   if(writes.length&&time<writes.at(-1)!.time)throw new Error('native_trace_clock_reversed');
   writes.push({bytes,time});processes.set(match[1]!,writes);
  }
+ if(pending.size)throw new Error('native_trace_write_incomplete');
  return processes;
 }
 
