@@ -24,3 +24,7 @@ test('strict ExUnit reporting preserves native failures and skipped dispositions
   {exitCode:null,signal:'SIGTERM'},
  ]){const supplied={...native,...change},before=structuredClone(supplied),report=exUnitAssertionReport(supplied);assert.equal(report.success,false,JSON.stringify(change));assert.deepEqual(report.raw,before);assert.deepEqual(supplied,before);}
 });
+test('strict ExUnit reporting retains a complete doctest-only suite without inventing ordinary tests',()=>{
+ const supplied={...native,stdout:stdout.replaceAll('test exact boundary','doctest Boundary.example/0 (1)').replace('1 test, 0 failures','1 doctest, 0 failures')};
+ const report=exUnitAssertionReport(supplied);assert.equal(report.success,true);assert.equal(report.numTotalTests,1);assert.equal(report.numPassedTests,1);assert.deepEqual(report.raw,supplied);
+});
