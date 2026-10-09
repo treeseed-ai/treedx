@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# The release gate freshly runs the complete native owner suite before this scene.
+# Reuse its actual reporting boundary cases without a parallel acceptance runner.
+node --test --test-reporter=tap tests/reporting/*.test.ts
+
 if [[ -z "${TREEDX_API_HOST_PORT:-}" && -z "${TREEDX_URL:-}" ]]; then
   TREEDX_API_HOST_PORT="$(
     node -e "const server = require('node:net').createServer(); server.listen(0, '127.0.0.1', () => { console.log(server.address().port); server.close(); });"
