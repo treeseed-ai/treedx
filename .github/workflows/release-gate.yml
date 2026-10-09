@@ -448,6 +448,43 @@ jobs:
         run: python -m pip install -e ".[dev]"
         working-directory: packages/python-sdk
 
+      - name: Setup native SDK fixture Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: packages/ts-sdk/package-lock.json
+
+      - name: Install original native SDK fixture dependencies
+        run: npm ci
+        working-directory: packages/ts-sdk
+
+      - name: Setup native SDK fixture Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup native SDK fixture Elixir
+        uses: erlef/setup-beam@v1
+        env:
+          ImageOS: ubuntu24
+        with:
+          otp-version: "27"
+          elixir-version: "1.17"
+
+      - name: Build original native SDK fixture Git worker
+        run: cargo build -p treedx_git --bin treedx_git_worker
+
+      - name: Compile original native SDK fixture engine
+        env:
+          MIX_ENV: dev
+        run: |
+          mix deps.get
+          mix compile
+        working-directory: apps/api
+
+      - name: Start disposable native SDK conformance fixture
+        run: node --import tsx scripts/native-conformance.ts start
+        working-directory: packages/ts-sdk
+
       - name: Check generated OpenAPI metadata
         run: python scripts/check_treedx_generated_types.py
         working-directory: packages/python-sdk
@@ -479,6 +516,11 @@ jobs:
       - name: Run full test suite
         run: python -m pytest
         working-directory: packages/python-sdk
+
+      - name: Stop disposable native SDK conformance fixture
+        if: always()
+        run: node --import tsx scripts/native-conformance.ts stop
+        working-directory: packages/ts-sdk
 
   test-rust-sdk:
     needs: sdk-spec
