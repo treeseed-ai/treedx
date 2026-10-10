@@ -4,6 +4,7 @@ services:
       context: ..
       target: prod
     mem_limit: ${TREEDX_API_MEMORY_LIMIT:-4g}
+    memswap_limit: ${TREEDX_API_MEMORY_LIMIT:-4g}
     environment:
       ELIXIR_ERL_OPTIONS: "+fnu"
       PHX_SERVER: "true"

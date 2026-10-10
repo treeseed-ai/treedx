@@ -24,7 +24,9 @@ defmodule TreeDx.CacheTest do
   end
 
   test "an exhausted zero byte budget retains no values while preserving loader results" do
-    assert {:ok, "loaded"} = Cache.get_or_load(@table, :zero, 1_000, 10, 0, fn -> {:ok, "loaded"} end)
+    assert {:ok, "loaded"} =
+             Cache.get_or_load(@table, :zero, 1_000, 10, 0, fn -> {:ok, "loaded"} end)
+
     assert Cache.stats(@table) == %{entries: 0, approx_bytes: 0}
   end
 

@@ -81,6 +81,7 @@ for _ in $(seq 1 120); do
 done
 
 curl -fsS "$TREEDX_URL/api/v1/health" >/dev/null
+node scripts/acceptance/cache-budget.ts "$(compose ps -q treedx-api)" "$TREEDX_URL"
 
 TOKEN="$(
   curl -fsS -X POST "$TREEDX_URL/api/v1/auth/dev-token" \
@@ -167,6 +168,8 @@ artifact_json="$(
 artifact_checksum="$(json_get '.artifact.checksum' <<<"$artifact_json")"
 
 curl -fsS "$TREEDX_URL/api/v1/audit/events?repoId=$repo_id&limit=50" "${AUTH[@]}" >/dev/null
+
+node scripts/acceptance/cache-budget.ts "$(compose ps -q treedx-api)" "$TREEDX_URL"
 
 cat <<SUMMARY
 MVP smoke passed

@@ -6,11 +6,7 @@ defmodule TreeDx.Runtime.Resources do
   end
 
   def memory_budget_bytes do
-    case System.get_env("TREEDX_RUNTIME_MEMORY_BUDGET_MB") do
-      nil -> nil
-      "" -> nil
-      value -> parse_positive_int(value) && parse_positive_int(value) * 1_048_576
-    end
+    int_env("TREEDX_RUNTIME_MEMORY_BUDGET_MB", 4096) * 1_048_576
   end
 
   def cache_budget_bytes do
@@ -30,13 +26,14 @@ defmodule TreeDx.Runtime.Resources do
       weights = %{
         repo_doc: int_env("TREEDX_REPO_DOC_CACHE_MEMORY_WEIGHT", 5),
         graph_index: int_env("TREEDX_GRAPH_INDEX_CACHE_MEMORY_WEIGHT", 3),
-        artifact_index: int_env("TREEDX_ARTIFACT_INDEX_CACHE_MEMORY_WEIGHT", 1)
+        artifact_index: int_env("TREEDX_ARTIFACT_INDEX_CACHE_MEMORY_WEIGHT", 1),
+        native_log: 1
       }
 
       total_weight = Enum.sum(Map.values(weights))
       div(total * Map.get(weights, kind, 1), max(total_weight, 1))
     else
-      _ -> nil
+      _ -> 0
     end
   end
 
@@ -60,6 +57,11 @@ defmodule TreeDx.Runtime.Resources do
   end
 
   def cache_pressure?, do: memory_snapshot().pressure in [:moderate, :high]
+
+  def configure_native_cache do
+    TreeDx.Native.configure_log_cache(cache_budget_for(:native_log))
+    :ok
+  end
 
   def worker_pool_size(:repository_query),
     do: int_env("TREEDX_REPOSITORY_QUERY_POOL_SIZE", max(2, cpu_budget() * 2))
@@ -104,7 +106,7 @@ defmodule TreeDx.Runtime.Resources do
 
   defp float_env(name, default) do
     case Float.parse(System.get_env(name, "")) do
-      {value, _} when value >= 0.0 -> value
+      {value, ""} when value >= 0.0 and value <= 1.0 -> value
       _ -> default
     end
   end
@@ -114,7 +116,7 @@ defmodule TreeDx.Runtime.Resources do
 
   defp parse_positive_int(value) do
     case Integer.parse(to_string(value)) do
-      {int, _} when int > 0 -> int
+      {int, ""} when int > 0 -> int
       _ -> nil
     end
   end

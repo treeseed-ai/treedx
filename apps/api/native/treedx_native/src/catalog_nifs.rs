@@ -4,6 +4,17 @@ use rustler::{Env, Term};
 use std::path::Path;
 use treedx_store::*;
 
+#[rustler::nif(schedule = "DirtyCpu")]
+fn configure_log_cache(max_bytes: usize) -> (usize, usize, usize) {
+    treedx_store::log::set_cache_budget(max_bytes);
+    treedx_store::log::cache_stats()
+}
+
+#[rustler::nif(schedule = "DirtyCpu")]
+fn log_cache_stats() -> (usize, usize, usize) {
+    treedx_store::log::cache_stats()
+}
+
 #[rustler::nif(schedule = "DirtyIo")]
 fn init_data_dir<'a>(env: Env<'a>, data_dir: String, opts_json: String) -> Term<'a> {
     match parse_json::<InitOptions>(opts_json) {

@@ -208,6 +208,10 @@ jobs:
       - name: Check native reporting TypeScript
         run: node packages/ts-sdk/node_modules/typescript/bin/tsc -p scripts/verification/reporting/tsconfig.json
 
+      - name: Install existing component definition tooling
+        run: npm ci --ignore-scripts
+        working-directory: release
+
       - name: Verify native reporting contracts
         run: node --test --test-reporter=tap tests/reporting/*.test.ts
 

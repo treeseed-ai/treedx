@@ -14,6 +14,7 @@ defmodule TreeDx.Application do
 
     TreeDx.ConfigValidation.validate_boot!()
     :ok = validate_auth!()
+    :ok = TreeDx.Runtime.Resources.configure_native_cache()
     TreeDx.Store.init!(node_id: node_id())
     TreeDx.Federation.NodeIdentity.ensure_keys!()
 

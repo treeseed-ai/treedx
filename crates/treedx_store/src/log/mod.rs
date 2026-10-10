@@ -9,6 +9,9 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::SystemTime;
 
+mod cache;
+use cache::{record_bytes, IndexCache};
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LogEnvelope<T> {
@@ -23,14 +26,32 @@ pub struct LogEnvelope<T> {
 }
 
 static LOG_LOCKS: OnceLock<Mutex<HashMap<PathBuf, Arc<Mutex<()>>>>> = OnceLock::new();
-static LOG_INDEXES: OnceLock<Mutex<HashMap<(PathBuf, String), LogIndex>>> = OnceLock::new();
+static LOG_INDEXES: OnceLock<Mutex<IndexCache>> = OnceLock::new();
+
+pub fn set_cache_budget(bytes: usize) {
+    let mut cache = LOG_INDEXES
+        .get_or_init(Default::default)
+        .lock()
+        .expect("treedx log index poisoned");
+    cache.budget = bytes;
+    cache.enforce();
+}
+
+pub fn cache_stats() -> (usize, usize, usize) {
+    let cache = LOG_INDEXES
+        .get_or_init(Default::default)
+        .lock()
+        .expect("treedx log index poisoned");
+    (cache.indexes.len(), cache.bytes(), cache.budget)
+}
 
 #[derive(Clone)]
 struct LogIndex {
     file_len: u64,
     modified: Option<SystemTime>,
     next_seq: u64,
-    latest: BTreeMap<String, serde_json::Value>,
+    latest: Option<BTreeMap<String, serde_json::Value>>,
+    bytes: usize,
 }
 
 fn lock_for(path: &Path) -> Arc<Mutex<()>> {
@@ -53,7 +74,7 @@ pub fn warm_log(path: &Path, kind: &str) -> Result<(), StoreError> {
     let lock = lock_for(path);
     let _guard = lock.lock().expect("treedx log lock poisoned");
     ensure_log_unlocked(path, kind)?;
-    ensure_index_unlocked(path, kind)
+    with_index_unlocked(path, kind, |_| ())
 }
 
 fn ensure_log_unlocked(path: &Path, kind: &str) -> Result<(), StoreError> {
@@ -229,9 +250,22 @@ pub fn replay_latest<T: DeserializeOwned + Serialize + Clone>(
     let lock = lock_for(path);
     let _guard = lock.lock().expect("treedx log lock poisoned");
     ensure_log_unlocked(path, kind)?;
-    let index = load_index_unlocked(path, kind)?;
-    index
-        .latest
+    let cached = with_index_unlocked(path, kind, |index| index.latest.clone())?;
+    let latest = match cached {
+        Some(latest) => latest,
+        None => {
+            let mut latest = BTreeMap::new();
+            visit_envelopes_unlocked::<serde_json::Value>(path, kind, |envelope| {
+                if envelope.op == "delete" {
+                    latest.remove(&envelope.record_id);
+                } else {
+                    latest.insert(envelope.record_id, envelope.payload);
+                }
+            })?;
+            latest
+        }
+    };
+    latest
         .into_iter()
         .map(|(id, value)| Ok((id, serde_json::from_value(value)?)))
         .collect()
@@ -245,17 +279,27 @@ pub fn replay_record<T: DeserializeOwned + Serialize + Clone>(
     let lock = lock_for(path);
     let _guard = lock.lock().expect("treedx log lock poisoned");
     ensure_log_unlocked(path, kind)?;
-    ensure_index_unlocked(path, kind)?;
-    let key = (path.to_path_buf(), kind.to_string());
-    let indexes = LOG_INDEXES.get_or_init(|| Mutex::new(HashMap::new()));
-    let payload = {
-        let indexes = indexes.lock().expect("treedx log index poisoned");
-        indexes
-            .get(&key)
-            .and_then(|index| index.latest.get(record_id))
-            .cloned()
-    };
-
+    let (complete, mut payload) = with_index_unlocked(path, kind, |index| {
+        (
+            index.latest.is_some(),
+            index
+                .latest
+                .as_ref()
+                .and_then(|latest| latest.get(record_id))
+                .cloned(),
+        )
+    })?;
+    if !complete {
+        visit_envelopes_unlocked::<serde_json::Value>(path, kind, |envelope| {
+            if envelope.record_id == record_id {
+                payload = if envelope.op == "delete" {
+                    None
+                } else {
+                    Some(envelope.payload)
+                };
+            }
+        })?;
+    }
     payload
         .map(serde_json::from_value)
         .transpose()
@@ -263,68 +307,83 @@ pub fn replay_record<T: DeserializeOwned + Serialize + Clone>(
 }
 
 fn next_seq_unlocked(path: &Path, kind: &str) -> Result<u64, StoreError> {
-    ensure_index_unlocked(path, kind)?;
-    let key = (path.to_path_buf(), kind.to_string());
-    let indexes = LOG_INDEXES.get_or_init(|| Mutex::new(HashMap::new()));
-    Ok(indexes
-        .lock()
-        .expect("treedx log index poisoned")
-        .get(&key)
-        .map(|index| index.next_seq)
-        .unwrap_or(1))
+    with_index_unlocked(path, kind, |index| index.next_seq)
 }
 
-fn load_index_unlocked(path: &Path, kind: &str) -> Result<LogIndex, StoreError> {
-    ensure_index_unlocked(path, kind)?;
-    let key = (path.to_path_buf(), kind.to_string());
-    let indexes = LOG_INDEXES.get_or_init(|| Mutex::new(HashMap::new()));
-    Ok(indexes
-        .lock()
-        .expect("treedx log index poisoned")
-        .get(&key)
-        .cloned()
-        .unwrap_or(LogIndex {
-            file_len: 0,
-            modified: None,
-            next_seq: 1,
-            latest: BTreeMap::new(),
-        }))
-}
-
-fn ensure_index_unlocked(path: &Path, kind: &str) -> Result<(), StoreError> {
+fn with_index_unlocked<T>(
+    path: &Path,
+    kind: &str,
+    read: impl FnOnce(&LogIndex) -> T,
+) -> Result<T, StoreError> {
     let metadata = fs::metadata(path)?;
     let modified = metadata.modified().ok();
     let key = (path.to_path_buf(), kind.to_string());
-    let indexes = LOG_INDEXES.get_or_init(|| Mutex::new(HashMap::new()));
-    if indexes
-        .lock()
-        .expect("treedx log index poisoned")
-        .get(&key)
-        .filter(|index| index.file_len == metadata.len() && index.modified == modified)
-        .is_some()
-    {
-        return Ok(());
-    }
-    let envelopes = replay_envelopes_unlocked::<serde_json::Value>(path, kind)?;
-    let mut latest = BTreeMap::new();
-    for envelope in &envelopes {
-        if envelope.op == "delete" {
-            latest.remove(&envelope.record_id);
-        } else {
-            latest.insert(envelope.record_id.clone(), envelope.payload.clone());
+    let indexes = LOG_INDEXES.get_or_init(Default::default);
+    let budget = {
+        let cache = indexes.lock().expect("treedx log index poisoned");
+        if let Some(index) = cache
+            .indexes
+            .get(&key)
+            .filter(|index| index.file_len == metadata.len() && index.modified == modified)
+        {
+            return Ok(read(index));
         }
-    }
-    let index = LogIndex {
+        cache.budget
+    };
+    let mut index = LogIndex {
         file_len: metadata.len(),
         modified,
-        next_seq: envelopes.last().map(|entry| entry.seq + 1).unwrap_or(1),
-        latest,
+        next_seq: 1,
+        latest: Some(BTreeMap::new()),
+        bytes: 0,
     };
-    indexes
-        .lock()
-        .expect("treedx log index poisoned")
-        .insert(key, index);
-    Ok(())
+    visit_envelopes_unlocked::<serde_json::Value>(path, kind, |envelope| {
+        index.next_seq = envelope.seq + 1;
+        update_payload(
+            &mut index,
+            envelope.record_id,
+            if envelope.op == "delete" {
+                None
+            } else {
+                Some(envelope.payload)
+            },
+            budget,
+        );
+    })?;
+    let result = read(&index);
+    let mut cache = indexes.lock().expect("treedx log index poisoned");
+    // A concurrent budget reduction also applies to a load already in flight.
+    if index.bytes > cache.budget {
+        index.latest = None;
+        index.bytes = 0;
+    }
+    cache.indexes.insert(key, index);
+    cache.enforce();
+    Ok(result)
+}
+
+fn update_payload(
+    index: &mut LogIndex,
+    key: String,
+    payload: Option<serde_json::Value>,
+    budget: usize,
+) {
+    let Some(latest) = index.latest.as_mut() else {
+        return;
+    };
+    if let Some((old_key, old_value)) = latest.remove_entry(&key) {
+        index.bytes -= record_bytes(&old_key, &old_value);
+    }
+    if let Some(payload) = payload {
+        let bytes = record_bytes(&key, &payload);
+        if bytes > budget.saturating_sub(index.bytes) {
+            index.latest = None;
+            index.bytes = 0;
+        } else {
+            index.bytes += bytes;
+            latest.insert(key, payload);
+        }
+    }
 }
 
 fn update_index_after_write(
@@ -333,23 +392,11 @@ fn update_index_after_write(
     next_seq: u64,
     records: Vec<(String, serde_json::Value)>,
 ) -> Result<(), StoreError> {
-    let metadata = fs::metadata(path)?;
-    let key = (path.to_path_buf(), kind.to_string());
-    let indexes = LOG_INDEXES.get_or_init(|| Mutex::new(HashMap::new()));
-    let mut indexes = indexes.lock().expect("treedx log index poisoned");
-    let index = indexes.entry(key).or_insert(LogIndex {
-        file_len: 0,
-        modified: None,
-        next_seq: 1,
-        latest: BTreeMap::new(),
-    });
-    for (record_id, payload) in records {
-        index.latest.insert(record_id, payload);
-    }
-    index.file_len = metadata.len();
-    index.modified = metadata.modified().ok();
-    index.next_seq = next_seq;
-    Ok(())
+    update_written_index(path, kind, next_seq, |index, budget| {
+        for (key, payload) in records {
+            update_payload(index, key, Some(payload), budget);
+        }
+    })
 }
 
 fn remove_from_index_after_write(
@@ -358,20 +405,38 @@ fn remove_from_index_after_write(
     next_seq: u64,
     record_id: &str,
 ) -> Result<(), StoreError> {
+    update_written_index(path, kind, next_seq, |index, budget| {
+        update_payload(index, record_id.to_string(), None, budget)
+    })
+}
+
+fn update_written_index(
+    path: &Path,
+    kind: &str,
+    next_seq: u64,
+    update: impl FnOnce(&mut LogIndex, usize),
+) -> Result<(), StoreError> {
     let metadata = fs::metadata(path)?;
-    let key = (path.to_path_buf(), kind.to_string());
-    let indexes = LOG_INDEXES.get_or_init(|| Mutex::new(HashMap::new()));
-    let mut indexes = indexes.lock().expect("treedx log index poisoned");
-    let index = indexes.entry(key).or_insert(LogIndex {
-        file_len: 0,
-        modified: None,
-        next_seq: 1,
-        latest: BTreeMap::new(),
-    });
-    index.latest.remove(record_id);
+    let mut cache = LOG_INDEXES
+        .get_or_init(Default::default)
+        .lock()
+        .expect("treedx log index poisoned");
+    let budget = cache.budget;
+    let index = cache
+        .indexes
+        .entry((path.to_path_buf(), kind.to_string()))
+        .or_insert(LogIndex {
+            file_len: 0,
+            modified: None,
+            next_seq: 1,
+            latest: None,
+            bytes: 0,
+        });
+    update(index, budget);
     index.file_len = metadata.len();
     index.modified = metadata.modified().ok();
     index.next_seq = next_seq;
+    cache.enforce();
     Ok(())
 }
 
@@ -379,8 +444,17 @@ fn replay_envelopes_unlocked<T: DeserializeOwned + Serialize>(
     path: &Path,
     kind: &str,
 ) -> Result<Vec<LogEnvelope<T>>, StoreError> {
-    let file = fs::File::open(path)?;
     let mut out = Vec::new();
+    visit_envelopes_unlocked(path, kind, |envelope| out.push(envelope))?;
+    Ok(out)
+}
+
+fn visit_envelopes_unlocked<T: DeserializeOwned + Serialize>(
+    path: &Path,
+    kind: &str,
+    mut visit: impl FnMut(LogEnvelope<T>),
+) -> Result<(), StoreError> {
+    let file = fs::File::open(path)?;
     for (index, line) in BufReader::new(file).lines().enumerate() {
         let line_no = index + 1;
         let line = line?;
@@ -409,7 +483,7 @@ fn replay_envelopes_unlocked<T: DeserializeOwned + Serialize>(
                 line: line_no,
             });
         }
-        out.push(envelope);
+        visit(envelope);
     }
-    Ok(out)
+    Ok(())
 }

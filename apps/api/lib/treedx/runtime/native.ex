@@ -3,6 +3,8 @@ defmodule TreeDx.Native do
   use Rustler, otp_app: :treedx, crate: :treedx_native
 
   def init_data_dir(_data_dir, _opts), do: :erlang.nif_error(:nif_not_loaded)
+  def configure_log_cache(_max_bytes), do: :erlang.nif_error(:nif_not_loaded)
+  def log_cache_stats(), do: :erlang.nif_error(:nif_not_loaded)
   def seed_dev_records(_data_dir, _node_id, _base_url), do: :erlang.nif_error(:nif_not_loaded)
   def seed_local_records(_data_dir, _node_id, _base_url), do: :erlang.nif_error(:nif_not_loaded)
   def put_repository(_data_dir, _input), do: :erlang.nif_error(:nif_not_loaded)

@@ -126,7 +126,13 @@ defmodule TreeDx.Cache do
       ) do
     if table_exists?(table) do
       approx_bytes = approx_bytes(value)
-      :ets.insert(table, {key, inserted_at, inserted_at, approx_bytes, value})
+
+      if is_nil(max_bytes) or approx_bytes <= max_bytes do
+        :ets.insert(table, {key, inserted_at, inserted_at, approx_bytes, value})
+      else
+        :ets.delete(table, key)
+      end
+
       evict(table, max_entries, max_bytes)
     end
 
@@ -252,7 +258,11 @@ defmodule TreeDx.Cache do
   end
 
   defp evict_by_bytes(_table, nil), do: :ok
-  defp evict_by_bytes(_table, max_bytes) when max_bytes <= 0, do: :ok
+
+  defp evict_by_bytes(table, max_bytes) when max_bytes <= 0 do
+    :ets.delete_all_objects(table)
+    :ok
+  end
 
   defp evict_by_bytes(table, max_bytes) do
     entries = :ets.tab2list(table)
