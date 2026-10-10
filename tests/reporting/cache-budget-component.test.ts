@@ -6,9 +6,11 @@ import test from 'node:test';
 import { verifyCacheMetrics } from '../../scripts/acceptance/cache-budget.ts';
 
 const require = createRequire(new URL('../../release/package.json', import.meta.url));
-const { parse }: { parse(value: string): { services: { treedx: { mem_limit: string; memswap_limit: string; environment: Record<string, string> } } } } = require('yaml');
+const { parse }: { parse(value: string): { services: { treedx: { mem_limit: string; memswap_limit: string; environment: Record<string, string> } }; development: { targets: { id: string; resources: { memoryBytes?: number } }[] } } } = require('yaml');
 
 test('actual governed TreeDX component archive definition contains the confirmed RAM ceiling and finite owning cache budget', () => {
+  const target = parse(readFileSync('treeseed.package.yaml', 'utf8')).development.targets.find(target => target.id === 'service');
+  assert.equal(target?.resources.memoryBytes, 4 * 1024 ** 3);
   const version = (JSON.parse(readFileSync('release/package.json', 'utf8')) as {version: string}).version;
   try {
     execFileSync(process.execPath, ['release/create-component-release.mjs'], { env: { ...process.env,
