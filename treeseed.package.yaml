@@ -90,7 +90,7 @@ development:
       secretRefs:
         TREEDX_REMOTE_CREDENTIAL_BROKER_ASSERTION: treedx-credential-broker-assertion
       shutdown: { graceSeconds: 60, activeWorkPolicy: block }
-      resources: {}
+      resources: { memoryBytes: 4294967296 }
       logs: [.treeseed/development/service.log]
       forbiddenOperations: [shared-production-data, destructive-migration, publish, production-tag]
       freeze:
