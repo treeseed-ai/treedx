@@ -182,18 +182,10 @@ defmodule TreeDx.RepositoryCache do
   defp repository_key?(_key, _repo_id), do: false
 
   defp cache_max_bytes do
-    case System.get_env("TREEDX_REPO_DOC_CACHE_MAX_BYTES") do
-      nil -> TreeDx.Runtime.Resources.cache_budget_for(:repo_doc)
-      "" -> TreeDx.Runtime.Resources.cache_budget_for(:repo_doc)
-      value -> parse_positive_int(value) || TreeDx.Runtime.Resources.cache_budget_for(:repo_doc)
-    end
-  end
-
-  defp parse_positive_int(value) do
-    case Integer.parse(value) do
-      {int, _} when int > 0 -> int
-      _ -> nil
-    end
+    Cache.byte_limit(
+      "TREEDX_REPO_DOC_CACHE_MAX_BYTES",
+      TreeDx.Runtime.Resources.cache_budget_for(:repo_doc)
+    )
   end
 
   defp collect_ok(results) do

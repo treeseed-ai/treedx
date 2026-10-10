@@ -66,22 +66,9 @@ defmodule TreeDx.Graph.IndexCache do
   end
 
   defp cache_max_bytes do
-    case System.get_env("TREEDX_GRAPH_INDEX_CACHE_MAX_BYTES") do
-      nil ->
-        TreeDx.Runtime.Resources.cache_budget_for(:graph_index)
-
-      "" ->
-        TreeDx.Runtime.Resources.cache_budget_for(:graph_index)
-
-      value ->
-        parse_positive_int(value) || TreeDx.Runtime.Resources.cache_budget_for(:graph_index)
-    end
-  end
-
-  defp parse_positive_int(value) do
-    case Integer.parse(value) do
-      {int, _} when int > 0 -> int
-      _ -> nil
-    end
+    Cache.byte_limit(
+      "TREEDX_GRAPH_INDEX_CACHE_MAX_BYTES",
+      TreeDx.Runtime.Resources.cache_budget_for(:graph_index)
+    )
   end
 end

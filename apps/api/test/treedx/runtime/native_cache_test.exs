@@ -3,7 +3,7 @@ defmodule TreeDx.Runtime.NativeCacheTest do
 
   test "actual repository and native graph caches cannot override an exhausted shared RAM allocation" do
     names =
-      ~w(TREEDX_RUNTIME_MEMORY_BUDGET_MB TREEDX_REPO_DOC_CACHE_MAX_BYTES TREEDX_GRAPH_INDEX_CACHE_MAX_BYTES)
+      ~w(TREEDX_RUNTIME_MEMORY_BUDGET_MB TREEDX_CACHE_MIN_FREE_MEMORY_MB TREEDX_CACHE_MEMORY_FRACTION TREEDX_REPO_DOC_CACHE_MAX_BYTES TREEDX_GRAPH_INDEX_CACHE_MAX_BYTES)
 
     previous = Map.new(names, &{&1, System.get_env(&1)})
     manager = Process.whereis(TreeDx.Cache.Manager)
@@ -20,6 +20,8 @@ defmodule TreeDx.Runtime.NativeCacheTest do
     end)
 
     System.put_env("TREEDX_RUNTIME_MEMORY_BUDGET_MB", "256")
+    System.put_env("TREEDX_CACHE_MIN_FREE_MEMORY_MB", "512")
+    System.put_env("TREEDX_CACHE_MEMORY_FRACTION", "0.25")
     System.put_env("TREEDX_REPO_DOC_CACHE_MAX_BYTES", "4294967296")
     System.put_env("TREEDX_GRAPH_INDEX_CACHE_MAX_BYTES", "4294967296")
     TreeDx.RepositoryCache.reset!()
