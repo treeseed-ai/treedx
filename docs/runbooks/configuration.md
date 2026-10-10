@@ -83,12 +83,23 @@ Runtime resource and performance tuning settings:
 - `TREEDX_HEAVY_OPERATION_EXECUTION_TIMEOUT_MS=0`
 - `TREEDX_POOL_METRICS_INTERVAL_MS=1000`
 
-If `TREEDX_RUNTIME_MEMORY_BUDGET_MB` is set, TreeDX computes an approximate
-cache byte budget from `TREEDX_CACHE_MEMORY_FRACTION` and uses that byte budget
-as the default eviction ceiling. An explicitly configured `*_MAX_ENTRIES`
-setting adds an entry-count ceiling. Cache hits are read-only so concurrent
-readers do not contend on recency writes. If no memory budget is set, caches
-retain their legacy entry-count defaults.
+TreeDX defaults to a 4 GiB runtime budget. The managed component also enforces
+a 4 GiB container RAM ceiling without additional swap. The default cache pool
+is 896 MiB: 25% of the runtime budget after reserving 512 MiB. Repository, graph
+and native log caches receive bounded shares of this one pool. Missing, empty
+or malformed runtime configuration cannot disable that budget; an exhausted
+cache pool retains no entries. Explicit entry limits add a count ceiling.
+
+The native log cache charges owned JSON allocations and index metadata, evicts
+across logs, and bypasses oversized payload indexes. Reads still use and validate
+the durable log when payload caching is bypassed; sequence numbers, deletes and
+checksums retain the same authority. Standalone Rust storage consumers use a
+finite 64 MiB native cache default; the service replaces it with its allocated
+share before initializing storage. Native cache bytes and their ceiling appear
+as `treedx_native_log_cache_bytes` and `treedx_native_log_cache_budget_bytes`.
+Cache accounting is conservative estimated retained memory; the container
+ceiling independently bounds all service RAM, including transient allocations
+and native allocator overhead. Cache hits remain read-only.
 
 The repository-context cache coalesces repeated durable-catalog reads and Git
 ref resolution only after request authorization succeeds. Its short default

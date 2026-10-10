@@ -13,11 +13,14 @@ defmodule TreeDx.Cache.Manager do
   def start_link(_opts), do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
 
   def init(_opts) do
+    Resources.configure_native_cache()
+    publish_runtime()
     schedule_sample()
     {:ok, %{}}
   end
 
   def handle_info(:sample, state) do
+    Resources.configure_native_cache()
     publish_runtime()
     rebalance_caches()
     schedule_sample()
@@ -27,6 +30,7 @@ defmodule TreeDx.Cache.Manager do
   def snapshot do
     %{
       runtime: Resources.memory_snapshot(),
+      native_log: TreeDx.Native.log_cache_stats(),
       caches:
         Map.new(@managed, fn {table, kind} ->
           {kind, Cache.stats(table)}
@@ -56,6 +60,9 @@ defmodule TreeDx.Cache.Manager do
     Metrics.put_gauge("treedx_runtime_cache_budget_bytes", snapshot.cache_budget_bytes || 0)
     Metrics.put_gauge("treedx_runtime_memory_budget_bytes", snapshot.budget_bytes || 0)
     Metrics.put_gauge("treedx_cache_pressure", pressure_value(snapshot.pressure))
+    {_entries, bytes, budget} = TreeDx.Native.log_cache_stats()
+    Metrics.put_gauge("treedx_native_log_cache_bytes", bytes)
+    Metrics.put_gauge("treedx_native_log_cache_budget_bytes", budget)
   end
 
   defp schedule_sample do
