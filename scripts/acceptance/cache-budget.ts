@@ -17,6 +17,10 @@ export function verifyCacheMetrics(metrics: string): void {
   const budget = gauge('treedx_native_log_cache_budget_bytes');
   assert.equal(budget, 93_952_409);
   assert.ok(gauge('treedx_native_log_cache_bytes') <= budget, 'native cache exceeds its RAM share');
+  assert.ok(gauge('treedx_cache_approx_bytes{cache="repository_cache"}') <= 469_762_048,
+    'repository cache exceeds its RAM share');
+  assert.ok(gauge('treedx_cache_approx_bytes{cache="index_cache"}') <= 281_857_228,
+    'graph cache exceeds its RAM share');
 }
 
 async function verifyContainer(container: string, url: string): Promise<void> {
@@ -34,7 +38,7 @@ async function verifyContainer(container: string, url: string): Promise<void> {
   const response = await fetch(new URL('/metrics', url), { signal: AbortSignal.timeout(10_000) });
   assert.equal(response.status, 200);
   verifyCacheMetrics(await response.text());
-  console.log('TreeDX actual container ceiling=4294967296 cache pool=939524096 native cache<=93952409 bytes');
+  console.log('TreeDX actual container ceiling=4294967296 cache pool=939524096; native, repository and graph caches fit their shares');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

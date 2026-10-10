@@ -27,6 +27,13 @@ defmodule TreeDx.Cache do
     end
   end
 
+  def byte_limit(name, allocation) when is_integer(allocation) and allocation >= 0 do
+    case Integer.parse(System.get_env(name, "")) do
+      {value, ""} when value >= 0 -> min(value, allocation)
+      _ -> allocation
+    end
+  end
+
   def get_or_load(table, key, ttl_ms, max_entries, loader),
     do: get_or_load(table, key, ttl_ms, max_entries, nil, loader)
 

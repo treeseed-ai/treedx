@@ -42,6 +42,31 @@ defmodule TreeDx.CacheTest do
     assert Cache.entry_limit(name, 256, 1_000_000) == 512
   end
 
+  test "byte overrides can only lower their finite RAM allocation" do
+    name = "TREEDX_TEST_CACHE_MAX_BYTES"
+    previous = System.get_env(name)
+
+    on_exit(fn ->
+      if previous, do: System.put_env(name, previous), else: System.delete_env(name)
+    end)
+
+    for value <- [nil, "", "invalid", "-1", "4096garbage", "1.5", "Infinity"] do
+      if value, do: System.put_env(name, value), else: System.delete_env(name)
+      assert Cache.byte_limit(name, 4096) == 4096
+      assert Cache.byte_limit(name, 0) == 0
+    end
+
+    for {value, expected} <- [{"0", 0}, {"1", 1}, {"4096", 4096}, {"4294967296", 4096}] do
+      System.put_env(name, value)
+      assert Cache.byte_limit(name, 4096) == expected
+      assert Cache.byte_limit(name, 0) == 0
+    end
+
+    for invalid <- [nil, -1, 1.5, "4096"] do
+      assert_raise FunctionClauseError, fn -> Cache.byte_limit(name, invalid) end
+    end
+  end
+
   test "get_or_load returns cached value and refreshes last accessed metadata" do
     assert {:ok, "value"} =
              Cache.get_or_load(@table, :key, 1_000, 10, 10_000, fn -> {:ok, "value"} end)

@@ -28,6 +28,8 @@ const metrics = [
   'treedx_runtime_cache_budget_bytes 939524096',
   'treedx_native_log_cache_budget_bytes 93952409',
   'treedx_native_log_cache_bytes 128',
+  'treedx_cache_approx_bytes{cache="repository_cache"} 128',
+  'treedx_cache_approx_bytes{cache="index_cache"} 128',
 ].join('\n');
 
 test('actual service cache readback requires finite exact budgets and denies missing ambiguous malformed and overflowing observations', () => {
@@ -40,4 +42,12 @@ test('actual service cache readback requires finite exact budgets and denies mis
     metrics.replace('bytes 128', 'bytes '), metrics.replace('bytes 128', 'bytes Infinity'),
     metrics.replace('bytes 128', 'bytes 9007199254740992'), metrics.replace('bytes 128', 'bytes 0.5'), `${metrics}\ntreedx_native_log_cache_bytes 128`,
   ]) assert.throws(() => verifyCacheMetrics(invalid));
+  for (const [name, limit] of [['repository_cache', 469_762_048], ['index_cache', 281_857_228]] as const) {
+    const original = `treedx_cache_approx_bytes{cache="${name}"} 128`;
+    verifyCacheMetrics(metrics.replace(original, original.replace(' 128', ` ${limit}`)));
+    for (const replacement of ['', '-1', 'NaN', 'Infinity', '0.5', String(limit + 1)])
+      assert.throws(() => verifyCacheMetrics(metrics.replace(original, original.replace('128', replacement))));
+    assert.throws(() => verifyCacheMetrics(metrics.replace(original, '')));
+    assert.throws(() => verifyCacheMetrics(`${metrics}\n${original}`));
+  }
 });
