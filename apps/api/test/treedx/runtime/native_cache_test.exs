@@ -1,6 +1,43 @@
 defmodule TreeDx.Runtime.NativeCacheTest do
   use ExUnit.Case, async: false
 
+  test "actual repository and native graph caches cannot override an exhausted shared RAM allocation" do
+    names = ~w(TREEDX_RUNTIME_MEMORY_BUDGET_MB TREEDX_REPO_DOC_CACHE_MAX_BYTES TREEDX_GRAPH_INDEX_CACHE_MAX_BYTES)
+    previous = Map.new(names, &{&1, System.get_env(&1)})
+    manager = Process.whereis(TreeDx.Cache.Manager)
+    :ok = :sys.suspend(manager)
+
+    on_exit(fn ->
+      Enum.each(previous, fn {name, value} ->
+        if value, do: System.put_env(name, value), else: System.delete_env(name)
+      end)
+
+      TreeDx.RepositoryCache.reset!()
+      TreeDx.Graph.IndexCache.reset!()
+      :ok = :sys.resume(manager)
+    end)
+
+    System.put_env("TREEDX_RUNTIME_MEMORY_BUDGET_MB", "256")
+    System.put_env("TREEDX_REPO_DOC_CACHE_MAX_BYTES", "4294967296")
+    System.put_env("TREEDX_GRAPH_INDEX_CACHE_MAX_BYTES", "4294967296")
+    TreeDx.RepositoryCache.reset!()
+    TreeDx.Graph.IndexCache.reset!()
+    assert TreeDx.Runtime.Resources.cache_budget_bytes() == 0
+    assert {:ok, index} = TreeDx.Graph.Native.build_graph_index(%{
+      "repoId" => "bounded-native-cache", "refName" => "refs/heads/main",
+      "commitSha" => String.duplicate("a", 40), "documents" => []
+    })
+
+    for n <- 1..2 do
+      assert {:ok, %{iteration: ^n}} = TreeDx.RepositoryCache.context("bounded-repo", "main", fn -> {:ok, %{iteration: n}} end)
+      assert {:ok, observed} = TreeDx.Graph.IndexCache.get_or_load("bounded-graph", "version", fn -> {:ok, Map.put(index, "iteration", n)} end)
+      assert observed["iteration"] == n
+      assert is_reference(observed.native_resource)
+      assert TreeDx.Cache.stats(TreeDx.RepositoryCache) == %{entries: 0, approx_bytes: 0}
+      assert TreeDx.Cache.stats(TreeDx.Graph.IndexCache) == %{entries: 0, approx_bytes: 0}
+    end
+  end
+
   test "actual NIF catalog writes and independent readback survive cache exhaustion and reconfiguration" do
     dir =
       Path.join(System.tmp_dir!(), "treedx-native-cache-#{System.unique_integer([:positive])}")
