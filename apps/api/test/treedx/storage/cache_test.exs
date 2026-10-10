@@ -23,6 +23,11 @@ defmodule TreeDx.CacheTest do
     assert Cache.stats(@table).entries == 0
   end
 
+  test "an exhausted zero byte budget retains no values while preserving loader results" do
+    assert {:ok, "loaded"} = Cache.get_or_load(@table, :zero, 1_000, 10, 0, fn -> {:ok, "loaded"} end)
+    assert Cache.stats(@table) == %{entries: 0, approx_bytes: 0}
+  end
+
   test "uses byte-budget eviction unless an entry limit is explicitly configured" do
     name = "TREEDX_TEST_CACHE_MAX_ENTRIES"
     System.delete_env(name)
