@@ -94,9 +94,18 @@ fn changed_paths<'a>(env: Env<'a>, path: String, base_ref: String, head_ref: Str
 #[rustler::nif(schedule = "DirtyIo")]
 fn fetch_remote<'a>(env: Env<'a>, input_json: String) -> Term<'a> {
     match parse_json::<treedx_git::FetchRemoteInput>(input_json) {
-        Ok(input) => match treedx_git::fetch_remote(input) {
-            Ok(record) => ok_json(env, record),
-            Err(error) => err_json(env, error.code(), error),
+        // Run blocking gix protocol work on a Rust-owned thread. Keep Env and
+        // every Erlang term on the original dirty-I/O scheduler thread.
+        Ok(input) => match std::thread::Builder::new()
+            .name("treedx-git-fetch".to_string())
+            .spawn(move || treedx_git::fetch_remote(input))
+        {
+            Ok(worker) => match worker.join() {
+                Ok(Ok(record)) => ok_json(env, record),
+                Ok(Err(error)) => err_json(env, error.code(), error),
+                Err(_) => err_json(env, "git_error", "Native fetch worker panicked"),
+            },
+            Err(_) => err_json(env, "git_error", "Native fetch worker could not start"),
         },
         Err(error) => err_json(env, "invalid_json", format!("{error:?}")),
     }
