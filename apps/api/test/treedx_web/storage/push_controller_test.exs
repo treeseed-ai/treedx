@@ -18,7 +18,7 @@ defmodule TreeDxWeb.PushControllerTest do
         "remoteUrl" => "file://#{remote_path}"
       })["repo"]
 
-    {:ok, token: token, repo_id: repo["repoId"], remote_path: remote_path}
+    {:ok, token: token, repo_id: repo["repoId"], repo_path: repo_path, remote_path: remote_path}
   end
 
   test "actor with git push can plan and push an allowed ref", %{
