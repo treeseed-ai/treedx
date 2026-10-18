@@ -53,6 +53,41 @@ defmodule TreeDxWeb.PushControllerTest do
     assert git_bare!(remote_path, ["rev-parse", "refs/heads/main"]) =~ ~r/^[0-9a-f]{40}/
   end
 
+  test "native fetch preserves local branch and service health across exact remote replay", %{
+    token: token,
+    repo_id: repo_id,
+    repo_path: repo_path
+  } do
+    original = git!(repo_path, ["rev-parse", "refs/heads/main"])
+
+    build_conn()
+    |> auth_conn(token)
+    |> post("/api/v1/repos/#{repo_id}/push", %{
+      "refspecs" => ["refs/heads/main:refs/heads/main"],
+      "planOnly" => false
+    })
+    |> json!(200)
+
+    for iteration <- 1..2 do
+      fetched =
+        build_conn()
+        |> auth_conn(token)
+        |> post("/api/v1/repos/#{repo_id}/sync", %{
+          "refspecs" => ["+refs/heads/main:refs/remotes/origin/staging"],
+          "planOnly" => false
+        })
+        |> json!(200)
+
+      assert fetched["fetch"]["status"] == "synced"
+      expected = if iteration == 1, do: ["refs/remotes/origin/staging"], else: []
+      assert fetched["fetch"]["updatedRefs"] == expected
+      assert_public_hygiene!(fetched)
+      assert git!(repo_path, ["rev-parse", "refs/remotes/origin/staging"]) == original
+      assert git!(repo_path, ["rev-parse", "refs/heads/main"]) == original
+      assert build_conn() |> get("/api/v1/health") |> json!(200)
+    end
+  end
+
   test "push rejects credentials, missing capability, and wrong ref scope", %{
     token: token,
     repo_id: repo_id

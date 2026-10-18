@@ -72,6 +72,60 @@ fn repeated_local_push_is_convergent_after_the_destination_already_matches() {
 }
 
 #[test]
+fn local_fetch_retains_branch_identity_and_replays_without_duplicate_ref_updates() {
+    let local = tempdir().unwrap();
+    let remote = tempdir().unwrap();
+    git(local.path(), &["init", "-b", "main"]);
+    git(local.path(), &["config", "user.name", "TreeDX Test"]);
+    git(
+        local.path(),
+        &["config", "user.email", "test@example.invalid"],
+    );
+    std::fs::write(local.path().join("README.md"), "native fetch\n").unwrap();
+    git(local.path(), &["add", "README.md"]);
+    git(local.path(), &["commit", "-m", "native fetch"]);
+    git(remote.path(), &["init", "--bare"]);
+    let original = git_stdout(local.path(), &["rev-parse", "refs/heads/main"]);
+    push_remote(PushRemoteInput {
+        repo_path: local.path().display().to_string(),
+        remote_url: Some(format!("file://{}", remote.path().display())),
+        remote_name: Some("origin".to_string()),
+        refspecs: vec!["refs/heads/main:refs/heads/main".to_string()],
+        plan: false,
+        expected_remote_head: None,
+    })
+    .unwrap();
+    let input = || FetchRemoteInput {
+        repo_path: local.path().display().to_string(),
+        remote_url: Some(format!("file://{}", remote.path().display())),
+        remote_name: Some("origin".to_string()),
+        refspecs: vec!["+refs/heads/main:refs/remotes/origin/staging".to_string()],
+        plan: false,
+    };
+    let first = fetch_remote(input()).unwrap();
+    assert_eq!(first.status, "synced");
+    assert_eq!(first.updated_refs, vec!["refs/remotes/origin/staging"]);
+    assert_eq!(
+        git_stdout(local.path(), &["rev-parse", "refs/remotes/origin/staging"]),
+        original
+    );
+    assert_eq!(
+        git_stdout(local.path(), &["rev-parse", "refs/heads/main"]),
+        original
+    );
+    assert!(fetch_remote(input()).unwrap().updated_refs.is_empty());
+    let missing = FetchRemoteInput {
+        remote_url: Some(format!("file://{}/missing.git", remote.path().display())),
+        ..input()
+    };
+    assert_eq!(fetch_remote(missing).unwrap_err().code(), "git_error");
+    assert_eq!(
+        git_stdout(local.path(), &["rev-parse", "refs/heads/main"]),
+        original
+    );
+}
+
+#[test]
 fn plan_validates_without_remote_mutation() {
     let local = tempdir().unwrap();
     let remote = tempdir().unwrap();
