@@ -43,6 +43,24 @@ impl IndexCache {
             return;
         }
         while self.bytes() > self.budget {
+            // Keep each log's validated length and next sequence when its
+            // payloads no longer fit. Dropping the entire index makes every
+            // subsequent append replay durable history just to find its seq.
+            if let Some(key) = self
+                .indexes
+                .iter()
+                .filter(|(_, index)| index.bytes > 0)
+                .max_by_key(|(_, index)| index.bytes)
+                .map(|(key, _)| key.clone())
+            {
+                let index = self
+                    .indexes
+                    .get_mut(&key)
+                    .expect("selected log index exists");
+                index.latest = None;
+                index.bytes = 0;
+                continue;
+            }
             let Some(key) = self.indexes.keys().next().cloned() else {
                 break;
             };
@@ -75,6 +93,48 @@ pub(super) fn record_bytes(key: &String, value: &Value) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn payload_pressure_preserves_log_sequences_and_small_catalog_reads() {
+        let mut cache = IndexCache::default();
+        for (path, payload) in [
+            ("small.tdb", "small".to_string()),
+            ("large.tdb", "x".repeat(8192)),
+        ] {
+            let value = Value::String(payload);
+            let key = "record".to_string();
+            let bytes = record_bytes(&key, &value);
+            cache.indexes.insert(
+                (PathBuf::from(path), "test".to_string()),
+                LogIndex {
+                    file_len: 4096,
+                    modified: None,
+                    next_seq: 42,
+                    latest: Some(BTreeMap::from([(key, value)])),
+                    bytes,
+                },
+            );
+        }
+        cache.budget = 4096;
+        cache.enforce();
+        assert!(cache.bytes() <= cache.budget);
+        assert_eq!(
+            cache.indexes.len(),
+            2,
+            "payload eviction must retain bounded sequence metadata"
+        );
+        let large = &cache.indexes[&(PathBuf::from("large.tdb"), "test".to_string())];
+        assert_eq!(large.next_seq, 42);
+        assert_eq!(large.file_len, 4096);
+        assert!(large.latest.is_none());
+        let small = &cache.indexes[&(PathBuf::from("small.tdb"), "test".to_string())];
+        assert_eq!(small.latest.as_ref().unwrap()["record"], "small");
+        cache.budget = 1;
+        cache.enforce();
+        assert!(cache.indexes.is_empty());
+        assert!(cache.bytes() <= 1);
+    }
     #[test]
     fn owned_json_capacity_and_zero_budget_are_charged() {
         let text = String::with_capacity(4096);
