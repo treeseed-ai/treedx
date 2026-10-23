@@ -470,20 +470,30 @@ fn visit_envelopes_unlocked<T: DeserializeOwned + Serialize>(
                 line: line_no,
                 message: err.to_string(),
             })?;
-        if envelope.record_kind != kind {
-            return Err(StoreError::InvalidRecord {
-                file: path.display().to_string(),
-                line: line_no,
-                message: format!("expected kind {kind}, got {}", envelope.record_kind),
-            });
-        }
-        if payload_hash(&envelope.payload)? != envelope.payload_hash {
-            return Err(StoreError::Checksum {
-                file: path.display().to_string(),
-                line: line_no,
-            });
-        }
+        validate_envelope(&envelope, path, line_no, kind)?;
         visit(envelope);
+    }
+    Ok(())
+}
+
+pub(crate) fn validate_envelope<T: Serialize>(
+    envelope: &LogEnvelope<T>,
+    path: &Path,
+    line: usize,
+    kind: &str,
+) -> Result<(), StoreError> {
+    if envelope.record_kind != kind {
+        return Err(StoreError::InvalidRecord {
+            file: path.display().to_string(),
+            line,
+            message: format!("expected kind {kind}, got {}", envelope.record_kind),
+        });
+    }
+    if payload_hash(&envelope.payload)? != envelope.payload_hash {
+        return Err(StoreError::Checksum {
+            file: path.display().to_string(),
+            line,
+        });
     }
     Ok(())
 }
