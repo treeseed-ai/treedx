@@ -60,6 +60,7 @@ fn seen_token_fixture() -> (tempfile::TempDir, std::path::PathBuf, ConnectedToke
 fn run_recovery(dir: &std::path::Path, digest: Option<&str>) -> std::process::Output {
     let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_treedx_store_recover"));
     command.arg(dir);
+    command.arg("catalog/connected_tokens.tdb");
     if let Some(digest) = digest {
         command.args(["--apply", digest]);
     }
@@ -283,7 +284,7 @@ fn interrupted_recovery_staging_is_retained_and_does_not_block_an_exact_retry() 
     let backup = dir
         .path()
         .join("recovery/backups")
-        .join(format!("token-tail-{id}"));
+        .join(format!("log-tail-{id}"));
     std::fs::create_dir_all(&backup).unwrap();
     std::fs::write(
         backup.join("interrupted.pending"),

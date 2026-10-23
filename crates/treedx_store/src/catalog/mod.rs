@@ -395,7 +395,7 @@ fn ensure_all_logs(data_dir: &Path) -> Result<(), StoreError> {
     Ok(())
 }
 
-fn log_files() -> Vec<(PathBuf, &'static str)> {
+pub(crate) fn log_files() -> Vec<(PathBuf, &'static str)> {
     vec![
         ("catalog/repositories.tdb".into(), "repository"),
         ("catalog/repository_remotes.tdb".into(), "repository_remote"),

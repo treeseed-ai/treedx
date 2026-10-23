@@ -11,7 +11,7 @@ use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 
-pub mod connected_token_tail;
+pub mod log_tail;
 
 pub fn compact_storage(
     data_dir: &Path,
