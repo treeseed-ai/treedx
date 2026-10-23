@@ -47,9 +47,11 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
   mix deps.get --only prod \
   && mix compile \
   && cargo build --release -p treedx_git --bin treedx_git_worker \
+  && cargo build --release -p treedx_store --bin treedx_store_recover \
   && mix release \
   && cc ../../docker-healthcheck.c -O2 -o _build/prod/rel/treedx/bin/treedx_healthcheck \
   && cp ../../target/release/treedx_git_worker _build/prod/rel/treedx/bin/treedx_git_worker \
+  && cp ../../target/release/treedx_store_recover _build/prod/rel/treedx/bin/treedx_store_recover \
   && release_vsn="$(cut -d' ' -f2 _build/prod/rel/treedx/releases/start_erl.data)" \
   && erts_vsn="$(cut -d' ' -f1 _build/prod/rel/treedx/releases/start_erl.data)" \
   && ln -s "$release_vsn" _build/prod/rel/treedx/releases/current \
