@@ -85,10 +85,11 @@ defmodule TreeDx.Runtime.Pool do
       {job, info} ->
         cancel_timer(job.timeout_ref)
         demonitor(job.caller_monitor_ref)
-        GenServer.reply(job.from, busy(pool, "queue_timeout"))
         info = %{info | queue_timeouts: info.queue_timeouts + 1}
         Metrics.incr("treedx_pool_queue_timeouts_total", %{pool: to_string(pool)})
-        {:noreply, put_pool(state, pool, info)}
+        state = put_pool(state, pool, info)
+        GenServer.reply(job.from, busy(pool, "queue_timeout"))
+        {:noreply, state}
     end
   end
 
@@ -111,14 +112,15 @@ defmodule TreeDx.Runtime.Pool do
           do: Task.Supervisor.terminate_child(TreeDx.Runtime.Pool.TaskSupervisor, job.task_pid)
 
         demonitor(job.caller_monitor_ref)
-        GenServer.reply(job.from, busy(pool, "execution_timeout"))
 
         info =
           %{info | active: active, execution_timeouts: info.execution_timeouts + 1}
           |> maybe_start_next()
 
         Metrics.incr("treedx_pool_execution_timeouts_total", %{pool: to_string(pool)})
-        {:noreply, put_pool(state, pool, info)}
+        state = put_pool(state, pool, info)
+        GenServer.reply(job.from, busy(pool, "execution_timeout"))
+        {:noreply, state}
     end
   end
 
@@ -134,7 +136,6 @@ defmodule TreeDx.Runtime.Pool do
         demonitor(job.caller_monitor_ref)
         execution_ms = System.monotonic_time(:millisecond) - job.started_at
         Metrics.observe("treedx_pool_execution_ms", execution_ms, %{pool: to_string(pool)})
-        GenServer.reply(job.from, result)
 
         info =
           %{
@@ -146,7 +147,9 @@ defmodule TreeDx.Runtime.Pool do
           |> maybe_start_next()
 
         Metrics.incr("treedx_pool_completed_total", %{pool: to_string(pool)})
-        {:noreply, put_pool(state, pool, info)}
+        state = put_pool(state, pool, info)
+        GenServer.reply(job.from, result)
+        {:noreply, state}
     end
   end
 
@@ -188,7 +191,6 @@ defmodule TreeDx.Runtime.Pool do
           {pool, info, job} ->
             cancel_timer(job.execution_timeout_ref)
             demonitor(job.caller_monitor_ref)
-            GenServer.reply(job.from, task_failed(reason))
 
             info =
               %{
@@ -199,7 +201,9 @@ defmodule TreeDx.Runtime.Pool do
               |> maybe_start_next()
 
             Metrics.incr("treedx_pool_completed_total", %{pool: to_string(pool), status: "crash"})
-            {:noreply, put_pool(state, pool, info)}
+            state = put_pool(state, pool, info)
+            GenServer.reply(job.from, task_failed(reason))
+            {:noreply, state}
         end
     end
   end
