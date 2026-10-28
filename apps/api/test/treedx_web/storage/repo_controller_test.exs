@@ -152,11 +152,23 @@ defmodule TreeDxWeb.RepoControllerTest do
     observed = build_conn() |> auth_conn(token) |> get("/api/v1/workspaces/#{id}") |> json!(200)
     assert observed["status"] == "closed"
 
-    delivered =
+    denied =
       build_conn()
       |> auth_conn(token)
       |> post("/api/v1/repos/#{repo_id}/files/read", %{
         "ref" => committed["commitSha"],
+        "path" => "docs/delivery.md",
+        "encoding" => "utf8"
+      })
+      |> json!(403)
+
+    assert denied["error"]["code"] == "permission_denied"
+
+    delivered =
+      build_conn()
+      |> auth_conn(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{
+        "ref" => workspace["branchName"],
         "path" => "docs/delivery.md",
         "encoding" => "utf8"
       })
