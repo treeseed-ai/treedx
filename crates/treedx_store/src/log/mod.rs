@@ -12,6 +12,11 @@ use std::time::SystemTime;
 mod cache;
 use cache::{record_bytes, IndexCache};
 
+#[cfg(test)]
+thread_local! {
+    static VALIDATED_RECORDS: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LogEnvelope<T> {
@@ -482,6 +487,8 @@ pub(crate) fn validate_envelope<T: Serialize>(
     line: usize,
     kind: &str,
 ) -> Result<(), StoreError> {
+    #[cfg(test)]
+    VALIDATED_RECORDS.with(|count| count.set(count.get() + 1));
     if envelope.record_kind != kind {
         return Err(StoreError::InvalidRecord {
             file: path.display().to_string(),
@@ -496,4 +503,50 @@ pub(crate) fn validate_envelope<T: Serialize>(
         });
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod lookup_tests {
+    use super::*;
+    use serde_json::{json, Value};
+
+    #[test]
+    fn exact_record_lookup_stays_bounded_after_payload_eviction() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("workspace-records.tdb");
+        set_cache_budget(65_536);
+        append_records(
+            &path,
+            "workspace",
+            (0..256)
+                .map(|n| {
+                    (
+                        format!("workspace-{n}"),
+                        json!({"id":n,"body":"x".repeat(512)}),
+                    )
+                })
+                .collect(),
+        )
+        .unwrap();
+        assert!(cache_stats().1 <= 65_536);
+        assert!(with_index_unlocked(&path, "workspace", |index| index.latest.is_none()).unwrap());
+        assert_eq!(
+            replay_record::<Value>(&path, "workspace", "workspace-255")
+                .unwrap()
+                .unwrap()["id"],
+            255
+        );
+        VALIDATED_RECORDS.with(|count| count.set(0));
+        let actual = replay_record::<Value>(&path, "workspace", "workspace-128")
+            .unwrap()
+            .unwrap();
+        assert_eq!(actual, json!({"id":128,"body":"x".repeat(512)}));
+        let replayed = VALIDATED_RECORDS.with(|count| count.get());
+        assert!(
+            replayed <= 1,
+            "one warm exact lookup replayed {replayed} historical records"
+        );
+        assert!(cache_stats().1 <= 65_536);
+        set_cache_budget(0);
+    }
 }
