@@ -73,6 +73,114 @@ defmodule TreeDxWeb.RepoControllerTest do
     assert json_response(replay, 200)["alreadyRetired"] == true
   end
 
+  test "workspace delivery and closed readback survive bounded cache history", %{token: token} do
+    previous_fraction = System.get_env("TREEDX_CACHE_MEMORY_FRACTION")
+
+    on_exit(fn ->
+      if previous_fraction,
+        do: System.put_env("TREEDX_CACHE_MEMORY_FRACTION", previous_fraction),
+        else: System.delete_env("TREEDX_CACHE_MEMORY_FRACTION")
+
+      TreeDx.Runtime.Resources.configure_native_cache()
+    end)
+
+    System.put_env("TREEDX_CACHE_MEMORY_FRACTION", "0.0005")
+    TreeDx.Runtime.Resources.configure_native_cache()
+
+    repo =
+      build_conn()
+      |> auth_conn(token)
+      |> post("/api/v1/repos", %{"repositoryName" => "bounded-cache-history"})
+      |> json!(200)
+
+    repo_id = repo["repo"]["repoId"]
+
+    for n <- 1..32 do
+      workspace =
+        build_conn()
+        |> auth_conn(token)
+        |> post("/api/v1/repos/#{repo_id}/workspaces", %{
+          "baseRef" => "refs/heads/main",
+          "branchName" => "refs/heads/cache-history/#{n}",
+          "mode" => "writable",
+          "allowedPaths" => ["docs/**"]
+        })
+        |> json!(200)
+
+      closed =
+        build_conn()
+        |> auth_conn(token)
+        |> post("/api/v1/workspaces/#{workspace["workspaceId"]}/close", %{})
+        |> json!(200)
+
+      assert closed["status"] == "closed"
+    end
+
+    workspace =
+      build_conn()
+      |> auth_conn(token)
+      |> post("/api/v1/repos/#{repo_id}/workspaces", %{
+        "baseRef" => "refs/heads/main",
+        "branchName" => "refs/heads/cache-history/delivery",
+        "mode" => "writable",
+        "allowedPaths" => ["docs/**"]
+      })
+      |> json!(200)
+
+    id = workspace["workspaceId"]
+    content = "# Retained delivery Å🍃\n"
+
+    build_conn()
+    |> auth_conn(token)
+    |> put("/api/v1/workspaces/#{id}/files?path=docs/delivery.md", %{"content" => content})
+    |> json!(200)
+
+    committed =
+      build_conn()
+      |> auth_conn(token)
+      |> post("/api/v1/workspaces/#{id}/commit", %{
+        "message" => "Retain delivery after workspace history",
+        "author" => %{"name" => "Workspace fixture", "email" => "workspace@example.invalid"}
+      })
+      |> json!(200)
+
+    build_conn()
+    |> auth_conn(token)
+    |> post("/api/v1/workspaces/#{id}/close", %{})
+    |> json!(200)
+
+    observed = build_conn() |> auth_conn(token) |> get("/api/v1/workspaces/#{id}") |> json!(200)
+    assert observed["status"] == "closed"
+
+    denied =
+      build_conn()
+      |> auth_conn(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{
+        "ref" => committed["commitSha"],
+        "path" => "docs/delivery.md",
+        "encoding" => "utf8"
+      })
+      |> json!(403)
+
+    assert denied["error"]["code"] == "permission_denied"
+
+    delivered =
+      build_conn()
+      |> auth_conn(token)
+      |> post("/api/v1/repos/#{repo_id}/files/read", %{
+        "ref" => workspace["branchName"],
+        "path" => "docs/delivery.md",
+        "encoding" => "utf8"
+      })
+      |> json!(200)
+
+    assert delivered["resolvedRef"] == committed["commitSha"]
+    assert delivered["file"]["content"] == content
+    {_entries, bytes, budget} = TreeDx.Native.log_cache_stats()
+    assert budget > 0 and budget <= 200_000
+    assert bytes <= budget
+  end
+
   test "lists refs and remotes, syncs, and manages workspace lifecycle", %{token: token} do
     path = Path.join(TreeDx.Store.data_dir(), "repos/bare/git-fixture")
     create_git_fixture(path)
