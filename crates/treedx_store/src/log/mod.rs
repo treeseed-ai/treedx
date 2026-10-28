@@ -4,13 +4,19 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::fs::{self, OpenOptions};
-use std::io::{BufRead, BufReader, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::SystemTime;
 
 mod cache;
-use cache::{record_bytes, IndexCache};
+use cache::{
+    next_seq_unlocked, remove_from_index_after_write, update_index_after_write,
+    with_index_unlocked, IndexCache,
+};
+mod read;
+pub(crate) use read::validate_envelope;
+use read::{replay_envelopes_unlocked, visit_envelopes_unlocked};
 
 #[cfg(test)]
 thread_local! {
@@ -50,11 +56,22 @@ pub fn cache_stats() -> (usize, usize, usize) {
     (cache.indexes.len(), cache.bytes(), cache.budget)
 }
 
+#[derive(Clone, Copy)]
+struct RecordPosition {
+    offset: u64,
+    line: usize,
+}
+
 #[derive(Clone)]
 struct LogIndex {
     file_len: u64,
     modified: Option<SystemTime>,
     next_seq: u64,
+    line_count: usize,
+    // Derived positions in the existing validated log remain useful when its
+    // payloads exceed the cache share. They are charged and evicted separately.
+    positions: Option<BTreeMap<String, RecordPosition>>,
+    position_bytes: usize,
     latest: Option<BTreeMap<String, serde_json::Value>>,
     bytes: usize,
 }
@@ -284,7 +301,7 @@ pub fn replay_record<T: DeserializeOwned + Serialize + Clone>(
     let lock = lock_for(path);
     let _guard = lock.lock().expect("treedx log lock poisoned");
     ensure_log_unlocked(path, kind)?;
-    let (complete, mut payload) = with_index_unlocked(path, kind, |index| {
+    let (complete, mut payload, indexed, position) = with_index_unlocked(path, kind, |index| {
         (
             index.latest.is_some(),
             index
@@ -292,18 +309,31 @@ pub fn replay_record<T: DeserializeOwned + Serialize + Clone>(
                 .as_ref()
                 .and_then(|latest| latest.get(record_id))
                 .cloned(),
+            index.positions.is_some(),
+            index
+                .positions
+                .as_ref()
+                .and_then(|positions| positions.get(record_id))
+                .copied(),
         )
     })?;
     if !complete {
-        visit_envelopes_unlocked::<serde_json::Value>(path, kind, |envelope| {
-            if envelope.record_id == record_id {
-                payload = if envelope.op == "delete" {
-                    None
-                } else {
-                    Some(envelope.payload)
-                };
-            }
-        })?;
+        if indexed {
+            payload = match position {
+                Some(position) => read::read_indexed_record(path, kind, record_id, position)?,
+                None => None,
+            };
+        } else {
+            visit_envelopes_unlocked::<serde_json::Value>(path, kind, |envelope| {
+                if envelope.record_id == record_id {
+                    payload = if envelope.op == "delete" {
+                        None
+                    } else {
+                        Some(envelope.payload)
+                    };
+                }
+            })?;
+        }
     }
     payload
         .map(serde_json::from_value)
@@ -311,242 +341,5 @@ pub fn replay_record<T: DeserializeOwned + Serialize + Clone>(
         .map_err(Into::into)
 }
 
-fn next_seq_unlocked(path: &Path, kind: &str) -> Result<u64, StoreError> {
-    with_index_unlocked(path, kind, |index| index.next_seq)
-}
-
-fn with_index_unlocked<T>(
-    path: &Path,
-    kind: &str,
-    read: impl FnOnce(&LogIndex) -> T,
-) -> Result<T, StoreError> {
-    let metadata = fs::metadata(path)?;
-    let modified = metadata.modified().ok();
-    let key = (path.to_path_buf(), kind.to_string());
-    let indexes = LOG_INDEXES.get_or_init(Default::default);
-    let budget = {
-        let cache = indexes.lock().expect("treedx log index poisoned");
-        if let Some(index) = cache
-            .indexes
-            .get(&key)
-            .filter(|index| index.file_len == metadata.len() && index.modified == modified)
-        {
-            return Ok(read(index));
-        }
-        cache.budget
-    };
-    let mut index = LogIndex {
-        file_len: metadata.len(),
-        modified,
-        next_seq: 1,
-        latest: Some(BTreeMap::new()),
-        bytes: 0,
-    };
-    visit_envelopes_unlocked::<serde_json::Value>(path, kind, |envelope| {
-        index.next_seq = envelope.seq + 1;
-        update_payload(
-            &mut index,
-            envelope.record_id,
-            if envelope.op == "delete" {
-                None
-            } else {
-                Some(envelope.payload)
-            },
-            budget,
-        );
-    })?;
-    let result = read(&index);
-    let mut cache = indexes.lock().expect("treedx log index poisoned");
-    // A concurrent budget reduction also applies to a load already in flight.
-    if index.bytes > cache.budget {
-        index.latest = None;
-        index.bytes = 0;
-    }
-    cache.indexes.insert(key, index);
-    cache.enforce();
-    Ok(result)
-}
-
-fn update_payload(
-    index: &mut LogIndex,
-    key: String,
-    payload: Option<serde_json::Value>,
-    budget: usize,
-) {
-    let Some(latest) = index.latest.as_mut() else {
-        return;
-    };
-    if let Some((old_key, old_value)) = latest.remove_entry(&key) {
-        index.bytes -= record_bytes(&old_key, &old_value);
-    }
-    if let Some(payload) = payload {
-        let bytes = record_bytes(&key, &payload);
-        if bytes > budget.saturating_sub(index.bytes) {
-            index.latest = None;
-            index.bytes = 0;
-        } else {
-            index.bytes += bytes;
-            latest.insert(key, payload);
-        }
-    }
-}
-
-fn update_index_after_write(
-    path: &Path,
-    kind: &str,
-    next_seq: u64,
-    records: Vec<(String, serde_json::Value)>,
-) -> Result<(), StoreError> {
-    update_written_index(path, kind, next_seq, |index, budget| {
-        for (key, payload) in records {
-            update_payload(index, key, Some(payload), budget);
-        }
-    })
-}
-
-fn remove_from_index_after_write(
-    path: &Path,
-    kind: &str,
-    next_seq: u64,
-    record_id: &str,
-) -> Result<(), StoreError> {
-    update_written_index(path, kind, next_seq, |index, budget| {
-        update_payload(index, record_id.to_string(), None, budget)
-    })
-}
-
-fn update_written_index(
-    path: &Path,
-    kind: &str,
-    next_seq: u64,
-    update: impl FnOnce(&mut LogIndex, usize),
-) -> Result<(), StoreError> {
-    let metadata = fs::metadata(path)?;
-    let mut cache = LOG_INDEXES
-        .get_or_init(Default::default)
-        .lock()
-        .expect("treedx log index poisoned");
-    let budget = cache.budget;
-    let index = cache
-        .indexes
-        .entry((path.to_path_buf(), kind.to_string()))
-        .or_insert(LogIndex {
-            file_len: 0,
-            modified: None,
-            next_seq: 1,
-            latest: None,
-            bytes: 0,
-        });
-    update(index, budget);
-    index.file_len = metadata.len();
-    index.modified = metadata.modified().ok();
-    index.next_seq = next_seq;
-    cache.enforce();
-    Ok(())
-}
-
-fn replay_envelopes_unlocked<T: DeserializeOwned + Serialize>(
-    path: &Path,
-    kind: &str,
-) -> Result<Vec<LogEnvelope<T>>, StoreError> {
-    let mut out = Vec::new();
-    visit_envelopes_unlocked(path, kind, |envelope| out.push(envelope))?;
-    Ok(out)
-}
-
-fn visit_envelopes_unlocked<T: DeserializeOwned + Serialize>(
-    path: &Path,
-    kind: &str,
-    mut visit: impl FnMut(LogEnvelope<T>),
-) -> Result<(), StoreError> {
-    let file = fs::File::open(path)?;
-    for (index, line) in BufReader::new(file).lines().enumerate() {
-        let line_no = index + 1;
-        let line = line?;
-        if line_no == 1 && line.starts_with("# treedx:") {
-            continue;
-        }
-        if line.trim().is_empty() {
-            continue;
-        }
-        let envelope: LogEnvelope<T> =
-            serde_json::from_str(&line).map_err(|err| StoreError::InvalidRecord {
-                file: path.display().to_string(),
-                line: line_no,
-                message: err.to_string(),
-            })?;
-        validate_envelope(&envelope, path, line_no, kind)?;
-        visit(envelope);
-    }
-    Ok(())
-}
-
-pub(crate) fn validate_envelope<T: Serialize>(
-    envelope: &LogEnvelope<T>,
-    path: &Path,
-    line: usize,
-    kind: &str,
-) -> Result<(), StoreError> {
-    #[cfg(test)]
-    VALIDATED_RECORDS.with(|count| count.set(count.get() + 1));
-    if envelope.record_kind != kind {
-        return Err(StoreError::InvalidRecord {
-            file: path.display().to_string(),
-            line,
-            message: format!("expected kind {kind}, got {}", envelope.record_kind),
-        });
-    }
-    if payload_hash(&envelope.payload)? != envelope.payload_hash {
-        return Err(StoreError::Checksum {
-            file: path.display().to_string(),
-            line,
-        });
-    }
-    Ok(())
-}
-
 #[cfg(test)]
-mod lookup_tests {
-    use super::*;
-    use serde_json::{json, Value};
-
-    #[test]
-    fn exact_record_lookup_stays_bounded_after_payload_eviction() {
-        let root = tempfile::tempdir().unwrap();
-        let path = root.path().join("workspace-records.tdb");
-        set_cache_budget(65_536);
-        append_records(
-            &path,
-            "workspace",
-            (0..256)
-                .map(|n| {
-                    (
-                        format!("workspace-{n}"),
-                        json!({"id":n,"body":"x".repeat(512)}),
-                    )
-                })
-                .collect(),
-        )
-        .unwrap();
-        assert!(cache_stats().1 <= 65_536);
-        assert!(with_index_unlocked(&path, "workspace", |index| index.latest.is_none()).unwrap());
-        assert_eq!(
-            replay_record::<Value>(&path, "workspace", "workspace-255")
-                .unwrap()
-                .unwrap()["id"],
-            255
-        );
-        VALIDATED_RECORDS.with(|count| count.set(0));
-        let actual = replay_record::<Value>(&path, "workspace", "workspace-128")
-            .unwrap()
-            .unwrap();
-        assert_eq!(actual, json!({"id":128,"body":"x".repeat(512)}));
-        let replayed = VALIDATED_RECORDS.with(|count| count.get());
-        assert!(
-            replayed <= 1,
-            "one warm exact lookup replayed {replayed} historical records"
-        );
-        assert!(cache_stats().1 <= 65_536);
-        set_cache_budget(0);
-    }
-}
+mod lookup_tests;
