@@ -28,7 +28,7 @@ defmodule TreeDx.MixProject do
       {:phoenix, "~> 1.8.9"},
       {:plug, "~> 1.20.3"},
       {:jason, "~> 1.4"},
-      {:bandit, "~> 1.13.0"},
+      {:bandit, "~> 1.14.1"},
       {:rustler, "~> 0.38.0"},
       {:yamerl, "~> 0.10"},
       {:telemetry_metrics, "~> 1.0"},
